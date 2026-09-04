@@ -1,0 +1,15 @@
+{
+  "login": {
+    "subtitle": "Start your journey with SAA 2025.",
+    "tagline": "Log in to explore!",
+    "loginButton": "LOGIN With Google",
+    "footer": "Copyright © Sun* 2025",
+    "error": "Login failed. Please try again.",
+    "logoAlt": "Sun* Annual Awards 2025",
+    "heroAlt": "ROOT FURTHER"
+  },
+  "todo": {
+    "greeting": "Hello {email}",
+    "logout": "Log out"
+  }
+}
