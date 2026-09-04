@@ -1,0 +1,8 @@
+{
+  "mode": "system",
+  "intents": [
+    "(visitor, authentication, signs in with a Google account via Supabase Auth and lands on /todo; authenticated users are kept out of /login and unauthenticated users out of /todo; logout returns to /login)",
+    "(visitor, localization, switches the UI language between VN and EN from the header selector; choice persists in the NEXT_LOCALE cookie and re-renders all UI copy)"
+  ],
+  "justification": "Smell-flag: no ALWAYS/NEVER-fire conjunction in the task text. Enumeration found 2 distinct user-facing intents on the Login screen (auth flow vs. language switching, independent flows and outcomes) -> SYSTEM per Step 0 rule (count >= 2). User may merge at Rest Point 1.5a."
+}

@@ -1,0 +1,641 @@
+
+Running 28 tests using 4 workers
+
+  ✘   1 [chromium-anon] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right (1.8s)
+  ✘   2 [chromium-anon] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position (5.9s)
+  ✘   3 [chromium-anon] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text (5.9s)
+  ✘   4 [chromium-anon] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence (6.0s)
+  ✘   5 [chromium-anon] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button (5.3s)
+  ✘   8 [chromium-anon] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* (5.5s)
+  ✘   6 [chromium-anon] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position (5.5s)
+  ✘   7 [chromium-anon] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click (5.6s)
+  ✘   9 [chromium-anon] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login (30.1s)
+  -  13 [chromium-anon] › tests/e2e/login.spec.ts:149:10 › Login Screen › Authenticated › [TC f62b0c97] Authenticated user redirects /login to /todo
+  -  14 [chromium-anon] › tests/e2e/login.spec.ts:157:10 › Login Screen › Authenticated › [TC e76aa170] /todo shows user email and logout button
+  ✘  11 [chromium-anon] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) (30.0s)
+  ✘  10 [chromium-anon] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login (30.0s)
+  ✘  12 [chromium-anon] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication (30.0s)
+  ✘  15 [chromium] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right (584ms)
+  ✘  17 [chromium] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence (5.6s)
+  ✘  18 [chromium] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text (5.5s)
+  ✘  16 [chromium] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position (5.6s)
+  ✘  19 [chromium] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button (5.3s)
+  ✘  21 [chromium] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position (5.6s)
+  ✘  20 [chromium] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* (5.6s)
+  ✘  22 [chromium] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click (5.6s)
+  ✘  23 [chromium] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login (30.1s)
+  -  27 [chromium] › tests/e2e/login.spec.ts:149:10 › Login Screen › Authenticated › [TC f62b0c97] Authenticated user redirects /login to /todo
+  -  28 [chromium] › tests/e2e/login.spec.ts:157:10 › Login Screen › Authenticated › [TC e76aa170] /todo shows user email and logout button
+  ✘  26 [chromium] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication (30.0s)
+  ✘  24 [chromium] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) (30.0s)
+  ✘  25 [chromium] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login (30.1s)
+
+
+  1) [chromium] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('header img[alt="Sun* Annual Awards 2025"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('header img[alt="Sun* Annual Awards 2025"]')
+
+
+       7 |
+       8 |       const logo = page.locator('header img[alt="Sun* Annual Awards 2025"]');
+    >  9 |       await expect(logo).toBeVisible();
+         |                          ^
+      10 |
+      11 |       // Verify it's in the header (top-left area)
+      12 |       const header = page.locator('header');
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:9:26
+
+    Error Context: test-results/login-Login-Screen-Unauthe-957a4-5e65-Logo-top-left-position-chromium/error-context.md
+
+  2) [chromium] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "VN"
+    Received string:    "Open Next.js Dev Tools"
+
+      27 |         (await selector.textContent()) ||
+      28 |         (await selector.innerText());
+    > 29 |       expect(accessibleName).toContain('VN');
+         |                              ^
+      30 |     });
+      31 |
+      32 |     test('[TC 5fbe2a18] Hero artwork presence', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:29:30
+
+    Error Context: test-results/login-Login-Screen-Unauthe-84e69-Language-selector-top-right-chromium/error-context.md
+
+  3) [chromium] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('img[alt="ROOT FURTHER"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('img[alt="ROOT FURTHER"]')
+
+
+      34 |
+      35 |       const heroImage = page.locator('img[alt="ROOT FURTHER"]');
+    > 36 |       await expect(heroImage).toBeVisible();
+         |                               ^
+      37 |     });
+      38 |
+      39 |     test('[TC 42b82364] Hero title and description text', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:36:31
+
+    Error Context: test-results/login-Login-Screen-Unauthe-f282c-e2a18-Hero-artwork-presence-chromium/error-context.md
+
+  4) [chromium] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')
+
+
+      41 |
+      42 |       // Title and descriptions should be present
+    > 43 |       await expect(page.locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')).toBeVisible();
+         |                                                                                   ^
+      44 |       await expect(page.locator('text=Đăng nhập để khám phá')).toBeVisible();
+      45 |     });
+      46 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:43:83
+
+    Error Context: test-results/login-Login-Screen-Unauthe-bffc1--title-and-description-text-chromium/error-context.md
+
+  5) [chromium] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('button:has-text("LOGIN With Google")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      49 |
+      50 |       const googleButton = page.locator('button:has-text("LOGIN With Google")');
+    > 51 |       await expect(googleButton).toBeVisible();
+         |                                  ^
+      52 |     });
+      53 |
+      54 |     test('[TC 33a1dacf] Footer fixed bottom position', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:51:34
+
+    Error Context: test-results/login-Login-Screen-Unauthe-b4a2a-15-LOGIN-With-Google-button-chromium/error-context.md
+
+  6) [chromium] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('footer')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('footer')
+
+
+      56 |
+      57 |       const footer = page.locator('footer');
+    > 58 |       await expect(footer).toBeVisible();
+         |                            ^
+      59 |
+      60 |       const footerText = page.locator('text=Bản quyền thuộc về Sun* © 2025');
+      61 |       await expect(footerText).toBeVisible();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:58:28
+
+    Error Context: test-results/login-Login-Screen-Unauthe-34c1f-ooter-fixed-bottom-position-chromium/error-context.md
+
+  7) [chromium] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[role="menuitem"]:has-text("VN")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('[role="menuitem"]:has-text("VN")')
+
+
+      75 |       const vnItem = page.locator('[role="menuitem"]:has-text("VN")');
+      76 |       const enItem = page.locator('[role="menuitem"]:has-text("EN")');
+    > 77 |       await expect(vnItem).toBeVisible();
+         |                            ^
+      78 |       await expect(enItem).toBeVisible();
+      79 |     });
+      80 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:77:28
+
+    Error Context: test-results/login-Login-Screen-Unauthe-4cbf4-age-dropdown-opens-on-click-chromium/error-context.md
+
+  8) [chromium] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: "Đăng nhập không thành công"
+    Received string:    ""
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 5000ms
+      - waiting for locator('[role="alert"]')
+        14 × locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>
+           - unexpected value ""
+
+
+      84 |       const alert = page.locator('[role="alert"]');
+      85 |       await expect(alert).toBeVisible();
+    > 86 |       await expect(alert).toContainText('Đăng nhập không thành công');
+         |                           ^
+      87 |       await expect(alert).toContainText('Vui lòng thử lại');
+      88 |     });
+      89 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:86:27
+
+    Error Context: test-results/login-Login-Screen-Unauthe-2af71-Error-alert-on-login-error--chromium/error-context.md
+
+  9) [chromium] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation to "/login" until "load"
+      navigated to "http://localhost:3000/todo"
+    ============================================================
+
+      90 |     test('[TC 45278c06] Unauthenticated GET /todo redirects to /login', async ({ page }) => {
+      91 |       await page.goto('/todo');
+    > 92 |       await page.waitForURL('/login');
+         |                  ^
+      93 |       expect(page.url()).toContain('/login');
+      94 |     });
+      95 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:92:18
+
+    Error Context: test-results/login-Login-Screen-Unauthe-5dc84-GET-todo-redirects-to-login-chromium/error-context.md
+
+  10) [chromium] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation to "/login" until "load"
+      navigated to "http://localhost:3000/"
+    ============================================================
+
+       96 |     test('[TC 45278c06] Unauthenticated GET / redirects to /login', async ({ page }) => {
+       97 |       await page.goto('/');
+    >  98 |       await page.waitForURL('/login');
+          |                  ^
+       99 |       expect(page.url()).toContain('/login');
+      100 |     });
+      101 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:98:18
+
+    Error Context: test-results/login-Login-Screen-Unauthe-65073-ated-GET-redirects-to-login-chromium/error-context.md
+
+  11) [chromium] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      112 |       await page.goto('/login');
+      113 |       const googleButton = page.locator('button:has-text("LOGIN With Google")');
+    > 114 |       await googleButton.click();
+          |                          ^
+      115 |
+      116 |       // Give it a moment to call the authorize endpoint
+      117 |       await page.waitForTimeout(500);
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:114:26
+
+    Error Context: test-results/login-Login-Screen-Unauthe-c06a9--triggers-OAuth-flow-abort--chromium/error-context.md
+
+  12) [chromium] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.isDisabled: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      132 |       await page.waitForTimeout(100);
+      133 |
+    > 134 |       const isDisabled = await googleButton.isDisabled();
+          |                                             ^
+      135 |       const ariabusy = await googleButton.getAttribute('aria-busy');
+      136 |
+      137 |       // At least one of these should indicate loading state
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:134:45
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      129 |
+      130 |       // Click and check if button becomes disabled
+    > 131 |       const clickPromise = googleButton.click();
+          |                                         ^
+      132 |       await page.waitForTimeout(100);
+      133 |
+      134 |       const isDisabled = await googleButton.isDisabled();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:131:41
+
+    Error Context: test-results/login-Login-Screen-Unauthe-195fd-abled-during-authentication-chromium/error-context.md
+
+  13) [chromium-anon] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('header img[alt="Sun* Annual Awards 2025"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('header img[alt="Sun* Annual Awards 2025"]')
+
+
+       7 |
+       8 |       const logo = page.locator('header img[alt="Sun* Annual Awards 2025"]');
+    >  9 |       await expect(logo).toBeVisible();
+         |                          ^
+      10 |
+      11 |       // Verify it's in the header (top-left area)
+      12 |       const header = page.locator('header');
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:9:26
+
+    Error Context: test-results/login-Login-Screen-Unauthe-957a4-5e65-Logo-top-left-position-chromium-anon/error-context.md
+
+  14) [chromium-anon] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "VN"
+    Received string:    "Open Next.js Dev Tools"
+
+      27 |         (await selector.textContent()) ||
+      28 |         (await selector.innerText());
+    > 29 |       expect(accessibleName).toContain('VN');
+         |                              ^
+      30 |     });
+      31 |
+      32 |     test('[TC 5fbe2a18] Hero artwork presence', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:29:30
+
+    Error Context: test-results/login-Login-Screen-Unauthe-84e69-Language-selector-top-right-chromium-anon/error-context.md
+
+  15) [chromium-anon] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('img[alt="ROOT FURTHER"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('img[alt="ROOT FURTHER"]')
+
+
+      34 |
+      35 |       const heroImage = page.locator('img[alt="ROOT FURTHER"]');
+    > 36 |       await expect(heroImage).toBeVisible();
+         |                               ^
+      37 |     });
+      38 |
+      39 |     test('[TC 42b82364] Hero title and description text', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:36:31
+
+    Error Context: test-results/login-Login-Screen-Unauthe-f282c-e2a18-Hero-artwork-presence-chromium-anon/error-context.md
+
+  16) [chromium-anon] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')
+
+
+      41 |
+      42 |       // Title and descriptions should be present
+    > 43 |       await expect(page.locator('text=Bắt đầu hành trình của bạn cùng SAA 2025')).toBeVisible();
+         |                                                                                   ^
+      44 |       await expect(page.locator('text=Đăng nhập để khám phá')).toBeVisible();
+      45 |     });
+      46 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:43:83
+
+    Error Context: test-results/login-Login-Screen-Unauthe-bffc1--title-and-description-text-chromium-anon/error-context.md
+
+  17) [chromium-anon] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('button:has-text("LOGIN With Google")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      49 |
+      50 |       const googleButton = page.locator('button:has-text("LOGIN With Google")');
+    > 51 |       await expect(googleButton).toBeVisible();
+         |                                  ^
+      52 |     });
+      53 |
+      54 |     test('[TC 33a1dacf] Footer fixed bottom position', async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:51:34
+
+    Error Context: test-results/login-Login-Screen-Unauthe-b4a2a-15-LOGIN-With-Google-button-chromium-anon/error-context.md
+
+  18) [chromium-anon] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('footer')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('footer')
+
+
+      56 |
+      57 |       const footer = page.locator('footer');
+    > 58 |       await expect(footer).toBeVisible();
+         |                            ^
+      59 |
+      60 |       const footerText = page.locator('text=Bản quyền thuộc về Sun* © 2025');
+      61 |       await expect(footerText).toBeVisible();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:58:28
+
+    Error Context: test-results/login-Login-Screen-Unauthe-34c1f-ooter-fixed-bottom-position-chromium-anon/error-context.md
+
+  19) [chromium-anon] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[role="menuitem"]:has-text("VN")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('[role="menuitem"]:has-text("VN")')
+
+
+      75 |       const vnItem = page.locator('[role="menuitem"]:has-text("VN")');
+      76 |       const enItem = page.locator('[role="menuitem"]:has-text("EN")');
+    > 77 |       await expect(vnItem).toBeVisible();
+         |                            ^
+      78 |       await expect(enItem).toBeVisible();
+      79 |     });
+      80 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:77:28
+
+    Error Context: test-results/login-Login-Screen-Unauthe-4cbf4-age-dropdown-opens-on-click-chromium-anon/error-context.md
+
+  20) [chromium-anon] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: "Đăng nhập không thành công"
+    Received string:    ""
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 5000ms
+      - waiting for locator('[role="alert"]')
+        14 × locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>
+           - unexpected value ""
+
+
+      84 |       const alert = page.locator('[role="alert"]');
+      85 |       await expect(alert).toBeVisible();
+    > 86 |       await expect(alert).toContainText('Đăng nhập không thành công');
+         |                           ^
+      87 |       await expect(alert).toContainText('Vui lòng thử lại');
+      88 |     });
+      89 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:86:27
+
+    Error Context: test-results/login-Login-Screen-Unauthe-2af71-Error-alert-on-login-error--chromium-anon/error-context.md
+
+  21) [chromium-anon] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation to "/login" until "load"
+      navigated to "http://localhost:3000/todo"
+    ============================================================
+
+      90 |     test('[TC 45278c06] Unauthenticated GET /todo redirects to /login', async ({ page }) => {
+      91 |       await page.goto('/todo');
+    > 92 |       await page.waitForURL('/login');
+         |                  ^
+      93 |       expect(page.url()).toContain('/login');
+      94 |     });
+      95 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:92:18
+
+    Error Context: test-results/login-Login-Screen-Unauthe-5dc84-GET-todo-redirects-to-login-chromium-anon/error-context.md
+
+  22) [chromium-anon] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation to "/login" until "load"
+      navigated to "http://localhost:3000/"
+    ============================================================
+
+       96 |     test('[TC 45278c06] Unauthenticated GET / redirects to /login', async ({ page }) => {
+       97 |       await page.goto('/');
+    >  98 |       await page.waitForURL('/login');
+          |                  ^
+       99 |       expect(page.url()).toContain('/login');
+      100 |     });
+      101 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:98:18
+
+    Error Context: test-results/login-Login-Screen-Unauthe-65073-ated-GET-redirects-to-login-chromium-anon/error-context.md
+
+  23) [chromium-anon] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      112 |       await page.goto('/login');
+      113 |       const googleButton = page.locator('button:has-text("LOGIN With Google")');
+    > 114 |       await googleButton.click();
+          |                          ^
+      115 |
+      116 |       // Give it a moment to call the authorize endpoint
+      117 |       await page.waitForTimeout(500);
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:114:26
+
+    Error Context: test-results/login-Login-Screen-Unauthe-c06a9--triggers-OAuth-flow-abort--chromium-anon/error-context.md
+
+  24) [chromium-anon] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      129 |
+      130 |       // Click and check if button becomes disabled
+    > 131 |       const clickPromise = googleButton.click();
+          |                                         ^
+      132 |       await page.waitForTimeout(100);
+      133 |
+      134 |       const isDisabled = await googleButton.isDisabled();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:131:41
+
+    Error: locator.isDisabled: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("LOGIN With Google")')
+
+
+      132 |       await page.waitForTimeout(100);
+      133 |
+    > 134 |       const isDisabled = await googleButton.isDisabled();
+          |                                             ^
+      135 |       const ariabusy = await googleButton.getAttribute('aria-busy');
+      136 |
+      137 |       // At least one of these should indicate loading state
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/login.spec.ts:134:45
+
+    Error Context: test-results/login-Login-Screen-Unauthe-195fd-abled-during-authentication-chromium-anon/error-context.md
+
+  24 failed
+    [chromium] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position 
+    [chromium] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right 
+    [chromium] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence 
+    [chromium] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text 
+    [chromium] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button 
+    [chromium] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position 
+    [chromium] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click 
+    [chromium] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* 
+    [chromium] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login 
+    [chromium] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login 
+    [chromium] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) 
+    [chromium] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication 
+    [chromium-anon] › tests/e2e/login.spec.ts:5:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position 
+    [chromium-anon] › tests/e2e/login.spec.ts:19:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right 
+    [chromium-anon] › tests/e2e/login.spec.ts:32:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence 
+    [chromium-anon] › tests/e2e/login.spec.ts:39:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text 
+    [chromium-anon] › tests/e2e/login.spec.ts:47:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button 
+    [chromium-anon] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position 
+    [chromium-anon] › tests/e2e/login.spec.ts:64:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click 
+    [chromium-anon] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* 
+    [chromium-anon] › tests/e2e/login.spec.ts:90:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login 
+    [chromium-anon] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login 
+    [chromium-anon] › tests/e2e/login.spec.ts:102:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) 
+    [chromium-anon] › tests/e2e/login.spec.ts:121:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication 
+  4 skipped

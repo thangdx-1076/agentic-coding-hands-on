@@ -1,0 +1,55 @@
+{
+  "task": "Implement the SAA 2025 Login screen (/login) from MoMorph design GzbNeVGJHz with Supabase Google OAuth (local instance saa-app), auth guard, /todo placeholder, and VN/EN language switch via next-intl cookie",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "/login renders header logo, language selector VN, hero ROOT FURTHER, subtitle and tagline copy, LOGIN With Google button, footer copyright",
+    "LOGIN With Google starts Supabase OAuth authorize with provider=google and shows disabled aria-busy pending state",
+    "/login?error shows inline role=alert error message",
+    "language selector opens menu VN/EN, sets NEXT_LOCALE cookie and re-renders copy in the chosen locale",
+    "unauthenticated /todo and / redirect to /login and authenticated /login redirects to /todo",
+    "/auth/callback exchanges the PKCE code and redirects to a sanitized next path or /login?error",
+    "/todo shows the user email and logout returns to /login",
+    "tsc lint vitest build exit 0 and Playwright login suite GREEN 14/14 with the unchanged RED command"
+  ],
+  "touchpoints": [
+    "proxy.ts",
+    "lib/supabase/client.ts",
+    "lib/supabase/server.ts",
+    "lib/supabase/proxy-client.ts",
+    "lib/supabase/next-path.ts",
+    "lib/i18n/locale.ts",
+    "i18n/request.ts",
+    "messages/vi.json",
+    "messages/en.json",
+    "next.config.ts",
+    "app/layout.tsx",
+    "app/page.tsx",
+    "app/login/page.tsx",
+    "app/login/login-client.tsx",
+    "app/auth/callback/route.ts",
+    "app/todo/page.tsx",
+    "app/todo/actions.ts",
+    "app/actions/locale.ts",
+    "app/fonts.ts",
+    "app/globals.css",
+    "components/login/",
+    "tests/e2e/login.spec.ts",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "package.json"
+  ],
+  "blastRadius": [
+    "every request passes through proxy.ts (matcher / login todo) — a bug there can redirect-loop or 500 the site",
+    "root layout wraps all pages in NextIntlClientProvider — i18n request config failure breaks every page render",
+    "open redirect via /auth/callback next parameter",
+    "session cookie handling via @supabase/ssr in proxy and server client",
+    "NEXT_LOCALE cookie normalization rewriting cookies on every matched response",
+    "app/page.tsx boilerplate replaced by auth-based redirect"
+  ],
+  "contracts": [
+    "npx playwright test tests/e2e/login.spec.ts --reporter=list (RED exit 1 → GREEN exit 0, same command)",
+    "env NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.local (gitignored)",
+    "routes: /login, /todo, /auth/callback, / ; cookie NEXT_LOCALE vi|en ; Supabase local http://127.0.0.1:55321 project saa-app",
+    "LoginScreen props { copy, locale, onSelectLocale, onLoginClick, loginPending, errorMessage } ; setLocale(locale) Server Action ; logoutAction()"
+  ]
+}

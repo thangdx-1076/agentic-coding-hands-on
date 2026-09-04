@@ -1,0 +1,98 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Verified: /login renders header logo, language selector VN, hero ROOT FURTHER, subtitle and tagline copy, LOGIN With Google button, footer copyright — via code read + evidence/green-run.log TC b9805e65, 8415b629, 5fbe2a18, 42b82364, 6ae76d15, 33a1dacf all PASS",
+    "Verified: LOGIN With Google starts Supabase OAuth authorize with provider=google and shows disabled aria-busy pending state — via google-login-button.tsx + login-client.tsx + evidence/green-run.log TC 60bc5bbb, 37eae882 PASS",
+    "Verified: /login?error shows inline role=alert error message — via login-error-alert.tsx + hasErrorParam (boolean-only) + evidence/green-run.log TC 45278c06 PASS",
+    "Verified: language selector opens menu VN/EN, sets NEXT_LOCALE cookie and re-renders copy in the chosen locale — via language-selector.tsx + app/actions/locale.ts + evidence/green-run.log TC 20d87e28 PASS + vitest normalizeLocale 8/8",
+    "Verified: unauthenticated /todo and / redirect to /login and authenticated /login redirects to /todo — via proxy.ts + app/page.tsx + app/login/page.tsx + evidence/green-run.log TC 45278c06 and TC f62b0c97 PASS",
+    "Verified: /auth/callback exchanges the PKCE code and redirects to a sanitized next path or /login?error — via route.ts + next-path.ts safeNextPath (now with explicit control-char rejection) + vitest 18/18 next-path unit tests pass",
+    "Verified: /todo shows the user email and logout returns to /login — via app/todo/page.tsx + actions.ts + evidence/green-run.log TC e76aa170 PASS",
+    "Verified: tsc lint vitest build exit 0 and Playwright login suite GREEN 14/14 with the unchanged RED command — tsc/lint/vitest verified live by me (exit 0/0/0, 26/26); build exit 0 and Playwright 14/14 verified via evidence/raw-runs.json, evidence/green-run.log, reports/tester-final-temper-login.md"
+  ],
+  "regressionChecked": [
+    "every request passes through proxy.ts (matcher / login todo) — unchanged since first pass, re-confirmed via evidence/green-run.log redirect tests passing",
+    "root layout wraps all pages in NextIntlClientProvider — unchanged, i18n/request.ts try/catch fallback intact",
+    "open redirect via /auth/callback next parameter — re-verified with the new control-char hardening; double-encoding and U+2028/2029 analyzed, both confirmed non-exploitable in the current pipeline",
+    "session cookie handling via @supabase/ssr in proxy and server client — unchanged since first pass",
+    "NEXT_LOCALE cookie normalization rewriting cookies on every matched response — unchanged since first pass",
+    "app/page.tsx boilerplate replaced by auth-based redirect — unchanged since first pass",
+    "polish pass (login-hero, google-login-button, language-selector, globals.css) — checked for a11y role/name regressions (none), hydration mismatches (none, deterministic state), and desktop layout semantics (pixel-verified against tester report, matches design targets)"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Warning",
+      "category": "Correctness",
+      "location": "tests/e2e/visual-capture.ts:7",
+      "summary": "browser.createContext(...) invalid Playwright API, broke tsc/build",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Warning",
+      "category": "Correctness",
+      "location": "tests/e2e/helpers/sign-in.ts:15",
+      "summary": "prefer-const ESLint error",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Warning",
+      "category": "Correctness",
+      "location": "tests/e2e/helpers/sign-in.ts:28",
+      "summary": "no-explicit-any ESLint error",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Warning",
+      "category": "Security",
+      "location": "lib/supabase/next-path.ts:18-32",
+      "summary": "safeNextPath did not explicitly reject control chars; resolved with explicit hasRawControlChar/hasEncodedControlChar checks + 8 new vitest cases",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Warning",
+      "category": "Security",
+      "location": "tests/e2e/login.spec.ts:218",
+      "summary": "hardcoded test password; resolved with per-run randomUUID-based password",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Maintainability",
+      "location": "package.json:22",
+      "summary": "playwright devDependency caret range; resolved with exact pin 1.62.1",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Maintainability",
+      "location": "components/login/language-selector.tsx:7",
+      "summary": "local vi|en union duplicated AppLocale; resolved by importing AppLocale",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Security",
+      "location": "lib/supabase/next-path.ts:29-30",
+      "summary": "isControlCodePoint doesn't cover Unicode line separators U+2028/U+2029; safe today only via Node's header validator + route.ts try/catch, same accidental-safety-net pattern now narrowed to this one residual case",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "A11y",
+      "location": "components/login/language-selector.tsx:78-95",
+      "summary": "role=menu items lack ARIA APG arrow-key/Home-End roving navigation; acceptable for a 2-item switcher",
+      "disposition": "Defer"
+    }
+  ],
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": true,
+    "humanSignedOff": true
+  }
+}
