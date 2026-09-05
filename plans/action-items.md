@@ -47,6 +47,7 @@
 - [ ] Review + merge PR cho `feat/test-storybook-standards`.
 - [ ] Quyết định: bật branch protection cho `main` và đặt `quality` + `e2e` làm required status check. Chưa bật thì ngưỡng 100% và bước build Storybook chỉ *báo cáo*, không *chặn* merge (`gh api .../branches/main/protection` vẫn trả 404).
 - [ ] Vẫn còn 14 cảnh báo `LGPL-3.0-or-later` từ `@img/sharp-libvips-*` (nợ từ session trước, chưa xử lý).
+- [ ] Chạy lại `derive_confidence_report.py` (hoặc `/tkm:rebuild-spec --artifact F001_GoogleOAuthLogin`) cho `docs/vi/features/F001_GoogleOAuthLogin/confidence-report_technical-spec.md`: nó parse citation của `technical-spec.md`, mà file đó vừa được sửa citation sau khi tách `TodoScreen` — nên report đã cũ theo đúng thiết kế. **Đừng sửa tay**, nó là output của script.
 
 ### Decisions
 
