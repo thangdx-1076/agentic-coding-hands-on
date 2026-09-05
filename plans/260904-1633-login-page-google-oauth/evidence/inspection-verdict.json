@@ -6,11 +6,11 @@
     "Verified: /login renders header logo, language selector VN, hero ROOT FURTHER, subtitle and tagline copy, LOGIN With Google button, footer copyright — via code read + evidence/green-run.log TC b9805e65, 8415b629, 5fbe2a18, 42b82364, 6ae76d15, 33a1dacf all PASS",
     "Verified: LOGIN With Google starts Supabase OAuth authorize with provider=google and shows disabled aria-busy pending state — via google-login-button.tsx + login-client.tsx + evidence/green-run.log TC 60bc5bbb, 37eae882 PASS",
     "Verified: /login?error shows inline role=alert error message — via login-error-alert.tsx + hasErrorParam (boolean-only) + evidence/green-run.log TC 45278c06 PASS",
-    "Verified: language selector opens menu VN/EN, sets NEXT_LOCALE cookie and re-renders copy in the chosen locale — via language-selector.tsx + app/actions/locale.ts + evidence/green-run.log TC 20d87e28 PASS + vitest normalizeLocale 8/8",
+    "Verified: language selector opens menu VN/EN, sets NEXT_LOCALE cookie and re-renders copy in the chosen locale — via language-selector.tsx + app/actions/locale.ts + evidence/green-run.log TC 20d87e28 PASS + vitest normalizeLocale 8/8 + ARIA APG keyboard nav (ArrowDown/Up/Home/End/Escape/Tab, roving tabindex, focus resets to first item on every open) re-verified 2026-09-05 via 9 Playwright keyboard tests in evidence/green-run-polish.log",
     "Verified: unauthenticated /todo and / redirect to /login and authenticated /login redirects to /todo — via proxy.ts + app/page.tsx + app/login/page.tsx + evidence/green-run.log TC 45278c06 and TC f62b0c97 PASS",
-    "Verified: /auth/callback exchanges the PKCE code and redirects to a sanitized next path or /login?error — via route.ts + next-path.ts safeNextPath (now with explicit control-char rejection) + vitest 18/18 next-path unit tests pass",
+    "Verified: /auth/callback exchanges the PKCE code and redirects to a sanitized next path or /login?error — via route.ts + next-path.ts safeNextPath (control-char rejection + U+2028/U+2029 rejection, raw and percent-encoded, added 2026-09-05) + vitest 24/24 next-path unit tests pass",
     "Verified: /todo shows the user email and logout returns to /login — via app/todo/page.tsx + actions.ts + evidence/green-run.log TC e76aa170 PASS",
-    "Verified: tsc lint vitest build exit 0 and Playwright login suite GREEN 14/14 with the unchanged RED command — tsc/lint/vitest verified live by me (exit 0/0/0, 26/26); build exit 0 and Playwright 14/14 verified via evidence/raw-runs.json, evidence/green-run.log, reports/tester-final-temper-login.md"
+    "Verified: tsc lint vitest build exit 0 and Playwright login suite GREEN 14/14 with the unchanged RED command — tsc/lint/vitest verified live by me (exit 0/0/0, 26/26); build exit 0 and Playwright 14/14 verified via evidence/raw-runs.json, evidence/green-run.log, reports/tester-final-temper-login.md — re-verified 2026-09-05 after the polish pass: tsc/lint/build exit 0, vitest 32/32, Playwright 23/23 (14 original + 8 keyboard + 1 regression), same command, no assertion weakened; log evidence/green-run-polish.log"
   ],
   "regressionChecked": [
     "every request passes through proxy.ts (matcher / login todo) — unchanged since first pass, re-confirmed via evidence/green-run.log redirect tests passing",
@@ -19,7 +19,10 @@
     "session cookie handling via @supabase/ssr in proxy and server client — unchanged since first pass",
     "NEXT_LOCALE cookie normalization rewriting cookies on every matched response — unchanged since first pass",
     "app/page.tsx boilerplate replaced by auth-based redirect — unchanged since first pass",
-    "polish pass (login-hero, google-login-button, language-selector, globals.css) — checked for a11y role/name regressions (none), hydration mismatches (none, deterministic state), and desktop layout semantics (pixel-verified against tester report, matches design targets)"
+    "polish pass (login-hero, google-login-button, language-selector, globals.css) — checked for a11y role/name regressions (none), hydration mismatches (none, deterministic state), and desktop layout semantics (pixel-verified against tester report, matches design targets)",
+    "open redirect via /auth/callback next parameter — re-verified 2026-09-05 with U+2028/U+2029 hardening; a legitimately percent-encoded multibyte path (/todo/%C3%A9t%C3%A9) still passes (no false reject), 2 encoding layers rejected, 3rd layer confirmed inert (no second decode before NextResponse.redirect at app/auth/callback/route.ts:37)",
+    "language selector DOM contract (header button[aria-haspopup=menu], [role=menu], [role=menuitem]) — unchanged by the keyboard work; all 14 original E2E assertions still pass untouched",
+    "language selector mouse/click path — reviewer reproduced a live focus leak (stale activeIndex from a keyboard session landing focus on the wrong item after a mouse reopen); fixed by routing pointer opens through openMenuAt(0), covered by a new regression test"
   ],
   "contractStatus": "OK",
   "refuted": [],
@@ -79,14 +82,28 @@
       "severity": "Suggestion",
       "category": "Security",
       "location": "lib/supabase/next-path.ts:29-30",
-      "summary": "isControlCodePoint doesn't cover Unicode line separators U+2028/U+2029; safe today only via Node's header validator + route.ts try/catch, same accidental-safety-net pattern now narrowed to this one residual case",
-      "disposition": "Defer"
+      "summary": "isControlCodePoint doesn't cover Unicode line separators U+2028/U+2029; safe today only via Node's header validator + route.ts try/catch, same accidental-safety-net pattern now narrowed to this one residual case — RESOLVED 2026-09-05: U+2028/U+2029 now rejected raw and percent-encoded via a decoded second pass; 6 new vitest cases",
+      "disposition": "Accept"
     },
     {
       "severity": "Suggestion",
       "category": "A11y",
       "location": "components/login/language-selector.tsx:78-95",
-      "summary": "role=menu items lack ARIA APG arrow-key/Home-End roving navigation; acceptable for a 2-item switcher",
+      "summary": "role=menu items lack ARIA APG arrow-key/Home-End roving navigation; acceptable for a 2-item switcher — RESOLVED 2026-09-05: full ARIA APG menu-button keyboard nav added; 8 new Playwright keyboard tests",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Warning",
+      "category": "Correctness",
+      "location": "components/login/language-selector.tsx:120",
+      "summary": "mouse onClick was a bare setOpen toggle that never reset activeIndex, so a stale index from an earlier keyboard session moved focus to the wrong menu item on a later mouse open (reproduced live by the reviewer); fixed by routing pointer opens through openMenuAt(0) + regression test at tests/e2e/login.spec.ts",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Security",
+      "location": "lib/supabase/next-path.ts:56",
+      "summary": "a 3rd percent-encoding layer (%2525E2%252580%2525A8) still evades the decoded pass; confirmed inert — no second decode exists between safeNextPath and NextResponse.redirect (app/auth/callback/route.ts:37) — same class of gap already accepted for CR/LF, one layer deeper",
       "disposition": "Defer"
     }
   ],

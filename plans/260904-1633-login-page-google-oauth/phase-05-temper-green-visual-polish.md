@@ -20,8 +20,8 @@ file_ownership: ["tests/e2e/**", "playwright.config.ts", "playwright/.auth/**", 
 
 ## Overview
 
-**Priority**: P0 · **Status**: pending · **Owner**: `tester`, sau đó `momorph-ui-implementer` (mode `polish`), rồi `tester` re-validate.
-Chốt bằng chứng: chạy đúng redCommand tới exit 0, bật 2 test authenticated đang `fixme`, visual diff với `data/preview.png`, polish responsive/hover/focus rồi re-validate ở 375/768/1280.
+**Priority**: P0 · **Status**: completed · **Owner**: `tester`, `momorph-ui-implementer` (mode `polish`), `tester` re-validate.
+**Completed 2026-09-05**: redCommand exit 0 (23/23 GREEN, 14 original + 8 keyboard + 1 regression), 2 authenticated test fixme removed, visual diff confirmed vs `data/preview.png`, ARIA APG keyboard nav added + mouse focus defect fixed, responsive polish validated 375/768/1280. Log: `evidence/green-run-polish.log`.
 
 ## Key Insights
 

@@ -65,7 +65,7 @@ Phase 02 → 03 tuần tự nên cùng chạm `package.json` là hợp lệ. Tra
 | `public/login/keyvisual.png` user chưa export → hero thiếu ảnh nền | Low | Không chặn GREEN (E2E chỉ assert `img[alt="ROOT FURTHER"]`); ghi chú vùng này khi visual diff | 05 | — **Resolved 2026-09-05** (asset từ saa-app, next/image; xem clarifications.md)
 | Google OAuth client creds của `saa-app` | Low | Đã verify 302 → accounts.google.com (`reports/tester-red-login-e2e.md`) | 03 |
 
-## Delivery summary (2026-09-04)
+## Delivery summary (2026-09-05)
 
 **Shipped**: F001_GoogleOAuthLogin (PKCE OAuth, 2-layer guard) + F002_LanguageSwitch (vi/en, cookie-based).
 
@@ -73,6 +73,10 @@ Phase 02 → 03 tuần tự nên cùng chạm `package.json` là hợp lệ. Tra
 
 **Track B**: i18n (next-intl, cookie `NEXT_LOCALE`), Supabase auth (proxy + PKCE handler + `/todo` guard), `/login` wiring (server + client, OAuth initiation via `signInWithOAuth`). vitest unit runner added.
 
-**Evidence**: Playwright 14/14 GREEN, vitest 26/26, tsc/lint/build exit 0. Reviewer sealed (score 9, zero Critical findings).
+**Polish Phase (05)**: U+2028/U+2029 hardening (decoded pass in `next-path.ts`), ARIA APG menu-button keyboard nav (ArrowDown/Up/Home/End/Escape/Tab + focus roving), regression test for mouse-after-keyboard focus reset. 6 new vitest cases + 8 new E2E keyboard tests + 1 regression E2E test.
 
-**Open items**: (a) ~~user export Figma node 662:14389 → `public/login/keyvisual.png`~~ **resolved 2026-09-05** (asset từ saa-app, next/image); (b) Reviewer Defer — U+2028/U+2029 hardening in `next-path.ts`, ARIA menu navigation; (c) docs gen gate skipped — run `/tkm:rebuild-spec` later; (d) `.rebuild-state.json` `last_feature_spec_run_sha` empty (no commit).
+**Evidence**: Playwright 23/23 GREEN (14 original + 8 keyboard + 1 regression), vitest 32/32, tsc/lint/build exit 0. Reviewer sealed (score 9, zero Critical findings). Log: `plans/260904-1633-login-page-google-oauth/evidence/green-run-polish.log`.
+
+**Docs Generation**: Full `/tkm:rebuild-spec` core pass completed in separate plan `plans/260905-1447-rebuild-spec-core/`. 12 core artifacts promoted to `docs/vi/` (system docs reconciled from forward-draft, F001/F002 codes pinned). State cursor advanced; `last_feature_spec_run_sha` still empty (feature spec pass deferred).
+
+**All open items resolved**:
