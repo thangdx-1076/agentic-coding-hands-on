@@ -103,7 +103,7 @@ describe("signInWithGoogle", () => {
     });
   });
 
-  it("rơi về /todo khi next rỗng", async () => {
+  it("rơi về / khi next rỗng", async () => {
     const signInWithOAuth = vi.fn().mockResolvedValueOnce({ error: null });
     stubOAuth(signInWithOAuth);
 
@@ -111,7 +111,7 @@ describe("signInWithGoogle", () => {
 
     expect(signInWithOAuth).toHaveBeenCalledExactlyOnceWith({
       provider: "google",
-      options: { redirectTo: "http://localhost:3000/auth/callback?next=/todo" },
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=/" },
     });
   });
 
@@ -122,7 +122,7 @@ describe("signInWithGoogle", () => {
     ["off-origin tuyệt đối", "https://evil.com"],
     ["protocol-relative", "//evil.com"],
     ["header injection", "/todo%0d%0aSet-Cookie:+a=b"],
-  ])("chặn %s, rơi về /todo", async (_label, hostile) => {
+  ])("chặn %s, rơi về /", async (_label, hostile) => {
     const signInWithOAuth = vi.fn().mockResolvedValueOnce({ error: null });
     stubOAuth(signInWithOAuth);
 
@@ -130,7 +130,7 @@ describe("signInWithGoogle", () => {
 
     expect(signInWithOAuth).toHaveBeenCalledExactlyOnceWith({
       provider: "google",
-      options: { redirectTo: "http://localhost:3000/auth/callback?next=/todo" },
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=/" },
     });
   });
 });

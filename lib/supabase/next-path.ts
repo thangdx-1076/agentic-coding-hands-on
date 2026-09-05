@@ -85,7 +85,7 @@ function containsForbiddenChars(raw: string): boolean {
   return hasRawForbiddenChar(raw) || hasEncodedForbiddenChar(raw);
 }
 
-export function safeNextPath(raw: string | null, fallback = "/todo"): string {
+export function safeNextPath(raw: string | null, fallback = "/"): string {
   if (!raw) {
     return fallback;
   }

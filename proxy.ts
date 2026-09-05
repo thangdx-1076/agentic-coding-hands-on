@@ -15,9 +15,12 @@ import { createProxyClient } from "@/lib/supabase/proxy-client";
  * proxy/middleware layer "should not be your only line of defense."
  *
  * Redirect matrix (§ E2E contract):
- *   authed   & path ∈ {/, /login}   → /todo
- *   !authed  & path ∈ {/, /todo}    → /login
- *   else                            → pass through (with refreshed cookies)
+ *   authed   & path = /login          → /
+ *   !authed  & path ∈ {/todo, ...}    → /login
+ *   path = /                          → pass through, no redirect (public;
+ *                                        cookie refresh via getUserOrNull
+ *                                        still runs — see `config.matcher`)
+ *   else                               → pass through (with refreshed cookies)
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -27,11 +30,11 @@ export async function proxy(request: NextRequest) {
   const user = await getUserOrNull(request, response);
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/" || pathname === "/login";
-  const isProtectedPage = pathname === "/" || pathname.startsWith("/todo");
+  const isAuthPage = pathname === "/login";
+  const isProtectedPage = pathname.startsWith("/todo");
 
   if (user && isAuthPage) {
-    return redirectPreservingCookies(request, response, "/todo");
+    return redirectPreservingCookies(request, response, "/");
   }
 
   if (!user && isProtectedPage) {
