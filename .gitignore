@@ -51,3 +51,9 @@ next-env.d.ts
 # .tkm.json — sddMode is a project-level decision shared by everyone here.
 .claude/*
 !.claude/.tkm.json
+# Project-authored skills ARE source, not vendored install output. Un-ignore
+# the skills dir, re-ignore everything inside it (the kit drops node_modules /
+# .venv there), then opt each hand-written skill back in by name.
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/separate-hook-logic-from-components/
