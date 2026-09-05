@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-09-05T11:36:23Z",
+  "overall_status": "WARN",
+  "plan": "260905-1656-pnpm-ci-eslint-and-test-coverage",
+  "schema_version": 1,
+  "totals": {
+    "critical": 0,
+    "failed_specs": 0,
+    "passed_specs": 0,
+    "warning": 1
+  },
+  "validators": {
+    "deployment_view": {
+      "issues": [
+        {
+          "location": {
+            "file": "plans/260905-1656-pnpm-ci-eslint-and-test-coverage/artifacts/architecture.md",
+            "line": 133
+          },
+          "message": "No infrastructure-as-code found in repository \u2014 Deployment View degraded to the N/A line (expected behavior, not a defect)",
+          "rule_id": "DeploymentView.no_iac",
+          "severity": "warning",
+          "validator": "deployment_view"
+        }
+      ],
+      "status": "WARN",
+      "summary": {
+        "critical": 0,
+        "warning": 1
+      }
+    }
+  }
+}

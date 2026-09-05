@@ -1,0 +1,81 @@
+{
+  "commands": [
+    {
+      "command": "npx playwright test tests/e2e/login.spec.ts --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "14 tests passed, 0 failed, 0 skipped (7.4s). Covers all unauthenticated and authenticated test cases.",
+      "ts": "2026-09-04T19:51:45Z"
+    },
+    {
+      "command": "npm run test:e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Full E2E suite: 14 tests passed, 0 failed, 0 skipped (5.2s). All login tests green.",
+      "ts": "2026-09-04T19:52:15Z"
+    },
+    {
+      "command": "npx vitest run",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "26 unit tests passed across 2 test files (next-path.test.ts, locale.test.ts). Duration: 287ms.",
+      "ts": "2026-09-04T19:52:35Z"
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "TypeScript type check passed. No type errors.",
+      "ts": "2026-09-04T19:52:50Z"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "ESLint passed. No linting errors or warnings.",
+      "ts": "2026-09-04T19:53:00Z"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Production build succeeded (Turbopack). Routes: /, /auth/callback, /login, /todo, /_not-found. Build time: 1317ms.",
+      "ts": "2026-09-04T19:53:20Z"
+    },
+    {
+      "command": "node tests/e2e/visual-validation.mjs (responsive viewport & interaction validation)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Visual validation: 4 viewports (375, 768, 1280, 1440) captured. No horizontal overflow. Detailed checks @ 1440: logo/selector positioning, hover states, focus ring, reduced-motion all PASS.",
+      "ts": "2026-09-04T19:54:00Z"
+    },
+    {
+      "command": "npx playwright test tests/e2e/login.spec.ts --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "fix hero bg 2026-09-05: 14 passed incl. keyvisual asset assertion (evidence/green-run-fix-bg.log)",
+      "ts": "2026-09-05T07:40:29.026Z"
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "fix hero bg 2026-09-05: typecheck clean",
+      "ts": "2026-09-05T07:40:29.026Z"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "fix hero bg 2026-09-05: eslint clean",
+      "ts": "2026-09-05T07:40:29.026Z"
+    },
+    {
+      "command": "npx vitest run",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "fix hero bg 2026-09-05: 26 passed",
+      "ts": "2026-09-05T07:40:29.026Z"
+    }
+  ]
+}

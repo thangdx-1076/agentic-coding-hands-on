@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-09-04T11:20:43Z",
+  "plan": "260904-1633-login-page-google-oauth",
+  "features": [
+    {
+      "fcode": "F001",
+      "name": "Đăng nhập Google OAuth & Bảo vệ truy cập",
+      "slug": "F001_GoogleOAuthLogin",
+      "priority": "P0",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR001_Login",
+          "SCR002_Todo"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    },
+    {
+      "fcode": "F002",
+      "name": "Chuyển đổi ngôn ngữ giao diện (VN/EN)",
+      "slug": "F002_LanguageSwitch",
+      "priority": "P1",
+      "type": "ui",
+      "related": {
+        "screens": [],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    }
+  ]
+}

@@ -10,6 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Login screen (mm:662:14387) — Figma fonts + literal design colors. */
+  --font-montserrat: var(--font-montserrat);
+  --font-montserrat-alternates: var(--font-montserrat-alternates);
+  --color-login-background: #00101a;
+  --color-login-divider: #2e3940;
+  --color-login-button: #ffea9e;
+  --color-login-button-text: #00101a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +31,28 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Login screen polish (2026-09-04) — language selector menu entrance.
+   150-200ms opacity/transform per polish-rules.md. Defined via `@utility`
+   (not a bare class) so it participates in Tailwind's own cascade layer
+   and the reduced-motion override below is never beaten by an unlayered
+   rule. */
+@keyframes login-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-login-menu-in {
+  animation: login-menu-in 180ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }

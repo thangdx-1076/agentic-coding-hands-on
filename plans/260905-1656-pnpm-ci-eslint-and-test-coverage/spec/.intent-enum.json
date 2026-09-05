@@ -1,0 +1,10 @@
+{
+  "mode": "single",
+  "intents": [
+    "developer / testing — executable tests cover the auth callback, logout and Supabase-outage paths",
+    "developer / dependency management — repo installs reproducibly under pnpm",
+    "developer+CI / continuous integration — every PR gated by lint, typecheck, unit, build and a CI-safe E2E subset",
+    "developer / static analysis — a Next.js lint standard that catches real defects, enforced in CI"
+  ],
+  "justification": "Enumeration found 4 workstreams, but NONE is a user-facing intent: no actor/action-domain/outcome triple here maps to a screen-group or API boundary — all four are repository infrastructure. Per the user's explicit decision at the Stage 1.5 scope gate, this run authors NO feature spec and reserves NO F### (dev tooling must not enter the product feature-list, where F### allocation is permanent). Stage 1.5 reduces to Step 2b: forward-draft docs/system/architecture.md only. Detailed requirements live in the plan's phase files."
+}

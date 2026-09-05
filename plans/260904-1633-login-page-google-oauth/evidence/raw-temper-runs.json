@@ -1,0 +1,7 @@
+[
+  {
+    "command": "npx playwright test tests/e2e/login.spec.ts --reporter=list",
+    "exitCode": 1,
+    "summary": "12 unauthenticated assertion failures (404 /login not found); 2 authenticated tests skipped (fixme); Google provider verified 302 redirect"
+  }
+]

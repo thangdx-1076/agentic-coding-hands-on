@@ -1,0 +1,24 @@
+agentic-coding-hands-on@0.1.0 /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+├── @emnapi/core@1.10.0 extraneous
+├── @emnapi/runtime@1.11.3 extraneous
+├── @emnapi/wasi-threads@1.2.1 extraneous
+├── @img/sharp-wasm32@0.35.4 extraneous
+├── @napi-rs/wasm-runtime@1.2.3 extraneous
+├── @playwright/test@1.62.1
+├── @supabase/ssr@0.12.5
+├── @supabase/supabase-js@2.115.0
+├── @tailwindcss/postcss@4.3.3
+├── @tybys/wasm-util@0.10.3 extraneous
+├── @types/node@20.19.43
+├── @types/react-dom@19.2.7
+├── @types/react@19.2.18
+├── eslint-config-next@16.3.4
+├── eslint@9.39.5
+├── next-intl@4.14.2
+├── next@16.3.4
+├── react-dom@19.2.8
+├── react@19.2.8
+├── tailwindcss@4.3.3
+├── typescript@5.9.3
+└── vitest@3.2.7
+

@@ -1,0 +1,1 @@
+1e71037629c71fe62e7b23e4e4322188308918f9f85a5e1f28f8630ae00f2ca3  docs/vi/system/architecture.md

@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-09-05T08:24:35Z",
+  "overall_status": "WARN",
+  "plan": "260905-1447-rebuild-spec-core",
+  "schema_version": 1,
+  "totals": {
+    "critical": 0,
+    "failed_specs": 0,
+    "passed_specs": 0,
+    "warning": 3
+  },
+  "validators": {
+    "behavior_logic": {
+      "issues": [
+        {
+          "location": {
+            "file": "plans/260905-1447-rebuild-spec-core/artifacts/behavior-logic.md",
+            "line": 74
+          },
+          "message": "BL section 'BL001' (type: integration) matches file-exchange vocabulary but has no populated '**File Schema**' table",
+          "rule_id": "BehaviorLogic.file_schema_missing",
+          "severity": "warning",
+          "validator": "behavior_logic"
+        },
+        {
+          "location": {
+            "file": "plans/260905-1447-rebuild-spec-core/artifacts/behavior-logic.md",
+            "line": 100
+          },
+          "message": "BL section 'BL002' (type: integration) matches file-exchange vocabulary but has no populated '**File Schema**' table",
+          "rule_id": "BehaviorLogic.file_schema_missing",
+          "severity": "warning",
+          "validator": "behavior_logic"
+        },
+        {
+          "location": {
+            "file": "plans/260905-1447-rebuild-spec-core/artifacts/behavior-logic.md",
+            "line": 129
+          },
+          "message": "BL section 'BL003' (type: integration) matches file-exchange vocabulary but has no populated '**File Schema**' table",
+          "rule_id": "BehaviorLogic.file_schema_missing",
+          "severity": "warning",
+          "validator": "behavior_logic"
+        }
+      ],
+      "status": "WARN",
+      "summary": {
+        "critical": 0,
+        "warning": 3
+      }
+    },
+    "feature_existence": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "id_contiguity": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "route_list": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "screen_flow": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "screen_list": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    }
+  }
+}

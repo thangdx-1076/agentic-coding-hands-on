@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.auth/
+
+# claude code / takumi kit
+# The whole tree is a LOCAL install: it vendors node_modules and a Python
+# .venv (site-packages, cacert.pem). Never commit it. The one exception is
+# .tkm.json — sddMode is a project-level decision shared by everyone here.
+.claude/*
+!.claude/.tkm.json

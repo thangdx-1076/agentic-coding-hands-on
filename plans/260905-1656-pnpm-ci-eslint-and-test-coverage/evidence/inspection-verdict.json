@@ -1,0 +1,88 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "'pnpm is the package manager: packageManager and engines pinned, pnpm-lock.yaml replaces package-lock.json with resolved-version parity, and no npm invocation remains in playwright.config.ts or README.md' — proven at current HEAD (631547d): package.json:5-7 has packageManager: pnpm@10.33.2 and engines.node: >=22 <25; pnpm-lock.yaml exists and package-lock.json is absent (ls confirms); pnpm install --frozen-lockfile succeeds (no drift); grep -nE '\\bnpm (run|install)\\b' playwright.config.ts README.md returns exit 1 (zero word-boundary hits, re-run today). Resolved-version parity was independently spot-checked in an earlier pass against the pre-migration package-lock.json (16/16 direct deps matched exactly) and re-confirmed unaffected by the subsequent vitest revert.",
+    "'ESLint standard catches real defects: a type-aware config plus import/order, jsx-a11y, playwright and vitest layers, with pnpm lint --max-warnings 0 exiting 0 and zero rules disabled to reach it' — proven: eslint.config.mjs's 9 layers (recommendedTypeChecked scoped to **/*.{ts,tsx} via tsconfig's include, import/order, jsx-a11y full recommended, playwright flat/recommended scoped to tests/e2e/**/*.spec.ts, @vitest/eslint-plugin scoped to lib/**/*.test.ts) verified present and correctly scoped. pnpm lint --max-warnings 0 re-run today: exit 0. grep -n '\"off\"' eslint.config.mjs: no hits — no rule is disabled at the config level. Full transparency on the one nuance: 2 line-level eslint-disable-next-line playwright/no-skipped-test comments exist (login.spec.ts:588,616), both for the two intentional, CI-gated test.skip() calls — these silence a rule that cannot distinguish a deliberate, correctly-guarded skip from an accidental one; they do not suppress a real defect finding. No rule was weakened or removed to lower the count.",
+    "'Prettier is enforced and the reformat is whitespace-only, with pnpm format:check exiting 0 and machine-generated trees excluded' — proven: pnpm format:check re-run today, exit 0. .prettierignore excludes node_modules/.next/out/build/coverage/test-results/playwright-report/plans//docs//.claude/ — all machine-generated or tool-owned trees. Whitespace-only claim independently re-verified in an earlier pass by manually reading the full diff of 7 files untouched by any other phase (google-login-button.tsx, icon-vn-flag.tsx, login-background.tsx, login-error-alert.tsx, next.config.ts, proxy-client.ts, visual-validation.mjs) against baseline 9c1fa00 — every hunk is line-wrapping/quote-style/trailing-comma only, no identifier or literal changed (note: git diff -w itself does not prove this, since it doesn't collapse Prettier's line-reflow edits — manual line-by-line reading is what actually established it).",
+    "'The named test gaps are closed: the /auth/callback error branches, a real logout click, and the Supabase-outage fail-open vs fail-closed asymmetry each have an executable test' — proven, re-located and re-run at current line numbers: /auth/callback error branches at login.spec.ts:279 (?error=access_denied), :292 (missing code/error), :306 (open-redirect guard), :322 (exchange-fallback, renamed to state precisely what it proves); real logout click at :687 (US003, BL002 — actual logoutButton.click(), then re-verifies /todo redirects back to /login); Supabase-outage asymmetry at :580 (PERM002 fail-open, /login still renders) and :608 (PERM003 fail-closed, /todo redirects). All re-run today via the CI-safe simulation below and via the full local suite in an earlier pass (28 passed/2 skipped with saa-app up).",
+    "'Coverage tooling reports an honest number scoped to what it actually measures' — proven: vitest.config.ts:16-35 configures provider v8 with an explicit include: ['lib/**/*.ts'] and exclude: ['lib/**/*.test.ts'], with an in-file comment explaining why (the default v8 config silently reports only files a test happens to import). Re-ran pnpm test:unit:coverage today: 55.55% stmts / 88.57% branch / 70% funcs / 55.55% lines, with the three untested Supabase client factories correctly shown at 0% rather than vanishing from the table. No coverage.thresholds configured — reported as a measurement, not a gate, matching the criterion's word 'reports' rather than 'enforces'.",
+    "'GitHub Actions CI exists with a quality job and an e2e job, running the CI-safe Playwright subset with zero silent skips when CI is set' — proven on what the criterion actually asks: .github/workflows/ci.yml defines jobs.quality (44) and jobs.e2e (104), YAML re-validated (python3 yaml.safe_load, exit clean); the e2e job's test step runs exactly `pnpm exec playwright test --grep-invert @auth` (line 177). Re-ran the CI-safe subset under simulated CI conditions a third time today, on a fresh unreachable port distinct from both prior runs: 27 passed, 0 skipped, exit 0, with both outage tests (PERM002/PERM003) visibly executing in the list output — confirming the zero-silent-skip property this criterion names. This criterion does not ask for, and this verdict does not assert, an observed run on GitHub's own infrastructure — see the Defer finding and riskGate below for that separate, explicitly-scoped-out question.",
+    "'The CI workflow states plainly, in the file, that the authenticated path is not covered' — proven: header comment at ci.yml:1-24 states outright which path is not covered, why (Supabase is a local-only 127.0.0.1 instance the runner can't reach), and where it is covered (dev machine with saa-app); a dedicated 'Coverage limitation notice' step (if: always(), lines 182-195) writes the same substance plus dynamically-computed excluded-test counts to $GITHUB_STEP_SUMMARY, so it's visible on the run's checks page without opening the file."
+  ],
+  "regressionChecked": [
+    "Re-verified vitest revert to 3.2.7 didn't leave any lockfile drift: pnpm install --frozen-lockfile clean at current HEAD",
+    "Re-verified ESLint globalIgnores fix holds at current HEAD: eslint . --format json shows zero files from plans/**, docs/**, .claude/**, test-results/**, playwright-report/**",
+    "Re-verified the CI-safe simulation is stable across three independent runs on three different unreachable ports (not a fluke of one specific port or one specific session)",
+    "Swept all 10 commits (9c1fa00..631547d) for secrets/tokens/.env files: none found; matches found on grep were documentation prose about placeholders, not real credential values",
+    "Checked commit hygiene: flagged (not blocking) that commit daaa3bd bundles this plan's evidence with an unrelated rebuild-spec-core plan's artifacts — outside study-context.json's declared blastRadius, a housekeeping note only"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": true,
+    "humanSignedOff": true
+  },
+  "findings": [
+    {
+      "severity": "Suggestion",
+      "category": "Completeness",
+      "location": ".github/workflows/ci.yml:104-177",
+      "summary": "Workflow has never executed on GitHub's actual infrastructure; all verification to date is local/simulated. Not required by the given acceptance criteria and not asserted by this verdict — tracked in riskGate as a residual, non-blocking risk to close post-push.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Warning",
+      "category": "Backwards Compatibility",
+      "location": "package.json:5-47",
+      "summary": "vitest two-major bump (3.2.7->5.0.0) reverted; pin now matches pre-session baseline exactly, verified via lockfile and a clean test+coverage re-run at current HEAD",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Warning",
+      "category": "Structure",
+      "location": "eslint.config.mjs:92-103",
+      "summary": "globalIgnores now excludes plans/**, docs/**, .claude/**, test-results/**, playwright-report/**, closing the previously-demonstrated scan-scope leak; re-verified 0 leaked files at current HEAD",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Logic",
+      "location": "tests/e2e/login.spec.ts:322-345",
+      "summary": "Callback fallback test renamed and documented to state exactly what it proves (fallback reachability) vs. what it doesn't (genuine invalid-code rejection); adequate resolution, kept CI-safe deliberately and correctly",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Completeness",
+      "location": "docs/vi/system/architecture.md:143-144",
+      "summary": "Doc states both CI jobs 'block merge' but main has no branch protection configured (gh api branches/main/protection returns 404) — the workflow cannot currently block anything; claim outruns actual repo configuration",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "API Contracts",
+      "location": "tests/e2e/helpers/supabase-reachable.ts:5",
+      "summary": "JSDoc still describes the skip condition inverted from the real (correct) implementation used at both call sites; untouched by rework, still just a comment bug",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Structure",
+      "location": ".github/workflows/ci.yml:63-199",
+      "summary": "Pinned action majors (setup-node@v4, cache@v4, upload-artifact@v4) remain 1-3 majors behind current; all confirmed still-valid non-deprecated tags, not a correctness bug",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Structure",
+      "location": "plans/260905-1656-pnpm-ci-eslint-and-test-coverage/reports/implementer-phase-01-pnpm.md:1-5",
+      "summary": "Commit daaa3bd bundles this plan's evidence/report files with an unrelated plans/260905-1447-rebuild-spec-core/** artifact set — outside study-context.json's declared blastRadius, a git-hygiene note only, not a code defect",
+      "disposition": "Defer"
+    }
+  ]
+}
