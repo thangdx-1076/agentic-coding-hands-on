@@ -2,13 +2,19 @@
  * Test helper: detect whether a Supabase instance is reachable.
  * Used to conditionally skip tests that require a live Supabase endpoint.
  *
- * The skip condition is: `test.skip(!process.env.CI && !(await supabaseReachable(...)))`
- * This ensures:
- * - In CI (where `process.env.CI` is set), the test ALWAYS runs — even if Supabase is
- *   unreachable. This is intentional: the test exercises the outage-tolerant code path
- *   (fail-open or graceful degrade).
- * - On a dev machine (where `process.env.CI` is undefined), skip if Supabase is down,
- *   run if it's up.
+ * The skip condition at both call sites is:
+ *   `test.skip(!process.env.CI && isReachable)`
+ *
+ * Read that carefully — it skips when Supabase is UP, which is the opposite of
+ * the usual pattern. These tests assert outage behaviour (PERM002 fail-open on
+ * /login, PERM003 fail-closed on /todo), so a reachable Supabase is what makes
+ * them meaningless, not a missing one.
+ *
+ * - In CI (`process.env.CI` set): NEVER skips. The runner cannot reach the
+ *   local Supabase instance, so the outage path is exactly what executes — and
+ *   a silent skip here would be the one failure mode this suite must not have.
+ * - On a dev machine: skips when Supabase is up (the assertion could not hold),
+ *   runs when it is down.
  */
 export async function supabaseReachable(supabaseUrl: string): Promise<boolean> {
   try {
