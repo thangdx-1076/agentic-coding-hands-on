@@ -1,11 +1,30 @@
 {
-  "primary_lang": "vi",
-  "last_rebuild_sha": "",
-  "last_feature_spec_run_sha": "",
+  "doc_shas": {
+    "api-map.md": "aa2d4087df014f8a99db14e38ba8ea1b2640f961ed2401d361feb415fcfbaa7e",
+    "behavior-logic.md": "0e0d6404209ac65548e1a7ef8dbbd16c8025289169d0a4743ed48aa0cf54a002",
+    "data-model.md": "65e0909d3ea6d83f945166486b6ed97309b59eb5140e1f1b03f48250155b596b",
+    "feature-list.md": "dc7c8dfdeaee9ae8811ad1c89cabc75db527c6d485d943cf2795119f4973d04b",
+    "permissions.md": "8871d0246ae70f550d81b3f6dcaaf7e4e7227d25e1bd42eb1e27d8afa66b8f20",
+    "route-list.md": "3af0aaaa3c28ac2075f66be5ee5b2d34e252bef672b7327a2762df261da38338",
+    "screen-flow.md": "cd8290ee82f4c078821213488666824d2661d7fc43c0babff63783050ac024f8",
+    "screen-list.md": "f68a72f5cdf4bc469b47302e133a5d31cd3cbce1a0e2c3513ae976e0b4d9ad02",
+    "system-overview.md": "1dfba3f7180810ce02056dd4efc3639e0f4b8291990da203b05fb6f9a7c56a78",
+    "user-stories.md": "b8571b90f3e9237350192dd7e6937388c5d6a834bf52750810aade14033a0c58"
+  },
   "fcode_index_sha": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-  "doc_shas": {},
+  "last_api_contracts_run_sha": "",
+  "last_feature_spec_run_sha": "",
+  "last_flows_run_sha": "",
+  "last_glossary_run_sha": "",
+  "last_rebuild_sha": "afb4891c7821fc237dd044a72d36591f0ac15297",
+  "last_test_cases_run_sha": "",
+  "mode": "full",
+  "primary_lang": "vi",
+  "rebuilt_at": "2026-09-05T08:34:02Z",
+  "schema_version": "22.1.0",
   "screen_spec_shas": {
     "SCR001": "869d2a0e96cb679ed4e6bd21a4c8a2d7fbe375408b094505fa97b08ef718ee75",
     "SCR002": "12f52f462fd341942b9f823ebcd3d1902afb48c892c1b947c66fdb9b623e17c4"
-  }
+  },
+  "translations": {}
 }

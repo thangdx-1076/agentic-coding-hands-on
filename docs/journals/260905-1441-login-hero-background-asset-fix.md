@@ -44,3 +44,13 @@ Figma node `662:14389` ("image 1", 1441×1022) là `RECTANGLE` với image-fill,
 ---
 
 **Evidence**: `git log --oneline -3` e8ec751→403266f→dee240c; TC 5fbe2a18 (14/14 E2E GREEN); tsc/lint/vitest clean.
+
+---
+
+## Closing note (2026-09-05 15:53)
+
+Hai mục ở "Còn mở" phía trên đã đóng trong session tiếp theo:
+1. **`docs/vi/system/*` forward-draft** → closed by `/tkm:rebuild-spec --core` full pass; system docs promoted, "chưa có code" token removed.
+2. **Reviewer deferred items** → U+2028/U+2029 hardening + ARIA menu keyboard nav both implemented, sealed in `plans/260904-1633-login-page-google-oauth/evidence/inspection-verdict.json` 9/10.
+
+Xem journal entry `docs/journals/260905-1553-polish-defer-fixes-and-core-docs-rebuild.md` cho chi tiết.

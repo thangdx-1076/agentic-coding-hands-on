@@ -1,57 +1,52 @@
----
-status: implemented
-authored_by: takumi
-created: 2026-09-04
-lang: vi
----
-
 # Permissions
 
-**Phạm vi**: F001_GoogleOAuthLogin (route-guard) — forward-draft, chưa có code. Không có RBAC trong phạm vi này.
+**Project**: agentic-coding-hands-on
+**Generated**: 2026-09-05
+**Analysis Scope**: `/`, `/login`, `/todo`, `/auth/callback` — toàn bộ authorization surface hiện có của app
 
-## Overview
+> **Curated, plain-language view.** This document is for PM, BA, and client audiences who
+> need to understand access without reading raw codes. The raw PERM### matrix lives at
+> [permissions-matrix.md](../generated/permissions-matrix.md). Derive this prose FROM that matrix.
+> No PERM### codes and no matrix tables belong here.
 
-Hệ thống KHÔNG có vai trò/quyền phân biệt (no RBAC) — mọi tài khoản Google hợp lệ đăng nhập thành công đều có cùng quyền truy cập `/todo`. Cơ chế phân quyền duy nhất là **route-guard theo trạng thái đăng nhập** (đã auth / chưa auth), không theo role hay ownership.
+## Authorization System Type
 
-## Actors/Roles
+**System Type**: `other`
 
-| Actor | Mô tả | Quyền |
-|---|---|---|
-| Anonymous visitor | Chưa đăng nhập | Xem `/login`; không vào được `/todo` |
-| Authenticated user | Đã đăng nhập Google (bất kỳ tài khoản nào) | Vào `/todo`; không quay lại `/login` hoặc `/` |
+The primary authorization system used by this project:
 
-Không có role admin/manager/owner nào trong phạm vi F001/F002 — TBD (draft) nếu tương lai cần RBAC.
+| System Type | Description |
+|-------------|-------------|
+| `rbac` | Role-Based Access Control — roles (admin, user, manager) drive access |
+| `abac` | Attribute-Based Access Control — policies on attributes (department, owner, status) |
+| `acl` | Access Control List — explicit per-user permissions |
+| `ownership` | Resource Ownership — owner_id / created_by / can_edit rules |
+| `hybrid` | Mixed — roles combined with ownership checks |
+| `other` | Custom permission logic |
 
-## Route Access Matrix
+Chọn `other` vì hệ thống không khớp bất kỳ mục nào ở trên: không có role (loại `rbac`/`hybrid`), không có policy theo thuộc tính (loại `abac`), không có bảng quyền theo từng user (loại `acl`), và không có cột `owner_id`/`created_by` nào để check ownership (loại `ownership`) — placeholder `/todo` chưa có dữ liệu todo thật, nên chưa có khái niệm "item của ai". Toàn bộ hệ thống chỉ có đúng MỘT trục phân quyền: **đã đăng nhập hay chưa**.
 
-| Route | Anonymous | Authenticated | Redirect khi vi phạm |
-|---|---|---|---|
-| `/` | Redirect → `/login` | Redirect → `/todo` | luôn redirect, không render |
-| `/login` | Render form | Redirect → `/todo` | authenticated → `/todo` |
-| `/auth/callback` | Cho phép (xử lý PKCE code) | Cho phép | lỗi → `/login?error=...` |
-| `/todo` | Redirect → `/login` | Render placeholder | anonymous → `/login` |
+**Identified Roles**:
 
-`PERM###` cho từng gate: TBD (draft) — cấp khi promote (`docs/vi/generated/permissions-matrix.md`).
+- Không có role nào trong hệ thống. Đây không phải một khoảng trống coverage — codebase thực sự không có bảng role, không có cột `role`/`permission` trong data model, không có RBAC middleware nào. Trục duy nhất quyết định quyền truy cập là trạng thái đăng nhập (anonymous / authenticated), không phải vai trò tổ chức.
 
-## Guard Mechanisms
+## Curated View
 
-Hai lớp, theo pattern chính thức Next.js (optimistic proxy + authoritative check tại nguồn dữ liệu):
+- **Người dùng chưa đăng nhập (anonymous)** chỉ xem được `/login` — mọi cố gắng vào `/` hoặc `/todo` đều bị chuyển hướng ngay về `/login`, kể cả trước khi trang kịp render. Không có ngoại lệ nào theo tài khoản hay vai trò, vì hệ thống không phân biệt tài khoản.
+- **Người dùng đã đăng nhập bằng Google** (bất kỳ tài khoản Google hợp lệ nào, không phân biệt) có thể vào `/todo` và xem placeholder chào mừng theo email kèm nút đăng xuất. Mọi tài khoản đã đăng nhập có đúng một mức quyền như nhau — không có tài khoản nào "cao cấp" hơn tài khoản khác.
+- **Người đã đăng nhập** không thể quay lại xem `/` hay `/login` — cả hai tự động chuyển hướng sang `/todo`, tránh hiển thị lại form đăng nhập cho người đã có phiên hợp lệ.
+- **Không ai** — dù đã đăng nhập hay chưa — có thể xem hoặc chỉnh sửa quyền/thông tin của một tài khoản khác, vì hệ thống không có khái niệm "tài khoản khác": không danh sách user, không admin panel, không API nào trả dữ liệu của user thứ hai.
 
-1. **Optimistic — `proxy.ts`** (Next 16, đổi tên từ `middleware.ts`): đọc session cookie qua `getUser()` nhẹ, redirect sớm cho `/login` và `/todo`. KHÔNG phải lớp phòng vệ duy nhất.
-2. **Authoritative — `/todo` (Server Component)**: gọi lại `createClient().auth.getUser()` server-side trước khi render — không tin riêng kết quả của proxy.
+## Access Boundaries
 
-Không có guard nào khác trong phạm vi này (`/auth/callback` tự xử lý code/error qua query param, không cần session sẵn có).
+Ranh giới truy cập duy nhất trong hệ thống là **đăng nhập hay chưa** — không có ranh giới kiểu admin-vs-user hay owner-vs-owner. Việc kiểm tra này chạy hai lớp trên mỗi route được bảo vệ: một lớp optimistic (`proxy.ts`, chạy trước khi trang render, dựa trên cookie session) và một lớp authoritative (chính trang đó tự hỏi lại Supabase mỗi request) — lớp sau không bao giờ tin riêng kết quả của lớp trước.
 
-## Session Lifecycle
+`/todo` hiện chỉ là trang placeholder (chưa có tính năng todo thật), nên chưa có ranh giới "ai sở hữu item nào" cần phân quyền tiếp — nếu tương lai có todo item thật gắn với từng user, hệ thống sẽ cần bổ sung ownership check mà **hiện tại không tồn tại trong code**.
 
-- **Tạo session**: `signInWithOAuth` (PKCE) → redirect Google → `/auth/callback?code=...` → `exchangeCodeForSession(code)` → session cookie set bởi `@supabase/ssr`.
-- **Đọc session**: `getUser()` (không dùng `getSession()` phía server — `getUser()` xác thực lại với Supabase, tránh tin cookie có thể bị giả mạo).
-- **Kết thúc session**: nút "Đăng xuất" trên `/todo` → Server Action `signOut()` → xoá session cookie → redirect `/login`.
-- **Thất bại/hủy OAuth**: GoTrue redirect `/auth/callback?error=...` → app redirect `/login?error=...` → thông báo lỗi inline, không tạo session.
-- Thời hạn session/refresh-token: theo cấu hình mặc định của `saa-app` — TBD (draft), chưa xác nhận riêng cho project.
+`/auth/callback` không nằm trong ranh giới đăng nhập/chưa đăng nhập nói trên — nó là điểm hoàn tất OAuth, không yêu cầu tiền điều kiện session, và tự quyết định redirect dựa trên kết quả trao đổi mã PKCE với Supabase.
 
-## Open Points
+## Special Conditions
 
-- RBAC/role tương lai (nếu SAA 2025 cần phân quyền admin/BTC): ngoài phạm vi hiện tại, TBD (draft).
-- `PERM###` codes cho từng gate (`/login`, `/todo`, `/auth/callback`): TBD (draft), cấp khi promote.
-- Rate-limit/brute-force protection cho `/auth/callback`: chưa quyết định, TBD (draft) — không có trong `clarifications.md`.
+- **Bất đối xứng có chủ đích khi Supabase gặp sự cố**: `/login` fail **mở** — nếu không hỏi được Supabase, trang vẫn hiển thị form đăng nhập bình thường (coi như chưa đăng nhập), vì đây là cổng vào duy nhất của app và không được phép khoá hẳn người dùng ở ngoài. Ngược lại `/todo` fail **đóng** — nếu không hỏi được Supabase, hệ thống không có đường nào lộ nội dung được bảo vệ ra ngoài; đây là lựa chọn an toàn hơn cho nội dung cần bảo vệ. Đây là hai hành vi khác nhau có chủ đích, không phải một bên bị thiếu xử lý lỗi.
+- **Chống mở-redirect (open redirect) ở bước hoàn tất đăng nhập**: sau khi trao đổi mã OAuth thành công tại `/auth/callback`, hệ thống cho phép quay lại một đường dẫn được yêu cầu trước đó (`?next=`) — nhưng giá trị này đến từ URL, không đáng tin. Trước khi dùng, hệ thống chỉ chấp nhận đường dẫn nội bộ (cùng domain, bắt đầu bằng đúng một dấu `/`); bất kỳ giá trị nào trông như dẫn ra ngoài hoặc chứa ký tự bất thường đều bị thay bằng đường dẫn mặc định `/todo`. Đây là một biện pháp bảo mật, không phải một luật phân quyền theo vai trò.
+- Không có time-based restriction, không có IP-based rule, không có feature flag nào gate tính năng trong scope hiện tại (đã xác minh trực tiếp trên source — xem [permissions-matrix.md](../generated/permissions-matrix.md) § Client-Side Gate Types).

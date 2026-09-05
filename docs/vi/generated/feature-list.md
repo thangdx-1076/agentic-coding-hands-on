@@ -1,87 +1,113 @@
 # Feature List
 
+**Project**: agentic-coding-hands-on
+**Generated**: 2026-09-05
+**Analysis Scope**: toàn bộ source hiện có — 2 screen (`/login`, `/todo`), 1 backend route, 3 US###, 3 BL###, 4 PERM###, 3 MODEL###
+
+**F-code stability note**: F001/F002 và slug của chúng được giữ nguyên từ `docs/vi/_canonical-fcodes.json` (đã promote ở lần chạy trước) — wave này chỉ bổ sung các trường Related bằng mã thật (US###/SCR###/ROUTE###/MODEL###/BL###/PERM###) hiện đã tồn tại, không renumber/rename/split/merge.
+
 ## Feature Hierarchy
 
-| # | Code | Feature | Priority | Type | Status |
-|---|------|---------|----------|------|--------|
-| 1 | F001 | Đăng nhập Google OAuth & Bảo vệ truy cập | P0 | mixed | implemented |
-| 2 | F002 | Chuyển đổi ngôn ngữ giao diện (VN/EN) | P1 | ui | implemented |
+| Code | Name | Type | Language | Workspace | Priority |
+|------|------|------|----------|-----------|----------|
+| F001_GoogleOAuthLogin | Đăng nhập Google OAuth & Bảo vệ truy cập | mixed | TypeScript | agentic-coding-hands-on | P0 |
+| F002_LanguageSwitch | Chuyển đổi ngôn ngữ giao diện (VN/EN) | ui | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
-### F001 — Đăng nhập Google OAuth & Bảo vệ truy cập
+### F001: Đăng nhập Google OAuth & Bảo vệ truy cập
 
-**Priority:** P0 | **Type:** mixed | **Status:** implemented | **Slug:** F001_GoogleOAuthLogin
+**Type**: mixed
+**Description**: Khách truy cập đăng nhập bằng tài khoản Google qua Supabase Auth (flow PKCE); thành công đưa vào `/todo` (placeholder được bảo vệ). Toàn bộ vòng đời phiên đăng nhập nằm trong MỘT outcome duy nhất: vào được khu vực bảo vệ, giữ được phiên, và rời khỏi phiên đúng cách.
 
-Khách truy cập đăng nhập SAA 2025 bằng tài khoản Google qua Supabase Auth (PKCE); thành công → `/todo` (placeholder được bảo vệ, có nút đăng xuất). Guard optimistic (`proxy.ts`) + xác thực authoritative (`getUser()` trên `/todo`) đảm bảo: đã đăng nhập không vào lại `/login`/`/`, chưa đăng nhập không vào được `/todo`. Đăng nhập thất bại/hủy → thông báo lỗi inline dưới nút Google.
-
-**Related:** screens: SCR001, SCR002 | routes: — | models: —
+**Vì sao "Đăng nhập" và "Bảo vệ truy cập" là MỘT outcome, không phải hai** (justification bắt buộc theo yêu cầu clustering): route-guard trong dự án này (`PERM001-004`) không có trục ủy quyền thứ hai nào — không role, không ownership, không policy table (`permissions-matrix.md` § Ground-truth note: "Dự án này KHÔNG có RBAC"). Bốn PERM### chỉ kiểm tra đúng MỘT thứ: đã đăng nhập (Authenticated) hay chưa (Anonymous). Guard tồn tại chỉ để enforce đúng trạng thái mà US002 (đăng nhập) và US003 (đăng xuất) tạo ra/kết thúc — root redirect (PERM001), login fail-open (PERM002), todo fail-closed (PERM003), callback next-path (PERM004) đều là hệ quả trực tiếp của "đã đăng nhập chưa", không phải một quyết định phân quyền độc lập. Vì không có second axis, tách guard thành F### riêng sẽ tạo một Feature không có primary business outcome của chính nó (nó không phục vụ actor/intent nào khác ngoài enforce login state) — vi phạm chính nguyên tắc "một outcome giải thích mọi US" mà Feature Clustering Rule yêu cầu. Toàn bộ US (US002, US003) và mọi PERM### (001-004) đều được giải thích trọn vẹn bởi một outcome: "khách vào và rời khu vực được bảo vệ một cách đúng đắn, có xác thực Google, không có bug open-redirect".
 
 **Workspace**: agentic-coding-hands-on
 **Languages**: TypeScript
-**Components**: 7 design items (Header shell, Logo, Hero section, Hero Visual, Content block, nút Google Login, Footer — `momorph/specs.csv`) + màn `/todo` placeholder (chưa có spec MoMorph, tạo mới theo `clarifications.md`)
+**Components**: 2 screen shell (SCR001 toàn bộ trừ vùng language-selector, SCR002 toàn bộ) + 3 BL### integration client (browser/server/proxy Supabase) + 4 PERM### route-guard + 1 ROUTE### (callback)
 
 **Related Screens**:
-- SCR001_Login: Màn Đăng nhập (`/login`) — sở hữu khung màn hình đầy đủ (header + hero + footer); vùng Language Selector trong header do F002 sở hữu riêng (partial-screen ownership)
-- SCR002_Todo: Màn Todo placeholder được bảo vệ (`/todo`) — chào email người dùng + nút Đăng xuất
+- SCR001_LoginScreen: Login (sở hữu khung màn hình đầy đủ — trừ vùng language-selector trong header, do F002 sở hữu; SCR001 không có REG### phát sinh vì `screen-list.md` phân loại atomic nên đây là partial-scope theo mô tả, không phải partial-screen `SCR###/REG###` chính thức)
+- SCR002_TodoScreen: Todo (placeholder)
 
-**Related User Stories** (intent-derived, chưa cấp US###):
-- Khách đăng nhập bằng Google → được đưa tới `/todo`
-- Khách đã đăng nhập cố vào `/login` hoặc `/` → tự động chuyển tới `/todo`
-- Khách chưa đăng nhập cố vào `/todo` → tự động chuyển tới `/login`
-- Khách đã đăng nhập bấm "Đăng xuất" → quay lại `/login`
-- Khách thấy thông báo lỗi inline khi đăng nhập Google thất bại/bị hủy
+**Related User Stories**:
+- US002_LoginWithGoogle: Login With Google
+- US003_LogOut: Log Out
 
 **Related APIs/Routes**:
-- (GET) `/auth/callback` — Route Handler nội bộ, đổi PKCE code lấy session (`exchangeCodeForSession`)
-- (external) Supabase GoTrue `/auth/v1/authorize?provider=google` — endpoint khởi động OAuth, không phải route của app
+- (GET) /auth/callback — ROUTE001
 
-**Related Data Models**: N/A — không có data model do app sở hữu; user/session do Supabase Auth quản lý ngoài app (`auth.users`, ngoài phạm vi MODEL### dự án)
+**Related Data Models**:
+- MODEL002_SupabaseUser
 
-**Related Background Logic**: TBD (chưa cấp BL###) — `/auth/callback` là Route Handler xử lý đồng bộ theo request, không khớp rõ 10 loại BL### chuẩn. Guard `proxy.ts` thuộc Permissions artifact (`docs/vi/system/permissions.md`)
+**Related Background Logic**:
+- BL001_SupabaseBrowserClient: SupabaseBrowserClient
+- BL002_SupabaseServerClient: SupabaseServerClient
+- BL003_SupabaseProxyClient: SupabaseProxyClient
 
 **Related Permissions**:
-- TBD (chưa cấp PERM###): route-guard — `proxy.ts` (Next 16) optimistic: đã auth vào `/login`/`/` → redirect `/todo`; chưa auth vào `/todo` → redirect `/login`. `/todo` xác thực lại authoritative bằng `getUser()` server-side
+- PERM001_RootRouteGuard: Root Route Guard
+- PERM002_LoginRouteGuard: Login Route Guard (fail-open)
+- PERM003_TodoRouteGuard: Todo Route Guard (fail-closed)
+- PERM004_CallbackNextPathGuard: Callback Next-Path Open-Redirect Guard
 
 ---
 
-### F002 — Chuyển đổi ngôn ngữ giao diện (VN/EN)
+### F002: Chuyển đổi ngôn ngữ giao diện (VN/EN)
 
-**Priority:** P1 | **Type:** ui | **Status:** implemented | **Slug:** F002_LanguageSwitch
-
-Khách chuyển ngôn ngữ giao diện VN/EN qua bộ chọn trên header màn `/login`. Lựa chọn lưu vào cookie `NEXT_LOCALE` (next-intl, no-routing mode — không dùng URL prefix), áp dụng lại toàn bộ nội dung UI ngay sau khi chọn. Mặc định `vi` khi chưa có cookie.
-
-**Related:** screens: SCR001 (region: language-selector — partial-screen ownership, không sở hữu khung màn) | routes: — | models: —
+**Type**: ui
+**Description**: Khách chuyển ngôn ngữ giao diện VN/EN qua bộ chọn ở header màn `/login`. Lựa chọn lưu vào cookie `NEXT_LOCALE` (next-intl, no-routing), áp dụng lại toàn bộ nội dung UI ngay sau khi chọn. Outcome độc lập với F001 — không liên quan trạng thái đăng nhập, không đi qua PERM### nào (locale normalize ở `proxy.ts` là input-validation thuần, không phải locale-gate, xem `permissions-matrix.md` § Codebase check note).
 
 **Workspace**: agentic-coding-hands-on
 **Languages**: TypeScript
-**Components**: 1 design item (Language Selector — `momorph/specs.csv` item 1.2)
+**Components**: 1 UI component (LanguageSelector, vùng con trong header của SCR001) + 1 MODEL### (AppLocale)
 
 **Related Screens**:
-- SCR001_Login / region: language-selector — vùng con trong header của màn `/login`; khung màn do F001 sở hữu (partial-screen ownership)
+- SCR001_LoginScreen: Login (chỉ vùng LanguageSelector trong header — không sở hữu khung màn hình; `screen-list.md` không phát sinh REG### nào cho SCR001 vì screen được phân loại atomic, nên tham chiếu ở đây dùng mã bare SCR001 theo đúng mã thật hiện có, không bịa `SCR001/REG###`)
 
-**Related User Stories** (intent-derived, chưa cấp US###):
-- Khách chuyển đổi ngôn ngữ VN ⇄ EN từ bộ chọn ở header
-- Lựa chọn ngôn ngữ được lưu (cookie `NEXT_LOCALE`) và áp dụng lại ở lần tải trang sau
+**Related User Stories**:
+- US001_SwitchLanguage: Switch Language
 
 **Related APIs/Routes**:
-- Server Action `setLocale` (không phải REST route) — set cookie `NEXT_LOCALE`, path=`/`, 1 năm
+- Không có ROUTE### — `setLocale(locale)` là Next.js Server Action (`app/actions/locale.ts`), không phải HTTP endpoint có path (xem `api-map.md` § Server Actions)
 
-**Related Data Models**: N/A — không có data model; lựa chọn ngôn ngữ lưu trong cookie `NEXT_LOCALE`
+**Related Data Models**:
+- MODEL001_AppLocale
 
-**Related Background Logic**: N/A — Server Action set cookie chạy đồng bộ theo tương tác UI (click)
+**Related Background Logic**:
+- Không có — `setLocale` đánh dấu `[UNMAPPED]` trong `behavior-logic.md`/`api-map.md` (không gọi Supabase, chỉ ghi cookie)
 
-**Related Permissions**: N/A — không có permission gating cho việc đổi ngôn ngữ
+**Related Permissions**:
+- Không có — đổi ngôn ngữ không đi qua route-guard nào; xem justification F001 ở trên cho lý do PERM001-004 thuộc F001
 
 ---
 
 ## Summary
 
 - **Total Features**: 2
-- **Total Screens**: 2 — SCR001_Login (`/login`), SCR002_Todo (`/todo`)
-- **Total User Stories**: ~7 (chưa cấp US### — 5 ở F001, 2 ở F002)
-- **Total Routes**: 1 route nội bộ (`/auth/callback`) + 1 external (GoTrue authorize) + 1 Server Action
-- **Total Data Models**: 0
-- **Total Background Logic**: 0 xác nhận được
-- **Total Permissions**: 1 (route-guard, chưa cấp PERM###)
+- **Total Screens**: 2 — SCR001_LoginScreen, SCR002_TodoScreen (cả hai đều được ít nhất một F### tham chiếu)
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001)
+- **Total Routes**: 1 — ROUTE001 (F001)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới)
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (đều F001)
+- **Total Permissions**: 4 — PERM001-004 (đều F001)
 - **Languages Detected**: TypeScript
+
+**Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
+
+## Cross-Reference Validation
+
+- [x] All F### codes are unique (F001, F002 — không trùng, không renumber)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001)
+- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen tồn tại trong `screen-list.md`)
+- [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `data-model.md`)
+- [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`)
+- [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001
+- [x] Every route maps to a feature (F###) — ROUTE001→F001
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001; MODEL003 dùng chung, xem ghi chú Summary
+- [x] Every background logic maps to a feature (F###) — BL001-003→F001
+- [x] Every permission maps to a feature (F###) — PERM001-004→F001

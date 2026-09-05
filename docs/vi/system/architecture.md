@@ -1,89 +1,126 @@
 ---
 status: implemented
 authored_by: takumi
-created: 2026-09-04
+created: 2026-09-05
 lang: vi
 ---
 
 # Architecture
 
-**Phạm vi**: F001_GoogleOAuthLogin, F002_LanguageSwitch (xem `spec/feature-list.md`) — forward-draft, chưa có code.
+**Phạm vi**: toàn bộ source hiện có trong repo (2 screen: `/login`, `/todo`; route phụ `/`, `/auth/callback`). Mô tả code THỰC TẾ đang chạy, dựng ngược từ source — không phải kế hoạch.
 
-## Overview
+## System Architecture
 
-SAA 2025 (Next.js 16 App Router) xác thực người dùng qua Google OAuth (Supabase Auth, PKCE); không có vai trò/RBAC — mọi tài khoản Google hợp lệ đều vào được `/todo` (placeholder được bảo vệ). Giao diện hỗ trợ 2 ngôn ngữ (vi mặc định, en) qua cookie, không dùng URL-prefix routing. Ba khối chính: Next.js app (frontend + route handler), Supabase Auth (local instance `saa-app`, ngoài repo), và Google OAuth (bên thứ ba).
+```mermaid
+graph TB
+    subgraph "Browser"
+        Client["Trình duyệt người dùng"]
+    end
+    subgraph "Next.js App Router (repo này)"
+        Proxy["proxy.ts — edge guard"]
+        Root["app/page.tsx (route /)"]
+        LoginPage["app/login/page.tsx (screen)"]
+        LoginClient["login-client.tsx (use client)"]
+        LoginScreen["components/login/** (presentational)"]
+        TodoPage["app/todo/page.tsx (screen)"]
+        TodoActions["app/todo/actions.ts (logoutAction)"]
+        Callback["app/auth/callback/route.ts"]
+        LocaleAction["app/actions/locale.ts (setLocale)"]
+        SupaServer["lib/supabase/server.ts"]
+        SupaProxyClient["lib/supabase/proxy-client.ts"]
+        SupaBrowserClient["lib/supabase/client.ts"]
+        NextPathGuard["lib/supabase/next-path.ts (safeNextPath)"]
+        I18nCfg["i18n/request.ts + lib/i18n/locale.ts"]
+    end
+    subgraph "External (ngoài repo)"
+        Supabase["Supabase Auth — instance local 'saa-app' (http://127.0.0.1:55321)"]
+        Google["Google OAuth"]
+    end
 
-## Runtime & Stack
+    Client -->|"mọi request"| Proxy
+    Proxy --> SupaProxyClient --> Supabase
+    Proxy -->|"redirect /login hoặc /todo"| Client
+    Client --> Root --> SupaServer
+    Client --> LoginPage --> SupaServer
+    LoginPage --> LoginClient --> LoginScreen
+    LoginClient -->|"signInWithOAuth"| SupaBrowserClient --> Supabase --> Google
+    LoginClient -->|"setLocale()"| LocaleAction --> I18nCfg
+    Google -->|"redirect ?code=..."| Callback
+    Callback --> SupaServer
+    Callback --> NextPathGuard
+    Client --> TodoPage --> SupaServer
+    TodoPage --> TodoActions --> SupaServer
+```
+
+Ba khối chính: (1) Next.js App Router trong repo này — vừa render UI vừa là "backend" (Server Actions, Route Handler, edge guard), không có service backend riêng; (2) Supabase Auth — instance local `saa-app`, chạy ngoài repo, là nguồn xác thực + lưu session duy nhất; (3) Google OAuth — bên thứ ba, app không gọi trực tiếp mà qua Supabase GoTrue.
+
+Hai lớp guard tách biệt (không phải một):
+- `proxy.ts` — guard optimistic, chỉ đọc cookie qua `getUser()` (`proxy.ts:21-40,71-81`), khớp 3 route `/`, `/login`, `/todo/:path*` (`proxy.ts:108-110`), loại trừ `/auth/callback`.
+- Guard authoritative nằm ở từng Server Component: `app/page.tsx:10-17`, `app/login/page.tsx:73-83`, `app/todo/page.tsx:17-25` — mỗi trang tự gọi lại `getUser()` qua `lib/supabase/server.ts:16`, không tin tưởng riêng lớp proxy.
+
+`lib/supabase/{client,server,proxy-client}.ts` là 3 factory khác nhau cho cùng một SDK `@supabase/ssr` (browser / Server Component-Action-Route / proxy) — khác nhau ở nơi đọc/ghi cookie, không phải khác nhau về logic nghiệp vụ.
+
+## Tech Stack
 
 | Layer | Technology | Version |
-|---|---|---|
+|-------|------------|---------|
 | Framework | Next.js (App Router) | 16.3.4 |
-| UI | React | 19.2.8 |
-| Styling | Tailwind CSS | 4 |
-| Ngôn ngữ | TypeScript | — |
-| Auth SDK | @supabase/ssr | 0.12.5 |
-| Auth SDK | @supabase/supabase-js | 2.115.0 |
-| i18n | next-intl | 4.14.2 (no-routing) |
-| E2E | @playwright/test | 1.62.1 |
-| Auth backend | Supabase (local `saa-app`) | API `http://127.0.0.1:55321` |
+| UI | React / React DOM | 19.2.8 |
+| Ngôn ngữ | TypeScript | ^5 |
+| Styling | Tailwind CSS (`@tailwindcss/postcss`) | ^4 |
+| i18n | next-intl (no-routing, cookie `NEXT_LOCALE`) | 4.14.2 |
+| Auth SDK | `@supabase/ssr` | 0.12.5 |
+| Auth SDK | `@supabase/supabase-js` | 2.115.0 |
+| Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, ngoài repo | API `http://127.0.0.1:55321` |
+| Backend (in-repo) | Next.js Server Actions + Route Handlers (không có service backend riêng) | — |
+| Database | N/A trong repo — `auth.users` do Supabase quản lý, ngoài phạm vi code này | — |
+| Cache | N/A — không tìm thấy | — |
+| Queue | N/A — không tìm thấy | — |
+| Testing (unit) | Vitest | ^3.2.7 |
+| Testing (e2e) | `@playwright/test` | 1.62.1 |
 
-Nguồn: `research/researcher-01-supabase-google-oauth-nextjs16.md`. `proxy.ts` là tên mới của `middleware.ts` (Next 16); `cookies()`/`headers()` là async.
+Nguồn: `package.json:8-27`. Cache/Queue/Database ghi N/A vì scan repo không thấy dependency hay code tương ứng (`app/todo/actions.ts` chỉ gọi `signOut()`, không có model/schema nào trong repo — dữ liệu người dùng nằm hoàn toàn phía Supabase, ngoài phạm vi source này).
 
-## Components/Layers
-
-- `app/login/page.tsx` (Server Component) — header/hero/footer theo locale.
-- Nút "LOGIN With Google" (Client Component) — gọi `signInWithOAuth`, pending/error qua `useTransition`.
-- Language selector (Client Component, F002) — menu VN/EN, gọi Server Action `setLocale`.
-- `app/auth/callback/route.ts` (Route Handler GET) — đổi PKCE code lấy session.
-- `proxy.ts` — guard optimistic.
-- `app/todo/page.tsx` (Server Component, placeholder được bảo vệ) — xác thực authoritative + nút Đăng xuất.
-- `utils/supabase/client.ts`, `utils/supabase/server.ts` (factory Supabase client browser/server); `src/i18n/request.ts` (resolve locale từ cookie `NEXT_LOCALE`).
-
-## Request & Auth Flow
+## Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as User (browser)
-    participant P as proxy.ts
-    participant L as /login
-    participant G as Supabase GoTrue (saa-app)
-    participant C as /auth/callback
-    participant T as /todo
+    participant B as "Browser"
+    participant P as "proxy.ts"
+    participant LC as "login-client.tsx"
+    participant SB as "Supabase Auth (GoTrue)"
+    participant G as "Google OAuth"
+    participant CB as "/auth/callback route"
+    participant T as "/todo page"
 
-    U->>P: GET /login
-    P-->>U: đã auth → redirect /todo (else render /login)
-    U->>L: render form
-    U->>G: click Login → signInWithOAuth (PKCE)
-    G-->>U: Google consent → redirect /auth/callback?code
-    U->>C: GET /auth/callback?code
-    C->>G: exchangeCodeForSession(code)
-    G-->>C: session cookie
-    C-->>U: redirect /todo (hoặc /login?error=... nếu lỗi)
-    U->>P: GET /todo
-    P-->>U: optimistic pass
-    U->>T: getUser() authoritative → render
+    B->>P: GET /
+    P->>SB: getUser() qua cookie
+    SB-->>P: chưa có session
+    P-->>B: redirect /login
+    B->>LC: click nút Login
+    LC->>SB: signInWithOAuth(google) — PKCE
+    SB-->>LC: authorize URL
+    LC->>G: browser điều hướng sang trang consent Google
+    G-->>CB: redirect ?code=...&next=/todo
+    CB->>SB: exchangeCodeForSession(code)
+    SB-->>CB: session + Set-Cookie
+    CB-->>B: redirect safeNextPath(next) hoặc /login?error=auth_code_error
+    B->>T: GET /todo (kèm session cookie)
+    T->>SB: getUser() — kiểm tra authoritative
+    SB-->>T: user
+    T-->>B: render lời chào + form logout
 ```
 
-## Integrations
+Luồng trên là request lõi của app (đăng nhập Google OAuth qua PKCE, cấp bởi Supabase). Trích nguồn: `app/login/login-client.tsx:41-64` (kích hoạt OAuth), `app/auth/callback/route.ts:16-46` (exchange code, redirect matrix), `lib/supabase/next-path.ts:88-106` (`safeNextPath` chặn open-redirect trên tham số `?next=`), `app/todo/page.tsx:17-25` (kiểm tra authoritative). Nhánh lỗi (`?error=` từ Google, `exchangeCodeForSession` thất bại) đều redirect về `/login?error=...`, không lộ raw error ra client (`app/auth/callback/route.ts:39-42`).
 
-- **Supabase Auth (GoTrue)** — local instance `saa-app`, external; Google provider bật sẵn, `additional_redirect_urls` chứa `http://localhost:3000/auth/callback`. App không tự quản lý OAuth client secret.
-- **Google OAuth** — bên thứ ba qua GoTrue; app không gọi Google API trực tiếp.
-- Không có integration khác (không email/payment/queue) trong phạm vi F001/F002.
+Luồng phụ (không vẽ ở trên để giữ diagram gọn): đổi ngôn ngữ — `LoginClient` gọi Server Action `setLocale` (`app/actions/locale.ts:24-41`), ghi cookie `NEXT_LOCALE` (`lib/i18n/locale.ts:17,20`), vòng round-trip của chính Server Action khiến `i18n/request.ts:16-28` đọc lại cookie và trả bộ message mới — không cần `router.refresh()` (`app/login/login-client.tsx:66-72`).
 
-## Data & Session Storage
+## Deployment View
 
-- **Session**: Supabase quản lý qua cookie (`@supabase/ssr`); app không tự lưu session riêng.
-- **Locale**: cookie `NEXT_LOCALE` (path=`/`, 1 năm), set qua Server Action `setLocale` (F002).
-- **User/Auth data**: `auth.users` do Supabase quản lý — ngoài phạm vi data model của app.
-- Không có database riêng của app trong phạm vi 2 feature này.
+> Derived from repository infrastructure-as-code — not verified against production.
 
-## Cross-cutting (i18n, testing)
+N/A — no infrastructure-as-code found in repository.
 
-- **i18n**: next-intl no-routing, locale từ cookie `NEXT_LOCALE` (`vi` mặc định, `en`), không URL-prefix.
-- **Testing**: `testPolicy: e2e-red-first` — `tests/e2e/login.spec.ts`; OAuth-kickoff test chặn network qua `page.route` abort trên `**/auth/v1/authorize**`; authenticated-redirect test dùng setup-project `signInWithPassword` + `storageState`, không hit Google thật.
+**Không tìm thấy cấu hình infrastructure-as-code/deployment nào trong repo.**
 
-## Open Points
-
-- Deployment/hosting topology: TBD (draft) — chưa có Dockerfile/IaC trong repo.
-- Google OAuth client credentials của `saa-app`: giả định cấu hình qua env khi `supabase start`; verify bằng `GET /auth/v1/authorize?provider=google` → 302 `accounts.google.com` (`clarifications.md § Unresolved`).
-- `ROUTE###`/`SCR###` codes: TBD (draft), cấp khi promote.
+Đã quét root và các thư mục con cấp 1-3 (loại trừ `node_modules/`, `.next/`, `test-results/`, `playwright/`) tìm `Dockerfile*`, `docker-compose*`, `*.tf`, `Procfile`, `fly.toml`, `wrangler.toml`, `vercel.json`, `app.yaml`, `nginx.conf`, `*.yml`/`*.yaml`, k8s manifest — không có file nào khớp. `package.json` chỉ khai báo script `dev`/`build`/`start` chạy trực tiếp bằng Next.js CLI (`package.json:5-7`), không có target container/orchestration. Supabase (`saa-app`) là instance local chạy ngoài repo này, không có compose/IaC quản lý nó trong source đang xét. Không suy diễn thêm topology nào ngoài các sự thật trên.
