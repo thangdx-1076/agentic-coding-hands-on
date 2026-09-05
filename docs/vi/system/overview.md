@@ -34,7 +34,7 @@ For architecture diagrams and tech stack details, see [architecture.md](architec
 
 ## Security Overview
 
-- **Authentication**: Google OAuth qua Supabase Auth, flow PKCE (`README.md:3`). `LoginClient` gọi `supabase.auth.signInWithOAuth({provider: "google", redirectTo: origin + "/auth/callback?next=/todo"})` (`app/login/login-client.tsx:45-51`); `app/auth/callback/route.ts` đổi `code` lấy session bằng `exchangeCodeForSession` (`app/auth/callback/route.ts:30-42`). Không có mật khẩu tự quản lý — toàn bộ ủy quyền cho Supabase GoTrue.
+- **Authentication**: Google OAuth qua Supabase Auth, flow PKCE (`README.md:3`). `LoginClient` (qua hook `useLoginActions` → `signInWithGoogle`) gọi `supabase.auth.signInWithOAuth({provider: "google", redirectTo: origin + "/auth/callback?next=/todo"})` (`lib/auth/sign-in-with-google.ts:45-50`); `app/auth/callback/route.ts` đổi `code` lấy session bằng `exchangeCodeForSession` (`app/auth/callback/route.ts:30-42`). Không có mật khẩu tự quản lý — toàn bộ ủy quyền cho Supabase GoTrue.
 - **Authorization**: Không có role/permission — chỉ 1 kiểu gate duy nhất là "đã đăng nhập hay chưa" (route-guard), thực hiện ở 2 lớp: `proxy.ts` (optimistic) và `getUser()` tại `/todo`, `/login` (authoritative) — xem Decision 1.
 - **Data Encryption**: Không có xử lý mã hoá riêng trong repo này; phụ thuộc hoàn toàn vào TLS/hạ tầng của Supabase và transport HTTPS (không có evidence mã hoá tầng ứng dụng nào khác trong source đã đọc).
 - **API Security**:

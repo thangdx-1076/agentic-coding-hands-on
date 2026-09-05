@@ -1,4 +1,41 @@
 {
-  "generated_at": "2026-09-05T11:37:05Z",
-  "index": {}
+  "generated_at": "2026-09-05T14:52:09Z",
+  "index": {
+    "app/auth/callback/route.ts": [
+      "F001"
+    ],
+    "app/login/page.tsx": [
+      "F001"
+    ],
+    "app/page.tsx": [
+      "F001"
+    ],
+    "app/todo/actions.ts": [
+      "F001"
+    ],
+    "app/todo/page.tsx": [
+      "F001"
+    ],
+    "components/login/google-login-button.tsx": [
+      "F001"
+    ],
+    "components/login/language-selector.tsx": [
+      "F002"
+    ],
+    "docs/vi/generated/entities.md": [
+      "F002"
+    ],
+    "hooks/use-menu-keyboard-nav.ts": [
+      "F002"
+    ],
+    "lib/supabase/client.ts": [
+      "F001"
+    ],
+    "lib/ui/roving-index.ts": [
+      "F002"
+    ],
+    "proxy.ts:22-42,72-82,109-111": [
+      "F001"
+    ]
+  }
 }

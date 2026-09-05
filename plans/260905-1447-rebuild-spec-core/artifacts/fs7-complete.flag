@@ -1,3 +1,6 @@
+# FS.7 complete — 2026-09-05T14:46:04Z
+# Scope: feature-specs
+# F###: F001_GoogleOAuthLogin, F002_LanguageSwitch
 3f6d8816e4dd65e8a99700f8964a652aad18c2aac5ae7c4796975c96331038fe  docs/vi/features/F001_GoogleOAuthLogin/technical-spec.md
 22e1a1e7f9b12fa610f85525efd0e87737c104a01b1cade7c00acad0008d7006  docs/vi/features/F001_GoogleOAuthLogin/functional-spec.md
 3a292668f090c5683edb82b6d26e94f7b3e1729ec52377e66c2fdee8dedc6f75  docs/vi/features/F002_LanguageSwitch/technical-spec.md

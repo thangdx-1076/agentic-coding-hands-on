@@ -39,7 +39,7 @@ Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của 
 
 | Component | Type | Purpose |
 |-----------|------|---------|
-| LoginClient (`app/login/login-client.tsx`) | client-boundary | Giữ state pending/lỗi phía client, gọi `signInWithOAuth` và Server Action `setLocale` |
+| LoginClient (`app/login/login-client.tsx`) | client-boundary | Nối props với `useLoginActions` (`hooks/use-login-actions.ts`) — hook giữ state pending/lỗi, gọi `signInWithGoogle` (`lib/auth/sign-in-with-google.ts`) và Server Action `setLocale` |
 | LoginScreen (`components/login/login-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: background, header, hero, footer |
 | LoginBackground | decorative | Ảnh key visual + 2 lớp gradient phủ, `aria-hidden` |
 | LoginHeader | header | Logo tĩnh + LanguageSelector, sticky top |

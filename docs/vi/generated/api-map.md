@@ -28,7 +28,7 @@ Ba BL### còn lại trong `behavior-logic.md` là factory function tích hợp S
 
 | BL### | Source File | Gọi từ | Không phải route vì |
 |-------|-------------|--------|----------------------|
-| BL001_SupabaseBrowserClient | lib/supabase/client.ts | `app/login/login-client.tsx:45` (trước `signInWithOAuth`) | chạy trong trình duyệt, không có path server-side |
+| BL001_SupabaseBrowserClient | lib/supabase/client.ts | `lib/auth/sign-in-with-google.ts:44` (trước `signInWithOAuth`) | chạy trong trình duyệt, không có path server-side |
 | BL002_SupabaseServerClient | lib/supabase/server.ts | `app/login/page.tsx:75`, `app/todo/page.tsx:18`, `app/page.tsx:11`, `app/todo/actions.ts:15`, `app/auth/callback/route.ts:32` | factory dùng lại ở 5 nơi (Server Components/Action/Route Handler), không tự thân là 1 endpoint |
 | BL003_SupabaseProxyClient | lib/supabase/proxy-client.ts | `proxy.ts:73` (`getUserOrNull`) | chạy trong lớp proxy theo path matcher (`/`, `/login`, `/todo/:path*`), không map 1-1 vào 1 route cụ thể |
 

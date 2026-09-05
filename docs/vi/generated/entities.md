@@ -39,7 +39,7 @@ Không vẽ đường quan hệ (FK) nào — cả 3 shape đều độc lập, 
 | value | `"vi" \| "en"` | enum(2), NOT NULL | Mã locale — chỉ 2 giá trị hợp lệ (`lib/i18n/locale.ts:9`) |
 
 **Relationships**:
-- None (không có FK). Được *tham chiếu như kiểu field* trong 2 props shape khác — `LoginClientProps.locale` (`app/login/login-client.tsx:12`) và `LanguageSelectorProps` (`components/login/language-selector.tsx:4,12`) — đây là type-level reuse, không phải quan hệ entity-entity của ERD.
+- None (không có FK). Được *tham chiếu như kiểu field* trong 2 props shape khác — `LoginClientProps.locale` (`app/login/login-client.tsx:10`) và `LanguageSelectorProps` (`components/login/language-selector.tsx:7,13`) — đây là type-level reuse, không phải quan hệ entity-entity của ERD.
 
 **Discriminator Fields**:
 
@@ -81,7 +81,7 @@ Các field khác của kiểu `User` thật (vd. `id`, `user_metadata`, `app_met
 | languageLabel | string | NOT NULL | Nhãn mặc định của language selector ("VN") |
 
 **Relationships**:
-- None (presentational prop, không phải entity được persist). Được truyền làm prop `copy` vào `LoginClient` (`app/login/login-client.tsx:11,33`).
+- None (presentational prop, không phải entity được persist). Được truyền làm prop `copy` vào `LoginClient` (`app/login/login-client.tsx:9,40`).
 
 **Discriminator Fields**: None.
 
