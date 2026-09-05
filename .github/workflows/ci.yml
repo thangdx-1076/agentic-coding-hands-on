@@ -21,6 +21,23 @@
 # run as "the login flow is tested end to end". The `e2e` job's "Coverage
 # limitation notice" step prints the exact excluded-test count on every
 # run's summary page, so this limit is visible without opening this file.
+#
+# Green additionally means, since the testing standard landed: the logic
+# layer named in `vitest.config.ts`'s coverage allowlist is at 100%
+# (statements, branches, functions, lines -- the threshold exits non-zero
+# below that, so it is a gate and not a printed number), and every
+# Storybook story still compiles. Note the narrow scope of that 100%: no
+# `.tsx` glob appears in the allowlist, so components and `async` Server
+# Components are outside it by construction. The number says nothing about
+# whether a component renders correctly or the UI looks right.
+#
+# The Storybook step catches a story that BREAKS. It does not check that a
+# story EXISTS for every common component -- that remains a review concern.
+#
+# None of these gates actually block a merge today: `main` has no branch
+# protection (verified 2026-09-05, the protection API returns 404), so
+# every job here reports rather than enforces. Making them binding means
+# enabling branch protection and marking them required status checks.
 # -----------------------------------------------------------------------
 name: CI
 
@@ -91,8 +108,8 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      - name: Unit tests
-        run: pnpm test:unit
+      - name: Unit tests (100% coverage gate)
+        run: pnpm test:unit:coverage
 
       - name: Build
         run: pnpm build
@@ -107,6 +124,15 @@ jobs:
       # with the actual change being checked.
       - name: Typecheck
         run: pnpm typecheck
+
+      # Placed AFTER typecheck rather than between build and typecheck on
+      # purpose: those two are an ordered pair (see the comment above) and
+      # keeping them adjacent stops a later edit from separating them. This
+      # step catches a story that no longer compiles or imports something
+      # that has moved. It does NOT check that a story EXISTS for every
+      # common component -- that stays a review concern.
+      - name: Build Storybook
+        run: pnpm build-storybook
 
   e2e:
     name: E2E (CI-safe)

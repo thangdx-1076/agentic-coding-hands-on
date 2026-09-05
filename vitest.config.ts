@@ -87,6 +87,17 @@ export default defineConfig({
         "app/auth/callback/route.ts",
       ],
       exclude: ["**/*.test.ts"],
+      // A real gate, not a printed number: below 100% the process exits
+      // non-zero and CI fails. Turned on only AFTER the suite already reached
+      // 100% -- a threshold switched on early just blocks everyone until
+      // someone backfills, which is not what a standard is for.
+      //
+      // Its meaning is narrow and honest: every pure helper, every hook's
+      // observable state machine, and each Server Action / Route Handler's own
+      // logic is exercised. It does NOT say Server Components render
+      // correctly, that real Supabase/Google OAuth works, or that the UI looks
+      // right -- Playwright and Storybook own those.
+      thresholds: { 100: true },
     },
   },
 });
