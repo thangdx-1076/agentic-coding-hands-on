@@ -1,0 +1,28 @@
+{
+  "affected_fcodes": [],
+  "affected_waves": [
+    "Wave1: route-list",
+    "Wave1: data-model",
+    "Wave2: screen-list + screen-flow",
+    "Wave2: behavior-logic",
+    "Wave2.9: api-map",
+    "Wave3: permissions",
+    "Wave4: user-stories",
+    "Wave5: feature-list"
+  ],
+  "cascade_chain": null,
+  "deleted_files": [],
+  "doc_shas_snapshot": {
+    "architecture.md": "100b8716b786032816d516341041e7e39bf2751d82868b0772c784e152938cf5",
+    "feature-list.md": "16ca48ab410842eac9de05270b9171587043ecd55c3f3a28c0292e998e0db0e6",
+    "permissions.md": "20627c94a6863cce87fd9d22bbfd391f5056e1835db48c2af7da9a917b86dfb8",
+    "screen-list.md": "5e77cadd2edd0e1eeb56b5feafc6ad4c175a1a5e9484b198587996b334ca94d0"
+  },
+  "fallback_reason": "sha_unreachable",
+  "fallback_to_full": true,
+  "generated_at": "2026-09-05T08:00:13Z",
+  "head_sha": "afb4891c7821fc237dd044a72d36591f0ac15297",
+  "mode": "full",
+  "since_sha": "",
+  "w5_reran": true
+}

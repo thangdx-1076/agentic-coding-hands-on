@@ -1,0 +1,33 @@
+{
+  "task": "Audit unit/E2E test completeness; migrate the repo to pnpm and build a proper GitHub Actions CI; establish a standard Next.js ESLint config and wire it into CI.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "pnpm is the package manager: packageManager and engines pinned, pnpm-lock.yaml replaces package-lock.json with resolved-version parity, and no npm invocation remains in playwright.config.ts or README.md",
+    "ESLint standard catches real defects: a type-aware config plus import/order, jsx-a11y, playwright and vitest layers, with pnpm lint --max-warnings 0 exiting 0 and zero rules disabled to reach it",
+    "Prettier is enforced and the reformat is whitespace-only, with pnpm format:check exiting 0 and machine-generated trees excluded",
+    "The named test gaps are closed: the /auth/callback error branches, a real logout click, and the Supabase-outage fail-open vs fail-closed asymmetry each have an executable test",
+    "Coverage tooling reports an honest number scoped to what it actually measures",
+    "GitHub Actions CI exists with a quality job and an e2e job, running the CI-safe Playwright subset with zero silent skips when CI is set",
+    "The CI workflow states plainly, in the file, that the authenticated path is not covered"
+  ],
+  "touchpoints": [
+    "package.json",
+    "pnpm-lock.yaml",
+    "playwright.config.ts",
+    "README.md",
+    "eslint.config.mjs",
+    "tsconfig.json",
+    ".prettierignore",
+    "vitest.config.ts",
+    "tests/e2e/login.spec.ts",
+    "lib/i18n/messages-parity.test.ts",
+    ".github/workflows/ci.yml",
+    "docs/vi/system/architecture.md"
+  ],
+  "blastRadius": "Repository toolchain and CI only. No application route, screen, guard, permission or data flow was modified; the 17-file Prettier pass was verified whitespace-only.",
+  "contracts": [
+    "package.json scripts consumed by CI and by contributors",
+    "pnpm-lock.yaml resolved-version parity against the deleted package-lock.json",
+    "the @auth Playwright tag that CI filters on via --grep-invert"
+  ]
+}

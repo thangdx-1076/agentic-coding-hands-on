@@ -1,0 +1,59 @@
+=== npm run lint ===
+
+> agentic-coding-hands-on@0.1.0 lint
+> eslint
+
+EXIT:0
+=== npm run test:unit ===
+
+> agentic-coding-hands-on@0.1.0 test:unit
+> vitest run
+
+
+ RUN  v3.2.7 /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+
+ ✓ lib/i18n/locale.test.ts (8 tests) 2ms
+ ✓ lib/supabase/next-path.test.ts (24 tests) 2ms
+
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+   Start at  17:25:38
+   Duration  410ms (transform 71ms, setup 0ms, collect 69ms, tests 4ms, environment 0ms, prepare 160ms)
+
+EXIT:0
+=== npm run build ===
+
+> agentic-coding-hands-on@0.1.0 build
+> next build
+
+▲ Next.js 16.3.4 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 28ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 758ms
+  Running TypeScript ...
+  Finished TypeScript in 1161ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/7) ...
+  Generating static pages using 7 workers (1/7) 
+  Generating static pages using 7 workers (3/7) 
+  Generating static pages using 7 workers (5/7) 
+✓ Generating static pages using 7 workers (7/7) in 120ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /auth/callback
+├ ƒ /login
+└ ƒ /todo
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT:0
+=== npx tsc --noEmit ===
+EXIT:0

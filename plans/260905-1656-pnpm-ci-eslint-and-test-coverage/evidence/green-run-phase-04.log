@@ -1,0 +1,36 @@
+
+Running 30 tests using 4 workers
+
+  ✓   4 [chromium] › tests/e2e/login.spec.ts:63:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right (991ms)
+  ✓   1 [chromium] › tests/e2e/login.spec.ts:105:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text (991ms)
+  ✓   2 [chromium] › tests/e2e/login.spec.ts:49:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position (1.0s)
+  ✓   3 [chromium] › tests/e2e/login.spec.ts:78:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence (1.1s)
+  ✓   5 [chromium] › tests/e2e/login.spec.ts:115:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button (640ms)
+  ✓   6 [chromium] › tests/e2e/login.spec.ts:122:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position (652ms)
+  ✓   8 [chromium] › tests/e2e/login.spec.ts:150:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* (596ms)
+  ✓   7 [chromium] › tests/e2e/login.spec.ts:132:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click (726ms)
+  ✓   9 [chromium] › tests/e2e/login.spec.ts:162:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login (531ms)
+  ✓  10 [chromium] › tests/e2e/login.spec.ts:170:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login (613ms)
+  ✓  11 [chromium] › tests/e2e/login.spec.ts:178:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) (731ms)
+  ✓  12 [chromium] › tests/e2e/login.spec.ts:200:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication (786ms)
+  ✓  13 [chromium] › tests/e2e/login.spec.ts:279:9 › Login Screen › Unauthenticated › [ROUTE001] GET /auth/callback?error=access_denied redirects to /login?error=access_denied (930ms)
+  ✓  14 [chromium] › tests/e2e/login.spec.ts:292:9 › Login Screen › Unauthenticated › [ROUTE001] GET /auth/callback (no code, no error) redirects to /login?error=auth_code_error (872ms)
+  ✓  15 [chromium] › tests/e2e/login.spec.ts:304:9 › Login Screen › Unauthenticated › [PERM004] GET /auth/callback?next=https://evil.com stays within origin (744ms)
+  ✓  16 [chromium] › tests/e2e/login.spec.ts:318:9 › Login Screen › Unauthenticated › [ROUTE001] GET /auth/callback?code=<invalid> redirects to /login?error=auth_code_error (658ms)
+  ✓  17 [chromium] › tests/e2e/login.spec.ts:333:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB a1f8c2d1] ArrowDown on trigger opens menu and focuses first item (609ms)
+  ✓  19 [chromium] › tests/e2e/login.spec.ts:383:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB f7b2a4e8] ArrowDown wraps from last to first item in menu (586ms)
+  ✓  20 [chromium] › tests/e2e/login.spec.ts:406:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB e3c9b1a5] ArrowUp wraps from first to last item in menu (588ms)
+  ✓  18 [chromium] › tests/e2e/login.spec.ts:358:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB c4e7d9f2] ArrowUp on trigger opens menu and focuses last item (620ms)
+  ✓  21 [chromium] › tests/e2e/login.spec.ts:429:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB d6f1c3b9] Home key jumps to first item in menu (573ms)
+  ✓  22 [chromium] › tests/e2e/login.spec.ts:475:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB c5a9f2d3] Escape closes menu and returns focus to trigger (591ms)
+  ✓  23 [chromium] › tests/e2e/login.spec.ts:452:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB b8e2d7a4] End key jumps to last item in menu (616ms)
+  ✓  24 [chromium] › tests/e2e/login.spec.ts:500:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [KB a2d8e6f1] Tab closes menu without returning focus to trigger (610ms)
+  -  26 [chromium] › tests/e2e/login.spec.ts:564:9 › Login Screen › Supabase unavailable › [PERM002 fail-open] GET /login renders form even when Supabase is unreachable
+  -  27 [chromium] › tests/e2e/login.spec.ts:588:9 › Login Screen › Supabase unavailable › [PERM003 fail-closed] GET /todo does not render todo content when Supabase is unreachable
+  ✓  25 [chromium] › tests/e2e/login.spec.ts:525:11 › Login Screen › Unauthenticated › Language selector keyboard navigation (ARIA APG) › [REG 2026-09-05] Focus resets to first item on mouse open after keyboard navigation (465ms)
+  ✓  28 [chromium] › tests/e2e/login.spec.ts:642:9 › Login Screen › Authenticated › [TC f62b0c97] Authenticated user redirects /login to /todo @auth (838ms)
+  ✓  29 [chromium] › tests/e2e/login.spec.ts:651:9 › Login Screen › Authenticated › [TC e76aa170] /todo shows user email and logout button @auth (781ms)
+  ✓  30 [chromium] › tests/e2e/login.spec.ts:663:9 › Login Screen › Authenticated › [US003, BL002 signOut] Click logout button, verify redirect to /login, re-check guard blocks /todo @auth (1.0s)
+
+  2 skipped
+  28 passed (8.7s)
