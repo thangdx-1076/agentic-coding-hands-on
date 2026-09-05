@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "lang": "en",
+  "title": "Documentation Index — Reading Order",
+  "quickPath": {
+    "label": "Minimum fast read",
+    "nums": []
+  },
+  "roles": [],
+  "layers": [],
+  "ui": {
+    "start_here": "Start Here",
+    "appendix": "Appendix — Repo Docs",
+    "drill_labels": {
+      "flows": "Flows",
+      "features": "Features",
+      "screens": "Screens",
+      "traceability_matrix": "Traceability"
+    },
+    "pager": {
+      "prev": "‹ Previous",
+      "next": "Next ›",
+      "reading": "Reading",
+      "back_to_index": "back to index",
+      "end_of_spine": "End of the reading order"
+    },
+    "zoom": {
+      "title": "Diagram viewer",
+      "open": "Open this diagram in the zoom viewer",
+      "close": "Close",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
+      "fit": "Fit to screen",
+      "actual_size": "Actual size",
+      "hint": "Scroll to zoom · drag to pan · Esc to close"
+    }
+  }
+}
