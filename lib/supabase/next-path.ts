@@ -13,44 +13,76 @@
  *  - must NOT contain a `://` scheme separator anywhere (defends against
  *    inputs that happen to start with `/` yet still resolve to another
  *    origin or a non-http scheme once the browser normalizes them)
- *  - must NOT contain any ASCII control character (0x00-0x1f or 0x7f),
- *    raw or percent-encoded (e.g. `%0d`, `%0a`, `%00`, case-insensitive).
+ *  - must NOT contain any forbidden code point, raw or percent-encoded
+ *    (case-insensitive):
+ *      · ASCII control characters (0x00-0x1f, 0x7f) — e.g. `%0d`, `%0a`,
+ *        `%00`
+ *      · U+2028 LINE SEPARATOR / U+2029 PARAGRAPH SEPARATOR — encoded as
+ *        `%e2%80%a8` / `%e2%80%a9` in UTF-8, so a per-byte scan never sees
+ *        them; they are line terminators to JS/JSON parsers and to some
+ *        header/log consumers.
  *    This value is interpolated into a `Location` header by
- *    `NextResponse.redirect()`; an unescaped CR/LF would let an attacker
- *    split the header and inject arbitrary response headers (HTTP
+ *    `NextResponse.redirect()`; an unescaped line terminator would let an
+ *    attacker split the header and inject arbitrary response headers (HTTP
  *    response/header splitting). Node's header-value validator happens
- *    to throw on a raw CR/LF today, but that's the caller's try/catch
- *    acting as an accidental safety net -- this check makes the
- *    rejection explicit and independent of any caller's error handling.
+ *    to throw on these today, but that's the caller's try/catch acting as
+ *    an accidental safety net -- these checks make the rejection explicit
+ *    and independent of any caller's error handling.
  *
  * Anything else falls back to `fallback`.
  */
 
-function isControlCodePoint(codePoint: number): boolean {
-  return codePoint < 0x20 || codePoint === 0x7f;
+const LINE_SEPARATOR = 0x2028;
+const PARAGRAPH_SEPARATOR = 0x2029;
+
+function isForbiddenCodePoint(codePoint: number): boolean {
+  return (
+    codePoint < 0x20 ||
+    codePoint === 0x7f ||
+    codePoint === LINE_SEPARATOR ||
+    codePoint === PARAGRAPH_SEPARATOR
+  );
 }
 
-function hasRawControlChar(raw: string): boolean {
-  for (let i = 0; i < raw.length; i++) {
-    if (isControlCodePoint(raw.charCodeAt(i))) {
+function hasRawForbiddenChar(raw: string): boolean {
+  for (const char of raw) {
+    const codePoint = char.codePointAt(0);
+    if (codePoint !== undefined && isForbiddenCodePoint(codePoint)) {
       return true;
     }
   }
   return false;
 }
 
-function hasEncodedControlChar(raw: string): boolean {
+function hasEncodedForbiddenChar(raw: string): boolean {
   const percentEncodedSequences = raw.match(/%[0-9a-fA-F]{2}/g);
   if (!percentEncodedSequences) {
     return false;
   }
-  return percentEncodedSequences.some((sequence) =>
-    isControlCodePoint(parseInt(sequence.slice(1), 16)),
+
+  // Per-byte pass: catches ASCII controls even when the string as a whole
+  // is not valid UTF-8 (a lone `%80` makes `decodeURIComponent` throw).
+  const hasEncodedAsciiControl = percentEncodedSequences.some((sequence) =>
+    isForbiddenCodePoint(parseInt(sequence.slice(1), 16)),
   );
+  if (hasEncodedAsciiControl) {
+    return true;
+  }
+
+  // Decoded pass: U+2028/U+2029 span three bytes, so only the decoded form
+  // reveals them. A malformed sequence throws and is left to the per-byte
+  // pass above -- it cannot hide a forbidden code point on its own.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    return false;
+  }
+  return hasRawForbiddenChar(decoded);
 }
 
-function containsControlChars(raw: string): boolean {
-  return hasRawControlChar(raw) || hasEncodedControlChar(raw);
+function containsForbiddenChars(raw: string): boolean {
+  return hasRawForbiddenChar(raw) || hasEncodedForbiddenChar(raw);
 }
 
 export function safeNextPath(raw: string | null, fallback = "/todo"): string {
@@ -65,7 +97,7 @@ export function safeNextPath(raw: string | null, fallback = "/todo"): string {
   if (
     !startsWithSingleSlash ||
     hasSchemeSeparator ||
-    containsControlChars(raw)
+    containsForbiddenChars(raw)
   ) {
     return fallback;
   }
