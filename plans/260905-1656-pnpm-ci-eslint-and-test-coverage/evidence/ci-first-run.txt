@@ -1,0 +1,25 @@
+CI first green run — evidence
+Repo: thangdx-1076/agentic-coding-hands-on (origin fork)
+Branch: feat/login-google-oauth
+Run URL: https://github.com/thangdx-1076/agentic-coding-hands-on/actions/runs/33966248772
+Trigger: push  |  Commit: 3eb3330
+
+RUN 1 — 33966119604 — FAILURE (kept deliberately as evidence)
+  Quality: FAILED at Lint, exit 2
+  ERR_MODULE_NOT_FOUND: eslint-plugin-jsx-a11y imported by eslint.config.mjs but
+  never declared in devDependencies. Resolved locally by hoisting; unresolvable
+  on a clean pnpm isolated install. Fixed in 3eb3330.
+
+RUN 2 — 33966248772 — SUCCESS
+  Quality        conclusion=success  1m02s  (Lint, Format check, Unit tests, Build, Typecheck all pass)
+  E2E (CI-safe)  conclusion=success  1m13s
+    Playwright: 'Running 27 tests using 1 worker' -> '27 passed (28.5s)'
+    0 skipped — matches the local CI-simulated figure exactly.
+    3 @auth tests excluded by --grep-invert, as designed.
+
+NOT covered by CI (stated in ci.yml header + step summary):
+  - the 3 @auth authenticated-path tests
+  - the /auth/callback valid-PKCE success branch (no test exists anywhere)
+
+Branch protection on main: NONE (gh api -> 404). CI reports; it does not enforce.
+Recorded: 2026-09-05
