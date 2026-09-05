@@ -1,0 +1,27 @@
+[
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "TypeScript compilation successful, no errors"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "summary": "ESLint clean, no violations"
+  },
+  {
+    "command": "pnpm test:unit",
+    "exitCode": 0,
+    "summary": "50 tests passed across 5 files"
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0,
+    "summary": "28 tests passed, 2 skipped"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "summary": "Next.js production build successful, all routes compiled"
+  }
+]
