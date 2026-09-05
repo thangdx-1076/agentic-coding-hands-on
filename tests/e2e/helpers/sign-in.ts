@@ -1,5 +1,5 @@
-import { BrowserContext } from '@playwright/test';
-import { createServerClient } from '@supabase/ssr';
+import { BrowserContext } from "@playwright/test";
+import { createServerClient } from "@supabase/ssr";
 
 /**
  * Sign in or sign up a test user via GoTrace REST API.
@@ -9,13 +9,13 @@ export async function createTestSession(
   supabaseUrl: string,
   publishableKey: string,
   email: string,
-  password: string
+  password: string,
 ): Promise<{ access_token: string; refresh_token: string; user_id: string }> {
   // Try to sign up first
   const signupResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       apikey: publishableKey,
     },
     body: JSON.stringify({
@@ -38,36 +38,36 @@ export async function createTestSession(
     const tokenResponse = await fetch(
       `${supabaseUrl}/auth/v1/token?grant_type=password`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           apikey: publishableKey,
         },
         body: JSON.stringify({
           email,
           password,
         }),
-      }
+      },
     );
-    sessionData = await tokenResponse.json();
+    sessionData = (await tokenResponse.json()) as SessionResponse;
   } else if (signupResponse.ok) {
-    sessionData = await signupResponse.json();
+    sessionData = (await signupResponse.json()) as SessionResponse;
   } else {
     throw new Error(
-      `Failed to create test session: ${signupResponse.status} ${signupResponse.statusText}`
+      `Failed to create test session: ${signupResponse.status} ${signupResponse.statusText}`,
     );
   }
 
   if (!sessionData.access_token || !sessionData.user) {
     throw new Error(
-      `No valid session in response from GoTrue: ${JSON.stringify(sessionData)}`
+      `No valid session in response from GoTrue: ${JSON.stringify(sessionData)}`,
     );
   }
 
   return {
-    access_token: sessionData.access_token || '',
-    refresh_token: sessionData.refresh_token || '',
-    user_id: sessionData.user?.id || '',
+    access_token: sessionData.access_token || "",
+    refresh_token: sessionData.refresh_token || "",
+    user_id: sessionData.user?.id || "",
   };
 }
 
@@ -79,7 +79,7 @@ export async function generateSupabaseCookies(
   supabaseUrl: string,
   publishableKey: string,
   accessToken: string,
-  refreshToken: string
+  refreshToken: string,
 ): Promise<Array<{ name: string; value: string }>> {
   const captured: Array<{ name: string; value: string }> = [];
 
@@ -114,18 +114,18 @@ export async function generateSupabaseCookies(
  */
 export async function injectSupabaseSession(
   context: BrowserContext,
-  cookies: Array<{ name: string; value: string }>
+  cookies: Array<{ name: string; value: string }>,
 ): Promise<void> {
   // Set cookies on localhost:3000 (the app origin)
   await context.addCookies(
     cookies.map((c) => ({
       name: c.name,
       value: c.value,
-      domain: 'localhost',
-      path: '/',
+      domain: "localhost",
+      path: "/",
       httpOnly: false,
       secure: false,
-      sameSite: 'Lax' as const,
-    }))
+      sameSite: "Lax" as const,
+    })),
   );
 }

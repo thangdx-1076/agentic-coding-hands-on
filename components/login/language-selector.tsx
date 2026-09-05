@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AppLocale } from "@/lib/i18n/locale";
+
 import { IconDown } from "./icons/icon-down";
 import { IconVnFlag } from "./icons/icon-vn-flag";
+
+import type { AppLocale } from "@/lib/i18n/locale";
 
 export type LanguageSelectorProps = {
   /** Currently active locale label, as shown on the button ("VN" | "EN"). */
@@ -149,6 +151,12 @@ export function LanguageSelector({ label, onSelect }: LanguageSelectorProps) {
       {open && (
         <div
           role="menu"
+          // Roving tabindex: focus lives on the active `menuitem` button
+          // (see the effect above), never on this wrapper. `tabIndex={-1}`
+          // documents that on purpose — jsx-a11y/interactive-supports-focus
+          // can't see the roving-tabindex delegation and would otherwise
+          // flag this node as needing its own focus stop.
+          tabIndex={-1}
           onKeyDown={handleMenuKeyDown}
           className="animate-login-menu-in absolute top-full right-0 z-30 mt-1 w-full min-w-[108px] overflow-hidden rounded bg-[#0B0F12] shadow-lg"
         >
