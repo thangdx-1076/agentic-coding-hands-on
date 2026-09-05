@@ -1,0 +1,203 @@
+# -----------------------------------------------------------------------
+# Known coverage limit — read this before trusting a green run
+# -----------------------------------------------------------------------
+# The `e2e` job below does NOT cover the authenticated path. Tests tagged
+# `@auth` are excluded here via `--grep-invert @auth` because they require
+# a live Supabase instance (`saa-app`, local to a developer machine on
+# 127.0.0.1) that this GitHub Actions runner can never reach. Those tests
+# exist and run on a developer machine with `saa-app` up; they are not
+# gated by this workflow, by design (see clarifications.md, "Known
+# trade-off" — running `supabase start` in CI was rejected).
+#
+# On top of that, the `/auth/callback` valid-PKCE-exchange branch (the
+# success path of a real Google OAuth round-trip) has NO automated test
+# anywhere, CI or local: a real authorization code / PKCE verifier pair
+# only exists after a genuine Google sign-in, which cannot be scripted.
+#
+# A green checkmark on this workflow means the unauthenticated login
+# screen, its route guards, and the Supabase-outage fail-open/fail-closed
+# paths are verified. It does NOT mean the authenticated flow, logout, or
+# the OAuth callback success path have been exercised. Do not read a green
+# run as "the login flow is tested end to end". The `e2e` job's "Coverage
+# limitation notice" step prints the exact excluded-test count on every
+# run's summary page, so this limit is visible without opening this file.
+# -----------------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Lets us run this workflow by hand on any branch (e.g. a feature branch,
+  # before a PR against `main` exists) to prove it goes green ahead of merge.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# No extra permissions: neither job writes back to the repo (no comments,
+# no pushed commits, no releases), so the default read-only token is enough.
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    env:
+      # These two NEXT_PUBLIC_* vars are placeholders, not secrets:
+      #  - Next.js inlines NEXT_PUBLIC_* into the client bundle at build time,
+      #    so `pnpm build` needs *some* non-empty value to succeed.
+      #  - The real values point at `saa-app`, a Supabase instance on
+      #    127.0.0.1 that this runner can never reach. A real value here
+      #    would be useless (no test calls it) and would only widen the
+      #    risk surface if it ever leaked. Do not put real Supabase
+      #    credentials in this workflow or in repo secrets for this job.
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "placeholder-publishable-key"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        # No `version:` input on purpose: this reads the `packageManager`
+        # field in package.json, so CI and local dev always agree on one
+        # pnpm version instead of drifting apart.
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          # cache is automatically keyed on pnpm-lock.yaml by setup-node.
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        # --frozen-lockfile makes pnpm-lock.yaml a real contract: a lockfile
+        # that drifts from package.json fails the install loudly instead of
+        # silently re-resolving.
+
+      - name: Lint
+        run: pnpm lint --max-warnings 0
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Build
+        run: pnpm build
+
+      # `typecheck` MUST run after `build`, not before. Next.js generates an
+      # ambient type (e.g. `LayoutProps`) into `.next/types` only once a
+      # build (or dev server) has run at least once. Running `tsc --noEmit`
+      # on a clean checkout before any build always fails on that generated
+      # type — a pre-existing Next.js behavior, unrelated to pnpm or this
+      # workflow. Do not reorder these two steps "to fail fast": it looks
+      # tidy but produces a red CI run for a reason that has nothing to do
+      # with the actual change being checked.
+      - name: Typecheck
+        run: pnpm typecheck
+
+  e2e:
+    name: E2E (CI-safe)
+    runs-on: ubuntu-latest
+    # Deliberately NOT `needs: quality`: this job is independent so a lint
+    # failure never delays this signal, and a slower e2e run never blocks
+    # the fast checks in `quality`. See the file-header comment above for
+    # what this job does and does not cover.
+    env:
+      # Same placeholder pair as `quality` — see that job's env comment.
+      # No Google credentials are used or required here either: every OAuth
+      # request in the CI-safe suite is intercepted and aborted client-side
+      # (`page.route(...).abort()`), so no request ever leaves the browser
+      # context. That is also why an unreachable Supabase URL is not just
+      # tolerated but the intended condition — two CI-safe tests assert the
+      # fail-open/fail-closed behavior that only shows up when Supabase is
+      # down, and `process.env.CI` being set makes those tests run instead
+      # of skip (see `tests/e2e/login.spec.ts`, "Supabase unavailable").
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "placeholder-publishable-key"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        # No `version:` input on purpose — see the `quality` job's comment.
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Read pinned Playwright version
+        id: playwright-version
+        run: |
+          VERSION=$(node -p "require('./package.json').devDependencies['@playwright/test']")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          # Keyed on the exact pinned @playwright/test version, no
+          # `restore-keys`: a partial-match cache can hand back a browser
+          # revision the installed test runner refuses to drive, which is
+          # worse than no cache at all. The key only changes when someone
+          # deliberately bumps the pinned version in package.json.
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        # Runs even on a cache hit: the cache only restores the browser
+        # binary, not the OS-level shared libraries `--with-deps` installs.
+        # A cache hit with a skipped install is a known-broken combination.
+        # `playwright.config.ts` only declares a `chromium` project, so
+        # that is the only browser installed here.
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Count e2e coverage split
+        id: e2e-counts
+        run: |
+          TOTAL=$(pnpm exec playwright test --list 2>/dev/null | grep -oE '^Total: [0-9]+' | grep -oE '[0-9]+')
+          RAN=$(pnpm exec playwright test --grep-invert @auth --list 2>/dev/null | grep -oE '^Total: [0-9]+' | grep -oE '[0-9]+')
+          EXCLUDED=$((TOTAL - RAN))
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "ran=$RAN" >> "$GITHUB_OUTPUT"
+          echo "excluded=$EXCLUDED" >> "$GITHUB_OUTPUT"
+
+      - name: Run CI-safe e2e tests
+        run: pnpm exec playwright test --grep-invert @auth
+
+      # This step MUST run even when the test step above fails, so the
+      # limitation is visible on both a red run and a green one — a failed
+      # run is not an excuse to skip disclosing what was never covered.
+      - name: Coverage limitation notice
+        if: always()
+        run: |
+          {
+            echo "## Authenticated path is NOT covered by this CI run"
+            echo ""
+            echo "This job ran **${{ steps.e2e-counts.outputs.ran }}** of **${{ steps.e2e-counts.outputs.total }}** e2e tests (\`--grep-invert @auth\`)."
+            echo "**${{ steps.e2e-counts.outputs.excluded }}** test(s) tagged \`@auth\` were excluded and did NOT run in this job."
+            echo ""
+            echo "- The excluded tests require a live Supabase instance (\`saa-app\`, local to a developer machine) that this runner cannot reach. They run only on a developer machine with \`saa-app\` up, never in CI."
+            echo "- The \`/auth/callback\` valid-PKCE-exchange branch (a successful Google OAuth round-trip) has NO automated test anywhere, CI or local — a real code/verifier pair only exists after a genuine Google sign-in."
+            echo "- Do not read this job's green status as \"the authenticated flow is tested\": logout and the OAuth callback success path are not exercised here."
+            echo "- No Google credentials are used or required in this job: every OAuth request in the CI-safe suite is aborted client-side before it leaves the browser."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
