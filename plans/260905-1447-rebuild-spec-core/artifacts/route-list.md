@@ -1,0 +1,83 @@
+# Route List
+
+**Project**: agentic-coding-hands-on
+**Generated**: 2026-09-05
+
+<!-- Tier 2 static parse — no CLI probe manifest available (Wave 0.4 probe skipped,
+     no bootable lockfile). Routes inferred directly from Next.js 16 App Router
+     file conventions (`app/**/page.tsx` = frontend route, `app/**/route.ts` =
+     backend route handler) and verified by reading every source file below. -->
+
+## Backend Routes
+
+> **Completeness Contract:** emit exactly ONE row per leaf route (HTTP method + concrete path). Expand framework resource macros (Rails `resources :x` → 7 RESTful rows). FORBIDDEN: resource-summary tables (`| Resource | Actions |`), approximation markers (`~N`, `(+nhiều)`, `see routes.rb`, `etc.`), wildcard paths (`/x/*`). Scout counts are estimates, not authority.
+
+> **Code Column Contract:** `Code` is mandatory going forward — `ROUTE###`, contiguous and global across this one file (same shape as `SCR###`/`F###`). `Owner F###` carries the bare feature code that claims the route, or `—` when the route cannot be attributed to a single feature (shared/infra routes). Rare shared routes may list comma-separated multi-owners, e.g. `F001, F003`.
+
+Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callback/route.ts`, xử lý bước redirect PKCE callback của Supabase OAuth. `Owner F###` = `F001` (F001_GoogleOAuthLogin claims route này — xem `feature-list.md` § F001 Related APIs/Routes).
+
+### File: app/auth/callback/route.ts
+
+| Method | Path | Code | Owner F### | Handler | Middleware |
+|--------|------|------|------------|---------|------------|
+| GET | /auth/callback | ROUTE001 | F001 | `GET(request)` — nhận redirect PKCE từ Supabase, đọc `?code`/`?error`/`?error_description`/`?next`; có `code` thì gọi `exchangeCodeForSession(code)` rồi redirect tới `safeNextPath(next)`; có `error` thì redirect `/login?error=...`; không có gì hợp lệ thì redirect `/login?error=auth_code_error` | none — loại trừ tường minh khỏi matcher của `proxy.ts` (route tự xử lý redirect riêng, xem `proxy.ts` dòng 103-110) |
+
+## Frontend Routes/Pages
+
+Bốn route frontend: ba route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+
+### File: app/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| / | Home | root-redirect |
+
+Route `/` không tự render UI — chỉ là fallback redirect (`redirect(user ? "/todo" : "/login")`), phòng trường hợp `proxy.ts` không chạy (ví dụ render server-side trực tiếp). Đây là bản kiểm tra AUTHORITATIVE, còn `proxy.ts` là bản optimistic chạy trước.
+
+### File: app/login/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /login | LoginPage | login |
+
+Guard AUTHORITATIVE ở đây bọc try/catch và fail OPEN (lỗi Supabase không chặn người dùng vào trang login) — khác với `/todo` fail CLOSED. Render ủy quyền phần tương tác (OAuth kickoff, đổi ngôn ngữ) cho boundary client `app/login/login-client.tsx` (đã gắn nhãn `screen-embedded` trong scout-report, không phải route riêng).
+
+### File: app/todo/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /todo | TodoPage | todo |
+
+Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có user thì redirect `/login`. Đây là trang todo placeholder (chưa có tính năng todo thật), tồn tại để chứng minh auth guard end-to-end.
+
+### File: (none — Next.js App Router framework default, no app-authored source)
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /_not-found | (built-in Next.js default boundary — không có `not-found.tsx` tùy biến trong `app/`) | not-found |
+
+## Middleware / Proxy Guard Layer
+
+`proxy.ts` (root) là lớp `proxy` của Next 16 (tên cũ: `middleware`) — guard optimistic, KHÔNG phải authoritative. Matcher whitelist tường minh:
+
+```
+matcher: ["/", "/login", "/todo/:path*"]
+```
+
+Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`):
+
+| Điều kiện | Redirect tới |
+|-----------|--------------|
+| đã login & path ∈ {/, /login} | /todo |
+| chưa login & path ∈ {/, /todo} | /login |
+| còn lại | pass-through (giữ cookie đã refresh) |
+
+`/auth/callback` bị loại khỏi matcher một cách tường minh — route đó tự xử lý redirect riêng (xem Backend Routes). `proxy.ts` cũng chuẩn hoá cookie `NEXT_LOCALE` (ghi đè cả trên `request` lẫn `response` nếu giá trị không hợp lệ) trước khi chạy auth guard.
+
+## Summary
+
+| Category | Count |
+|----------|-------|
+| Backend Routes | 1 |
+| Frontend Pages | 4 |
+| Total | 5 |

@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-09-05T08:24:27Z",
+  "plan": "260905-1447-rebuild-spec-core",
+  "features": [
+    {
+      "fcode": "F001",
+      "name": "Đăng nhập Google OAuth & Bảo vệ truy cập",
+      "slug": "F001_GoogleOAuthLogin",
+      "priority": "P0",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR001_LoginScreen",
+          "SCR002_TodoScreen"
+        ],
+        "user_stories": [
+          "US002_LoginWithGoogle",
+          "US003_LogOut"
+        ],
+        "routes": [
+          "ROUTE001"
+        ],
+        "models": [
+          "MODEL002_SupabaseUser"
+        ],
+        "bl": [
+          "BL001_SupabaseBrowserClient",
+          "BL002_SupabaseServerClient",
+          "BL003_SupabaseProxyClient"
+        ],
+        "perms": [
+          "PERM001_RootRouteGuard",
+          "PERM002_LoginRouteGuard",
+          "PERM003_TodoRouteGuard",
+          "PERM004_CallbackNextPathGuard"
+        ]
+      }
+    },
+    {
+      "fcode": "F002",
+      "name": "Chuyển đổi ngôn ngữ giao diện (VN/EN)",
+      "slug": "F002_LanguageSwitch",
+      "priority": "P1",
+      "type": "ui",
+      "related": {
+        "screens": [
+          "SCR001_LoginScreen"
+        ],
+        "user_stories": [
+          "US001_SwitchLanguage"
+        ],
+        "routes": [],
+        "models": [
+          "MODEL001_AppLocale"
+        ],
+        "bl": [],
+        "perms": []
+      }
+    }
+  ]
+}
