@@ -26,11 +26,18 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # Feature branches are listed deliberately, not just `main`. A workflow that
+    # only fires on `main` and on PRs gives a feature branch no signal at all
+    # until the PR is opened — by which point the mistakes are already stacked up.
+    branches: [main, "feat/**", "fix/**", "chore/**"]
   pull_request:
     branches: [main]
-  # Lets us run this workflow by hand on any branch (e.g. a feature branch,
-  # before a PR against `main` exists) to prove it goes green ahead of merge.
+  # NOTE: `workflow_dispatch` is intentionally kept, but be aware of GitHub's own
+  # constraint — it only becomes usable once this file exists on the DEFAULT
+  # branch. Verified 2026-09-05: `gh workflow run ci.yml --ref feat/...` returned
+  # HTTP 404 while the file lived only on the feature branch. That is exactly why
+  # the `push` filter above must cover feature branches: it is the only trigger
+  # that can prove this pipeline before anything reaches `main`.
   workflow_dispatch:
 
 concurrency:
