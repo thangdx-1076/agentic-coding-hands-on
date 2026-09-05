@@ -51,11 +51,11 @@ Không vẽ đường quan hệ (FK) nào — cả 3 shape đều độc lập, 
 
 ### MODEL002_SupabaseUser
 
-**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`app`, `components`, `lib`) xác nhận field duy nhất từng được truy cập là `user.email`, tại đúng 1 vị trí: `app/todo/page.tsx:32` (`t("greeting", { email: user.email ?? "" })`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `proxy.ts:32,36` và `app/todo/page.tsx:23-25`.
+**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`app`, `components`, `lib`) xác nhận field duy nhất từng được truy cập là `user.email`, tại đúng 1 vị trí: `app/todo/page.tsx:34` (`t("greeting", { email: user.email ?? "" })`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `proxy.ts:32,36` và `app/todo/page.tsx:26-28`.
 
 | Attribute | Type (as consumed) | Constraints | Description |
 |-----------|------|-------------|-------------|
-| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`app/todo/page.tsx:32`) |
+| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`app/todo/page.tsx:34`) |
 
 Các field khác của kiểu `User` thật (vd. `id`, `user_metadata`, `app_metadata`, `aud`, `created_at`, ...) tồn tại trên SDK nhưng **không có dòng code nào trong repo đọc chúng** — không liệt kê để tránh bịa cột.
 

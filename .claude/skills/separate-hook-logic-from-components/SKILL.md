@@ -158,10 +158,14 @@ Component còn lại đúng phần trình bày. Logic con trỏ chạy vòng (`n
 
 ## Vì sao ở repo này ranh giới `lib/` lại quan trọng
 
-`vitest.config.ts` chỉ chạy `lib/**/*.test.ts` và chỉ đo coverage `lib/**/*.ts`
-(môi trường `node`, không có jsdom). Logic để trong `.tsx` là logic **không ai
-đo được**. Đẩy xuống `lib/` là cách duy nhất để nó vào báo cáo coverage.
-Phần hook và JSX do Playwright (`tests/e2e/`) phủ.
+Logic để trong `.tsx` là logic **không ai đo được** — component không nằm trong
+phạm vi coverage, và đó là chủ ý. Đẩy xuống `lib/` hoặc `hooks/` là cách duy
+nhất để nó vào báo cáo.
+
+Phân lớp xong rồi thì phải kèm file gì bên cạnh (test co-located, story, ngưỡng
+coverage, ranh giới runner) là việc của skill
+[`write-unit-tests-and-storybook-stories`](../write-unit-tests-and-storybook-stories/SKILL.md).
+Cấu hình cụ thể chỉ được chép ở đó, không lặp lại ở đây.
 
 ## Không áp dụng khi
 

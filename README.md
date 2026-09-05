@@ -6,16 +6,18 @@ reach a protected `/todo` placeholder. UI ships in Vietnamese and English via a 
 
 ## Stack
 
-| Layer      | Technology                                     | Version          |
-| ---------- | ---------------------------------------------- | ---------------- |
-| Framework  | Next.js (App Router)                           | 16.3.4           |
-| UI         | React                                          | 19.2.8           |
-| Styling    | Tailwind CSS                                   | 4                |
-| Language   | TypeScript                                     | ^5               |
-| Auth       | `@supabase/ssr` + `@supabase/supabase-js`      | 0.12.5 / 2.115.0 |
-| i18n       | `next-intl` (no-routing, cookie `NEXT_LOCALE`) | 4.14.2           |
-| Unit tests | Vitest                                         | ^3.2.7           |
-| E2E tests  | `@playwright/test`                             | 1.62.1           |
+| Layer          | Technology                                                          | Version          |
+| -------------- | ------------------------------------------------------------------- | ---------------- |
+| Framework      | Next.js (App Router)                                                | 16.3.4           |
+| UI             | React                                                               | 19.2.8           |
+| Styling        | Tailwind CSS                                                        | 4                |
+| Language       | TypeScript                                                          | ^5               |
+| Auth           | `@supabase/ssr` + `@supabase/supabase-js`                           | 0.12.5 / 2.115.0 |
+| i18n           | `next-intl` (no-routing, cookie `NEXT_LOCALE`)                      | 4.14.2           |
+| Unit tests     | Vitest (2 projects: `node`, `jsdom`)                                | ^3.2.7           |
+| E2E tests      | `@playwright/test`                                                  | 1.62.1           |
+| Component docs | Storybook + `@storybook/nextjs-vite`                                | 10.6.0           |
+| API mocking    | `msw` + `msw-storybook-addon` (shared handlers, vitest + Storybook) | 2.15.0 / 3.0.0   |
 
 ## Routes
 
@@ -54,25 +56,27 @@ before rendering.
 
 ## Scripts
 
-| Command                   | What it does                                                                                                                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                           |
-| `pnpm build`              | Production build                                                                                                                                                                           |
-| `pnpm start`              | Start the production server                                                                                                                                                                |
-| `pnpm lint`               | ESLint                                                                                                                                                                                     |
-| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                                        |
-| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                                             |
-| `pnpm format`             | Prettier — write formatting to every file                                                                                                                                                  |
-| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                                      |
-| `pnpm test:unit`          | Vitest unit tests (`lib/i18n/locale.test.ts`, `lib/i18n/messages-parity.test.ts`, `lib/supabase/next-path.test.ts`, `lib/ui/roving-index.test.ts`, `lib/auth/sign-in-with-google.test.ts`) |
-| `pnpm test:unit:coverage` | Same, with coverage (`lib/**` only; no thresholds enforced — see `vitest.config.ts`)                                                                                                       |
-| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000                    |
+| Command                   | What it does                                                                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                                        |
+| `pnpm build`              | Production build                                                                                                                                                                                        |
+| `pnpm start`              | Start the production server                                                                                                                                                                             |
+| `pnpm lint`               | ESLint                                                                                                                                                                                                  |
+| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                                                     |
+| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                                                          |
+| `pnpm format`             | Prettier — write formatting to every file                                                                                                                                                               |
+| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                                                   |
+| `pnpm test:unit`          | Vitest unit tests, split into two projects (`vitest.config.ts`): `node` (`lib/**/*.test.ts`, `app/**/*.test.ts`) and `jsdom` (`hooks/**/*.test.ts`) — 13 files                                          |
+| `pnpm test:unit:coverage` | Same, with coverage against an explicit allowlist (`lib/**`, `hooks/**`, `app/actions/**`, `app/todo/actions.ts`, `app/auth/callback/route.ts`) and a real 100% threshold gate — see `vitest.config.ts` |
+| `pnpm storybook`          | Storybook dev server on port 6006                                                                                                                                                                       |
+| `pnpm build-storybook`    | Static Storybook build (also run in CI, see [CI](#ci))                                                                                                                                                  |
+| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000                                 |
 
 ## CI
 
 `.github/workflows/ci.yml` runs on every push/PR to `main`, plus manual `workflow_dispatch`:
 
-- **`quality`** — lint (`--max-warnings 0`), format check, unit tests, build, then typecheck (typecheck runs _after_ build on purpose — see the workflow's own comment).
+- **`quality`** — lint (`--max-warnings 0`), format check, unit tests with a 100% coverage gate (`pnpm test:unit:coverage`), build, typecheck (runs _after_ build on purpose — see the workflow's own comment), then a Storybook build check (`pnpm build-storybook` — catches a story that fails to compile, not whether a story exists for every component).
 - **`e2e` (CI-safe)** — Playwright, excluding tests tagged `@auth` (`--grep-invert @auth`). Tests tagged `@auth` need the local `saa-app` Supabase instance and only run on a developer machine, never in CI. A green `e2e` run does **not** mean the authenticated flow or the OAuth callback success path were exercised — read the file-header comment in `ci.yml` for the exact coverage limit.
 
 ## Known gaps

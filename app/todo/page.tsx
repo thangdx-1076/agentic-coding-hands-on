@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { logoutAction } from "./actions";
 
+import { TodoScreen } from "@/components/todo/todo-screen";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -29,18 +30,10 @@ export default async function TodoPage() {
   const t = await getTranslations("todo");
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-2xl font-semibold">
-        {t("greeting", { email: user.email ?? "" })}
-      </h1>
-      <form action={logoutAction}>
-        <button
-          type="submit"
-          className="rounded-full bg-foreground px-5 py-2 text-background"
-        >
-          {t("logout")}
-        </button>
-      </form>
-    </main>
+    <TodoScreen
+      greeting={t("greeting", { email: user.email ?? "" })}
+      logoutLabel={t("logout")}
+      logoutAction={logoutAction}
+    />
   );
 }
