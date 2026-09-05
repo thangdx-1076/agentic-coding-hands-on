@@ -40,7 +40,8 @@ export function LoginBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(0deg, #00101A 22.48%, rgba(0, 19, 32, 0) 51.74%)",
+          background:
+            "linear-gradient(0deg, #00101A 22.48%, rgba(0, 19, 32, 0) 51.74%)",
         }}
       />
     </div>

@@ -18,7 +18,11 @@ export type GoogleLoginButtonProps = {
  * dark page background), and a pressed/active scale — additive states only,
  * no layout/text/role change.
  */
-export function GoogleLoginButton({ label, pending = false, onClick }: GoogleLoginButtonProps) {
+export function GoogleLoginButton({
+  label,
+  pending = false,
+  onClick,
+}: GoogleLoginButtonProps) {
   return (
     /* mm:662:14426 */
     <button

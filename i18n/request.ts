@@ -1,6 +1,12 @@
 import { cookies } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
-import { DEFAULT_LOCALE, LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/locale";
+import type { AbstractIntlMessages } from "next-intl";
+
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE,
+  normalizeLocale,
+} from "@/lib/i18n/locale";
 
 /**
  * next-intl request config (no-routing mode — locale comes from the
@@ -18,11 +24,18 @@ export default getRequestConfig(async () => {
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
 
   try {
-    const messages = (await import(`../messages/${locale}.json`)).default;
+    const messages = (
+      (await import(`../messages/${locale}.json`)) as {
+        default: AbstractIntlMessages;
+      }
+    ).default;
     return { locale, messages };
   } catch {
-    const fallbackMessages = (await import(`../messages/${DEFAULT_LOCALE}.json`))
-      .default;
+    const fallbackMessages = (
+      (await import(`../messages/${DEFAULT_LOCALE}.json`)) as {
+        default: AbstractIntlMessages;
+      }
+    ).default;
     return { locale: DEFAULT_LOCALE, messages: fallbackMessages };
   }
 });

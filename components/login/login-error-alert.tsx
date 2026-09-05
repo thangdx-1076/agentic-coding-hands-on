@@ -11,7 +11,10 @@ export function LoginErrorAlert({ message }: LoginErrorAlertProps) {
   if (!message) return null;
 
   return (
-    <p role="alert" className="font-montserrat text-sm leading-5 font-bold text-[#FF8A80]">
+    <p
+      role="alert"
+      className="font-montserrat text-sm leading-5 font-bold text-[#FF8A80]"
+    >
       {message}
     </p>
   );

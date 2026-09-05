@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import { GoogleLoginButton } from "./google-login-button";
 import { LoginErrorAlert } from "./login-error-alert";
 import type { LoginCopy } from "./login-copy";
@@ -26,7 +27,12 @@ export type LoginHeroProps = {
  * covering the button on short viewports — `lg:pb-24` keeps the exact 96px
  * bottom value the pixel-perfect 1440×1024 capture was validated against.
  */
-export function LoginHero({ copy, onLoginClick, loginPending, errorMessage }: LoginHeroProps) {
+export function LoginHero({
+  copy,
+  onLoginClick,
+  loginPending,
+  errorMessage,
+}: LoginHeroProps) {
   return (
     /* mm:662:14393 */
     <section className="relative z-10 flex w-full flex-1 flex-col items-start justify-center px-6 pt-10 pb-24 sm:px-12 sm:pt-16 sm:pb-28 lg:mt-2 lg:max-h-[845px] lg:px-36 lg:pt-24 lg:pb-24">

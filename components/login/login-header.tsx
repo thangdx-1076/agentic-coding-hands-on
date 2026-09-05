@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import { LanguageSelector } from "./language-selector";
 
 export type LoginHeaderProps = {
@@ -11,7 +12,11 @@ export type LoginHeaderProps = {
  * Sticky top navigation bar (mm:662:14391): static brand logo + language
  * switcher. Not interactive beyond the language selector (logo has no link).
  */
-export function LoginHeader({ logoAlt, languageLabel, onSelectLocale }: LoginHeaderProps) {
+export function LoginHeader({
+  logoAlt,
+  languageLabel,
+  onSelectLocale,
+}: LoginHeaderProps) {
   return (
     /* mm:662:14391 */
     <header className="sticky top-0 z-20 flex w-full items-center justify-between bg-[rgba(11,15,18,0.8)] px-6 py-3 sm:px-12 lg:px-36">

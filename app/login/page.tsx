@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
+
+import { LoginClient } from "./login-client";
+
 import { createClient } from "@/lib/supabase/server";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 import type { LoginCopy } from "@/components/login/login-copy";
-import { LoginClient } from "./login-client";
 
 export const metadata: Metadata = {
   title: "Đăng nhập | SAA 2025",

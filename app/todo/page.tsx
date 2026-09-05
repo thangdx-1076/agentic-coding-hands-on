@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+
 import { logoutAction } from "./actions";
+
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Protected `/todo` placeholder (FR-301/FR-302/FR-603/US004). No todo

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { safeNextPath } from "./next-path";
 
 /**
@@ -60,15 +61,11 @@ describe("safeNextPath", () => {
   });
 
   it("rejects a percent-encoded CRLF (uppercase)", () => {
-    expect(safeNextPath("/todo%0D%0ASet-Cookie:%20x=y", "/todo")).toBe(
-      "/todo",
-    );
+    expect(safeNextPath("/todo%0D%0ASet-Cookie:%20x=y", "/todo")).toBe("/todo");
   });
 
   it("rejects a percent-encoded CRLF (lowercase)", () => {
-    expect(safeNextPath("/todo%0d%0aSet-Cookie:%20x=y", "/todo")).toBe(
-      "/todo",
-    );
+    expect(safeNextPath("/todo%0d%0aSet-Cookie:%20x=y", "/todo")).toBe("/todo");
   });
 
   it("rejects a percent-encoded NUL byte", () => {

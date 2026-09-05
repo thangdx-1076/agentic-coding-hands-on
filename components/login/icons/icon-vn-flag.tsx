@@ -55,7 +55,12 @@ export function IconVnFlag(props: SVGProps<SVGSVGElement>) {
       </g>
       <defs>
         <clipPath id="login-vn-flag-clip">
-          <rect width="20" height="15" fill="white" transform="translate(2 5)" />
+          <rect
+            width="20"
+            height="15"
+            fill="white"
+            transform="translate(2 5)"
+          />
         </clipPath>
       </defs>
     </svg>

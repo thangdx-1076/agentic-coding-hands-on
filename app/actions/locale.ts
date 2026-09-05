@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+
 import {
   LOCALE_COOKIE,
   LOCALE_COOKIE_MAX_AGE,
@@ -36,6 +37,8 @@ export async function setLocale(locale: string): Promise<void> {
     // Route Handler context. Surface a clear cause instead of a silent
     // no-op locale switch.
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`setLocale: failed to persist ${LOCALE_COOKIE} cookie: ${reason}`);
+    throw new Error(
+      `setLocale: failed to persist ${LOCALE_COOKIE} cookie: ${reason}`,
+    );
   }
 }

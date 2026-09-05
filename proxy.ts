@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+
 import {
   LOCALE_COOKIE,
   LOCALE_COOKIE_MAX_AGE,
