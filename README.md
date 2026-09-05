@@ -54,19 +54,19 @@ before rendering.
 
 ## Scripts
 
-| Command                   | What it does                                                                                                                                                            |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                        |
-| `pnpm build`              | Production build                                                                                                                                                        |
-| `pnpm start`              | Start the production server                                                                                                                                             |
-| `pnpm lint`               | ESLint                                                                                                                                                                  |
-| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                     |
-| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                          |
-| `pnpm format`             | Prettier — write formatting to every file                                                                                                                               |
-| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                   |
-| `pnpm test:unit`          | Vitest unit tests (`lib/i18n/locale.test.ts`, `lib/i18n/messages-parity.test.ts`, `lib/supabase/next-path.test.ts`)                                                     |
-| `pnpm test:unit:coverage` | Same, with coverage (`lib/**` only; no thresholds enforced — see `vitest.config.ts`)                                                                                    |
-| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000 |
+| Command                   | What it does                                                                                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                           |
+| `pnpm build`              | Production build                                                                                                                                                                           |
+| `pnpm start`              | Start the production server                                                                                                                                                                |
+| `pnpm lint`               | ESLint                                                                                                                                                                                     |
+| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                                        |
+| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                                             |
+| `pnpm format`             | Prettier — write formatting to every file                                                                                                                                                  |
+| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                                      |
+| `pnpm test:unit`          | Vitest unit tests (`lib/i18n/locale.test.ts`, `lib/i18n/messages-parity.test.ts`, `lib/supabase/next-path.test.ts`, `lib/ui/roving-index.test.ts`, `lib/auth/sign-in-with-google.test.ts`) |
+| `pnpm test:unit:coverage` | Same, with coverage (`lib/**` only; no thresholds enforced — see `vitest.config.ts`)                                                                                                       |
+| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000                    |
 
 ## CI
 

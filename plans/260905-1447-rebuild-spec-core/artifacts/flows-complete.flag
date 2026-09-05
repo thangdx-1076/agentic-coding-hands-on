@@ -1,0 +1,4 @@
+# FL.5 complete — 2026-09-05T14:52:09Z
+# Scope: flows (all entities)
+# Result: 0 Tier-1 flows emitted — no entity cleared the >=2 transitions AND >=2 trigger-types gate.
+# promote_drafts.py --scope flows intentionally NOT run: empty source, exit 3 guard. No docs/vi/flows/ created.

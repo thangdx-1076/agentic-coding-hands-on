@@ -34,7 +34,7 @@ authored_by: rebuild-spec
 
 | Code | Name | Trigger | Payload | File Schema |
 |------|------|---------|---------|--------------|
-| BL001_SupabaseBrowserClient | SupabaseBrowserClient | Client component cần Supabase Auth phía trình duyệt (hiện tại: `LoginClient.handleLoginClick` trước khi gọi `signInWithOAuth`) | — | N/A — not a file-exchange type |
+| BL001_SupabaseBrowserClient | SupabaseBrowserClient | Client component cần Supabase Auth phía trình duyệt (hiện tại: `useLoginActions.handleLoginClick` gọi `signInWithGoogle` trước khi gọi `signInWithOAuth`) | — | N/A — not a file-exchange type |
 | BL002_SupabaseServerClient | SupabaseServerClient | Server Component / Server Action / Route Handler cần Supabase Auth phía server, mỗi request | — | N/A — not a file-exchange type |
 | BL003_SupabaseProxyClient | SupabaseProxyClient | `proxy.ts` trên mọi request khớp matcher `["/", "/login", "/todo/:path*"]` | — | N/A — not a file-exchange type |
 
@@ -74,18 +74,19 @@ Aggregating multiple source files into a single BL item violates Rule C1 and wil
 ## BL001_SupabaseBrowserClient
 
 **Type**: integration
-**Trigger**: Client component cần Supabase Auth phía trình duyệt — điểm gọi duy nhất hiện có: `LoginClient.handleLoginClick` (`app/login/login-client.tsx:45`) ngay trước `supabase.auth.signInWithOAuth(...)`
+**Trigger**: Client component cần Supabase Auth phía trình duyệt — điểm gọi duy nhất hiện có: `signInWithGoogle` (`lib/auth/sign-in-with-google.ts:44`), gọi từ `useLoginActions.handleLoginClick` (`hooks/use-login-actions.ts:42-57`), ngay trước `supabase.auth.signInWithOAuth(...)`
 **File Schema**: N/A — not a file-exchange type
 **Source File**: lib/supabase/client.ts
 **Source Symbol**: createClient
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory function bọc `createBrowserClient` từ `@supabase/ssr` — client SDK Supabase Auth phía trình duyệt, đọc `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (assertion `!` cố ý: thiếu biến môi trường phải fail loud). **Intent matched**: integration — external API/service client (Supabase Auth/DB SDK). **No-row reason**: stack Next.js App Router không có dòng nào trong bảng `bl-source-patterns.md`; analog gần nhất (NestJS "external SDK injection clients") là pattern Mode B theo decorator, không khớp cấu trúc factory function thuần này. **Observed pattern**: export `createClient()` bọc `createBrowserClient`, được gọi duy nhất tại `app/login/login-client.tsx:45`.
+`[SIGNAL_INFERRED]` Factory function bọc `createBrowserClient` từ `@supabase/ssr` — client SDK Supabase Auth phía trình duyệt, đọc `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (assertion `!` cố ý: thiếu biến môi trường phải fail loud). **Intent matched**: integration — external API/service client (Supabase Auth/DB SDK). **No-row reason**: stack Next.js App Router không có dòng nào trong bảng `bl-source-patterns.md`; analog gần nhất (NestJS "external SDK injection clients") là pattern Mode B theo decorator, không khớp cấu trúc factory function thuần này. **Observed pattern**: export `createClient()` bọc `createBrowserClient`, được gọi duy nhất tại `lib/auth/sign-in-with-google.ts:44`.
 
 ### Related Modules
 
-- app/login/login-client.tsx (`LoginClient.handleLoginClick`)
+- lib/auth/sign-in-with-google.ts (`signInWithGoogle`)
+- hooks/use-login-actions.ts (`useLoginActions.handleLoginClick`, caller)
 
 ### Related Routes
 

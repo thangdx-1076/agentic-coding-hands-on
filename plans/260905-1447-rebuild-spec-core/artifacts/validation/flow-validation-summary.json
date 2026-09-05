@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-09-05T14:50:54Z",
+  "overall_status": "PASS",
+  "plan": "260905-1447-rebuild-spec-core",
+  "schema_version": 1,
+  "totals": {
+    "critical": 0,
+    "failed_specs": 0,
+    "passed_specs": 0,
+    "warning": 0
+  },
+  "validators": {
+    "id_contiguity": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "process_flow": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    }
+  }
+}

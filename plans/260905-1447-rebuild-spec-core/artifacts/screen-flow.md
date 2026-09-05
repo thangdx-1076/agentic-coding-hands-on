@@ -23,9 +23,20 @@ graph TD
 
 ## Feature Entry Points
 
-{Populated by FS.1 researchers (feature-specs pass) AFTER feature-list.md exists. W2 ScreenFlow researcher leaves this section as the placeholder below — do NOT populate it during W2.}
+### F001_GoogleOAuthLogin
 
-<!-- Feature Entry Points: run /tkm:rebuild-spec --feature-specs to populate -->
+- **Entry screen**: SCR001_LoginScreen — `/login`
+- **Owned screens**:
+  - SCR001_LoginScreen — `/login` (atomic)
+  - SCR002_TodoScreen — `/todo` (atomic)
+- **Exit screens**: SCR002_TodoScreen (on successful Google OAuth) → SCR001_LoginScreen (on logout)
+
+### F002_LanguageSwitch
+
+- **Entry screen**: SCR001_LoginScreen — `/login`
+- **Owned screens**:
+  - SCR001_LoginScreen (partial-scope: chỉ vùng LanguageSelector trong header — SCR001 không phát sinh REG### vì screen được phân loại atomic, nên tham chiếu dùng mã bare SCR001, không bịa `SCR001/REG###`) — `/login` (atomic)
+- **Exit screens**: none (không điều hướng sang screen khác; chọn ngôn ngữ chỉ re-render tại chỗ)
 
 ---
 

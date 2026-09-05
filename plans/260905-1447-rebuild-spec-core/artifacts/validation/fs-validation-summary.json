@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-09-05T14:35:18Z",
+  "overall_status": "WARN",
+  "plan": "artifacts",
+  "schema_version": 1,
+  "totals": {
+    "critical": 0,
+    "failed_specs": 0,
+    "passed_specs": 2,
+    "warning": 5
+  },
+  "validators": {
+    "feature_api_link": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "feature_screen_link": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "reading_guide_db_impact": {
+      "issues": [],
+      "status": "PASS",
+      "summary": {
+        "critical": 0,
+        "warning": 0
+      }
+    },
+    "specs": {
+      "F001_GoogleOAuthLogin": {
+        "issues": [
+          {
+            "location": {
+              "file": "plans/260905-1447-rebuild-spec-core/artifacts/features/F001_GoogleOAuthLogin/technical-spec.md",
+              "line": 239
+            },
+            "message": "## 4. Decision Logic is N/A but spec contains conditional patterns matching DEC signatures (['\\\\{[^}]*\\\\?[^:]*:[^}]*\\\\}']); reviewer should verify",
+            "rule_id": "FeatureSpec.dec_lazy_na",
+            "severity": "warning",
+            "validator": "feature_spec"
+          },
+          {
+            "location": {
+              "file": "plans/260905-1447-rebuild-spec-core/artifacts/features/F001_GoogleOAuthLogin/functional-spec.md",
+              "line": null
+            },
+            "message": "\u00a7 4 + \u00a7 5 average 2.2 lines/rule (budget: \u22642)",
+            "rule_id": "func.rule_density",
+            "severity": "warning",
+            "validator": "feature_spec"
+          }
+        ],
+        "spec_path": "plans/260905-1447-rebuild-spec-core/artifacts/features/F001_GoogleOAuthLogin/technical-spec.md",
+        "status": "WARN",
+        "summary": {
+          "critical": 0,
+          "warning": 2
+        }
+      },
+      "F002_LanguageSwitch": {
+        "issues": [
+          {
+            "location": {
+              "file": "plans/260905-1447-rebuild-spec-core/artifacts/features/F002_LanguageSwitch/technical-spec.md",
+              "line": 218
+            },
+            "message": "\u00a7 4.4 rule has no 'Used in:' action list and its enclosing heading carries no explicit cross-cutting label",
+            "rule_id": "FeatureSpec.crosscutting_unlabelled",
+            "severity": "warning",
+            "validator": "feature_spec"
+          },
+          {
+            "location": {
+              "file": "plans/260905-1447-rebuild-spec-core/artifacts/features/F002_LanguageSwitch/technical-spec.md",
+              "line": 90
+            },
+            "message": "A2 writes >=2 tables or is background/async \u2014 over the diagram threshold \u2014 but its capability bucket carries no mermaid sequenceDiagram (_pre_fill)",
+            "rule_id": "FeatureSpec.diagram_required_missing",
+            "severity": "warning",
+            "validator": "feature_spec"
+          },
+          {
+            "location": {
+              "file": "plans/260905-1447-rebuild-spec-core/artifacts/features/F002_LanguageSwitch/functional-spec.md",
+              "line": null
+            },
+            "message": "\u00a7 4 + \u00a7 5 average 2.8 lines/rule (budget: \u22642)",
+            "rule_id": "func.rule_density",
+            "severity": "warning",
+            "validator": "feature_spec"
+          }
+        ],
+        "spec_path": "plans/260905-1447-rebuild-spec-core/artifacts/features/F002_LanguageSwitch/technical-spec.md",
+        "status": "WARN",
+        "summary": {
+          "critical": 0,
+          "warning": 3
+        }
+      }
+    }
+  }
+}

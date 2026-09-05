@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "vitest/config";
 
 /**
@@ -10,6 +12,16 @@ import { defineConfig } from "vitest/config";
  * configured (see phase-04.md § Key Insights).
  */
 export default defineConfig({
+  resolve: {
+    // Mirror `tsconfig.json`'s `paths` ({"@/*": ["./*"]}). Vitest does not read
+    // tsconfig paths, and until now nothing caught that: every `@/` import a
+    // test reached was intercepted by `vi.mock` before resolution ever ran.
+    // The first REAL `@/` import between two lib modules
+    // (`sign-in-with-google.ts` -> `next-path.ts`) failed to resolve.
+    alias: {
+      "@": fileURLToPath(new URL(".", import.meta.url)),
+    },
+  },
   test: {
     environment: "node",
     include: ["lib/**/*.test.ts"],
