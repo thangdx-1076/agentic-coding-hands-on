@@ -103,7 +103,7 @@ describe("signInWithGoogle", () => {
     });
   });
 
-  it("giữ nguyên chuỗi rỗng khi next rỗng", async () => {
+  it("rơi về /todo khi next rỗng", async () => {
     const signInWithOAuth = vi.fn().mockResolvedValueOnce({ error: null });
     stubOAuth(signInWithOAuth);
 
@@ -111,7 +111,26 @@ describe("signInWithGoogle", () => {
 
     expect(signInWithOAuth).toHaveBeenCalledExactlyOnceWith({
       provider: "google",
-      options: { redirectTo: "http://localhost:3000/auth/callback?next=" },
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=/todo" },
+    });
+  });
+
+  // Ba case dưới đây là lý do `next` đi qua `safeNextPath`: ràng buộc "chỉ
+  // nhận đường dẫn nội bộ" phải nằm ở code, không nằm ở comment. Một caller
+  // sau này nối `next` từ query param cũng không mở được open redirect.
+  it.each([
+    ["off-origin tuyệt đối", "https://evil.com"],
+    ["protocol-relative", "//evil.com"],
+    ["header injection", "/todo%0d%0aSet-Cookie:+a=b"],
+  ])("chặn %s, rơi về /todo", async (_label, hostile) => {
+    const signInWithOAuth = vi.fn().mockResolvedValueOnce({ error: null });
+    stubOAuth(signInWithOAuth);
+
+    await signInWithGoogle({ origin: ORIGIN, next: hostile });
+
+    expect(signInWithOAuth).toHaveBeenCalledExactlyOnceWith({
+      provider: "google",
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=/todo" },
     });
   });
 });

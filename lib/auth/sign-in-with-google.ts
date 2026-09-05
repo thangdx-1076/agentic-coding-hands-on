@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { safeNextPath } from "@/lib/supabase/next-path";
 
 export type SignInWithGoogleOptions = {
   /**
@@ -11,11 +12,11 @@ export type SignInWithGoogleOptions = {
   /**
    * Đường dẫn quay về sau khi callback đổi code lấy session.
    *
-   * PHẢI là đường dẫn nội bộ do chính code quyết định, không bao giờ lấy
-   * thẳng từ query param của người dùng: giá trị này được nối trực tiếp
-   * vào URL nên một caller bất cẩn sẽ mở đường cho open redirect. Nếu về
-   * sau cần nhận `next` từ bên ngoài, cho nó đi qua cùng bộ kiểm tra mà
-   * `lib/supabase/next-path.ts` đang dùng cho chiều đi vào.
+   * Giá trị luôn đi qua `safeNextPath` trước khi được nối vào URL, nên một
+   * caller truyền nhầm dữ liệu người dùng vào đây cũng không mở được open
+   * redirect — thứ không hợp lệ sẽ rơi về `/todo`. Đây là cùng bộ kiểm tra
+   * mà `/auth/callback` dùng cho chiều đi vào; ràng buộc nằm ở code, không
+   * nằm ở lời dặn trong comment.
    */
   next: string;
 };
@@ -45,7 +46,7 @@ export async function signInWithGoogle({
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback?next=${next}`,
+        redirectTo: `${origin}/auth/callback?next=${safeNextPath(next)}`,
       },
     });
     return { ok: !error };
