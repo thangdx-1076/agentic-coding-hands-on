@@ -56,4 +56,18 @@ export const handlers = [
     `${SUPABASE_URL}/auth/v1/logout`,
     () => new HttpResponse(null, { status: 204 }),
   ),
+
+  // Storybook/browser fixture for the homepage account menu's role read
+  // (`lib/auth/get-user-role.ts`, called server-side from `app/page.tsx`).
+  // No unit test consumes this handler — `getUserRole` takes an injected
+  // client and is tested against stubs, not this fixture. `.maybeSingle()`
+  // on a GET sends `Accept: application/json`, so PostgREST replies with a
+  // plain array (never `vnd.pgrst.object+json`) — the handler MUST mirror
+  // that shape or `getUserRole` would receive the wrong data type.
+  http.get(`${SUPABASE_URL}/rest/v1/users`, ({ request }) => {
+    const id = new URL(request.url).searchParams.get("id");
+    return HttpResponse.json(
+      id === `eq.${MOCK_USER.id}` ? [{ role: "member" }] : [],
+    );
+  }),
 ];
