@@ -74,9 +74,10 @@ const eslintConfig = defineConfig([
     extends: [playwright.configs["flat/recommended"]],
   },
 
-  // Vitest unit test files only.
+  // Vitest unit test files only. Scope tracks `vitest.config.ts`'s two
+  // projects: `lib/**` + `app/**` run under `node`, `hooks/**` under `jsdom`.
   {
-    files: ["lib/**/*.test.ts"],
+    files: ["lib/**/*.test.ts", "hooks/**/*.test.ts", "app/**/*.test.ts"],
     extends: [vitest.configs.recommended],
   },
 
@@ -100,6 +101,13 @@ const eslintConfig = defineConfig([
     // Playwright/test output
     "test-results/**",
     "playwright-report/**",
+    // Storybook build output (generated).
+    "storybook-static/**",
+    // MSW's service worker, generated verbatim by `msw init` and version-
+    // matched to the installed msw. `eslint` runs bare here (no path arg), so
+    // it does sweep `public/` — without this line the first `msw init` turns
+    // `pnpm lint` red on a file no human wrote and no human may edit.
+    "public/mockServiceWorker.js",
   ]),
 
   // Prettier integration: disables ESLint's own stylistic/formatting rules
