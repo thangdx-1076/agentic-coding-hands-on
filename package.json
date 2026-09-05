@@ -17,7 +17,14 @@
     "format:check": "prettier --check .",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
-    "test:unit:coverage": "vitest run --coverage"
+    "test:unit:coverage": "vitest run --coverage",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "msw"
+    ]
   },
   "dependencies": {
     "@supabase/ssr": "0.12.5",
@@ -29,7 +36,10 @@
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
+    "@storybook/nextjs-vite": "10.6.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -41,10 +51,15 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-playwright": "^2.11.0",
+    "jsdom": "^30.0.1",
+    "msw": "2.15.0",
+    "msw-storybook-addon": "3.0.0",
     "prettier": "^3.9.6",
+    "storybook": "10.6.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "typescript-eslint": "^8.69.0",
+    "vite": "^8.2.2",
     "vitest": "^3.2.7"
   }
 }
