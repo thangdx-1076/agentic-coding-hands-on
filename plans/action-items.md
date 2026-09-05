@@ -59,6 +59,8 @@
 - Coverage allowlist **không có glob `.tsx`**. Đó là cơ chế loại `components/**` và `app/**/page.tsx` khỏi mẫu số — sai khác phần mở rộng, không phải exclude list phải bảo trì.
 - Ngưỡng 100% bật ở phase cuối, sau khi test đã đủ. Bật sớm là chặn cả nhánh cho tới khi có người trả nợ.
 - `tsconfig.json` thêm glob `.storybook/**` (ngoài plan): glob `**/*` của TypeScript bỏ qua thư mục bắt đầu bằng dấu chấm, nên 2 file đó nằm ngoài project và lint type-aware không parse được.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/3 — branch `feat/test-storybook-standards` → `main`, 13 commit.
+- Bump **minor** `0.1.1 → 0.2.0` chứ không phải patch: có 2 commit `feat:` (Storybook + script mới), tức thêm capability chưa từng có. Ship bảo minor phải hỏi, nhưng CLAUDE.md bảo chỉ dừng khi mất dữ liệu/tốn tiền/lộ secret — số version không thuộc nhóm đó nên tự chốt.
 
 ### Nợ lại
 
