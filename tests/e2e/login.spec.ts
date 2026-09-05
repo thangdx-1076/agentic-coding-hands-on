@@ -229,6 +229,214 @@ test.describe('Login Screen', () => {
       );
       expect(loadingObserved).toBe(true);
     });
+
+    test.describe('Language selector keyboard navigation (ARIA APG)', () => {
+      test('[KB a1f8c2d1] ArrowDown on trigger opens menu and focuses first item', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+        const menu = page.locator('[role="menu"]');
+
+        // Menu should not be visible initially
+        await expect(menu).not.toBeVisible();
+
+        // Focus the button
+        await button.focus();
+
+        // Press ArrowDown
+        await page.keyboard.press('ArrowDown');
+
+        // Menu should be visible
+        await expect(menu).toBeVisible();
+
+        // First menu item should be focused
+        const firstItem = page.locator('[role="menuitem"]').nth(0);
+        await expect(firstItem).toBeFocused();
+      });
+
+      test('[KB c4e7d9f2] ArrowUp on trigger opens menu and focuses last item', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+        const menu = page.locator('[role="menu"]');
+
+        // Menu should not be visible initially
+        await expect(menu).not.toBeVisible();
+
+        // Focus the button
+        await button.focus();
+
+        // Press ArrowUp
+        await page.keyboard.press('ArrowUp');
+
+        // Menu should be visible
+        await expect(menu).toBeVisible();
+
+        // Last menu item (EN) should be focused
+        const lastItem = page.locator('[role="menuitem"]').nth(1);
+        await expect(lastItem).toBeFocused();
+      });
+
+      test('[KB f7b2a4e8] ArrowDown wraps from last to first item in menu', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+
+        // Open menu and focus last item
+        await button.focus();
+        await page.keyboard.press('ArrowUp'); // Opens at last item
+
+        // Verify last item (EN) is focused
+        const lastItem = page.locator('[role="menuitem"]').nth(1);
+        await expect(lastItem).toBeFocused();
+
+        // Press ArrowDown to wrap to first
+        await page.keyboard.press('ArrowDown');
+
+        // First item (VN) should now be focused
+        const firstItem = page.locator('[role="menuitem"]').nth(0);
+        await expect(firstItem).toBeFocused();
+      });
+
+      test('[KB e3c9b1a5] ArrowUp wraps from first to last item in menu', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+
+        // Open menu and focus first item
+        await button.focus();
+        await page.keyboard.press('ArrowDown'); // Opens at first item
+
+        // Verify first item (VN) is focused
+        const firstItem = page.locator('[role="menuitem"]').nth(0);
+        await expect(firstItem).toBeFocused();
+
+        // Press ArrowUp to wrap to last
+        await page.keyboard.press('ArrowUp');
+
+        // Last item (EN) should now be focused
+        const lastItem = page.locator('[role="menuitem"]').nth(1);
+        await expect(lastItem).toBeFocused();
+      });
+
+      test('[KB d6f1c3b9] Home key jumps to first item in menu', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+
+        // Open menu and focus last item
+        await button.focus();
+        await page.keyboard.press('ArrowUp'); // Opens at last item
+
+        // Verify last item is focused
+        const lastItem = page.locator('[role="menuitem"]').nth(1);
+        await expect(lastItem).toBeFocused();
+
+        // Press Home to jump to first
+        await page.keyboard.press('Home');
+
+        // First item should now be focused
+        const firstItem = page.locator('[role="menuitem"]').nth(0);
+        await expect(firstItem).toBeFocused();
+      });
+
+      test('[KB b8e2d7a4] End key jumps to last item in menu', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+
+        // Open menu and focus first item
+        await button.focus();
+        await page.keyboard.press('ArrowDown'); // Opens at first item
+
+        // Verify first item is focused
+        const firstItem = page.locator('[role="menuitem"]').nth(0);
+        await expect(firstItem).toBeFocused();
+
+        // Press End to jump to last
+        await page.keyboard.press('End');
+
+        // Last item should now be focused
+        const lastItem = page.locator('[role="menuitem"]').nth(1);
+        await expect(lastItem).toBeFocused();
+      });
+
+      test('[KB c5a9f2d3] Escape closes menu and returns focus to trigger', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+        const menu = page.locator('[role="menu"]');
+
+        // Open menu
+        await button.focus();
+        await page.keyboard.press('ArrowDown');
+
+        // Menu should be visible
+        await expect(menu).toBeVisible();
+
+        // Press Escape
+        await page.keyboard.press('Escape');
+
+        // Menu should be hidden
+        await expect(menu).not.toBeVisible();
+
+        // Focus should return to button
+        await expect(button).toBeFocused();
+      });
+
+      test('[KB a2d8e6f1] Tab closes menu without returning focus to trigger', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+        const menu = page.locator('[role="menu"]');
+
+        // Open menu
+        await button.focus();
+        await page.keyboard.press('ArrowDown');
+
+        // Menu should be visible
+        await expect(menu).toBeVisible();
+
+        // Press Tab
+        await page.keyboard.press('Tab');
+
+        // Menu should be hidden
+        await expect(menu).not.toBeVisible();
+
+        // Focus should move away from button (Tab behavior)
+        await expect(button).not.toBeFocused();
+      });
+
+      test('[REG 2026-09-05] Focus resets to first item on mouse open after keyboard navigation', async ({ page }) => {
+        await page.goto('/login');
+
+        const button = page.locator('header button[aria-haspopup="menu"]');
+        const menu = page.locator('[role="menu"]');
+        const firstItem = page.locator('[role="menuitem"]').nth(0); // VN
+        const lastItem = page.locator('[role="menuitem"]').nth(1); // EN
+
+        // Step 1: keyboard open with ArrowUp lands on last item
+        await button.focus();
+        await page.keyboard.press('ArrowUp');
+
+        // Menu should be visible with last item focused
+        await expect(menu).toBeVisible();
+        await expect(lastItem).toBeFocused();
+
+        // Step 2: Escape closes menu and returns focus to trigger
+        await page.keyboard.press('Escape');
+        await expect(menu).not.toBeVisible();
+        await expect(button).toBeFocused();
+
+        // Step 3: Mouse click opens menu again
+        await button.click();
+        await expect(menu).toBeVisible();
+
+        // Step 4: Verify first item (VN) is now focused, not the stale last item
+        await expect(firstItem).toBeFocused();
+        await expect(lastItem).not.toBeFocused();
+      });
+    });
   });
 
   test.describe('Authenticated', () => {

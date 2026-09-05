@@ -82,4 +82,30 @@ describe("safeNextPath", () => {
   it("rejects the DEL control character (0x7f)", () => {
     expect(safeNextPath("/todo\x7f", "/todo")).toBe("/todo");
   });
+
+  it("rejects a raw U+2028 line separator", () => {
+    expect(safeNextPath("/todo\u2028Set-Cookie: x=y", "/todo")).toBe("/todo");
+  });
+
+  it("rejects a raw U+2029 paragraph separator", () => {
+    expect(safeNextPath("/todo\u2029Set-Cookie: x=y", "/todo")).toBe("/todo");
+  });
+
+  it("rejects a percent-encoded U+2028 (lowercase)", () => {
+    expect(safeNextPath("/todo%e2%80%a8", "/todo")).toBe("/todo");
+  });
+
+  it("rejects a percent-encoded U+2029 (uppercase)", () => {
+    expect(safeNextPath("/todo%E2%80%A9", "/todo")).toBe("/todo");
+  });
+
+  it("still accepts a percent-encoded non-control multibyte path", () => {
+    expect(safeNextPath("/todo/%C3%A9t%C3%A9", "/todo")).toBe(
+      "/todo/%C3%A9t%C3%A9",
+    );
+  });
+
+  it("still rejects a percent-encoded CR inside a malformed sequence", () => {
+    expect(safeNextPath("/todo%0d%zz", "/todo")).toBe("/todo");
+  });
 });
