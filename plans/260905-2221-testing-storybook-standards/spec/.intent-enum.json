@@ -1,0 +1,7 @@
+{
+  "mode": "single",
+  "intents": [
+    "(developer, viết logic layer — hook/util/helper — và common UI component, nhận được một chuẩn được enforce: UT co-located + coverage 100% + Storybook làm tài liệu sử dụng, dùng chung một lớp MSW mock)"
+  ],
+  "justification": "Enumeration tìm thấy đúng 1 intent. Task không thêm intent user-facing nào (không screen-group, không API boundary mới cho end-user) — nó là MỘT capability developer-facing: chuẩn test + tài liệu component được enforce. UT-runner, Storybook và MSW là ba THÀNH PHẦN của cùng một chuẩn, không phải ba outcome độc lập: MSW phục vụ cả hai runtime, và coverage-gate chỉ có nghĩa khi đi kèm quy tắc 'component UI không cần UT'. Tách F### riêng cho từng tooling sẽ chia đôi một chuẩn không thể áp dụng nửa vời. Tác động system-level (lớp tooling mới) được ghi ở forward-draft docs/vi/system/architecture.md theo Step 2b."
+}

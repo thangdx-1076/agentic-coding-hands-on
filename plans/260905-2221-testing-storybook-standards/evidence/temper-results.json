@@ -1,0 +1,53 @@
+{
+  "commands": [
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "> eslint --max-warnings 0",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style!",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "-------------------|---------|----------|---------|---------|-------------------",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "> tsc --noEmit",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "└  Storybook build completed successfully",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm exec playwright test --grep-invert @auth",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "27 passed (8.0s)",
+      "ts": "2026-09-06T00:35:00Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "ƒ  (Dynamic)  server-rendered on demand",
+      "ts": "2026-09-06T00:35:00Z"
+    }
+  ]
+}

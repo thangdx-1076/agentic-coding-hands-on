@@ -1,0 +1,37 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "A project-local skill defines the standard and is tracked by git (not swallowed by the .gitignore skill opt-in list) -- proven: `.claude/skills/write-unit-tests-and-storybook-stories/SKILL.md` is in `git ls-files` output and `git check-ignore` exits 1 (not ignored); `.gitignore` gained the explicit `!.claude/skills/write-unit-tests-and-storybook-stories/` un-ignore line.",
+    "Every hook, util, helper, Server Action and designated Route Handler in the coverage allowlist has a co-located unit test file -- proven: read every allowlisted source and its sibling test (lib/supabase/client.ts+.test.ts, server.ts+.test.ts, proxy-client.ts+.test.ts, next-path.ts+.test.ts, hooks/use-login-actions.ts+.test.ts, hooks/use-menu-keyboard-nav.ts+.test.ts, app/actions/locale.ts+.test.ts, app/todo/actions.ts+.test.ts, app/auth/callback/route.ts+.test.ts) -- all present and co-located, none placed under a __tests__/ folder.",
+    "Unit-test coverage reaches 100% for statements, branches, functions and lines across the allowlist, and the threshold genuinely fails the process below that rather than only printing a number -- proven by orchestrator's temper-results.json: 100/100/100/100 measured, and deleting one describe block reproduced a real non-zero exit (98.26% branches < 100% threshold). `vitest.config.ts:100` has `thresholds: { 100: true }`.",
+    "UI components are exempt from unit tests, and that exemption is achieved structurally by the allowlist carrying no .tsx glob rather than by a maintained exclude list -- proven: `vitest.config.ts` coverage.include (lines 82-88) lists only `lib/**/*.ts`, `hooks/**/*.ts`, `app/actions/**/*.ts`, `app/todo/actions.ts`, `app/auth/callback/route.ts` -- grepped the whole file, zero `.tsx` glob anywhere in `include`.",
+    "Every common component, judged by a mechanically checkable content test, has a co-located Storybook story documenting its main variants -- proven: applied the skill's 3-question test to every .tsx in components/ (find components -type f -name '*.tsx'); the 7 components that pass (GoogleLoginButton, LanguageSelector, LoginErrorAlert, LoginFooter, IconDown, IconGoogle, IconVnFlag) each have a .stories.tsx with multiple variant exports (e.g. GoogleLoginButton: Default+Pending; LanguageSelector: Vietnamese+English+Open with a real click-driven `play` function); the 3 that fail the test (LoginHeader, LoginHero -- both assemble >=2 named components; LoginBackground -- hardcodes its own image, no props) correctly have none.",
+    "Each main route that renders presentational UI has one viewable Storybook story that needs no login, no dev server and no live Supabase instance -- proven: login-screen.stories.tsx and todo-screen.stories.tsx both mock their callbacks as no-ops and pass static copy, no network/auth dependency; `/` is exempt (redirect-only, no JSX, confirmed against the skill table).",
+    "One shared MSW handler module serves both the vitest Node runtime and the Storybook browser runtime, with no duplicate handler for the same endpoint -- proven: grepped every .ts/.tsx for `http.get(`/`http.post(` outside test files -- only `mocks/handlers.ts` defines handlers (3: /auth/v1/token, /auth/v1/user, /auth/v1/logout); `mocks/node.ts` and `.storybook/preview.tsx` both import from that one module; the only `server.use(...)` override is a single per-test scoped 400-response variant in route.test.ts, cleaned up by the shared `afterEach(() => server.resetHandlers())` in tests/setup/msw-node.ts.",
+    "The existing e2e suite still passes, and the extraction of TodoScreen from app/todo/page.tsx changes no markup, no className and does not weaken the authoritative auth guard -- proven: diffed page.tsx against b7254e5 -- the createClient()->getUser()->if(!user) redirect('/login') sequence is byte-identical and unconditional, executed before getTranslations/render exactly as before; diffed the extracted JSX against the pre-extraction JSX in the old page.tsx -- the <main>/<h1>/<form>/<button> tree, every className, and every attribute are verbatim, only greeting/logout copy swapped for greeting/logoutLabel props; TodoScreen carries no 'use client' directive and is not async. 27/27 CI-safe e2e recorded passing in temper-results.json.",
+    "lint, format check, unit tests with coverage, build, typecheck and the Storybook build all exit 0 -- accepted per orchestrator's temper-results.json (all six commands exit 0); re-verified the CI workflow wiring matches (ci.yml now runs `pnpm test:unit:coverage` and a `Build Storybook` step in the quality job)."
+  ],
+  "regressionChecked": [
+    "app/todo/page.tsx is the only production runtime file modified -- walked it line by line against b7254e5's version: guard order/logic unchanged, only the render body now delegates to <TodoScreen>. No access-control or markup regression found.",
+    "vitest.config.ts changes what the coverage number measures -- confirmed include list has no .tsx glob (see acceptance criterion 4 above); the allowlist is exactly the 5 entries the plan specifies, nothing wider.",
+    "The CI quality job swapped pnpm test:unit for pnpm test:unit:coverage and gained a Build Storybook step -- confirmed via `git diff` on .github/workflows/ci.yml: both changes present, Storybook step placed after typecheck per the file's own ordering comment.",
+    "public/mockServiceWorker.js is generated and served from public/, and is excluded from eslint -- confirmed the file is msw's standard `/* Please do NOT modify this file. */` boilerplate (PACKAGE_VERSION 2.15.0 matching package.json's pinned msw version) and eslint.config.mjs's ignore list gained the exact `public/mockServiceWorker.js` line.",
+    "tsconfig.json gained .storybook globs -- confirmed `.storybook/**/*.ts` and `.storybook/**/*.tsx` were added to tsconfig's include array.",
+    "No database, migration, API contract or user-facing product behavior changed -- confirmed: the only behavioral file (page.tsx) preserves guard order and JSX verbatim; no migration files, no exported API route signature changed; the /auth/callback route.ts source itself is untouched, only tested."
+  ],
+  "contractStatus": "HELD",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Low",
+      "category": "Structure",
+      "location": "CLAUDE.md:2-49",
+      "summary": "This branch's history also carries an unrelated CLAUDE.md rewrite (--flow flag, gh --repo pinning, decisions/action-items protocol) with no connection to the testing/Storybook standard the plan describes. Harmless (project meta config, not shipped code) but it is scope creep on this diff and slightly muddies a review focused on the testing standard.",
+      "disposition": "Accept"
+    }
+  ]
+}

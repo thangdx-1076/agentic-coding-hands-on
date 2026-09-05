@@ -10,7 +10,7 @@ Auth backend là Supabase (`@supabase/ssr` 0.12.5 + `@supabase/supabase-js` 2.11
 
 Giao diện hỗ trợ song ngữ vi/en qua `next-intl` 4.14.2, chọn locale bằng cookie `NEXT_LOCALE` (không dùng URL prefix / i18n routing) — mặc định `vi` (`lib/i18n/locale.ts:9-14`, `i18n/request.ts:16-27`). Locale được set qua Server Action `setLocale` (`app/actions/locale.ts:24-41`) và luôn được chuẩn hoá (`normalizeLocale`) trước khi ghi cookie hoặc dùng trong dynamic `import(messages/${locale}.json)`, chặn path-traversal/cookie-injection (`lib/i18n/locale.ts:42-51`, `i18n/request.ts:9`).
 
-Stack đầy đủ: Next.js 16.3.4, React 19.2.8, TypeScript ^5, Tailwind CSS 4, Vitest ^3.2.7 (unit), `@playwright/test` 1.62.1 (E2E) — `package.json:13-32`, `README.md:9-18`.
+Stack đầy đủ: Next.js 16.3.4, React 19.2.8, TypeScript ^5, Tailwind CSS 4, Vitest ^3.2.7 (unit, cổng chặn coverage 100% trên allowlist tường minh), `@playwright/test` 1.62.1 (E2E), Storybook 10.6.0 + `msw` 2.15.0 (component docs + mock API dùng chung cho vitest lẫn Storybook) — `package.json:29-64`, `README.md:9-20`.
 
 For architecture diagrams and tech stack details, see [architecture.md](architecture.md).
 

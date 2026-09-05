@@ -82,7 +82,7 @@ graph TD
 - Đến SCR001_LoginScreen: guard `getUser()` phát hiện không có session hợp lệ
 
 **Decision Points**:
-- `getUser()` (fail CLOSED, `app/todo/page.tsx:17-25`): `!user` → redirect `/login` ngay trước khi render
+- `getUser()` (fail CLOSED, `app/todo/page.tsx:21-28`): `!user` → redirect `/login` ngay trước khi render
 
 ---
 
@@ -161,7 +161,7 @@ if (user) → redirect /todo
 
 ### GUARD-003 — Authoritative auth guard trên `/todo` (fail CLOSED)
 **trigger:** Server Component render
-**source:** `app/todo/page.tsx:17-25`
+**source:** `app/todo/page.tsx:21-28`
 **logic:**
 ```pseudo
 user = await supabase.auth.getUser()

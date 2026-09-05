@@ -162,18 +162,19 @@ Khi thất bại (mọi nhánh khác) không có cookie session nào được se
 `FR-301` `FR-603` `US003` · `SCR002_TodoScreen`
 
 **Who** · Người dùng đã đăng nhập (kỳ vọng) *(gate A0 — § 4.4)*
-**FE** · `app/todo/page.tsx:31-45` render `<h1>` chào theo email + form logout — không có
-component con nào khác, không có state phía client.
+**FE** · `app/todo/page.tsx:32-38` build props (`greeting`, `logoutLabel`, `logoutAction`) rồi render
+qua component con `TodoScreen` (`components/todo/todo-screen.tsx:16-34`) — thuần trình bày, không có
+state phía client.
 **Request** · không có param — chỉ dựa vào cookie session hiện có
 **BE** · `` `createClient` `` (BL002, `lib/supabase/server.ts:16-42`) rồi
 `supabase.auth.getUser()` — **KHÔNG bọc try/catch** (khác hẳn `/login`).
 **Rule** · **FR-603/BR-003 — Guard `/todo` fail CLOSED.** Không có `user` → `redirect("/login")`
-ngay trước khi render bất cứ nội dung nào (`app/todo/page.tsx:25-27`). Lỗi Supabase khi gọi
+ngay trước khi render bất cứ nội dung nào (`app/todo/page.tsx:26-28`). Lỗi Supabase khi gọi
 `getUser()` văng exception thẳng ra (không có try/catch nuốt lỗi) — hiệu quả tương đương fail-closed
 dù không tường minh trả `null`, vì không đường nào lộ nội dung bảo vệ khi check thất bại. *(§ 4.4)*
 **Result** · Read-only — **no DB write**. Hiển thị `t("greeting", { email: user.email ?? "" })`
 (field DUY NHẤT của `MODEL002_SupabaseUser` được đọc trong toàn bộ repo).
-**Source:** `app/todo/page.tsx:19-46` → `lib/supabase/server.ts:16-42`
+**Source:** `app/todo/page.tsx:9-39` → `lib/supabase/server.ts:16-42` → `components/todo/todo-screen.tsx:1-34`
 
 <!-- No diagram: read-only, 1 điều kiện guard, không background — dưới ngưỡng. -->
 
@@ -185,7 +186,7 @@ dù không tường minh trả `null`, vì không đường nào lộ nội dung
 `FR-302` `FR-603` `BR-004` `US003` · `BL002_SupabaseServerClient`
 
 **Who** · Người dùng đã đăng nhập, đang ở `/todo`
-**FE** · `app/todo/page.tsx:36-43` — `<form action={logoutAction}>`, không có client JS nào chặn
+**FE** · `components/todo/todo-screen.tsx:24-31` — `<form action={logoutAction}>`, không có client JS nào chặn
 submit (không optimistic UI, không confirm dialog).
 **Request** · form submit thuần, không có field nào
 **BE** · `` `logoutAction` `` (`app/todo/actions.ts:14-24`) gọi `createClient()` (BL002) rồi
@@ -248,6 +249,7 @@ trường hợp matcher của proxy không khớp. `app/page.tsx:11-18`.
 | `GET` (callback route) | PKCE code exchange + quyết định redirect (DEC-001/002) | A3 | `app/auth/callback/route.ts` |
 | `safeNextPath` | Choke point chống open-redirect cho `next` | A3 | `lib/supabase/next-path.ts` |
 | `TodoPage` | Server entry `/todo`, guard authoritative fail-closed | A4 | `app/todo/page.tsx` |
+| `TodoScreen` | Trình bày thuần `/todo` — nhận props, không tự gọi Supabase/i18n | A4 | `components/todo/todo-screen.tsx` |
 | `logoutAction` | Server Action đăng xuất best-effort | A5 | `app/todo/actions.ts` |
 | `Home` | Root fallback redirect authoritative | A6 | `app/page.tsx` |
 | `proxy` | Guard optimistic cross-cutting cho `/`, `/login`, `/todo/:path*` | A0 | `proxy.ts` |
@@ -445,7 +447,7 @@ redirect `/login` (guard A4 fail-closed re-check session đã mất). Test tươ
 | A2 | 4 | `signInWithGoogle` | `lib/auth/sign-in-with-google.ts:1-55` | khởi động OAuth qua BL001 |
 | A3 | 5 | `GET` (callback) | `app/auth/callback/route.ts:1-47` | đổi PKCE code lấy session + 3 nhánh redirect (DEC-001/002) |
 | A3 | 6 | `safeNextPath` | `lib/supabase/next-path.ts:1-106` | choke point chống open-redirect cho `next` |
-| A4 | 7 | `TodoPage` | `app/todo/page.tsx:1-46` | guard authoritative fail-closed + greeting |
+| A4 | 7 | `TodoPage` | `app/todo/page.tsx:1-39` | guard authoritative fail-closed + build greeting props |
 | A5 | 8 | `logoutAction` | `app/todo/actions.ts:1-24` | Server Action đăng xuất best-effort |
 | A6 | 9 | `Home` | `app/page.tsx:11-18` | root fallback redirect authoritative |
 
