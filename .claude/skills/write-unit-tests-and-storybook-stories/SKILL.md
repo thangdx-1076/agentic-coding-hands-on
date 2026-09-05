@@ -21,7 +21,7 @@ Quy tắc này **bắt buộc**. Không phải gợi ý.
 | `hooks/use-*.ts` | `hooks/use-*.test.ts` ngay cạnh | vitest, project `jsdom` |
 | `app/actions/**/*.ts`, `app/todo/actions.ts`, `app/auth/callback/route.ts` | `*.test.ts` ngay cạnh | vitest, project `node` |
 | Common component (xem ranh giới dưới) | `*.stories.tsx` ngay cạnh | Storybook |
-| Component composition, `app/**/page.tsx` | **không bắt buộc gì** | Playwright phủ |
+| Component composition, mọi `.tsx` trong `app/**` | **không bắt buộc gì** | Playwright phủ |
 
 "Ngay cạnh" nghĩa là cùng thư mục, cùng tên gốc. `hooks/use-login-actions.ts` →
 `hooks/use-login-actions.test.ts`. Không có thư mục `__tests__/` riêng.
@@ -143,8 +143,10 @@ không cần `await`. Chờ nó tắt thì dùng `waitFor`, **không** `waitForN
 ## Không áp dụng khi
 
 - Component composition — đã lắp ghép rồi, story của route phủ nó.
-- `app/**/page.tsx` — `async` Server Component, vitest không hỗ trợ (giới hạn của chính Next.js).
-  Playwright là nơi kiểm nó.
+- Mọi `.tsx` trong `app/**` — `page.tsx` là `async` Server Component, vitest không hỗ trợ (giới
+  hạn của chính Next.js). File ranh giới client của route (`*-client.tsx`) cũng miễn theo cùng lý
+  do: nó chỉ nối props với hành động, phần nhìn nằm ở component trình bày mà story của route đã
+  phủ. Playwright là nơi kiểm cả hai.
 - File `*-copy.ts` chỉ chứa chuỗi tĩnh, file `*.d.ts`.
 - File config ở gốc repo.
 
