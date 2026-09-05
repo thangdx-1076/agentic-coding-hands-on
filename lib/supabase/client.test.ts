@@ -19,9 +19,7 @@ vi.mock("@supabase/ssr", () => ({
 describe("createClient", () => {
   it("gọi createBrowserClient đúng 1 lần với (url, publishable key) từ env và trả nguyên client ra ngoài", () => {
     const fakeClient = {};
-    vi.mocked(createBrowserClient).mockReturnValueOnce(
-      fakeClient as unknown as ReturnType<typeof createBrowserClient>,
-    );
+    vi.mocked(createBrowserClient).mockReturnValueOnce(fakeClient);
 
     const client = createClient();
 

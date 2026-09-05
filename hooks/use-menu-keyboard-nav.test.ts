@@ -34,9 +34,17 @@ function buildMenuDom(itemCount: number) {
  * Event bàn phím tối giản: các handler chỉ đọc `.key` và gọi
  * `.preventDefault()`, nên không cần dispatch một KeyboardEvent thật qua
  * `fireEvent` — gọi thẳng hàm trả về là đủ (KISS, đúng như phase chỉ định).
+ *
+ * Trả về tuple `[event, preventDefault]` thay vì để caller đọc lại
+ * `event.preventDefault`: kiểu `KeyboardEvent<T>` khai báo `preventDefault`
+ * dạng method-shorthand (implicit `this`), nên tách nó ra khỏi `event` rồi
+ * đọc thẳng biến `preventDefault` mới tránh được cảnh báo có cơ sở của
+ * `@typescript-eslint/unbound-method` — không phải false positive để tắt đi.
  */
-function buildKeyEvent<T extends Element>(key: string): KeyboardEvent<T> {
-  return { key, preventDefault: vi.fn() } as unknown as KeyboardEvent<T>;
+function buildKeyEvent<T extends Element>(key: string) {
+  const preventDefault = vi.fn();
+  const event = { key, preventDefault } as unknown as KeyboardEvent<T>;
+  return [event, preventDefault] as const;
 }
 
 afterEach(() => {
@@ -71,14 +79,15 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
-      const event = buildKeyEvent<HTMLButtonElement>("ArrowDown");
+      const [event, preventDefault] =
+        buildKeyEvent<HTMLButtonElement>("ArrowDown");
       act(() => {
         result.current.handleButtonKeyDown(event);
       });
 
       expect(result.current.open).toBe(true);
       expect(result.current.activeIndex).toBe(0);
-      expect(event.preventDefault).toHaveBeenCalledOnce();
+      expect(preventDefault).toHaveBeenCalledOnce();
 
       unmount();
     });
@@ -88,14 +97,15 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
-      const event = buildKeyEvent<HTMLButtonElement>("ArrowUp");
+      const [event, preventDefault] =
+        buildKeyEvent<HTMLButtonElement>("ArrowUp");
       act(() => {
         result.current.handleButtonKeyDown(event);
       });
 
       expect(result.current.open).toBe(true);
       expect(result.current.activeIndex).toBe(2); // lastIndex(3)
-      expect(event.preventDefault).toHaveBeenCalledOnce();
+      expect(preventDefault).toHaveBeenCalledOnce();
 
       unmount();
     });
@@ -105,13 +115,13 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
-      const event = buildKeyEvent<HTMLButtonElement>("a");
+      const [event, preventDefault] = buildKeyEvent<HTMLButtonElement>("a");
       act(() => {
         result.current.handleButtonKeyDown(event);
       });
 
       expect(result.current.open).toBe(false);
-      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(preventDefault).not.toHaveBeenCalled();
 
       unmount();
     });
@@ -126,12 +136,13 @@ describe("useMenuKeyboardNav", () => {
       // Bước thứ 2 của chuỗi này (1 → 0) chính là "ArrowDown từ item cuối
       // vòng về đầu".
       [1, 0, 1].forEach((expectedIndex) => {
-        const event = buildKeyEvent<HTMLDivElement>("ArrowDown");
+        const [event, preventDefault] =
+          buildKeyEvent<HTMLDivElement>("ArrowDown");
         act(() => {
           result.current.handleMenuKeyDown(event);
         });
         expect(result.current.activeIndex).toBe(expectedIndex);
-        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(preventDefault).toHaveBeenCalledOnce();
       });
 
       unmount();
@@ -142,13 +153,13 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
-      const event = buildKeyEvent<HTMLDivElement>("ArrowUp");
+      const [event, preventDefault] = buildKeyEvent<HTMLDivElement>("ArrowUp");
       act(() => {
         result.current.handleMenuKeyDown(event);
       });
 
       expect(result.current.activeIndex).toBe(2); // lastIndex(3)
-      expect(event.preventDefault).toHaveBeenCalledOnce();
+      expect(preventDefault).toHaveBeenCalledOnce();
 
       unmount();
     });
@@ -158,31 +169,31 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
+      const [firstArrowDown] = buildKeyEvent<HTMLDivElement>("ArrowDown");
       act(() => {
-        result.current.handleMenuKeyDown(
-          buildKeyEvent<HTMLDivElement>("ArrowDown"),
-        );
+        result.current.handleMenuKeyDown(firstArrowDown);
       });
+      const [secondArrowDown] = buildKeyEvent<HTMLDivElement>("ArrowDown");
       act(() => {
-        result.current.handleMenuKeyDown(
-          buildKeyEvent<HTMLDivElement>("ArrowDown"),
-        );
+        result.current.handleMenuKeyDown(secondArrowDown);
       });
       expect(result.current.activeIndex).toBe(2);
 
-      const homeEvent = buildKeyEvent<HTMLDivElement>("Home");
+      const [homeEvent, homePreventDefault] =
+        buildKeyEvent<HTMLDivElement>("Home");
       act(() => {
         result.current.handleMenuKeyDown(homeEvent);
       });
       expect(result.current.activeIndex).toBe(0);
-      expect(homeEvent.preventDefault).toHaveBeenCalledOnce();
+      expect(homePreventDefault).toHaveBeenCalledOnce();
 
-      const endEvent = buildKeyEvent<HTMLDivElement>("End");
+      const [endEvent, endPreventDefault] =
+        buildKeyEvent<HTMLDivElement>("End");
       act(() => {
         result.current.handleMenuKeyDown(endEvent);
       });
       expect(result.current.activeIndex).toBe(2);
-      expect(endEvent.preventDefault).toHaveBeenCalledOnce();
+      expect(endPreventDefault).toHaveBeenCalledOnce();
 
       unmount();
     });
@@ -192,13 +203,13 @@ describe("useMenuKeyboardNav", () => {
         useMenuKeyboardNav({ itemCount: 3 }),
       );
 
-      const event = buildKeyEvent<HTMLDivElement>("a");
+      const [event, preventDefault] = buildKeyEvent<HTMLDivElement>("a");
       act(() => {
         result.current.handleMenuKeyDown(event);
       });
 
       expect(result.current.activeIndex).toBe(0);
-      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(preventDefault).not.toHaveBeenCalled();
 
       unmount();
     });
@@ -217,13 +228,13 @@ describe("useMenuKeyboardNav", () => {
       });
       expect(result.current.open).toBe(true);
 
-      const event = buildKeyEvent<HTMLDivElement>("Escape");
+      const [event, preventDefault] = buildKeyEvent<HTMLDivElement>("Escape");
       act(() => {
         result.current.handleMenuKeyDown(event);
       });
 
       expect(result.current.open).toBe(false);
-      expect(event.preventDefault).toHaveBeenCalledOnce();
+      expect(preventDefault).toHaveBeenCalledOnce();
       expect(document.activeElement).toBe(button);
 
       unmount();
@@ -243,7 +254,7 @@ describe("useMenuKeyboardNav", () => {
       });
       expect(result.current.open).toBe(true);
 
-      const event = buildKeyEvent<HTMLDivElement>("Tab");
+      const [event, preventDefault] = buildKeyEvent<HTMLDivElement>("Tab");
       act(() => {
         result.current.handleMenuKeyDown(event);
       });
@@ -251,7 +262,7 @@ describe("useMenuKeyboardNav", () => {
       expect(result.current.open).toBe(false);
       // Tab không preventDefault: phải để trình duyệt tự chuyển focus ra
       // ngoài widget, không phải nhánh nào khác trong switch cũng vậy.
-      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(preventDefault).not.toHaveBeenCalled();
       expect(document.activeElement).not.toBe(button);
 
       unmount();
@@ -349,10 +360,9 @@ describe("useMenuKeyboardNav", () => {
       expect(result.current.open).toBe(true);
       expect(document.activeElement).toBe(items[0]);
 
+      const [arrowDown] = buildKeyEvent<HTMLDivElement>("ArrowDown");
       act(() => {
-        result.current.handleMenuKeyDown(
-          buildKeyEvent<HTMLDivElement>("ArrowDown"),
-        );
+        result.current.handleMenuKeyDown(arrowDown);
       });
       expect(result.current.activeIndex).toBe(1);
       expect(document.activeElement).toBe(items[1]);
