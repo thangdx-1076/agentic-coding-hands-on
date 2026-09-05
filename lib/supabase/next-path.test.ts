@@ -105,4 +105,15 @@ describe("safeNextPath", () => {
   it("still rejects a percent-encoded CR inside a malformed sequence", () => {
     expect(safeNextPath("/todo%0d%zz", "/todo")).toBe("/todo");
   });
+
+  it("still accepts a percent-encoded byte that fails to decode but is not a forbidden code point", () => {
+    // `%80` is a lone UTF-8 continuation byte with no leading byte, so
+    // `decodeURIComponent` throws `URIError: URI malformed` -- this is the
+    // one case that reaches the `catch { return false; }` branch inside
+    // `hasEncodedForbiddenChar` (previously uncovered at 96.42%). 0x80 is
+    // not itself forbidden (not a control character, not U+2028/U+2029),
+    // and an undecodable byte alone does not prove an attack, so the
+    // correct outcome is ACCEPT -- not reject.
+    expect(safeNextPath("/todo%80", "/todo")).toBe("/todo%80");
+  });
 });
