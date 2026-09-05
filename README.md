@@ -57,10 +57,14 @@ before rendering.
 
 ## Known gaps
 
-- `public/login/keyvisual.png` (Figma node `662:14389`) has not been exported yet. The hero renders its
-  `#00101A` gradient fallback instead (see `components/login/login-background.tsx`) until the PNG is
-  added.
 - `/todo` is a placeholder proving the auth guard; no todo feature exists.
+
+## Assets
+
+- `public/login/keyvisual.png` is the hero background (Figma node `662:14389`, 2× export,
+  2882×2044), served via `next/image` (`fill`, `object-cover`) in
+  `components/login/login-background.tsx`. Copied from the sibling `saa-app` project's Figma
+  export; not re-exported from Figma in this repo.
 
 ## Docs
 

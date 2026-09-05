@@ -1,0 +1,19 @@
+
+Running 14 tests using 4 workers
+
+  ✓   3 [chromium] › tests/e2e/login.spec.ts:81:9 › Login Screen › Unauthenticated › [TC 42b82364] Hero title and description text (1.0s)
+  ✓   1 [chromium] › tests/e2e/login.spec.ts:40:9 › Login Screen › Unauthenticated › [TC 8415b629] Language selector top-right (1.0s)
+  ✓   2 [chromium] › tests/e2e/login.spec.ts:26:9 › Login Screen › Unauthenticated › [TC b9805e65] Logo top-left position (1.0s)
+  ✓   4 [chromium] › tests/e2e/login.spec.ts:54:9 › Login Screen › Unauthenticated › [TC 5fbe2a18] Hero artwork presence (1.0s)
+  ✓   6 [chromium] › tests/e2e/login.spec.ts:96:9 › Login Screen › Unauthenticated › [TC 33a1dacf] Footer fixed bottom position (698ms)
+  ✓   5 [chromium] › tests/e2e/login.spec.ts:89:9 › Login Screen › Unauthenticated › [TC 6ae76d15] LOGIN With Google button (709ms)
+  ✓   8 [chromium] › tests/e2e/login.spec.ts:124:9 › Login Screen › Unauthenticated › [TC 45278c06] Error alert on /login?error=* (675ms)
+  ✓   7 [chromium] › tests/e2e/login.spec.ts:106:9 › Login Screen › Unauthenticated › [TC 20d87e28] Language dropdown opens on click (772ms)
+  ✓   9 [chromium] › tests/e2e/login.spec.ts:134:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET /todo redirects to /login (658ms)
+  ✓  10 [chromium] › tests/e2e/login.spec.ts:140:9 › Login Screen › Unauthenticated › [TC 45278c06] Unauthenticated GET / redirects to /login (657ms)
+  ✓  12 [chromium] › tests/e2e/login.spec.ts:165:9 › Login Screen › Unauthenticated › [TC 37eae882] Button disabled during authentication (926ms)
+  ✓  14 [chromium] › tests/e2e/login.spec.ts:263:9 › Login Screen › Authenticated › [TC e76aa170] /todo shows user email and logout button (616ms)
+  ✓  13 [chromium] › tests/e2e/login.spec.ts:257:9 › Login Screen › Authenticated › [TC f62b0c97] Authenticated user redirects /login to /todo (630ms)
+  ✓  11 [chromium] › tests/e2e/login.spec.ts:146:9 › Login Screen › Unauthenticated › [TC 60bc5bbb] Google button triggers OAuth flow (abort) (1.3s)
+
+  14 passed (5.8s)

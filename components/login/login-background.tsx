@@ -1,10 +1,14 @@
+import Image from "next/image";
+
 /**
  * Full-bleed hero image + gradient overlays behind the header/content
  * (mm:662:14388, mm:662:14392, mm:662:14390). Purely decorative.
  *
- * Node 662:14389's bitmap could not be fetched from MoMorph (Figma API
- * 500). Renders against the #00101A base + the two literal gradients until
- * the design exports `public/login/keyvisual.png` (see clarifications.md).
+ * `public/login/keyvisual.png` is the 2× export of the Figma node
+ * 662:14389 (1441×1022 → 2882×2044): the Figma crop/offset is already
+ * baked into the bitmap, so it is drawn at 100% of the frame with
+ * `object-cover`. next/image serves it optimized (WebP/AVIF, responsive
+ * sizes) instead of the 9 MB source.
  */
 export function LoginBackground() {
   return (
@@ -15,12 +19,13 @@ export function LoginBackground() {
       {/* mm:662:14388 */}
       <div className="absolute inset-0">
         {/* mm:662:14389 */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "url(/login/keyvisual.png) -440px -217.975px / 159.763% 133.371% no-repeat",
-          }}
+        <Image
+          src="/login/keyvisual.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
         />
       </div>
       {/* mm:662:14392 */}

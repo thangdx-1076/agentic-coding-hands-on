@@ -62,7 +62,7 @@ Phase 02 → 03 tuần tự nên cùng chạm `package.json` là hợp lệ. Tra
 | GoTrue allow-list có thể từ chối `redirect_to` kèm `?next=/todo` → login rơi về SITE_URL | High | Verify bằng curl authorize trước khi wire; fallback bỏ `next`, callback default `/todo` (BR-002) — cần orchestrator ký vì lệch § E2E contract | 04 |
 | `playwright.config.ts` project `chromium` không set `storageState`; bật 2 test authenticated sẽ fail ở `chromium-anon` | High | tester scope storageState theo `test.use` trong từng describe (hoặc tách file), không nới assertion | 05 |
 | `app/fonts.ts` do Track A sở hữu, `app/layout.tsx` do Track B — import sai tên export → build fail | Medium | phase-04 đọc `app/fonts.ts` thật rồi mới sửa layout; chưa có → BLOCKED, không tự tạo | 04 |
-| `public/login/keyvisual.png` user chưa export → hero thiếu ảnh nền | Low | Không chặn GREEN (E2E chỉ assert `img[alt="ROOT FURTHER"]`); ghi chú vùng này khi visual diff | 05 |
+| `public/login/keyvisual.png` user chưa export → hero thiếu ảnh nền | Low | Không chặn GREEN (E2E chỉ assert `img[alt="ROOT FURTHER"]`); ghi chú vùng này khi visual diff | 05 | — **Resolved 2026-09-05** (asset từ saa-app, next/image; xem clarifications.md)
 | Google OAuth client creds của `saa-app` | Low | Đã verify 302 → accounts.google.com (`reports/tester-red-login-e2e.md`) | 03 |
 
 ## Delivery summary (2026-09-04)
@@ -75,4 +75,4 @@ Phase 02 → 03 tuần tự nên cùng chạm `package.json` là hợp lệ. Tra
 
 **Evidence**: Playwright 14/14 GREEN, vitest 26/26, tsc/lint/build exit 0. Reviewer sealed (score 9, zero Critical findings).
 
-**Open items**: (a) user export Figma node 662:14389 → `public/login/keyvisual.png`; (b) Reviewer Defer — U+2028/U+2029 hardening in `next-path.ts`, ARIA menu navigation; (c) docs gen gate skipped — run `/tkm:rebuild-spec` later; (d) `.rebuild-state.json` `last_feature_spec_run_sha` empty (no commit).
+**Open items**: (a) ~~user export Figma node 662:14389 → `public/login/keyvisual.png`~~ **resolved 2026-09-05** (asset từ saa-app, next/image); (b) Reviewer Defer — U+2028/U+2029 hardening in `next-path.ts`, ARIA menu navigation; (c) docs gen gate skipped — run `/tkm:rebuild-spec` later; (d) `.rebuild-state.json` `last_feature_spec_run_sha` empty (no commit).

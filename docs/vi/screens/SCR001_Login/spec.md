@@ -46,7 +46,7 @@ Header sticky top chứa logo (trái) và bộ chọn ngôn ngữ (phải — v�
 |----|---------|------|----------|---------|------------|--------|--------|--------|-----------------|-----------|
 | E01 | Logo Sun* Annual Awards 2025 | image | — | static | Always | — (không tương tác) | static | raw | — | asset `public/login/logo.*` (TBD draft) |
 | E02 | Bộ chọn ngôn ngữ | dropdown | no | "VN" | Always | Mở menu chọn ngôn ngữ (chi tiết hành vi do F002_LanguageSwitch sở hữu) | static | — | — | Owned by F002_LanguageSwitch — TBD (draft) |
-| E03 | Hero visual | image | — | static | Always | — (trang trí, không tương tác) | static | raw | — | asset `public/login/hero-visual.*` (TBD draft) |
+| E03 | Hero visual | image | — | static | Always | — (trang trí, không tương tác) | static | raw | — | asset `public/login/keyvisual.png` (2× export Figma node 662:14389, render `next/image` fill/object-cover) |
 | E04 | Nội dung giới thiệu: tiêu đề "ROOT FURTHER" + subtitle "Bắt đầu hành trình của bạn cùng SAA 2025." + tagline "Đăng nhập để khám phá!" | display field | — | static | Always | — | static | raw | — | — |
 | E05 | Nút "LOGIN With Google" | button | — | Enabled | Always | Khởi động luồng Google OAuth (PKCE) | — | — | — | binding: `isPending` (useTransition) |
 | E06 | Thông báo lỗi inline (`role="alert"`) | message | — | Ẩn | Conditional | — | route param `error` | raw | hidden | query param `error` |

@@ -56,6 +56,26 @@ test.describe('Login Screen', () => {
 
       const heroImage = page.locator('img[alt="ROOT FURTHER"]');
       await expect(heroImage).toBeVisible();
+
+      // Regression guard (fix 2026-09-05): the key-visual background bitmap
+      // (Figma node 662:14389 → public/login/keyvisual.png) must actually load,
+      // not just be referenced — it was missing and the page fell back to a
+      // flat #00101A background.
+      const keyVisual = page.locator('img[src*="keyvisual"]');
+      await expect(keyVisual).toHaveCount(1);
+      // Hit the static file directly: the next/image optimizer cache can keep
+      // serving an old rendition after the source file disappears.
+      const asset = await page.request.get('/login/keyvisual.png');
+      expect(asset.status()).toBe(200);
+      expect(asset.headers()['content-type']).toContain('image/png');
+      await expect
+        .poll(async () =>
+          keyVisual.evaluate((img) => {
+            const el = img as HTMLImageElement;
+            return el.complete && el.naturalWidth > 0;
+          }),
+        )
+        .toBe(true);
     });
 
     test('[TC 42b82364] Hero title and description text', async ({ page }) => {

@@ -47,5 +47,33 @@
     "status": "pass",
     "summary": "Visual validation: 4 viewports (375, 768, 1280, 1440) captured. No horizontal overflow. Detailed checks @ 1440: logo/selector positioning, hover states, focus ring, reduced-motion all PASS.",
     "ts": "2026-09-04T19:54:00Z"
+  },
+  {
+    "command": "npx playwright test tests/e2e/login.spec.ts --reporter=list",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "fix hero bg 2026-09-05: 14 passed incl. keyvisual asset assertion (evidence/green-run-fix-bg.log)",
+    "ts": "2026-09-05T07:40:29.026Z"
+  },
+  {
+    "command": "npx tsc --noEmit",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "fix hero bg 2026-09-05: typecheck clean",
+    "ts": "2026-09-05T07:40:29.026Z"
+  },
+  {
+    "command": "npm run lint",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "fix hero bg 2026-09-05: eslint clean",
+    "ts": "2026-09-05T07:40:29.026Z"
+  },
+  {
+    "command": "npx vitest run",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "fix hero bg 2026-09-05: 26 passed",
+    "ts": "2026-09-05T07:40:29.026Z"
   }
 ]
