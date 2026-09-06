@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T14:52:09Z",
+  "generated_at": "2026-09-05T18:35:15Z",
   "index": {
     "app/auth/callback/route.ts": [
       "F001"
@@ -8,7 +8,8 @@
       "F001"
     ],
     "app/page.tsx": [
-      "F001"
+      "F001",
+      "F003"
     ],
     "app/todo/actions.ts": [
       "F001"
@@ -36,6 +37,18 @@
     ],
     "proxy.ts:22-42,72-82,109-111": [
       "F001"
+    ],
+    "lib/countdown/countdown.ts": [
+      "F003"
+    ],
+    "lib/auth/get-user-role.ts": [
+      "F003"
+    ],
+    "hooks/use-countdown.ts": [
+      "F003"
+    ],
+    "hooks/use-select-locale.ts": [
+      "F003"
     ]
   }
 }

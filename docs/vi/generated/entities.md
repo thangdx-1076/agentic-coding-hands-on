@@ -1,9 +1,9 @@
 # Entities
 
 **Project**: SAA 2025 — Login
-**Generated**: 2026-09-05
+**Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không sở hữu schema CSDL nào (không có ORM model, không có migration). Toàn bộ persistence nghiệp vụ nằm ở một instance Supabase local bên ngoài repo (`saa-app`, `http://127.0.0.1:55321`) — thứ duy nhất app đọc được từ đó là session/user object trả về từ `@supabase/ssr`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 3 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa, 1 do SDK ngoài định nghĩa và chỉ bị đọc một phần) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không sở hữu schema CSDL nào (không có ORM model, không có migration). Toàn bộ persistence nghiệp vụ nằm ở một instance Supabase local bên ngoài repo (`saa-app`, `http://127.0.0.1:55321`) — thứ duy nhất app đọc được từ đó là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` mà repo không sở hữu schema. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 3 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa, 1 do SDK/bảng ngoài định nghĩa và chỉ bị đọc một phần) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -14,6 +14,8 @@ erDiagram
     }
     MODEL002_SupabaseUser {
         string email "as consumed — nullable"
+        string id "UUID — khoa tra cuu public.users.role"
+        string role "member | admin — fail-open member, tu public.users"
     }
     MODEL003_LoginCopy {
         string subtitle
@@ -51,18 +53,27 @@ Không vẽ đường quan hệ (FK) nào — cả 3 shape đều độc lập, 
 
 ### MODEL002_SupabaseUser
 
-**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`app`, `components`, `lib`) xác nhận field duy nhất từng được truy cập là `user.email`, tại đúng 1 vị trí: `app/todo/page.tsx:34` (`t("greeting", { email: user.email ?? "" })`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `proxy.ts:32,36` và `app/todo/page.tsx:26-28`.
+**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`app`, `components`, `lib`) xác nhận 2 field từng được truy cập: `user.email` (`app/todo/page.tsx:34`, `t("greeting", { email: user.email ?? "" })`) và `user.id` (`app/page.tsx:161`, truyền vào `getUserRole(supabase, userId)`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `proxy.ts:36,40` và `app/todo/page.tsx:26-28`.
+
+**Cập nhật 2026-09-06 (F003_Homepage)**: `id` của user nay được dùng để đọc thêm `role` từ bảng `public.users` (bảng riêng, KHÔNG phải trường của object `User` gốc — xem dòng `role` bên dưới, đánh dấu nguồn khác biệt).
 
 | Attribute | Type (as consumed) | Constraints | Description |
 |-----------|------|-------------|-------------|
-| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`app/todo/page.tsx:34`) |
+| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`app/todo/page.tsx:34`) và trong `HeaderViewer.email` ở SCR003_HomeScreen (`app/page.tsx:162`) |
+| id | `string` (UUID) | NOT NULL | Khoá tra cứu `public.users.role` — truyền vào `getUserRole(supabase, userId)` (`app/page.tsx:161`, `lib/auth/get-user-role.ts:49-67`) |
+| role *(nguồn khác — `public.users`, không phải field gốc của `User`)* | `"member" \| "admin"` (as consumed) | fail-open `"member"` khi lỗi/không có row | Đọc qua `lib/auth/get-user-role.ts:49-68` (`getUserRole`) bằng client PostgREST hẹp `lib/supabase/users-role-client.ts` (`toUsersRoleClient` — shim thu hẹp `@supabase/ssr` server client về đúng slice `.from("users").select("role").eq("id",…).maybeSingle()`, tránh lỗi TS2589 "type instantiation is excessively deep" khi so khớp kiểu SDK trực tiếp). Quyết định `HeaderViewer.isAdmin` (`role === "admin"`) — chỉ ẩn/hiện mục "Trang quản trị" trong menu tài khoản, KHÔNG phải một authorization gate (xem `permissions-matrix.md § Role-based screen-permission`) |
 
-Các field khác của kiểu `User` thật (vd. `id`, `user_metadata`, `app_metadata`, `aud`, `created_at`, ...) tồn tại trên SDK nhưng **không có dòng code nào trong repo đọc chúng** — không liệt kê để tránh bịa cột.
+Các field khác của kiểu `User` thật (vd. `user_metadata`, `app_metadata`, `aud`, `created_at`, ...) tồn tại trên SDK nhưng **không có dòng code nào trong repo đọc chúng** — không liệt kê để tránh bịa cột.
 
 **Relationships**:
 - None — object này không được persist lại bởi repo (không bảng nào giữ FK trỏ tới nó); nó được lấy lại mỗi request từ session Supabase (`lib/supabase/server.ts:16-42`, `lib/supabase/proxy-client.ts:13-31`, `lib/supabase/client.ts:13-18`).
+- `role` được join thủ công (không phải FK trong ERD — đọc bằng 2 lời gọi Supabase riêng biệt trong cùng 1 request): `getUser()` lấy `id`, rồi `getUserRole(toUsersRoleClient(supabase), id)` query `public.users` dưới RLS own-row (JWT của chính user). Không có API nào trong app trả role của người khác.
 
-**Discriminator Fields**: None. (Không có field enum nào của user được app đọc — sự có/không của `user` là một existence-check, không phải discriminator field theo schema.)
+**Discriminator Fields**:
+
+| Field | DISC-### | Values | Description |
+|-------|----------|--------|-------------|
+| role | DISC-002 | member, admin | `member` = mặc định/fail-open (không thấy mục "Trang quản trị"); `admin` = thấy thêm mục "Trang quản trị" (`/admin`, route chưa implement) trong menu tài khoản của SCR003_HomeScreen (`lib/auth/get-user-role.ts:14`, `components/home/account-menu.tsx`) |
 
 ---
 

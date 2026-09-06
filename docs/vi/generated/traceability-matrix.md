@@ -12,8 +12,9 @@
 
 | F### | SCR### | US### | BL### | ROUTE### | PERM### |
 |---|---|---|---|---|---|
-| F001 | SCR001, SCR002 | US002, US003 | BL001, BL002, BL003 | ROUTE001 | PERM001, PERM002, PERM003, PERM004 |
-| F002 | SCR001 | US001 | — | — | PERM001 |
+| F001 | SCR001, SCR002 | US002, US003 | BL001, BL002, BL003 | ROUTE001 | PERM001 (superseded), PERM002, PERM003, PERM004 |
+| F002 | SCR001, SCR003 | US001 | — | — | — |
+| F003 | SCR003 | TBD (chưa cấp mã US### — xem `features/F003_Homepage/functional-spec.md` § 7, chạy `/tkm:rebuild-spec --features F003`) | — | — | TBD (screen-permission chưa cấp mã — xem `generated/permissions-matrix.md` § Role-based screen-permission) |
 
 ---
 

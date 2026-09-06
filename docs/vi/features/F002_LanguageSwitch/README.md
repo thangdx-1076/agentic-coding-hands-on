@@ -14,7 +14,7 @@
 
 | Màn hình | SCR | Đặc tả |
 |---|---|---|
-| Login | SCR001_LoginScreen | [spec.md](../../screens/SCR001_LoginScreen/spec.md) |
+| Login | SCR001_LoginScreen | [spec.md](../../screens/SCR001_Login/spec.md) |
 
 
 <!-- end-generated -->

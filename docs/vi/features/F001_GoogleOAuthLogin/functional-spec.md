@@ -77,8 +77,9 @@ None — no unresolved domain confirmations.
 
 ### Interaction (4xx)
 
-- **FR-401** Sau khi OAuth thành công, người dùng được đưa từ màn hình đăng nhập sang màn hình todo
-  mà không cần thao tác thêm.
+- **FR-401** Sau khi OAuth thành công, người dùng được đưa từ màn hình đăng nhập sang trang chủ (`/`)
+  mà không cần thao tác thêm — đổi từ màn hình todo kể từ F003_Homepage (2026-09-06); `/todo` vẫn là
+  khu vực được bảo vệ, chỉ không còn là đích mặc định.
 - **FR-402** Đường dẫn quay về sau khi đăng nhập (tham số `next` đầu vào) luôn được kiểm tra an
   toàn — không bao giờ đưa người dùng ra khỏi app.
 
@@ -151,7 +152,7 @@ khẩu riêng cho app này
 **Acceptance Criteria:**
 - [ ] Click nút "LOGIN With Google" khởi động OAuth; nút chuyển trạng thái đang xử lý (disabled +
   hiệu ứng loading) trong lúc chờ.
-- [ ] OAuth thành công → được đưa vào khu vực bảo vệ (mặc định `/todo`), không cần thao tác thêm.
+- [ ] OAuth thành công → được đưa tới trang chủ (mặc định `/`, đổi từ `/todo`), không cần thao tác thêm.
 - [ ] Nhà cung cấp OAuth trả lỗi, hoặc bước đổi mã xác thực thất bại/thiếu dữ liệu → quay lại
   `/login` kèm đúng một thông báo lỗi cố định đã dịch (không bao giờ hiện lỗi nguyên văn).
 - [ ] Lỗi xảy ra ngay phía trình duyệt (chưa kịp chuyển trang) → cùng thông báo lỗi cố định hiện ra
@@ -175,7 +176,7 @@ dung của mình
 ### US002_LoginWithGoogle — Happy Path
 
 **Given** khách chưa đăng nhập đang ở `/login`, **When** họ click "LOGIN With Google" và hoàn tất
-cấp quyền trên Google, **Then** họ được đưa tới `/todo` và thấy lời chào theo email của mình.
+cấp quyền trên Google, **Then** họ được đưa tới `/` (trang chủ, đổi từ `/todo`).
 
 ### US002_LoginWithGoogle — Error: nhà cung cấp OAuth từ chối/lỗi
 
@@ -233,6 +234,6 @@ lặng nhưng họ vẫn được đưa về `/login`.
 ## 13. Configuration
 
 ```text
-LOGIN_SUCCESS_DEFAULT_PATH = /todo    # nơi người dùng được đưa tới sau khi đăng nhập Google thành công
-CALLBACK_NEXT_FALLBACK_PATH = /todo   # đích dự phòng khi đường dẫn quay về không hợp lệ/không an toàn
+LOGIN_SUCCESS_DEFAULT_PATH = /    # nơi người dùng được đưa tới sau khi đăng nhập Google thành công (đổi từ /todo, F003_Homepage 2026-09-06)
+CALLBACK_NEXT_FALLBACK_PATH = /   # đích dự phòng khi đường dẫn quay về không hợp lệ/không an toàn (đổi từ /todo)
 ```

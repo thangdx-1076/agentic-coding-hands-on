@@ -18,7 +18,7 @@ fcode: F001
 
 **Purpose:** Khách chưa đăng nhập vào đây để bắt đầu luồng đăng nhập Google; đây là điểm vào chính của ứng dụng SAA 2025.
 **Actors:** Khách (chưa đăng nhập)
-**Entry Conditions:** Chưa có phiên đăng nhập hợp lệ (guard optimistic cho qua); hoặc callback trả về lỗi. **Exit Conditions:** bấm "LOGIN With Google" và xác thực thành công → rời màn này, tới `/todo`.
+**Entry Conditions:** Chưa có phiên đăng nhập hợp lệ (guard optimistic cho qua); hoặc callback trả về lỗi. **Exit Conditions:** bấm "LOGIN With Google" và xác thực thành công → rời màn này, tới `/` (trang chủ — đổi từ `/todo` kể từ F003_Homepage, 2026-09-06; `/todo` vẫn tồn tại, chỉ không còn là đích mặc định).
 
 ## 2. Screen Layout
 
@@ -104,7 +104,7 @@ Google xác thực thất bại/bị huỷ → quay lại `/login?error=...` (xe
 | Action | Element | Condition | Destination | Result | Source |
 |--------|---------|-----------|-------------|--------|--------|
 | Bấm "LOGIN With Google" | E05 | không đang pending | external (Google OAuth authorize) | redirect | TBD (draft) |
-| Guard tự động chuyển hướng | — | đã có session hợp lệ | SCR002_Todo | redirect | TBD (draft) |
+| Guard tự động chuyển hướng | — | đã có session hợp lệ | SCR003_Home (đổi từ SCR002_Todo, F003_Homepage 2026-09-06) | redirect | `app/login/page.tsx:33-36` |
 
 ## 9. Accessibility
 

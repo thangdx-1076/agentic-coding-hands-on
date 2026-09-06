@@ -20,7 +20,8 @@ appendix dùng chung — chỉ nhảy vào khi một block ở § 3 trỏ tới.
 ## 1. Technical Overview
 
 Khách truy cập đăng nhập bằng Google qua Supabase Auth (PKCE) từ `/login`; callback đổi code lấy
-session rồi đưa vào `/todo` (placeholder được bảo vệ). Route-guard hai lớp — `proxy.ts` (optimistic)
+session rồi đưa vào `/` (trang chủ — đổi từ `/todo` kể từ F003_Homepage, 2026-09-06; `/todo` vẫn tồn
+tại như khu vực được bảo vệ, chỉ không còn là đích mặc định). Route-guard hai lớp — `proxy.ts` (optimistic)
 và một re-check tại chính trang (authoritative) — enforce đúng một trục duy nhất: đã đăng nhập hay
 chưa, không có role/ownership nào khác. Đăng xuất là Server Action best-effort, luôn đưa về `/login`.
 
@@ -30,28 +31,30 @@ flowchart LR
         Anon["Anonymous"] -->|"A1: GET /login"| SCR001["SCR001_LoginScreen"]
         SCR001 -->|"A2: click Google"| GoogleAuth["Google OAuth consent"]
         GoogleAuth -->|"A3: GET /auth/callback"| Session["Supabase session (cookie)"]
-        Session -->|"redirect safeNextPath"| SCR002["SCR002_TodoScreen"]
+        Session -->|"redirect safeNextPath → / (mặc định mới)"| Home["/ SCR003_HomeScreen (F003, ngoài CAP-01)"]
+        Home -.->|"truy cập URL trực tiếp /todo, đã đăng nhập"| SCR002["SCR002_TodoScreen"]
         SCR002 -->|"A5: click logout"| Session
         Session -->|"signOut"| SCR001
-        Anon -.->|"A6: GET /"| RootGuard["root fallback"]
-        RootGuard -.-> SCR001
-        RootGuard -.-> SCR002
+        Home -.->|"click Đăng xuất trong menu tài khoản (F003)"| Session
+        Anon -.->|"A6: GET / — SUPERSEDED, không còn redirect"| RootGuard["root fallback (retired 2026-09-06)"]
     end
     classDef guard fill:#333,color:#fff
-    class RootGuard guard
+    classDef retired fill:#666,color:#fff,stroke-dasharray: 5 5
+    class RootGuard retired
+    class Home guard
 ```
 
 ## 2. Action Index
 
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
-| **A0** | *cross-cutting — `proxy` optimistic guard, không thuộc riêng action nào* | proxy · `["/", "/login", "/todo/:path*"]` | {FR-001, PERM001, PERM002, PERM003} | — *(cookie refresh only)* | § 4.4 |
+| **A0** | *cross-cutting — `proxy` optimistic guard, không thuộc riêng action nào* | proxy · `["/", "/login", "/todo/:path*"]` (`/` chỉ để refresh cookie, không redirect) | {FR-001, PERM002, PERM003} | — *(cookie refresh only)* | § 4.4 |
 | **A1** | `LoginPage` | `GET` `/login` | {FR-201, FR-204, FR-601, BR-001, PERM002, US002, SCR001} | — *(read-only)* | § 3.1 |
 | **A2** | `useLoginActions#handleLoginClick` → `signInWithGoogle` | client-SDK · *(no app path — browser navigates to Google)* | {FR-202, FR-203, BR-005, US002, BL001} | — *(read-only; browser leaves the page)* | § 3.1 |
 | **A3** | `GET` (`app/auth/callback/route.ts`) | `GET` `/auth/callback` | {FR-401, FR-402, BR-002, DEC-001, DEC-002, SM-001, PERM004, US002, BL002} | — *(no app table; sets Supabase session cookie)* | § 3.1 |
 | **A4** | `TodoPage` | `GET` `/todo` | {FR-301, FR-603, BR-003, PERM003, US003, SCR002} | — *(read-only)* | § 3.1 |
 | **A5** | `logoutAction` | `POST` *(Server Action, no HTTP path)* | {FR-302, FR-603, BR-004, SM-001, US003, BL002} | — *(no app table; clears Supabase session cookie)* | § 3.1 |
-| **A6** | `Home` | `GET` `/` | {FR-101, FR-602, PERM001, BL002} | — *(read-only)* | § 3.1 |
+| **A6** | ~~`Home`~~ — **SUPERSEDED**, xem F003_Homepage | `GET` `/` | {FR-101, FR-602, PERM001} (retired) | — *(retired — route nay thuộc F003, không redirect)* | § 3.1 |
 
 **Rung set** (mỗi block ở § 3 dùng đúng thứ tự này; rung vắng mặt thì bỏ hẳn, không viết `N/A`):
 
@@ -74,8 +77,8 @@ sau này). Không chạm DOM/window — chỉ nối props.
 **BE** · `` `getAuthenticatedUser` `` (`app/login/page.tsx:75-85`) bọc try/catch, trả `null` khi
 Supabase lỗi — **FR-601: guard fail OPEN**, không chặn ai vào form khi Supabase outage. `LoginPage`
 (`app/login/page.tsx:32-67`) build `LoginCopy` từ `getTranslations("login")`.
-**Rule** · Có session hợp lệ thì redirect ngay `/todo` trước khi render (single-field check, không
-phải DEC). **BR-001 — Guard `/login` luôn fail OPEN khi Supabase lỗi.** Không có form đăng nhập nào
+**Rule** · Có session hợp lệ thì redirect ngay `/` trước khi render (đổi từ `/todo`, F003_Homepage
+2026-09-06; single-field check, không phải DEC). **BR-001 — Guard `/login` luôn fail OPEN khi Supabase lỗi.** Không có form đăng nhập nào
 khác trong app — chặn nhầm ở đây khoá toàn bộ người dùng ra ngoài vĩnh viễn; try/catch trả `null`
 thay vì để lỗi văng ra, coi như Anonymous. `app/login/page.tsx:75-85`. **FR-204: `?error=` (string
 hoặc string[] do Next.js parse key lặp) chỉ bật một cờ boolean qua `hasErrorParam`** — raw value
@@ -100,12 +103,12 @@ client-SDK *(browser điều hướng sang Google, không có app path)* → `` 
 `hooks/use-login-actions.ts:42-57` (`handleLoginClick`), chạy trong `useTransition` DÙNG CHUNG với
 đổi ngôn ngữ — click "đổi ngôn ngữ" cũng làm nút Google vào trạng thái pending (xem **BR-005** ở
 rung Rule ngay dưới).
-**Request** · không có request đi từ app — `signInWithGoogle({ origin: window.location.origin, next: "/todo" })`
+**Request** · không có request đi từ app — `signInWithGoogle({ origin: window.location.origin, next: "/" })` (đổi từ `"/todo"`, F003_Homepage)
 **BE** · `` `signInWithGoogle` `` (`lib/auth/sign-in-with-google.ts:39-55`) gọi
 `supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: "${origin}/auth/callback?next=${next}" } })`
 qua client Supabase phía trình duyệt (BL001, `lib/supabase/client.ts:13-18`).
 **Rule** · **FR-202: click gọi `signInWithOAuth` qua BL001; redirectTo luôn trỏ về
-`/auth/callback?next=/todo`.** **FR-203: `ok:false` khi Supabase trả error HOẶC ném exception (2
+`/auth/callback?next=/` (đổi từ `?next=/todo`, F003_Homepage).** **FR-203: `ok:false` khi Supabase trả error HOẶC ném exception (2
 đường gộp làm 1 cờ boolean)** — UI chỉ hiển thị đúng 1 thông báo cố định, không bao giờ render lỗi
 thô từ provider (`lib/auth/sign-in-with-google.ts:51-54`). **BR-005 — Nút Google login và nút đổi
 ngôn ngữ (F002) dùng CHUNG một `useTransition`.** Click đổi ngôn ngữ cũng đẩy `isPending` của action
@@ -138,7 +141,7 @@ client (`app/auth/callback/route.ts:32-43`)
 | DEC | subtype | Condition | What the user sees | Source |
 |---|---|---|---|---|
 | **DEC-001** | flow | `error` param có mặt | Redirect `/login?error=<message đã encode>` — `LoginErrorAlert` sau đó chỉ hiện thông báo cố định, không phải raw message này | `app/auth/callback/route.ts:24-29` |
-| **DEC-002** | flow | `code` param có mặt AND `exchangeCodeForSession` thành công | Redirect `${origin}${safeNextPath(next)}` — mặc định `/todo` | `app/auth/callback/route.ts:31-39` |
+| **DEC-002** | flow | `code` param có mặt AND `exchangeCodeForSession` thành công | Redirect `${origin}${safeNextPath(next)}` — mặc định `/` (đổi từ `/todo`, F003_Homepage) | `app/auth/callback/route.ts:31-39` |
 | **DEC-002** | flow | `code` param có mặt AND exchange lỗi/throw, HOẶC cả `code` lẫn `error` đều thiếu | Redirect `/login?error=auth_code_error` (fallback chung) | `app/auth/callback/route.ts:40-46` |
 
 **BR-002 — `next` chỉ được chấp nhận khi same-origin, root-relative, không chứa scheme separator
@@ -205,24 +208,27 @@ sao. Luôn `redirect("/login")` sau cùng, không điều kiện.
 
 ---
 
-#### A6 · `GET /` — fallback redirect authoritative
+#### A6 · `GET /` — fallback redirect authoritative — **SUPERSEDED, xem F003_Homepage**
 
-`GET` `/` → `` `Home` ``
-`FR-101` `FR-602` · `PERM001_RootRouteGuard` · `BL002_SupabaseServerClient`
+**Đã lỗi thời kể từ 2026-09-06 (F003_Homepage).** `app/page.tsx` đã được viết lại hoàn toàn — nó
+không còn `redirect()` nào, và route `/` (SCR003_HomeScreen) không còn thuộc F001. Nội dung dưới đây
+mô tả HÀNH VI CŨ, giữ lại để tham chiếu lịch sử; không dùng để hiểu code hiện tại.
 
-**Who** · Bất kỳ ai truy cập root — dùng làm fallback khi `proxy.ts` (A0) không chạy (vd. render
-server-side trực tiếp)
-**FE** · *không có* — route này không tự render UI nào, chỉ redirect.
-**Request** · không có param
-**BE** · `` `createClient` `` (BL002) rồi `supabase.auth.getUser()` — **KHÔNG bọc try/catch** (xem
-`RISK-01` ở functional-spec.md § 11).
-**Rule** · **FR-602 — Redirect authoritative theo đúng trạng thái đăng nhập.** `redirect(user ?
-"/todo" : "/login")` — bản sao logic của A0 (proxy optimistic), chạy lại ở lớp authoritative phòng
-trường hợp matcher của proxy không khớp. `app/page.tsx:11-18`.
-**Result** · Read-only — **no DB write**, không bao giờ tự render nội dung của `/`.
-**Source:** `app/page.tsx:11-18` → `lib/supabase/server.ts:16-42`
+`GET` `/` → ~~`Home`~~ *(hàm này không còn tồn tại dưới hình hài cũ — `app/page.tsx` nay export
+`HomePage`, một Server Component render trang chủ)*
+`FR-101` `FR-602` · `PERM001_RootRouteGuard` (superseded) · `BL002_SupabaseServerClient`
 
-<!-- No diagram: 1 điều kiện, 1 redirect, không ghi bảng. -->
+**Rule (cũ, không còn đúng)** · ~~`redirect(user ? "/todo" : "/login")` — bản sao logic của A0
+(proxy optimistic), chạy lại ở lớp authoritative phòng trường hợp matcher của proxy không khớp.~~
+**Hiện tại:** `app/page.tsx` gọi `getUser()`/`getUserRole()` (`app/page.tsx:150-166`) chỉ để cá nhân
+hoá header của SCR003_HomeScreen — không redirect ai, không còn thuộc CAP-01 của F001. Chi tiết đầy
+đủ (bao gồm rationale nghiệp vụ) thuộc về `docs/vi/features/F003_Homepage/technical-spec.md` và
+`docs/vi/system/permissions.md` — không lặp lại ở đây để tránh hai nguồn sự thật. `FR-101`/`FR-602`
+ở trên mô tả hành vi ĐÃ RETIRED; xem `functional-spec.md § 11 RISK-01` cho ghi chú lịch sử. Việc
+di dời chính thức 2 mã FR này (và PERM001) ra khỏi F001 là việc của `/tkm:rebuild-spec --features
+F001,F003`, không phải một surgical edit.
+
+<!-- No diagram: action đã retired, không còn logic nào để vẽ. -->
 
 ### 3.2 Edge cases
 
@@ -230,7 +236,7 @@ trường hợp matcher của proxy không khớp. `app/page.tsx:11-18`.
 |---|---|---|
 | A3 | `?error=` có mặt (Google/GoTrue trả lỗi consent) | Redirect `/login?error=<encoded message>` — `LoginErrorAlert` chỉ hiện thông báo cố định đã dịch, KHÔNG BAO GIỜ render raw `message` |
 | A3 | Không có cả `code` lẫn `error` (truy cập trực tiếp `/auth/callback`) | Redirect `/login?error=auth_code_error` |
-| A3 | `code` hợp lệ nhưng `next` off-origin/protocol-relative (`https://evil.com`, `//evil.com`) | `safeNextPath` fallback `/todo` im lặng — không có message nào cho user, redirect vẫn ở đúng origin |
+| A3 | `code` hợp lệ nhưng `next` off-origin/protocol-relative (`https://evil.com`, `//evil.com`) | `safeNextPath` fallback `/` im lặng (đổi từ `/todo`, F003_Homepage) — không có message nào cho user, redirect vẫn ở đúng origin |
 | A3 | `code` không hợp lệ HOẶC Supabase không reachable lúc exchange | Cả 2 nguyên nhân đều rơi vào cùng 1 catch → redirect `/login?error=auth_code_error` giống hệt nhau (không phân biệt được — xem `RISK-02` functional-spec § 11) |
 | A1 · A0 | Supabase unreachable khi vào `/login` | Guard fail OPEN — form vẫn render, nút Google vẫn clickable |
 | A4 · A0 | Supabase unreachable khi vào `/todo` | Guard fail CLOSED — exception văng ra thay vì render, không có đường nào lộ nội dung bảo vệ |
@@ -251,7 +257,7 @@ trường hợp matcher của proxy không khớp. `app/page.tsx:11-18`.
 | `TodoPage` | Server entry `/todo`, guard authoritative fail-closed | A4 | `app/todo/page.tsx` |
 | `TodoScreen` | Trình bày thuần `/todo` — nhận props, không tự gọi Supabase/i18n | A4 | `components/todo/todo-screen.tsx` |
 | `logoutAction` | Server Action đăng xuất best-effort | A5 | `app/todo/actions.ts` |
-| `Home` | Root fallback redirect authoritative | A6 | `app/page.tsx` |
+| ~~`Home`~~ | **SUPERSEDED** — `app/page.tsx` nay là `HomePage` (F003_Homepage), không còn redirect | A6 (retired) | `app/page.tsx` |
 | `proxy` | Guard optimistic cross-cutting cho `/`, `/login`, `/todo/:path*` | A0 | `proxy.ts` |
 | `createClient` (browser) | Factory Supabase client phía trình duyệt (BL001) | A2 | `lib/supabase/client.ts` |
 | `createClient` (server) | Factory Supabase client phía server, async (BL002) | A1, A3, A4, A5, A6 | `lib/supabase/server.ts` |
@@ -306,14 +312,16 @@ action tương ứng (§ 3.1) — không lặp lại ở đây.
 
 #### Bin 3 — cross-cutting, không thuộc riêng action nào
 
-**A0 · `PERM001`/`PERM002`/`PERM003` — proxy optimistic guard áp dụng cho cả 3 route `/`, `/login`,
-`/todo/:path*`.** `proxy.ts:22-42` gọi `getUserOrNull` (qua BL003, `createProxyClient`) rồi redirect
-theo ma trận: đã login & path ∈ {/, /login} → `/todo`; chưa login & path ∈ {/, /todo} → `/login`;
-còn lại pass-through. Đây là lớp ĐẦU TIÊN, không phải lớp duy nhất — mỗi route còn có re-check
-authoritative riêng (A1/A4/A6). `/auth/callback` bị loại tường minh khỏi matcher (route tự xử lý
-redirect riêng, xem A3). Lỗi Supabase khi gọi `getUserOrNull` bị nuốt (try/catch), coi như chưa
-login — không bao giờ 500 cả site vì lỗi này.
-**Source:** `proxy.ts:22-42,72-82,109-111`
+**A0 · `PERM002`/`PERM003` — proxy optimistic guard áp dụng cho `/login` và `/todo/:path*`
+(`/` vẫn khớp `matcher` để refresh cookie nhưng KHÔNG còn redirect nào — `PERM001` superseded kể từ
+F003_Homepage, 2026-09-06).** `proxy.ts:25-44` gọi `getUserOrNull` (qua BL003, `createProxyClient`)
+rồi redirect theo ma trận: đã login & path === `/login` → `/` (đổi từ `/todo`); chưa login & path
+bắt đầu bằng `/todo` → `/login`; còn lại (kể cả `path === "/"`) pass-through. Đây là lớp ĐẦU TIÊN,
+không phải lớp duy nhất — `/login`/`/todo` còn có re-check authoritative riêng (A1/A4); `/` không
+còn re-check nào vì không còn gì để guard (A6 bên dưới đã retired). `/auth/callback` bị loại tường
+minh khỏi matcher (route tự xử lý redirect riêng, xem A3). Lỗi Supabase khi gọi `getUserOrNull` bị
+nuốt (try/catch), coi như chưa login — không bao giờ 500 cả site vì lỗi này.
+**Source:** `proxy.ts:25-44,75-85,112-114`
 
 <!-- BR-005 (Google login button shares its pending state with the language-switch button) is
      Bin 1 — used by exactly ONE action (A2) — so its full statement lives inline in A2's Rule
@@ -356,7 +364,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  # Supabase publishable key — bắt buộ
 
 - **SC-001** *(A1)* `/login` render form thành công ngay cả khi Supabase `getUser()` ném lỗi (covers FR-601, BR-001)
 - **SC-002** *(A4)* `/todo` không bao giờ render nội dung khi thiếu `user` HOẶC khi `getUser()` ném lỗi (covers FR-603, BR-003)
-- **SC-003** *(A3)* mọi giá trị `next` off-origin/protocol-relative/chứa control char đều fallback `/todo`, không redirect ra ngoài origin hiện tại (covers FR-402, BR-002)
+- **SC-003** *(A3)* mọi giá trị `next` off-origin/protocol-relative/chứa control char đều fallback `/` (đổi từ `/todo`, F003_Homepage), không redirect ra ngoài origin hiện tại (covers FR-402, BR-002)
 - **SC-004** *(A3)* raw `error`/`error_description` từ provider không bao giờ xuất hiện trong HTML render — chỉ có 1 thông báo cố định đã dịch (covers FR-204)
 - **SC-005** *(A1)* `/login` render đúng copy đã dịch — hero title/description và nút "LOGIN With
   Google" đều visible (covers FR-201). Test: `tests/e2e/login.spec.ts` TC `42b82364` (Hero title and
@@ -369,12 +377,12 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  # Supabase publishable key — bắt buộ
   phạm vi 2 test này — cả hai chỉ verify tới bước gọi `authorize`/trạng thái pending rồi abort, không
   chạy trọn round-trip Google thật. `[UNVERIFIED]` cho nhánh thành công của FR-401 bằng test thực
   thi; chỉ được xác nhận qua đọc source + giả định ở § 5.2 (Assumption 1).
-- **SC-007** *(A6, A0)* `GET /` với anonymous redirect về `/login` (covers FR-101 nhánh anonymous,
-  FR-602 một phần). Test: `tests/e2e/login.spec.ts` TC `45278c06` ("Unauthenticated GET / redirects
-  to /login"). `[UNVERIFIED]` cho nhánh authenticated (`GET /` khi đã đăng nhập → `/todo`) và cho
-  việc cô lập guard authoritative của riêng `Home` (A6) khỏi guard optimistic của `proxy.ts` (A0) —
-  không có test nào bypass `proxy.ts` để chạy riêng `app/page.tsx`; test hiện có đi qua cả 2 lớp
-  cùng lúc.
+- **SC-007** — **SUPERSEDED, không còn áp dụng cho F001** *(A6 đã retired)*. Test cũ
+  (`tests/e2e/login.spec.ts` TC `45278c06`, "Unauthenticated GET / redirects to /login") đã bị XOÁ
+  kể từ F003_Homepage — `/` nay public, không còn redirect nào để verify ở đây. Hành vi thật của `/`
+  (public cho mọi actor) được verify bởi bộ test riêng của F003: `tests/e2e/home.spec.ts` TC `ID-0`
+  ("Unauthenticated user can access public homepage"). Mã `SC-007` giữ lại (không xoá số) để chỗ cho
+  lịch sử; không mô tả test nào đang chạy thật cho F001 nữa.
 - **SC-008** *(A4)* `/todo` hiển thị đúng email trong greeting VÀ nút đăng xuất visible (covers
   FR-301, FR-302). Test: `tests/e2e/login.spec.ts` TC `e76aa170` ("/todo shows user email and logout
   button").
@@ -385,14 +393,15 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  # Supabase publishable key — bắt buộ
 #### US002_LoginWithGoogle *(A1, A2, A3)*
 
 **Independent Test:** Từ `/login` (anonymous), click "LOGIN With Google", giả lập
-`auth/v1/authorize` trả về thành công → xác nhận redirect cuối cùng là `/todo` và session cookie
-tồn tại. Test CI-safe tương ứng (→ **SC-006**): `tests/e2e/login.spec.ts` TC `60bc5bbb`/`37eae882`
-(kiểm chứng đến bước gọi authorize + trạng thái pending, không chạy trọn round-trip Google thật).
+`auth/v1/authorize` trả về thành công → xác nhận redirect cuối cùng là `/` (đổi từ `/todo`,
+F003_Homepage) và session cookie tồn tại. Test CI-safe tương ứng (→ **SC-006**):
+`tests/e2e/login.spec.ts` TC `60bc5bbb`/`37eae882` (kiểm chứng đến bước gọi authorize + trạng thái
+pending, không chạy trọn round-trip Google thật).
 
 **Acceptance Scenarios:**
 
 1. **Given** anonymous tại `/login`, **When** click nút Google và OAuth thành công, **Then**
-   redirect `/todo`, session cookie được set (DEC-002 nhánh thành công).
+   redirect `/` (đổi từ `/todo`), session cookie được set (DEC-002 nhánh thành công).
 2. **Given** anonymous tại `/login`, **When** provider trả `?error=` (huỷ consent), **Then**
    redirect `/login?error=...`, `LoginErrorAlert` hiện đúng 1 thông báo cố định (DEC-001).
 
@@ -432,10 +441,10 @@ redirect `/login` (guard A4 fail-closed re-check session đã mất). Test tươ
 2. **Tên cookie session Supabase** *(A0, SM-001)*: `@supabase/ssr` tự sinh tên cookie theo
    project-ref lúc runtime, không phải literal string trong repo — không thể xác nhận tên chính xác
    chỉ bằng đọc source.
-3. **Thiếu try/catch ở root guard** *(A6)*: không thể xác nhận từ source liệu
-   `app/page.tsx`'s `getUser()` không bọc try/catch là chủ đích (dựa vào error boundary mặc định của
-   framework) hay là một điểm bất đối xứng bị bỏ sót so với `/login`/`/todo` — ghi nhận thay vào đó
-   ở `functional-spec.md` § 11 `RISK-01`.
+3. **[MOOT — A6 retired]** Thiếu try/catch ở root guard cũ: câu hỏi này không còn áp dụng —
+   `app/page.tsx` đã được viết lại hoàn toàn cho F003_Homepage và nay bọc `getUser()` trong try/catch,
+   fail-open về `null` (`app/page.tsx:150-166`, xem `getViewer()`). Giữ mục này lại chỉ để tham chiếu
+   lịch sử; `functional-spec.md § 11 RISK-01` cũng nên được đọc với cùng lưu ý.
 
 ### 5.4 Source References
 
@@ -443,13 +452,13 @@ redirect `/login` (guard A4 fail-closed re-check session đã mất). Test tươ
 |---|---|---|---|---|
 | — | 1 | `SupabaseUser` (MODEL002) | *(kiểu ngoài repo, `@supabase/supabase-js`)* | entity duy nhất mà toàn bộ guard/greeting của feature xoay quanh |
 | A1 | 2 | `LoginPage` | `app/login/page.tsx:1-99` | server entry + guard authoritative fail-open cho `/login` |
-| A0 | 3 | `proxy` | `proxy.ts:1-111` | guard optimistic cross-cutting cho `/`, `/login`, `/todo/:path*` |
+| A0 | 3 | `proxy` | `proxy.ts:1-114` | guard optimistic — `/login`, `/todo/:path*` (redirect); `/` chỉ refresh cookie, không redirect |
 | A2 | 4 | `signInWithGoogle` | `lib/auth/sign-in-with-google.ts:1-55` | khởi động OAuth qua BL001 |
 | A3 | 5 | `GET` (callback) | `app/auth/callback/route.ts:1-47` | đổi PKCE code lấy session + 3 nhánh redirect (DEC-001/002) |
 | A3 | 6 | `safeNextPath` | `lib/supabase/next-path.ts:1-106` | choke point chống open-redirect cho `next` |
 | A4 | 7 | `TodoPage` | `app/todo/page.tsx:1-39` | guard authoritative fail-closed + build greeting props |
 | A5 | 8 | `logoutAction` | `app/todo/actions.ts:1-24` | Server Action đăng xuất best-effort |
-| A6 | 9 | `Home` | `app/page.tsx:11-18` | root fallback redirect authoritative |
+| A6 | 9 | ~~`Home`~~ (superseded) | *(N/A — `app/page.tsx` nay thuộc F003_Homepage)* | retired 2026-09-06; xem `docs/vi/features/F003_Homepage/technical-spec.md` |
 
 #### Data Flow
 

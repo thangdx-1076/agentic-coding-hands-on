@@ -20,7 +20,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 | Method | Path | Code | Owner F### | Handler | Middleware |
 |--------|------|------|------------|---------|------------|
-| GET | /auth/callback | ROUTE001 | F001 | `GET(request)` — nhận redirect PKCE từ Supabase, đọc `?code`/`?error`/`?error_description`/`?next`; có `code` thì gọi `exchangeCodeForSession(code)` rồi redirect tới `safeNextPath(next)`; có `error` thì redirect `/login?error=...`; không có gì hợp lệ thì redirect `/login?error=auth_code_error` | none — loại trừ tường minh khỏi matcher của `proxy.ts` (route tự xử lý redirect riêng, xem `proxy.ts` dòng 103-110) |
+| GET | /auth/callback | ROUTE001 | F001 | `GET(request)` — nhận redirect PKCE từ Supabase, đọc `?code`/`?error`/`?error_description`/`?next`; có `code` thì gọi `exchangeCodeForSession(code)` rồi redirect tới `safeNextPath(next)` (mặc định `/`, đổi từ `/todo` — F003_Homepage); có `error` thì redirect `/login?error=...`; không có gì hợp lệ thì redirect `/login?error=auth_code_error` | none — loại trừ tường minh khỏi matcher của `proxy.ts` (route tự xử lý redirect riêng, xem `proxy.ts` dòng 112-114) |
 
 ## Frontend Routes/Pages
 
@@ -30,9 +30,9 @@ Bốn route frontend: ba route dựng từ `page.tsx` theo quy ước App Router
 
 | Path | Component | Route Name |
 |------|-----------|------------|
-| / | Home | root-redirect |
+| / | HomePage | home (F003_Homepage) |
 
-Route `/` không tự render UI — chỉ là fallback redirect (`redirect(user ? "/todo" : "/login")`), phòng trường hợp `proxy.ts` không chạy (ví dụ render server-side trực tiếp). Đây là bản kiểm tra AUTHORITATIVE, còn `proxy.ts` là bản optimistic chạy trước.
+Route `/` render SCR003_HomeScreen — trang chủ công khai (hero + đếm ngược, thông tin sự kiện, 6 thẻ giải thưởng, Sun* Kudos, header/footer). **Đổi từ 2026-09-06**: trước đây route này chỉ là fallback redirect thuần (`redirect(user ? "/todo" : "/login")`); nay `app/page.tsx` tự đọc session + role (`getUserRole`, fail-open `member`) và ủy quyền tương tác cho `app/home-client.tsx` (client boundary), KHÔNG redirect ai — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác phần cá nhân hoá header (xem `docs/vi/generated/permissions-matrix.md § PERM001_RootRouteGuard`, nay superseded).
 
 ### File: app/login/page.tsx
 
@@ -64,12 +64,13 @@ Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có 
 matcher: ["/", "/login", "/todo/:path*"]
 ```
 
-Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`):
+Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và `/todo/:path*`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
 
 | Điều kiện | Redirect tới |
 |-----------|--------------|
-| đã login & path ∈ {/, /login} | /todo |
-| chưa login & path ∈ {/, /todo} | /login |
+| đã login & path === /login | / (đổi từ /todo) |
+| chưa login & path bắt đầu bằng /todo | /login |
+| path === / | pass-through LUÔN — không redirect (public, F003_Homepage; trước đây redirect theo trạng thái đăng nhập) |
 | còn lại | pass-through (giữ cookie đã refresh) |
 
 `/auth/callback` bị loại khỏi matcher một cách tường minh — route đó tự xử lý redirect riêng (xem Backend Routes). `proxy.ts` cũng chuẩn hoá cookie `NEXT_LOCALE` (ghi đè cả trên `request` lẫn `response` nếu giá trị không hợp lệ) trước khi chạy auth guard.
