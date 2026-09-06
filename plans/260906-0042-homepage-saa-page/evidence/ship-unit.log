@@ -1,0 +1,64 @@
+
+> agentic-coding-hands-on@0.2.0 test:unit:coverage /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+> vitest run --coverage
+
+
+ RUN  v3.2.7 /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+      Coverage enabled with v8
+
+ ✓ |node| app/todo/actions.test.ts (2 tests) 6ms
+ ✓ |node| lib/countdown/countdown.test.ts (12 tests) 8ms
+ ✓ |node| app/auth/callback/route.test.ts (6 tests) 27ms
+ ✓ |node| lib/i18n/locale.test.ts (8 tests) 6ms
+ ✓ |node| app/actions/locale.test.ts (4 tests) 8ms
+ ✓ |node| lib/auth/get-user-role.test.ts (7 tests) 48ms
+ ✓ |node| lib/supabase/server.test.ts (2 tests) 6ms
+ ✓ |node| lib/supabase/client.test.ts (1 test) 4ms
+ ✓ |jsdom| hooks/use-select-locale.test.ts (2 tests) 23ms
+ ✓ |node| lib/supabase/proxy-client.test.ts (2 tests) 4ms
+ ✓ |jsdom| hooks/use-login-actions.test.ts (4 tests) 50ms
+ ✓ |jsdom| hooks/use-menu-keyboard-nav.test.ts (14 tests) 38ms
+ ✓ |jsdom| hooks/use-countdown.test.ts (6 tests) 80ms
+ ✓ |node| lib/supabase/next-path.test.ts (27 tests) 6ms
+ ✓ |node| lib/auth/sign-in-with-google.test.ts (9 tests) 6ms
+ ✓ |node| lib/supabase/users-role-client.test.ts (1 test) 5ms
+ ✓ |node| lib/i18n/messages-parity.test.ts (2 tests) 4ms
+ ✓ |node| lib/ui/roving-index.test.ts (10 tests) 4ms
+
+ Test Files  18 passed (18)
+      Tests  119 passed (119)
+   Start at  10:15:31
+   Duration  2.45s (transform 450ms, setup 3.04s, collect 1.21s, tests 333ms, environment 3.75s, prepare 1.48s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |     100 |      100 |     100 |     100 |                   
+ app/actions       |     100 |      100 |     100 |     100 |                   
+  locale.ts        |     100 |      100 |     100 |     100 |                   
+ app/auth/callback |     100 |      100 |     100 |     100 |                   
+  route.ts         |     100 |      100 |     100 |     100 |                   
+ app/todo          |     100 |      100 |     100 |     100 |                   
+  actions.ts       |     100 |      100 |     100 |     100 |                   
+ hooks             |     100 |      100 |     100 |     100 |                   
+  use-countdown.ts |     100 |      100 |     100 |     100 |                   
+  ...in-actions.ts |     100 |      100 |     100 |     100 |                   
+  ...yboard-nav.ts |     100 |      100 |     100 |     100 |                   
+  ...ect-locale.ts |     100 |      100 |     100 |     100 |                   
+ lib/auth          |     100 |      100 |     100 |     100 |                   
+  get-user-role.ts |     100 |      100 |     100 |     100 |                   
+  ...ith-google.ts |     100 |      100 |     100 |     100 |                   
+ lib/countdown     |     100 |      100 |     100 |     100 |                   
+  countdown.ts     |     100 |      100 |     100 |     100 |                   
+ lib/i18n          |     100 |      100 |     100 |     100 |                   
+  locale.ts        |     100 |      100 |     100 |     100 |                   
+ lib/supabase      |     100 |      100 |     100 |     100 |                   
+  client.ts        |     100 |      100 |     100 |     100 |                   
+  next-path.ts     |     100 |      100 |     100 |     100 |                   
+  proxy-client.ts  |     100 |      100 |     100 |     100 |                   
+  server.ts        |     100 |      100 |     100 |     100 |                   
+  ...ole-client.ts |     100 |      100 |     100 |     100 |                   
+ lib/ui            |     100 |      100 |     100 |     100 |                   
+  roving-index.ts  |     100 |      100 |     100 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------

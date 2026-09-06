@@ -1,0 +1,621 @@
+
+Running 27 tests using 4 workers
+
+  ✓   2 [chromium] › tests/e2e/home.spec.ts:64:9 › Homepage SAA › Unauthenticated User › [TC ID-10] Language selector shows 'VN' by default (950ms)
+  ✓   4 [chromium] › tests/e2e/home.spec.ts:43:9 › Homepage SAA › Unauthenticated User › [TC ID-8] Header logo position and alt text (969ms)
+  ✘   1 [chromium] › tests/e2e/home.spec.ts:33:9 › Homepage SAA › Unauthenticated User › [TC ID-0] Unauthenticated user can access public homepage (5.9s)
+  ✘   3 [chromium] › tests/e2e/home.spec.ts:52:9 › Homepage SAA › Unauthenticated User › [TC ID-9] Navigation link 'About SAA 2025' active state (5.9s)
+  ✘   5 [chromium] › tests/e2e/home.spec.ts:74:9 › Homepage SAA › Unauthenticated User › [TC ID-1 anon variant] Anonymous user sees login link, no bell (5.3s)
+  ✘   6 [chromium] › tests/e2e/home.spec.ts:87:9 › Homepage SAA › Unauthenticated User › [TC ID-12, ID-13] Hero section with countdown timer and 'Coming soon' label (5.4s)
+  ✘   7 [chromium] › tests/e2e/home.spec.ts:152:9 › Homepage SAA › Unauthenticated User › [TC ID-14] Event information text visible (5.5s)
+  ✘  10 [chromium] › tests/e2e/home.spec.ts:178:9 › Homepage SAA › Unauthenticated User › [TC ID-45] CTA 'ABOUT KUDOS' link navigates to /kudos (5.4s)
+  ✘   9 [chromium] › tests/e2e/home.spec.ts:168:9 › Homepage SAA › Unauthenticated User › [TC ID-44] CTA 'ABOUT AWARDS' link navigates to /awards (5.4s)
+  ✘  11 [chromium] › tests/e2e/home.spec.ts:188:9 › Homepage SAA › Unauthenticated User › [TC ID-15] Award cards display in 3-column grid on desktop (≥1024px) (5.3s)
+  ✘  12 [chromium] › tests/e2e/home.spec.ts:265:9 › Homepage SAA › Unauthenticated User › [TC ID-47, ID-48, ID-49, ID-50] Award cards link to /awards with proper slugs (5.4s)
+  ✘  13 [chromium] › tests/e2e/home.spec.ts:226:9 › Homepage SAA › Unauthenticated User › [TC ID-16] Award cards display in 2-column grid on mobile (<768px) (5.4s)
+  ✘  14 [chromium] › tests/e2e/home.spec.ts:292:9 › Homepage SAA › Unauthenticated User › [TC ID-53] Kudos section with 'Chi tiết' link to /kudos (5.2s)
+  ✘  16 [chromium] › tests/e2e/home.spec.ts:344:9 › Homepage SAA › Unauthenticated User › [TC ID-17] Footer content and links (5.5s)
+  ✘  17 [chromium] › tests/e2e/home.spec.ts:372:9 › Homepage SAA › Unauthenticated User › [TC ID-25, ID-26] Language switch to EN and back to VN (5.7s)
+  ✘  18 [chromium] › tests/e2e/home.spec.ts:412:9 › Homepage SAA › Unauthenticated User › [TC ID-41, ID-42] Zero-state countdown when event time reached (5.3s)
+  ✘   8 [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes (30.0s)
+  ✘  21 [chromium] › tests/e2e/home.spec.ts:505:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-1] Authenticated member user sees notification bell and account menu (5.6s)
+  ✘  22 [chromium] › tests/e2e/home.spec.ts:523:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-29] Notification bell has no badge when no unread notifications (5.4s)
+  ✘  15 [chromium] › tests/e2e/home.spec.ts:307:9 › Homepage SAA › Unauthenticated User › [TC ID-30, ID-31, ID-32, ID-33, ID-34, ID-35] Widget button menu keyboard and click behavior (30.0s)
+  ✘  19 [chromium] › tests/e2e/home.spec.ts:441:9 › Homepage SAA › Unauthenticated User › [TC ID-2] Clicking header logo navigates to homepage and scrolls to top (30.1s)
+  ✘  20 [chromium] › tests/e2e/home.spec.ts:463:9 › Homepage SAA › Unauthenticated User › [TC ID-3] Clicking 'About SAA 2025' in header stays on homepage (30.0s)
+  ✓  26 [chromium] › tests/e2e/home.spec.ts:663:9 › Homepage SAA › Authentication Guards › [TC f62b0c97] Unauthenticated user accessing /login is not redirected (245ms)
+  ✘  27 [chromium] › tests/e2e/home.spec.ts:671:9 › Homepage SAA › Authentication Guards › @auth [TC f62b0c97 new] Authenticated user accessing /login redirects to / (5.4s)
+  ✘  23 [chromium] › tests/e2e/home.spec.ts:545:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-36, ID-38] Account menu displays correct options for member user (30.0s)
+  ✘  24 [chromium] › tests/e2e/home.spec.ts:576:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-4] Logout button submits and redirects to /login (30.0s)
+  ✘  25 [chromium] › tests/e2e/home.spec.ts:628:9 › Homepage SAA › Authenticated Admin User › @auth [TC ID-5, ID-37] Account menu displays admin dashboard option for admin user (30.0s)
+
+
+  1) [chromium] › tests/e2e/home.spec.ts:33:9 › Homepage SAA › Unauthenticated User › [TC ID-0] Unauthenticated user can access public homepage 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('h1')
+    Expected substring: "ROOT FURTHER"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" with timeout 5000ms
+      - waiting for locator('h1')
+
+
+      38 |       // Verify page loaded successfully
+      39 |       const h1 = page.locator("h1");
+    > 40 |       await expect(h1).toContainText("ROOT FURTHER");
+         |                        ^
+      41 |     });
+      42 |
+      43 |     test("[TC ID-8] Header logo position and alt text", async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:40:24
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-bf4fd--can-access-public-homepage-chromium/error-context.md
+
+  2) [chromium] › tests/e2e/home.spec.ts:52:9 › Homepage SAA › Unauthenticated User › [TC ID-9] Navigation link 'About SAA 2025' active state 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('header').locator('a[href="/"]').filter({ hasText: 'About SAA 2025' })
+    Expected: "page"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for locator('header').locator('a[href="/"]').filter({ hasText: 'About SAA 2025' })
+
+
+      59 |         .locator('a[href="/"]')
+      60 |         .filter({ hasText: "About SAA 2025" });
+    > 61 |       await expect(aboutLink).toHaveAttribute("aria-current", "page");
+         |                               ^
+      62 |     });
+      63 |
+      64 |     test("[TC ID-10] Language selector shows 'VN' by default", async ({
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:61:31
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-3ee48-About-SAA-2025-active-state-chromium/error-context.md
+
+  3) [chromium] › tests/e2e/home.spec.ts:74:9 › Homepage SAA › Unauthenticated User › [TC ID-1 anon variant] Anonymous user sees login link, no bell 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('a[aria-label="Đăng nhập"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('a[aria-label="Đăng nhập"]')
+
+
+      78 |       // Should have login link with aria-label
+      79 |       const loginLink = page.locator('a[aria-label="Đăng nhập"]');
+    > 80 |       await expect(loginLink).toBeVisible();
+         |                               ^
+      81 |       await expect(loginLink).toHaveAttribute("href", "/login");
+      82 |       // Should NOT have notification bell
+      83 |       const bell = page.locator('button[aria-label*="Thông báo"]');
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:80:31
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-2606c-ser-sees-login-link-no-bell-chromium/error-context.md
+
+  4) [chromium] › tests/e2e/home.spec.ts:87:9 › Homepage SAA › Unauthenticated User › [TC ID-12, ID-13] Hero section with countdown timer and 'Coming soon' label 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('h1')
+    Expected substring: "ROOT FURTHER"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" with timeout 5000ms
+      - waiting for locator('h1')
+
+
+      91 |       // h1 ROOT FURTHER
+      92 |       const h1 = page.locator("h1");
+    > 93 |       await expect(h1).toContainText("ROOT FURTHER");
+         |                        ^
+      94 |
+      95 |       // "Coming soon" label should be visible before event
+      96 |       const comingSoon = page.locator("text=Coming soon");
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:93:24
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-913e7-timer-and-Coming-soon-label-chromium/error-context.md
+
+  5) [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.textContent: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=MINUTES').locator('..').getByText(/^\d{2,}$/).first()
+
+
+      131 |         .locator("..")
+      132 |         .getByText(/^\d{2,}$/);
+    > 133 |       const initialMinutes = await minutesLocator.first().textContent();
+          |                                                           ^
+      134 |       const initialVal = parseInt(initialMinutes || "0", 10);
+      135 |       expect(initialVal).toBeGreaterThan(0); // Should be > 0 with far-future target
+      136 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:133:59
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-7038b-inute-after-1-minute-passes-chromium/error-context.md
+
+  6) [chromium] › tests/e2e/home.spec.ts:152:9 › Homepage SAA › Unauthenticated User › [TC ID-14] Event information text visible 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('text=Thời gian: 18h30')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('text=Thời gian: 18h30')
+
+
+      153 |       await page.goto("/");
+      154 |       // Check for event time
+    > 155 |       await expect(page.locator("text=Thời gian: 18h30")).toBeVisible();
+          |                                                           ^
+      156 |       // Check for venue
+      157 |       await expect(
+      158 |         page.locator("text=Nhà hát nghệ thuật quân đội"),
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:155:59
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-7395e-nt-information-text-visible-chromium/error-context.md
+
+  7) [chromium] › tests/e2e/home.spec.ts:168:9 › Homepage SAA › Unauthenticated User › [TC ID-44] CTA 'ABOUT AWARDS' link navigates to /awards 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('a').filter({ hasText: /ABOUT AWARDS/i })
+    Expected: "/awards"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for locator('a').filter({ hasText: /ABOUT AWARDS/i })
+
+
+      173 |         .locator("a")
+      174 |         .filter({ hasText: /ABOUT AWARDS/i });
+    > 175 |       await expect(awardsCtaLink).toHaveAttribute("href", "/awards");
+          |                                   ^
+      176 |     });
+      177 |
+      178 |     test("[TC ID-45] CTA 'ABOUT KUDOS' link navigates to /kudos", async ({
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:175:35
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-51a65-DS-link-navigates-to-awards-chromium/error-context.md
+
+  8) [chromium] › tests/e2e/home.spec.ts:178:9 › Homepage SAA › Unauthenticated User › [TC ID-45] CTA 'ABOUT KUDOS' link navigates to /kudos 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('a').filter({ hasText: /ABOUT KUDOS/i })
+    Expected: "/kudos"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for locator('a').filter({ hasText: /ABOUT KUDOS/i })
+
+
+      183 |         .locator("a")
+      184 |         .filter({ hasText: /ABOUT KUDOS/i });
+    > 185 |       await expect(kudosCtaLink).toHaveAttribute("href", "/kudos");
+          |                                  ^
+      186 |     });
+      187 |
+      188 |     test("[TC ID-15] Award cards display in 3-column grid on desktop (≥1024px)", async ({
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:185:34
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-783fe-DOS-link-navigates-to-kudos-chromium/error-context.md
+
+  9) [chromium] › tests/e2e/home.spec.ts:188:9 › Homepage SAA › Unauthenticated User › [TC ID-15] Award cards display in 3-column grid on desktop (≥1024px) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('a').filter({ hasText: /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/ })
+    Expected: 6
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 5000ms
+      - waiting for locator('a').filter({ hasText: /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/ })
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      197 |           /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/,
+      198 |       });
+    > 199 |       await expect(cards).toHaveCount(6);
+          |                           ^
+      200 |
+      201 |       // Get bounding boxes to verify 3-column layout
+      202 |       const boxes = await cards.evaluateAll((elements) =>
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:199:27
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-c7581-mn-grid-on-desktop-≥1024px--chromium/error-context.md
+
+  10) [chromium] › tests/e2e/home.spec.ts:226:9 › Homepage SAA › Unauthenticated User › [TC ID-16] Award cards display in 2-column grid on mobile (<768px) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('a').filter({ hasText: /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/ })
+    Expected: 6
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 5000ms
+      - waiting for locator('a').filter({ hasText: /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/ })
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      234 |           /Top Talent|Top Project|Top Project Leader|Best Manager|Signature 2025|MVP/,
+      235 |       });
+    > 236 |       await expect(cards).toHaveCount(6);
+          |                           ^
+      237 |
+      238 |       // Get bounding boxes
+      239 |       const boxes = await cards.evaluateAll((elements) =>
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:236:27
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-5bda8-olumn-grid-on-mobile-768px--chromium/error-context.md
+
+  11) [chromium] › tests/e2e/home.spec.ts:265:9 › Homepage SAA › Unauthenticated User › [TC ID-47, ID-48, ID-49, ID-50] Award cards link to /awards with proper slugs 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('a[aria-label*="Chi tiết"][aria-label*="Top Talent"]').first()
+    Expected: "/awards#top-talent"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for locator('a[aria-label*="Chi tiết"][aria-label*="Top Talent"]').first()
+
+
+      283 |           .locator(`a[aria-label*="Chi tiết"][aria-label*="${award.title}"]`)
+      284 |           .first();
+    > 285 |         await expect(detailsLink).toHaveAttribute(
+          |                                   ^
+      286 |           "href",
+      287 |           `/awards#${award.slug}`,
+      288 |         );
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:285:35
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-1bf3b-to-awards-with-proper-slugs-chromium/error-context.md
+
+  12) [chromium] › tests/e2e/home.spec.ts:292:9 › Homepage SAA › Unauthenticated User › [TC ID-53] Kudos section with 'Chi tiết' link to /kudos 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Sun* Kudos' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Sun* Kudos' })
+
+
+      296 |       // Check heading "Sun* Kudos" using getByRole to scope to the section heading
+      297 |       const kudosHeading = page.getByRole("heading", { name: "Sun* Kudos" });
+    > 298 |       await expect(kudosHeading).toBeVisible();
+          |                                  ^
+      299 |
+      300 |       // Check "Chi tiết" link
+      301 |       const kudosDetailLink = page.locator(
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:298:34
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-58917-with-Chi-tiết-link-to-kudos-chromium/error-context.md
+
+  13) [chromium] › tests/e2e/home.spec.ts:307:9 › Homepage SAA › Unauthenticated User › [TC ID-30, ID-31, ID-32, ID-33, ID-34, ID-35] Widget button menu keyboard and click behavior 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button[aria-label="Hành động nhanh"]')
+
+
+      313 |
+      314 |       // Test click to open
+    > 315 |       await widgetButton.click();
+          |                          ^
+      316 |       await expect(menu).toBeVisible();
+      317 |
+      318 |       // Test click to close
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:315:26
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-c6023-keyboard-and-click-behavior-chromium/error-context.md
+
+  14) [chromium] › tests/e2e/home.spec.ts:344:9 › Homepage SAA › Unauthenticated User › [TC ID-17] Footer content and links 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('footer img[alt="Sun* Annual Awards 2025"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('footer img[alt="Sun* Annual Awards 2025"]')
+
+
+      350 |         'footer img[alt="Sun* Annual Awards 2025"]',
+      351 |       );
+    > 352 |       await expect(footerLogo).toBeVisible();
+          |                                ^
+      353 |
+      354 |       // Check navigation links
+      355 |       const aboutLink = page
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:352:32
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-204f0-17-Footer-content-and-links-chromium/error-context.md
+
+  15) [chromium] › tests/e2e/home.spec.ts:372:9 › Homepage SAA › Unauthenticated User › [TC ID-25, ID-26] Language switch to EN and back to VN 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('link', { name: 'Details' }).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('link', { name: 'Details' }).first()
+
+
+      390 |       await expect(
+      391 |         page.getByRole("link", { name: "Details" }).first(),
+    > 392 |       ).toBeVisible();
+          |         ^
+      393 |       langSelector = page.locator('header button[aria-haspopup="menu"]');
+      394 |       await expect(langSelector).toContainText("EN");
+      395 |
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:392:9
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-d7ccc-switch-to-EN-and-back-to-VN-chromium/error-context.md
+
+  16) [chromium] › tests/e2e/home.spec.ts:412:9 › Homepage SAA › Unauthenticated User › [TC ID-41, ID-42] Zero-state countdown when event time reached 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('text=Coming soon')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('text=Coming soon')
+
+
+      423 |       // Verify "Coming soon" is still visible before the event
+      424 |       const comingSoonBefore = page.locator("text=Coming soon");
+    > 425 |       await expect(comingSoonBefore).toBeVisible();
+          |                                      ^
+      426 |
+      427 |       // Fast-forward past the event time (adds 1 minute, crosses 18:30:00)
+      428 |       await page.clock.fastForward("00:01:00");
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:425:38
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-21fc8-own-when-event-time-reached-chromium/error-context.md
+
+  17) [chromium] › tests/e2e/home.spec.ts:441:9 › Homepage SAA › Unauthenticated User › [TC ID-2] Clicking header logo navigates to homepage and scrolls to top 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('header a[aria-label="Sun* Annual Awards 2025"]')
+
+
+      451 |         'header a[aria-label="Sun* Annual Awards 2025"]',
+      452 |       );
+    > 453 |       await headerLogo.click();
+          |                        ^
+      454 |
+      455 |       // Should be on homepage
+      456 |       expect(page.url()).toContain("/");
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:453:24
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-d7c02-homepage-and-scrolls-to-top-chromium/error-context.md
+
+  18) [chromium] › tests/e2e/home.spec.ts:463:9 › Homepage SAA › Unauthenticated User › [TC ID-3] Clicking 'About SAA 2025' in header stays on homepage 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('header a[href="/"]').filter({ hasText: 'About SAA 2025' })
+
+
+      468 |         .locator('header a[href="/"]')
+      469 |         .filter({ hasText: "About SAA 2025" });
+    > 470 |       await aboutLink.click();
+          |                       ^
+      471 |
+      472 |       // Should stay on homepage
+      473 |       expect(page.url()).toContain("/");
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:470:23
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-3432b-in-header-stays-on-homepage-chromium/error-context.md
+
+  19) [chromium] › tests/e2e/home.spec.ts:505:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-1] Authenticated member user sees notification bell and account menu 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('button[aria-label="Thông báo"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('button[aria-label="Thông báo"]')
+
+
+      510 |       // Should have notification bell
+      511 |       const bell = page.locator('button[aria-label="Thông báo"]');
+    > 512 |       await expect(bell).toBeVisible();
+          |                          ^
+      513 |
+      514 |       // Should have account button
+      515 |       const accountBtn = page.locator('button[aria-label="Tài khoản"]');
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:512:26
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-5f080-ation-bell-and-account-menu-chromium/error-context.md
+
+  20) [chromium] › tests/e2e/home.spec.ts:523:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-29] Notification bell has no badge when no unread notifications 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('button[aria-label="Thông báo"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('button[aria-label="Thông báo"]')
+
+
+      527 |
+      528 |       const bell = page.locator('button[aria-label="Thông báo"]');
+    > 529 |       await expect(bell).toBeVisible();
+          |                          ^
+      530 |
+      531 |       // Open notification panel
+      532 |       await bell.click();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:529:26
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-dcdf2-hen-no-unread-notifications-chromium/error-context.md
+
+  21) [chromium] › tests/e2e/home.spec.ts:545:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-36, ID-38] Account menu displays correct options for member user 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button[aria-label="Tài khoản"]')
+
+
+      549 |
+      550 |       const accountBtn = page.locator('button[aria-label="Tài khoản"]');
+    > 551 |       await accountBtn.click();
+          |                        ^
+      552 |
+      553 |       const menu = page.locator('[role="menu"]');
+      554 |       await expect(menu).toBeVisible();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:551:24
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-98a31-ect-options-for-member-user-chromium/error-context.md
+
+  22) [chromium] › tests/e2e/home.spec.ts:576:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-4] Logout button submits and redirects to /login 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button[aria-label="Tài khoản"]')
+
+
+      580 |
+      581 |       const accountBtn = page.locator('button[aria-label="Tài khoản"]');
+    > 582 |       await accountBtn.click();
+          |                        ^
+      583 |
+      584 |       const menu = page.locator('[role="menu"]');
+      585 |       const logoutMenuItem = menu
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:582:24
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-f1e2a-mits-and-redirects-to-login-chromium/error-context.md
+
+  23) [chromium] › tests/e2e/home.spec.ts:628:9 › Homepage SAA › Authenticated Admin User › @auth [TC ID-5, ID-37] Account menu displays admin dashboard option for admin user 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('button[aria-label="Tài khoản"]')
+
+
+      632 |
+      633 |       const accountBtn = page.locator('button[aria-label="Tài khoản"]');
+    > 634 |       await accountBtn.click();
+          |                        ^
+      635 |
+      636 |       const menu = page.locator('[role="menu"]');
+      637 |       await expect(menu).toBeVisible();
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:634:24
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-9619a-board-option-for-admin-user-chromium/error-context.md
+
+  24) [chromium] › tests/e2e/home.spec.ts:671:9 › Homepage SAA › Authentication Guards › @auth [TC f62b0c97 new] Authenticated user accessing /login redirects to / 
+
+    TimeoutError: page.waitForURL: Timeout 5000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation to "/" until "load"
+      navigated to "http://localhost:3000/todo"
+    ============================================================
+
+      698 |
+      699 |       // Should redirect to homepage
+    > 700 |       await page.waitForURL("/", { timeout: 5000 });
+          |                  ^
+      701 |       expect(page.url()).toContain("/");
+      702 |     });
+      703 |   });
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:700:18
+
+    Error Context: test-results/home-Homepage-SAA-Authenti-c4898-cessing-login-redirects-to--chromium/error-context.md
+
+  24 failed
+    [chromium] › tests/e2e/home.spec.ts:33:9 › Homepage SAA › Unauthenticated User › [TC ID-0] Unauthenticated user can access public homepage 
+    [chromium] › tests/e2e/home.spec.ts:52:9 › Homepage SAA › Unauthenticated User › [TC ID-9] Navigation link 'About SAA 2025' active state 
+    [chromium] › tests/e2e/home.spec.ts:74:9 › Homepage SAA › Unauthenticated User › [TC ID-1 anon variant] Anonymous user sees login link, no bell 
+    [chromium] › tests/e2e/home.spec.ts:87:9 › Homepage SAA › Unauthenticated User › [TC ID-12, ID-13] Hero section with countdown timer and 'Coming soon' label 
+    [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes 
+    [chromium] › tests/e2e/home.spec.ts:152:9 › Homepage SAA › Unauthenticated User › [TC ID-14] Event information text visible 
+    [chromium] › tests/e2e/home.spec.ts:168:9 › Homepage SAA › Unauthenticated User › [TC ID-44] CTA 'ABOUT AWARDS' link navigates to /awards 
+    [chromium] › tests/e2e/home.spec.ts:178:9 › Homepage SAA › Unauthenticated User › [TC ID-45] CTA 'ABOUT KUDOS' link navigates to /kudos 
+    [chromium] › tests/e2e/home.spec.ts:188:9 › Homepage SAA › Unauthenticated User › [TC ID-15] Award cards display in 3-column grid on desktop (≥1024px) 
+    [chromium] › tests/e2e/home.spec.ts:226:9 › Homepage SAA › Unauthenticated User › [TC ID-16] Award cards display in 2-column grid on mobile (<768px) 
+    [chromium] › tests/e2e/home.spec.ts:265:9 › Homepage SAA › Unauthenticated User › [TC ID-47, ID-48, ID-49, ID-50] Award cards link to /awards with proper slugs 
+    [chromium] › tests/e2e/home.spec.ts:292:9 › Homepage SAA › Unauthenticated User › [TC ID-53] Kudos section with 'Chi tiết' link to /kudos 
+    [chromium] › tests/e2e/home.spec.ts:307:9 › Homepage SAA › Unauthenticated User › [TC ID-30, ID-31, ID-32, ID-33, ID-34, ID-35] Widget button menu keyboard and click behavior 
+    [chromium] › tests/e2e/home.spec.ts:344:9 › Homepage SAA › Unauthenticated User › [TC ID-17] Footer content and links 
+    [chromium] › tests/e2e/home.spec.ts:372:9 › Homepage SAA › Unauthenticated User › [TC ID-25, ID-26] Language switch to EN and back to VN 
+    [chromium] › tests/e2e/home.spec.ts:412:9 › Homepage SAA › Unauthenticated User › [TC ID-41, ID-42] Zero-state countdown when event time reached 
+    [chromium] › tests/e2e/home.spec.ts:441:9 › Homepage SAA › Unauthenticated User › [TC ID-2] Clicking header logo navigates to homepage and scrolls to top 
+    [chromium] › tests/e2e/home.spec.ts:463:9 › Homepage SAA › Unauthenticated User › [TC ID-3] Clicking 'About SAA 2025' in header stays on homepage 
+    [chromium] › tests/e2e/home.spec.ts:505:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-1] Authenticated member user sees notification bell and account menu 
+    [chromium] › tests/e2e/home.spec.ts:523:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-29] Notification bell has no badge when no unread notifications 
+    [chromium] › tests/e2e/home.spec.ts:545:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-36, ID-38] Account menu displays correct options for member user 
+    [chromium] › tests/e2e/home.spec.ts:576:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-4] Logout button submits and redirects to /login 
+    [chromium] › tests/e2e/home.spec.ts:628:9 › Homepage SAA › Authenticated Admin User › @auth [TC ID-5, ID-37] Account menu displays admin dashboard option for admin user 
+    [chromium] › tests/e2e/home.spec.ts:671:9 › Homepage SAA › Authentication Guards › @auth [TC f62b0c97 new] Authenticated user accessing /login redirects to / 
+  3 passed (1.6m)
