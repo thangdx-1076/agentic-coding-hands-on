@@ -74,7 +74,7 @@
 
 ### Tôi cần làm
 
-- [ ] Review + merge PR `feat/homepage-saa-page` → `main` (URL ghi ở mục Decisions sau khi ship).
+- [ ] Review + merge PR #4 → https://github.com/thangdx-1076/agentic-coding-hands-on/pull/4
 - [ ] Chốt nội dung thật cho **menu widget hành động nhanh** (spec MoMorph item 6 không liệt kê option; đang suy diễn từ 2 icon: bút chì → Sun* Kudos `/kudos`, icon SAA → Awards Information `/awards`) — `components/home/widget-button.tsx`.
 - [ ] Chốt **thông tin sự kiện**: design Figma ghi `26/12/2025 · Âu Cơ Art Center · Livestream`, spec/TC ghi `18h30 · Nhà hát nghệ thuật quân đội · Group Facebook Sun* Family` (đã dùng spec/TC) — `messages/{vi,en}.json` `home.event.*`.
 - [ ] Cung cấp file font **"Digital Numbers"** (Figma dùng cho 3 ô đếm ngược; không có trên Google Fonts) — hiện fallback `monospace` trong `components/home/countdown-tiles.tsx`.
@@ -85,6 +85,10 @@
 
 ### Decisions
 
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/4 — branch `feat/homepage-saa-page` → `main`, 8 commit (3 forge + 5 ship: feat/test/docs/chore(plan)/chore(release)).
+- Bump **minor** `0.2.0 → 0.3.0`: tính năng người dùng thấy được mới (homepage public) — theo tiền lệ 0.2.0; ship bảo hỏi khi minor nhưng CLAUDE.md chỉ dừng khi mất dữ liệu/tốn tiền/lộ secret.
+- Không tạo GitHub issue để link PR (không có issue mở; 3 PR trước cũng không link) — tạo issue chỉ để có cái mà link là thao tác ra ngoài không cần thiết.
+- Ship gates: SunLint 81.3 (B) 0 error/12 warning (advisory); licenseal 171 dep, 0 violation, 0 gap, 14 warning LGPL đã biết; thêm `.takumi/` vào `.gitignore` để `git add -A` không kéo report công cụ vào commit.
 - `/` = Homepage **public** (TC ID-0): `proxy.ts` thu hẹp 2 predicate, GIỮ `/` trong matcher để refresh session; `app/page.tsx` render thật. PERM001 (Root Route Guard) hết hiệu lực — đã ghi vào `docs/vi/system/permissions.md`.
 - Đích sau đăng nhập đổi `/todo` → `/` (3 chỗ: `login-client.tsx` `NEXT_PATH`, `safeNextPath` fallback, `/login` redirect); `/todo` giữ nguyên là placeholder được bảo vệ. 2 assertion cũ trong `login.spec.ts` + 4 trong `sign-in-with-google.test.ts` đổi theo — thay đổi spec có chủ đích, không phải nới test.
 - Scope spec: **SINGLE** feature `F003_Homepage` (một actor/một action-domain/một outcome; header widgets là vùng con của cùng screen, không có API riêng) → không kích Rest Point 1.5a (gate duy nhất không nhường `--auto`).
