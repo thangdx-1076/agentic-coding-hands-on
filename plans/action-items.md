@@ -114,3 +114,18 @@
 - `.playwright-mcp/` (Playwright MCP) và script capture `.mjs` của tester ở root repo làm `format:check` đỏ — đã xoá; cân nhắc thêm `.playwright-mcp/` vào `.gitignore`/`.prettierignore`.
 - `app/page.tsx` 199 dòng — sát ngưỡng 200; lần sau thêm copy nên tách builder.
 - CI không chạy được 16/27 test `@auth` (cần Supabase local) — GREEN đầy đủ chỉ hợp lệ trên máy dev có `saa-app`.
+
+## 260906-1102 — track-project-skills
+
+### Tôi cần làm
+
+- (không có)
+
+### Decisions
+
+- Opt-in thêm `nextjs-route-colocation-architecture` và `takumi-flow` vào `.gitignore` (2 dòng `!.claude/skills/<tên>/`), giữ nguyên cơ chế "chặn cả cây, mở từng skill theo tên" vì kit vẫn đổ `node_modules`/`.venv` vào `.claude/skills/`. `devops`, `search-docs`, `think-sequential` là kit cài → tiếp tục ignore.
+- `.claude/hooks/notifications/.env.example` không đẩy lên: thư mục `hooks/` là kit cài, và pattern `.env*` cũng đang chặn.
+
+### Nợ lại
+
+- Skill viết tay mới sau này phải nhớ thêm dòng opt-in, nếu không sẽ lặp lại lỗi này.
