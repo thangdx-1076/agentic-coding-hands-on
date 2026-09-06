@@ -207,3 +207,26 @@
 - 5 file quá 200 dòng vẫn còn, base-identical: `home-copy.ts` 202, `route.test.ts` 221, `use-menu-keyboard-nav.test.ts` 382, e2e `home.spec.ts` 700, `login.spec.ts` 713.
 - Lớp generated + technical-spec F001–F003 + `_source-to-fcode.json` trỏ path cũ tới khi rebuild-spec chạy.
 - 5 link chết trên nav home: `/awards`, `/kudos`, `/standards`, `/profile`, `/admin`. Màn tiếp theo nên làm là `/awards` (MoMorph `zFYDgyj_pD`, design+spec done).
+
+## 260906-2235 — nextjs-agent-skills
+
+### Tôi cần làm
+
+- [ ] Review + merge PR #8 (https://github.com/thangdx-1076/agentic-coding-hands-on/pull/8) — quyết định cuối cùng có nhận 636 KB markdown vendored vào repo hay không là của người, không phải của agent.
+- [ ] Chốt có cài thêm `web-design-guidelines` không — repo đã bật `eslint-plugin-jsx-a11y` nên nó khớp, nhưng lần này bị loại vì không thuộc phạm vi "skill của nextjs".
+
+### Decisions
+
+- Cài đúng 3 skill Next.js/React: `vercel-react-best-practices`, `vercel-react-view-transitions`, `vercel-composition-patterns`. Loại `vercel-react-native-skills` (không có RN), `deploy-to-vercel` / `vercel-cli-with-tokens` / `vercel-optimize` (repo không deploy Vercel — không có `vercel.json` hay `.vercel`), `writing-guidelines` và `web-design-guidelines` (không thuộc Next.js).
+- Scope project + `--copy` thay vì `--global` hay symlink: khớp pattern repo (skill được commit thành thư mục thật) và không phụ thuộc cache trên máy một người.
+- work-type = `deliverable`, không cấp `F###`. Skill agent là tooling, không phải hành vi sản phẩm; `docs/vi/features/` chỉ giữ F001–F003 là feature thật và 4 skill có sẵn cũng chưa từng có F###.
+- Bỏ `.claude/skills/THIRD_PARTY_NOTICES.md` mà blueprint yêu cầu: vi phạm rule "không tạo markdown ngoài plans/ và docs/", và trùng lặp — `license: MIT` đã nằm trong frontmatter từng SKILL.md, `skills-lock.json` đã ghi source + hash từng skill.
+- Hạ finding của reviewer về README vendored từ `Accept` xuống `Defer`: sửa nó tức là edit nội dung upstream, làm lệch `computedHash` và bị `npx skills update` ghi đè.
+- Bỏ Step 5 (SunLint) và Step 6 (licenseal) của ship: cả hai không có config trong repo, và `package.json` + lockfile không đổi so với `origin/main` — chúng đọc đúng input mà main đã pass. Thay bằng `pnpm lint` (exit 0).
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/8
+
+### Nợ lại
+
+- `skills-lock.json` không ghi commit SHA của upstream, chỉ có `source` + `computedHash` — provenance yếu nếu sau này cần audit chính xác. Giới hạn của CLI, chưa có cách vá tại chỗ.
+- README trong 3 skill vendored mô tả layout của repo tác giả upstream (nhắc `pnpm build`, `src/`, `test-cases.json` không tồn tại trong bản cài). Để nguyên, việc sửa thuộc về upstream.
+- Chưa chạy `pnpm build` và `pnpm test:e2e` trong lượt này — thay đổi không chạm `src/` nên hai gate đó không có input mới; nếu muốn chắc tuyệt đối thì chạy trước khi merge.
