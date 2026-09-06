@@ -167,12 +167,14 @@ test.describe("Login Screen", () => {
       expect(page.url()).toContain("/login");
     });
 
-    test("[TC 45278c06] Unauthenticated GET / redirects to /login", async ({
+    test("[TC 45278c06] GET / renders the public homepage (no redirect)", async ({
       page,
     }) => {
       await page.goto("/");
-      await page.waitForURL("/login");
-      expect(page.url()).toContain("/login");
+      expect(page.url()).toContain("/");
+      // Verify homepage content is visible
+      const h1 = page.locator("h1");
+      await expect(h1).toContainText("ROOT FURTHER");
     });
 
     test("[TC 60bc5bbb] Google button triggers OAuth flow (abort)", async ({
@@ -663,13 +665,13 @@ test.describe("Login Screen", () => {
       await injectSupabaseSession(context, cookies);
     });
 
-    test("[TC f62b0c97] Authenticated user redirects /login to /todo", async ({
+    test("[TC f62b0c97] Authenticated user redirects /login to /", async ({
       page,
     }) => {
       await page.goto("/login");
-      // Should redirect to /todo since user is authenticated
-      await page.waitForURL("/todo", { timeout: 5000 });
-      expect(page.url()).toContain("/todo");
+      // Should redirect to / (homepage) since user is authenticated
+      await page.waitForURL("/", { timeout: 5000 });
+      expect(page.url()).toContain("/");
     });
 
     test("[TC e76aa170] /todo shows user email and logout button", async ({
