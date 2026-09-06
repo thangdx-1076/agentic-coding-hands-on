@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { TodoScreen } from "./todo-screen";
+import viMessages from "../../../messages/vi.json";
 
-import viMessages from "@/messages/vi.json";
+import { TodoScreen } from "./todo-screen";
 
 /**
  * Story route cho `/todo` (FR-005, US004) — dựng từ `TodoScreen`, component

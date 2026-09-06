@@ -25,14 +25,14 @@ export default getRequestConfig(async () => {
 
   try {
     const messages = (
-      (await import(`../messages/${locale}.json`)) as {
+      (await import(`../../messages/${locale}.json`)) as {
         default: AbstractIntlMessages;
       }
     ).default;
     return { locale, messages };
   } catch {
     const fallbackMessages = (
-      (await import(`../messages/${DEFAULT_LOCALE}.json`)) as {
+      (await import(`../../messages/${DEFAULT_LOCALE}.json`)) as {
         default: AbstractIntlMessages;
       }
     ).default;

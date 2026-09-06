@@ -5,10 +5,16 @@ import { describe, expect, it } from "vitest";
 
 // Load JSON messages files
 const enMessages = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../../messages/en.json"), "utf-8"),
+  fs.readFileSync(
+    path.resolve(__dirname, "../../../messages/en.json"),
+    "utf-8",
+  ),
 ) as Record<string, unknown>;
 const viMessages = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../../messages/vi.json"), "utf-8"),
+  fs.readFileSync(
+    path.resolve(__dirname, "../../../messages/vi.json"),
+    "utf-8",
+  ),
 ) as Record<string, unknown>;
 
 /**

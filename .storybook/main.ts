@@ -14,10 +14,7 @@ import type { StorybookConfig } from "@storybook/nextjs-vite";
  */
 const config: StorybookConfig = {
   framework: "@storybook/nextjs-vite",
-  stories: [
-    "../components/**/*.stories.@(ts|tsx)",
-    "../app/**/*.stories.@(ts|tsx)",
-  ],
+  stories: ["../src/**/*.stories.@(ts|tsx)"],
   // Registering the addon here is what starts the MSW service worker — see the
   // note in preview.tsx about `initialize()` not existing in v3.
   addons: ["msw-storybook-addon"],

@@ -12,7 +12,7 @@ import { HomeFooter } from "./home-footer";
 import { WidgetButton } from "./widget-button";
 import { defaultHomeCopy, type HomeCopy } from "./home-copy";
 
-import { montserrat, montserratAlternates } from "@/app/fonts";
+import { montserrat, montserratAlternates } from "@/styles/fonts";
 
 export type HomeScreenProps = {
   copy?: HomeCopy;

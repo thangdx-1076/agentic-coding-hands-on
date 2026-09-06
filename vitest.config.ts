@@ -7,26 +7,27 @@ import { defineConfig } from "vitest/config";
  * repo pins 3.2.7, past the rename from `workspace`; `environmentMatchGlobs`
  * is deprecated as of v3, so it is deliberately not used):
  *
- *  - `node`  — pure-logic helpers (`lib/**`) plus the Server Actions and
- *    Route Handler under `app/**` that only need their Next.js/Supabase
+ *  - `node`  — pure-logic helpers (`src/lib/**` etc.) plus the Server Actions
+ *    and Route Handler under `src/app/**` that only need their Next.js/Supabase
  *    boundary mocked, never a DOM.
- *  - `jsdom` — hooks (`hooks/**`) that touch `document`, focus and keyboard
- *    events. jsdom over happy-dom on purpose: focus/event semantics are
- *    exactly the edge-case territory happy-dom trims for speed, and at two
- *    hook files the speed difference is noise.
+ *  - `jsdom` — hooks under src/hooks and every route segment's private hooks
+ *    folder that touch `document`, focus and keyboard events. jsdom over
+ *    happy-dom on purpose: focus/event semantics are exactly the edge-case
+ *    territory happy-dom trims for speed, and at two hook files the speed
+ *    difference is noise.
  *
  * `resolve.alias` and `coverage` live at ROOT (vitest requires this) and are
  * inherited by both projects via the default `extends: true`.
  */
 export default defineConfig({
   resolve: {
-    // Mirror `tsconfig.json`'s `paths` ({"@/*": ["./*"]}). Vitest does not read
+    // Mirror `tsconfig.json`'s `paths` ({"@/*": ["./src/*"]}). Vitest does not read
     // tsconfig paths, and until now nothing caught that: every `@/` import a
     // test reached was intercepted by `vi.mock` before resolution ever ran.
     // The first REAL `@/` import between two lib modules
     // (`sign-in-with-google.ts` -> `next-path.ts`) failed to resolve.
     alias: {
-      "@": fileURLToPath(new URL(".", import.meta.url)),
+      "@": fileURLToPath(new URL("./src/", import.meta.url)),
     },
   },
   test: {
@@ -47,7 +48,8 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
+          include: ["src/**/*.test.ts"],
+          exclude: ["src/hooks/**", "src/app/**/_hooks/**"],
         },
       },
       {
@@ -55,7 +57,7 @@ export default defineConfig({
         test: {
           name: "jsdom",
           environment: "jsdom",
-          include: ["hooks/**/*.test.ts"],
+          include: ["src/hooks/**/*.test.ts", "src/app/**/_hooks/**/*.test.ts"],
         },
       },
     ],
@@ -72,21 +74,35 @@ export default defineConfig({
       // Every entry below is testable under vitest by mocking its
       // Next.js/Supabase boundary. Note what is NOT here: there is no `.tsx`
       // glob anywhere. That extension mismatch — not a maintained exclude
-      // list — is the mechanism that keeps `components/**` and
-      // `app/**/page.tsx` out of the denominator. Two different reasons, both
+      // list — is the mechanism that keeps `src/components/**` and
+      // `src/app/**/page.tsx` out of the denominator. Two different reasons, both
       // first-party: async Server Components are unsupported by vitest per
       // Next.js's own testing guide, and components are documented by
       // Storybook rather than unit-tested (a product decision).
       //
       // Adding a `.tsx` glob here would silently re-break the number.
+      //
+      // "src/app/actions/**/*.ts" is transitional: it covers
+      // `src/app/actions/locale.ts`, which the pattern-based `actions.ts` /
+      // `route.ts` / `_actions/**` globs below do not reach until Phase 2
+      // relocates it under `src/app/_actions/`. Phase 2 deletes this line;
+      // every other glob here is already pattern-based and needs no change.
       include: [
-        "lib/**/*.ts",
-        "hooks/**/*.ts",
-        "app/actions/**/*.ts",
-        "app/todo/actions.ts",
-        "app/auth/callback/route.ts",
+        "src/api/**/*.ts",
+        "src/dal/**/*.ts",
+        "src/lib/**/*.ts",
+        "src/utils/**/*.ts",
+        "src/hooks/**/*.ts",
+        "src/domain/**/*.ts",
+        "src/configs/**/*.ts",
+        "src/app/**/_hooks/**/*.ts",
+        "src/app/**/_utils/**/*.ts",
+        "src/app/**/_actions/**/*.ts",
+        "src/app/**/actions.ts",
+        "src/app/**/route.ts",
+        "src/app/actions/**/*.ts",
       ],
-      exclude: ["**/*.test.ts"],
+      exclude: ["**/*.test.ts", "**/*.d.ts"],
       // A real gate, not a printed number: below 100% the process exits
       // non-zero and CI fails. Turned on only AFTER the suite already reached
       // 100% -- a threshold switched on early just blocks everyone until

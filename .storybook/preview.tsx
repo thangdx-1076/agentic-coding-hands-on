@@ -2,9 +2,9 @@ import type { Preview } from "@storybook/nextjs-vite";
 import { NextIntlClientProvider } from "next-intl";
 import { mswLoader } from "msw-storybook-addon/csf3";
 
-import { handlers } from "../mocks/handlers";
+import { handlers } from "../src/mocks/handlers";
 import viMessages from "../messages/vi.json";
-import "../app/globals.css";
+import "../src/styles/globals.css";
 
 /**
  * MSW wiring, verified against the INSTALLED msw-storybook-addon@3.0.0 rather

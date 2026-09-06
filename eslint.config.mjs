@@ -77,7 +77,7 @@ const eslintConfig = defineConfig([
   // Vitest unit test files only. Scope tracks `vitest.config.ts`'s two
   // projects: `lib/**` + `app/**` run under `node`, `hooks/**` under `jsdom`.
   {
-    files: ["lib/**/*.test.ts", "hooks/**/*.test.ts", "app/**/*.test.ts"],
+    files: ["src/**/*.test.ts"],
     extends: [vitest.configs.recommended],
   },
 

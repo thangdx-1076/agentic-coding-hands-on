@@ -4,7 +4,7 @@ import { LoginHero } from "./login-hero";
 import { LoginFooter } from "./login-footer";
 import { defaultLoginCopy, type LoginCopy } from "./login-copy";
 
-import { montserrat, montserratAlternates } from "@/app/fonts";
+import { montserrat, montserratAlternates } from "@/styles/fonts";
 
 export type LoginScreenProps = {
   copy?: LoginCopy;
