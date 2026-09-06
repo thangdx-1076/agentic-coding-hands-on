@@ -1,0 +1,56 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Every file listed in references/migration-map.md lives at its target path and no source remains in root app/, components/, hooks/, lib/, mocks/, i18n/ or root proxy.ts",
+    "pnpm lint passes with the new boundary rules and no sideways or downward segment import remains (home header no longer imports from login; home page no longer imports from todo)",
+    "pnpm typecheck passes",
+    "pnpm test:unit:coverage passes at the 100% threshold with the pattern-based allowlist",
+    "pnpm build-storybook succeeds and all 22 stories are discovered under src/",
+    "pnpm test:e2e passes the CI-safe suite, and the @auth suite when Supabase is reachable, with unchanged URLs /, /login, /todo, /auth/callback",
+    "(protected)/layout.tsx is the single authoritative session gate and /todo still redirects anonymous users to /login",
+    "every src/dal module imports server-only and no client component imports src/dal",
+    "README.md and the three project skills reference only paths that exist in the new src/ layout"
+  ],
+  "regressionChecked": [
+    "Google OAuth login flow: /login -> /auth/callback -> /",
+    "Locale cookie normalization and the language selector on / and /login",
+    "Homepage countdown, awards grid and role-aware header",
+    "Protected /todo redirect for anonymous users and logout action",
+    "Vitest node/jsdom project split and the 100% coverage denominator",
+    "Storybook story discovery, MSW service worker and static assets",
+    "CI workflow (Quality and E2E jobs) path assumptions"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Warning",
+      "category": "Documentation",
+      "location": "src/proxy.ts:13-16",
+      "summary": "Docblock named the removed per-page getUser() in app/todo/page.tsx as the authoritative check instead of (protected)/layout.tsx — fixed by the orchestrator in commit fd445a5, which now names src/app/(protected)/layout.tsx + src/dal/auth.ts as the authoritative gate.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Warning",
+      "category": "Debt",
+      "location": "src/hooks/use-menu-keyboard-nav.test.ts:1-382",
+      "summary": "Five pre-existing files exceed the repo's 200-line rule, base-identical (not introduced by this refactor): home-copy.ts (202), route.test.ts (221), use-menu-keyboard-nav.test.ts (382), tests/e2e/home.spec.ts (700), tests/e2e/login.spec.ts (713) — being logged as debt in plans/action-items.md; does not block this structural, zero-behavior-change refactor.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Tooling",
+      "summary": "Tester's raw run read Storybook's 37 story exports as '37 vs 22 expected'; verified via storybook-static/index.json there are exactly 22 unique story files (what AC5 measures) with 37 exports across them — not a real gap, just an ambiguous unit in the tester's phrasing.",
+      "disposition": "Reject"
+    }
+  ],
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": true,
+    "humanSignedOff": false
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "commands": [
+    {
+      "command": "pnpm build (after Phase 1, f9e6e33)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Compiled; routes /, /_not-found, /auth/callback, /login, /todo; Proxy detected",
+      "ts": "2026-09-06T06:21:42.313Z"
+    },
+    {
+      "command": "pnpm typecheck (after Phase 1, f9e6e33)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean once generated route types were refreshed by the build",
+      "ts": "2026-09-06T06:21:42.313Z"
+    },
+    {
+      "command": "pnpm build (after Phase 2, 1f83396)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Compiled; same 5 routes; Proxy detected",
+      "ts": "2026-09-06T06:21:42.313Z"
+    },
+    {
+      "command": "pnpm typecheck (after Phase 2, 1f83396)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean",
+      "ts": "2026-09-06T06:21:42.313Z"
+    },
+    {
+      "command": "pnpm build (after Phase 3, 580e45f)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Compiled; same 5 routes; Proxy detected",
+      "ts": "2026-09-06T06:21:42.313Z"
+    },
+    {
+      "command": "pnpm typecheck (after Phase 3, 580e45f)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean",
+      "ts": "2026-09-06T06:21:42.313Z"
+    }
+  ]
+}
