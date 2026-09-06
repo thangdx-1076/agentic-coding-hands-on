@@ -1,0 +1,53 @@
+{
+  "commands": [
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style; vendored .claude/** excluded by .prettierignore, skills-lock.json checked and clean",
+      "ts": "2026-09-06T15:43:00Z"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint reported no violations; .claude/** excluded via globalIgnores",
+      "ts": "2026-09-06T15:43:00Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "vitest: 19 test files, 124 tests, all passed in 2.47s - unchanged from baseline",
+      "ts": "2026-09-06T15:43:00Z"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean; run by the orchestrator because a PreToolUse hook blocks the token in subagent shells",
+      "ts": "2026-09-06T15:42:00Z"
+    },
+    {
+      "command": "find .claude/skills/vercel-* -type l | wc -l",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0 symlinks under the three vendored skill directories",
+      "ts": "2026-09-06T15:41:00Z"
+    },
+    {
+      "command": "shasum of pre-existing SKILL.md files diffed against pre-install snapshot",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "NO CLOBBER - all four hand-authored skills byte-identical to the pre-install snapshot",
+      "ts": "2026-09-06T15:41:00Z"
+    },
+    {
+      "command": "git diff --stat -- src/",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "empty - no application source touched",
+      "ts": "2026-09-06T15:41:00Z"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "three vendored skill directories exist under .claude/skills with valid SKILL.md frontmatter - all 3 have name, description and license MIT; harness registered all 3 in the Skill tool immediately after install",
+    "no pre-existing skill directory was modified or removed - shasum of the 4 hand-authored SKILL.md files diffed clean against the pre-install snapshot",
+    "no symlinks are committed under .claude/skills - find -type l returned 0 across all 3 vendored dirs",
+    "the three vendored skill directories are visible to git - 3 unignore lines added; git status now lists 101 new files where it listed none before",
+    "MIT license and upstream source are recorded in-tree - license MIT in all 3 frontmatters plus source, skillPath and computedHash per skill in skills-lock.json; reviewer verified live that upstream itself ships no LICENSE file",
+    "format:check lint typecheck and test:unit all exit 0 - 4 of 4 green, 124 unit tests unchanged from baseline",
+    "the src diff is empty - git diff --stat -- src/ produced no output"
+  ],
+  "regressionChecked": [
+    "gitignore cascade does not un-ignore unrelated .claude content - verified with git check-ignore -v against synthetic paths including vendored node deps and stray json",
+    "no skill-name collision against the 4 existing project skills or built-ins - 7 distinct name values",
+    "no executable or script content vendored - grep sweep for shebangs and script extensions plus cross-check against the upstream GitHub listing confirming none of the 3 upstream dirs ships a scripts folder",
+    "no prompt-injection or exfiltration instruction in the vendored content - every SKILL.md and AGENTS.md read; all URLs are https and point to react.dev, nextjs.org, vercel.com, swr.vercel.app or github.com",
+    "no hidden dotfiles inside the 3 vendored dirs"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Low",
+      "category": "Maintainability",
+      "location": "skills-lock.json:1-23",
+      "summary": "lock file records source repo and per-skill content hash but no resolved upstream commit SHA, weakening exact provenance for a future audit",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Low",
+      "category": "Maintainability",
+      "location": ".claude/skills/vercel-react-best-practices/README.md:11-14",
+      "summary": "vendored README describes the upstream authoring repo layout absent from the installed copy; fixing it would edit third-party content, break the lockfile content hash and be overwritten by the next skills update, so it is deferred to upstream rather than patched here",
+      "disposition": "Defer"
+    }
+  ],
+  "riskGate": {
+    "touchesSensitiveArea": false,
+    "signoffRequired": false
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "task": "Vendor three Vercel Next.js/React agent skills (vercel-react-best-practices, vercel-react-view-transitions, vercel-composition-patterns) from github.com/vercel-labs/agent-skills into .claude/skills/ as committed project skills",
+  "mode": "interactive --flow (work-type: deliverable, no F### spec)",
+  "acceptanceCriteria": [
+    "three vendored skill directories exist under .claude/skills with valid SKILL.md frontmatter",
+    "no pre-existing skill directory was modified or removed",
+    "no symlinks are committed under .claude/skills",
+    "the three vendored skill directories are visible to git",
+    "MIT license and upstream source are recorded in-tree",
+    "format:check lint typecheck and test:unit all exit 0",
+    "the src diff is empty"
+  ],
+  "touchpoints": [
+    ".gitignore",
+    "skills-lock.json",
+    ".claude/skills/vercel-react-best-practices/",
+    ".claude/skills/vercel-react-view-transitions/",
+    ".claude/skills/vercel-composition-patterns/"
+  ],
+  "blastRadius": "Agent tooling only. No application code, no runtime dependency, no build input. The vendored files are markdown and JSON read by coding agents; they never reach the Next.js bundle. Risk concentrates in two places: the .gitignore pattern block (a wrong line could un-ignore vendored node deps under .claude/) and the content of the skills themselves, which agents follow with full permissions.",
+  "contracts": "No public API, route, schema, or exported contract changes. The only contract-shaped artifact is skills-lock.json, newly introduced by the skills CLI."
+}
