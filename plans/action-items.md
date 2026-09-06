@@ -129,3 +129,30 @@
 ### Nợ lại
 
 - Skill viết tay mới sau này phải nhớ thêm dòng opt-in, nếu không sẽ lặp lại lỗi này.
+
+## 260906-1125 — skills-route-colocation-src
+
+### Tôi cần làm
+
+- [ ] Review 3 skill vừa viết lại bằng tiếng Anh (`.claude/skills/{nextjs-route-colocation-architecture,separate-hook-logic-from-components,write-unit-tests-and-storybook-stories}/SKILL.md`) rồi commit/mở PR — chưa commit.
+
+### Decisions
+
+- Chốt dùng `src/` (user quyết). Skill mô tả đích, code chưa move → thêm mục "Status" đầu skill colocation và một dòng ở 2 skill kia để agent không tạo `src/` nửa vời (Next bỏ qua `src/app` khi root `app/` còn).
+- Route `/` đặt trong `(public)/(home)/` để có segment riêng; nếu để `page.tsx` ngay dưới `(public)/` thì component home rò sang `login/` qua `(public)/_components/`.
+- `logoutAction` → `src/app/_actions/logout.ts` (dùng bởi `/` và `/todo`); `setLocale` → `src/app/_actions/set-locale.ts` (concern của root shell, `layout.tsx` set `lang`).
+- `LanguageSelector` + `icon-down` + `icon-vn-flag` → `(public)/_components/language-selector/` (ancestor chung của home và login, gỡ import ngang trong `header.tsx`).
+- `lib/` tách theo kind: `supabase/*` → `src/lib/supabase`; `get-user-role` + `users-role-client` → `src/dal/` (server-only); `sign-in-with-google` → `src/api/auth.ts`; `countdown` → `(home)/_utils`; `roving-index` → `src/utils/a11y`; `next-path` → `src/utils/url`; `i18n/locale` → `src/lib/i18n`.
+- MSW `mocks/` → `src/mocks/` (giữ alias `@/mocks`); `globals.css` + `fonts.ts` → `src/styles/`; `messages/`, `public/`, `tests/` ở root.
+- ESLint boundaries: dùng core `no-restricted-imports` (không thêm dependency), chặn thêm pattern `@/app/**/_*` vì private folder luôn với được bằng relative path; nâng lên `eslint-plugin-boundaries` khi có vi phạm lọt qua.
+- Coverage allowlist đổi sang pattern (`_hooks/_utils/_actions/actions.ts/route.ts` + `src/{api,dal,lib,utils,hooks,domain,configs}`), vẫn không có glob `.tsx`. `_shared/`, `constants/`, `mocks/`, `i18n/request.ts`, `proxy.ts` ngoài mẫu số có chủ ý.
+- Phân công 3 skill, mỗi skill một câu: colocation = WHERE, separate-hook = WHICH LAYER, testing = WHAT SHIPS BESIDE. Mỗi skill có bảng 3 câu trỏ sang 2 skill kia, không lặp nội dung.
+- Skill colocation rút từ ~300 xuống 110 dòng; phần dài đẩy sang `references/migration-map.md` (checklist refactor + config diff) và `references/rationale-and-anti-patterns.md`. Version 6.0.0 → 7.0.0.
+- Sửa lỗi cũ trong skill test: route `/` giờ có story `HomeScreen` (bản cũ ghi "miễn, chỉ redirect").
+
+### Nợ lại
+
+- Code chưa move. Làm theo `references/migration-map.md`, 3 PR. PR 1 xong thì xoá các dòng "until the migration lands" ở 3 skill.
+- Sau khi move phải chạy rebuild-spec core pass: 19 file trong `docs/vi` tham chiếu path cũ, `_source-to-fcode.json` lệch.
+- Cần cài package `server-only` khi tạo `src/dal/`.
+- Trong lúc chờ PR 1, file mới vẫn phải đặt theo cột "Current" của migration map; agent đọc skill có thể lẫn nếu bỏ qua mục Status.
