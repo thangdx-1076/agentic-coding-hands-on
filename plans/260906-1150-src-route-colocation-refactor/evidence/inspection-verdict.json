@@ -51,6 +51,6 @@
   "riskGate": {
     "touchesSensitiveArea": true,
     "signoffRequired": true,
-    "humanSignedOff": false
+    "humanSignedOff": true
   }
 }

@@ -183,3 +183,27 @@
 - Lớp generated, technical-spec F001–F003, `_source-to-fcode.json`, confidence-report trỏ path cũ cho tới khi rebuild-spec chạy.
 - `docs/vi/system/overview.md` stale từ trước refactor.
 - Ba mục "Tôi cần làm" ở trên chặn ship; mọi thứ khác đã xong và commit local.
+
+## 260906-2220 — ship-src-route-colocation
+
+### Tôi cần làm
+
+- [ ] Review và merge PR của branch `refactor/src-route-colocation` vào `main`.
+- [ ] Quyết có chạy `/tkm:rebuild-spec` không (dry-run: `mode=full`, fallback `threshold_exceeded 359/37 > 0.3`). Chưa chạy thì `docs/vi/generated/**`, 3 `technical-spec.md`, `_source-to-fcode.json` và confidence-report còn trỏ path trước khi move. Ước cả triệu token nên không tự chạy.
+- [ ] `docs/vi/system/overview.md` stale từ trước refactor (mô tả app 2 màn, chưa có F003) — gộp vào lần rebuild-spec ở trên.
+
+### Decisions
+
+- riskGate ký duyệt bởi dang.xuan.thang lúc 260906-2225, sau khi soi ba file nhạy cảm: `(protected)/layout.tsx` (gate duy nhất, `getUser()` thật, `null` → redirect), `src/dal/auth.ts` (`server-only`, fail-open `null`), `src/proxy.ts` (hạ xuống pre-check lạc quan). Fail-open ở DAL nhưng fail-closed ở cổng → đúng khuyến nghị Next.
+- `riskGate` có schema đóng: thêm `signoffBy`/`signoffAt` làm gate exit 2 (`unknown/extra key`). Provenance chữ ký ghi ở đây, không nhét vào verdict JSON.
+- Ship mode `official` (base `main`) dù branch là `refactor/*` — bảng suy luận của skill không liệt kê prefix này; chọn theo pattern repo (mọi PR trước đều vào `main`).
+- Bump patch `0.3.0` → `0.3.1`: refactor cấu trúc, zero behavior change. Không có CHANGELOG nên Step 9 bỏ qua.
+- Step 10 (journal) và Step 11 (docs) bỏ qua: `docs/journals/260906-1150-src-route-colocation-refactor.md` và commit `6248003` đã làm xong từ phiên trước.
+- Licenseal 14 warning LGPL đều nằm ở `@img/sharp-*` (binary theo nền tảng, transitive từ Next image), có sẵn ở base, PR không đụng → không chặn.
+- SunLint 19 warning: 5 cái S055 trên `src/proxy.ts` là dương tính giả (proxy Next không phải REST endpoint). 0 error nên không chặn.
+
+### Nợ lại
+
+- 5 file quá 200 dòng vẫn còn, base-identical: `home-copy.ts` 202, `route.test.ts` 221, `use-menu-keyboard-nav.test.ts` 382, e2e `home.spec.ts` 700, `login.spec.ts` 713.
+- Lớp generated + technical-spec F001–F003 + `_source-to-fcode.json` trỏ path cũ tới khi rebuild-spec chạy.
+- 5 link chết trên nav home: `/awards`, `/kudos`, `/standards`, `/profile`, `/admin`. Màn tiếp theo nên làm là `/awards` (MoMorph `zFYDgyj_pD`, design+spec done).
