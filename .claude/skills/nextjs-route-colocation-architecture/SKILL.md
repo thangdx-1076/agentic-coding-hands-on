@@ -12,9 +12,7 @@ metadata:
 
 ## Status
 
-Adopted 2026-09-06 for this repo. Roadmap adds admin, awards CRUD and notifications on top of `/`, `/login`, `/todo`, so the move is cheapest now.
-
-**The code has not moved yet.** The tree below is the target. The file-by-file move and every config change live in [references/migration-map.md](references/migration-map.md). Until that PR merges: apply the rules (direction, scope ladder) today, resolve paths through the map's "current" column, and never create `src/` partially. Next ignores `src/app` while a root `app/` exists.
+Adopted and migrated 2026-09-06 on branch `refactor/src-route-colocation`.
 
 ## Three skills, one question each
 

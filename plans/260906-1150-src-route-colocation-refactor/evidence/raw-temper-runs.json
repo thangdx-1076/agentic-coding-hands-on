@@ -1,0 +1,44 @@
+[
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "ESLint passed with no warnings or errors"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "All matched files use Prettier code style"
+  },
+  {
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "19 test files passed, 124 tests passed, 100% coverage on all axes (statements, branches, functions, lines) across 18 source files"
+  },
+  {
+    "command": "pnpm build-storybook",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "Storybook build succeeded, 37 stories discovered (expected 22 per spec — discrepancy noted)"
+  },
+  {
+    "command": "pnpm exec playwright test --grep-invert @auth",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "46 e2e tests passed, 2 tests skipped (Supabase unavailable tests)"
+  },
+  {
+    "command": "pnpm exec playwright test --grep @auth",
+    "exitCode": 0,
+    "status": "pass",
+    "summary": "9 @auth e2e tests passed (requires Supabase instance, UP and reachable)"
+  },
+  {
+    "command": "static boundary checks: (a) client imports DAL, (b) auth.getUser in src/app, (c) server-only in dal, (d) no file over 200 lines, (e) no root-level app/components/hooks/lib/mocks/i18n/proxy.ts",
+    "exitCode": 1,
+    "status": "fail",
+    "summary": "Checks (a), (b), (c), (e) PASS; check (d) FAILS: 3 files exceed 200 lines — src/hooks/use-menu-keyboard-nav.test.ts (382), src/app/auth/callback/route.test.ts (221), src/app/(public)/(home)/_shared/home-copy.ts (202)"
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "task": "Migrate the Next.js 16 app to the src/ route-colocated layout defined by .claude/skills/nextjs-route-colocation-architecture (references/migration-map.md): move all code under src/, introduce (public)/(protected) route groups with private folders, split lib/ by kind into dal/api/utils/lib, add ESLint boundary rules and pattern-based vitest/Storybook globs, with zero URL or behavior change.",
+  "mode": "interactive (+flow); rest points decided by the orchestrator per CLAUDE.md 'Quyết định thay tôi'",
+  "acceptanceCriteria": [
+    "Every file listed in references/migration-map.md lives at its target path and no source remains in root app/, components/, hooks/, lib/, mocks/, i18n/ or root proxy.ts",
+    "pnpm lint passes with the new boundary rules and no sideways or downward segment import remains (home header no longer imports from login; home page no longer imports from todo)",
+    "pnpm typecheck passes",
+    "pnpm test:unit:coverage passes at the 100% threshold with the pattern-based allowlist",
+    "pnpm build-storybook succeeds and all 22 stories are discovered under src/",
+    "pnpm test:e2e passes the CI-safe suite, and the @auth suite when Supabase is reachable, with unchanged URLs /, /login, /todo, /auth/callback",
+    "(protected)/layout.tsx is the single authoritative session gate and /todo still redirects anonymous users to /login",
+    "every src/dal module imports server-only and no client component imports src/dal",
+    "README.md and the three project skills reference only paths that exist in the new src/ layout"
+  ],
+  "touchpoints": [
+    "app/** -> src/app/**",
+    "components/** -> src/app/**/_components/**",
+    "hooks/** -> src/app/**/_hooks/** and src/hooks/",
+    "lib/** -> src/lib/, src/dal/, src/api/, src/utils/, src/app/(public)/(home)/_utils/",
+    "mocks/ -> src/mocks/",
+    "i18n/request.ts -> src/i18n/request.ts",
+    "proxy.ts -> src/proxy.ts",
+    "tsconfig.json paths",
+    "vitest.config.ts alias, projects, coverage include",
+    ".storybook/main.ts stories glob, .storybook/preview.tsx imports",
+    "eslint.config.mjs boundary rules",
+    "README.md, docs/vi/** (via rebuild-spec core pass)"
+  ],
+  "blastRadius": [
+    "Google OAuth login flow: /login -> /auth/callback -> /",
+    "Locale cookie normalization and the language selector on / and /login",
+    "Homepage countdown, awards grid and role-aware header",
+    "Protected /todo redirect for anonymous users and logout action",
+    "Vitest node/jsdom project split and the 100% coverage denominator",
+    "Storybook story discovery, MSW service worker and static assets",
+    "CI workflow (Quality and E2E jobs) path assumptions",
+    "docs/vi spec layer: _source-to-fcode.json, technical-spec source citations, screen_spec_shas (re-baselined by the rebuild-spec core pass at Stage 6; evidenced by the advanced last_rebuild_sha cursor, not by inspection)"
+  ],
+  "contracts": [
+    "URLs / , /login , /todo , /auth/callback unchanged",
+    "Environment variables NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, EVENT_START_AT unchanged",
+    "package.json scripts (dev, build, lint, typecheck, test:unit, test:unit:coverage, test:e2e, storybook, build-storybook) unchanged",
+    "messages/vi.json and messages/en.json keys unchanged",
+    "MSW handler endpoints /auth/v1/token, /auth/v1/user, /auth/v1/logout unchanged",
+    "Playwright testDir tests/e2e unchanged"
+  ]
+}

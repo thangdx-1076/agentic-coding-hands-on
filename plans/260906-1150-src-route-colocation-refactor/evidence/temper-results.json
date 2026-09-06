@@ -1,0 +1,88 @@
+{
+  "commands": [
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "ESLint passed with no warnings or errors",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "19 test files passed, 124 tests passed, 100% coverage on all axes (statements, branches, functions, lines) across 18 source files",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Storybook build succeeded; 22 story files discovered (37 story exports in index.json)",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm exec playwright test --grep-invert @auth",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "46 e2e tests passed, 2 tests skipped (Supabase unavailable tests)",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm exec playwright test --grep @auth",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "9 @auth e2e tests passed (requires Supabase instance, UP and reachable)",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "static (a): no \"use client\" file imports @/dal",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0 client files import the DAL",
+      "ts": "2026-09-06T06:25:30.612Z"
+    },
+    {
+      "command": "static (b): grep auth.getUser src/app",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0 direct session reads; all go through getCurrentUser",
+      "ts": "2026-09-06T06:25:30.612Z"
+    },
+    {
+      "command": "static (c): server-only in every src/dal module",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "present in: src/dal/auth.ts src/dal/users-role-client.ts src/dal/users.ts ",
+      "ts": "2026-09-06T06:25:30.612Z"
+    },
+    {
+      "command": "static (d): no file over 200 lines introduced or grown by this PR",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "5 files over 200 (home-copy.ts 202, route.test.ts 221, use-menu-keyboard-nav.test.ts 382, e2e home.spec.ts, e2e login.spec.ts) all exist at base aca6e8e with identical line counts; nothing new or grown",
+      "ts": "2026-09-06T06:26:59.279Z"
+    },
+    {
+      "command": "static (d-repo): repo-wide 200-line rule",
+      "exitCode": 0,
+      "status": "skipped",
+      "summary": "5 pre-existing files exceed 200 lines (3 moved verbatim, 2 e2e specs untouched), unchanged from base; out of this refactor scope, logged as debt in action-items",
+      "ts": "2026-09-06T06:25:30.612Z"
+    },
+    {
+      "command": "static (e): no root-level app/ components/ hooks/ lib/ mocks/ i18n/ proxy.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "all legacy root folders gone",
+      "ts": "2026-09-06T06:25:30.612Z"
+    }
+  ]
+}

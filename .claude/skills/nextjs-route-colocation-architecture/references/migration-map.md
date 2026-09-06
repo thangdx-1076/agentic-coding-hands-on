@@ -1,8 +1,19 @@
-# Migration map: current layout → `src/` route-colocated layout
+# Migration map: current layout → `src/` route-colocated layout — EXECUTED 2026-09-06
 
-Checklist for the migration PR. One row per file that moves; `git mv` keeps history. URLs do not change, so the Playwright suite in `tests/e2e/` is the safety net; unit coverage catches broken imports; `pnpm build-storybook` catches story globs.
+Checklist for the migration PR, kept as the historical record of what moved and why. Branch
+`refactor/src-route-colocation`, phases 1-3 landed 2026-09-06 (phase-03's gate: `pnpm lint`,
+`pnpm format:check`, `pnpm test:unit:coverage`, `pnpm build-storybook`,
+`pnpm exec playwright test`, all green). One row per file that moved; `git mv` kept history. URLs
+did not change, so the Playwright suite in `tests/e2e/` was the safety net; unit coverage caught
+broken imports; `pnpm build-storybook` caught story globs.
 
-Suggested split: **PR 1** rows marked `1` (move into `src/`, config, green build) → **PR 2** rows marked `2` (route groups, colocation, remove sideways imports) → **PR 3** rows marked `3` (split `lib/`, lint boundaries, docs). Each PR ends green on `pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm build-storybook`.
+Split actually taken: **Phase 1** rows marked `1` — the **entire** `app/` tree moved verbatim into
+`src/app/` in the same phase as the shared folders and config cutover, never split across a
+PR/phase boundary (Next ignores `src/app` while a root `app/` still exists — a half-moved `app/`
+tree is not a green build, see the phase-03 researcher report's fact 1) → **Phase 2** rows marked
+`2` (route groups, colocation, remove sideways imports) → **Phase 3** rows marked `3` (split
+`lib/`, lint boundaries, routes constant, docs). Each phase ended green on
+`pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm build-storybook`.
 
 ## Stays at the repo root
 
@@ -68,6 +79,7 @@ Suggested split: **PR 1** rows marked `1` (move into `src/`, config, green build
 | `lib/countdown/countdown.ts` (+ test) | `src/app/(public)/(home)/_utils/countdown.ts` | 2 | only home uses it |
 | `lib/i18n/locale.ts` (+ test), `messages-parity.test.ts` | `src/lib/i18n/` | 1 | route-less capability |
 | `lib/ui/roving-index.ts` (+ test) | `src/utils/a11y/roving-index.ts` | 3 | |
+| new | `src/dal/auth.ts` (+ test) | 3 | `import "server-only";` exports `getCurrentUser(): Promise<User \| null>`; wraps `@/lib/supabase/server`'s `createClient()` + `auth.getUser()`, fails open to `null`. Rewires all 4 server-side session reads (`(protected)/layout.tsx`, `(protected)/todo/page.tsx`, `(public)/login/page.tsx`, `(public)/(home)/page.tsx`) — the home page keeps its own `createClient()` only for the `toUsersRoleClient` role read |
 | new | `src/constants/routes.ts` | 3 | replace inline `/login`, `/todo`, `/`, `/auth/callback` in proxy, pages, hooks, tests |
 | new, optional | `src/configs/env.ts` | 3 | `EVENT_START_AT`, Supabase public keys; create when a second env read appears |
 
@@ -117,8 +129,21 @@ Still no `.tsx` glob: components stay documented by Storybook, not unit-tested. 
 { files: ["src/app/**/*.{ts,tsx}"],
   rules: { "no-restricted-imports": ["error", { patterns: [
     { group: ["@/app/**/_*", "@/app/**/_*/**"], message: "Import private folders relatively from your own segment or an ancestor." },
-    { group: ["../*/_*", "../*/_*/**", "./*/_*", "./*/_*/**"], message: "No sideways or downward imports between segments." } ] }] } },
+    { regex: "^(?:\\.\\.\\/(?!\\.\\.(?:\\/|$))[^/]+\\/_|\\.\\/[^/]+\\/_)", message: "No sideways or downward imports between segments." } ] }] } },
 ```
+
+**Corrected from the original `group: ["../*/_*", ...]` draft (phase-03 insight 6, canary-verified
+2026-09-06):** ESLint's `no-restricted-imports` `group` option matches with a gitignore-style
+glob engine that has no extglob support, and empirically treats a bare `..` segment as a valid
+match for a bare `*` wildcard — `../*/_*` matched BOTH the intended sideways violation
+(`../login/_components/...`) AND the legitimate ancestor walk
+(`../../_components/language-selector/...`, used by the home header), verified by adding each as
+a temporary probe import and observing `pnpm lint`'s actual output — not by reading the matcher's
+source. `eslint-plugin-boundaries` was not reached for because ESLint 9.7+'s core
+`no-restricted-imports` already supports a `regex` pattern alternative to `group`; the regex above
+requires a real JS negative lookahead `(?!\.\.(?:\/|$))` to reject a second `..` segment, which no
+`group` glob syntax available here can express. `./*/_*` (downward, into a child segment) has no
+such ambiguity and needed no change.
 
 ## Docs and kit files to update in PR 3
 

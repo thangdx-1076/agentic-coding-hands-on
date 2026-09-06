@@ -1,0 +1,5 @@
+{
+  "mode": "single",
+  "intents": [],
+  "justification": "Structural refactor (work-type: feature per the refactoring rule) with ZERO new user-facing (actor, action-domain, outcome) intents. Existing implemented features F001_GoogleOAuthLogin, F002_LanguageSwitch and F003_Homepage keep identical behavior and URLs; only file locations, module boundaries and lint/test globs change. No feature 2-file draft is authored and no F### is allocated. Spec output for this run = forward-drafted system narratives only (spec/system/architecture.md, spec/system/permissions.md), which are planner input; the implemented docs are reconciled by the rebuild-spec core pass at Step 6.a-pre because the F001-F003 technical-spec source citations change path."
+}

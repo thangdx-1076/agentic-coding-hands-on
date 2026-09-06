@@ -156,3 +156,54 @@
 - Sau khi move phải chạy rebuild-spec core pass: 19 file trong `docs/vi` tham chiếu path cũ, `_source-to-fcode.json` lệch.
 - Cần cài package `server-only` khi tạo `src/dal/`.
 - Trong lúc chờ PR 1, file mới vẫn phải đặt theo cột "Current" của migration map; agent đọc skill có thể lẫn nếu bỏ qua mục Status.
+
+## 260906-1150 — src-route-colocation-refactor
+
+### Tôi cần làm
+
+- [ ] Ký riskGate rồi ship. Reviewer đánh `touchesSensitiveArea: true` vì gate auth chuyển sang `src/app/(protected)/layout.tsx` + `src/dal/auth.ts`. Review branch `refactor/src-route-colocation` (4 commit trên `aca6e8e`), rồi đặt `humanSignedOff: true` trong `plans/260906-1150-src-route-colocation-refactor/evidence/inspection-verdict.json` và chạy `/tkm:ship official --skip-journal --skip-docs` (hoặc bảo tôi chạy). Evidence gate hard hiện chặn đúng một dòng này.
+- [ ] Quyết có chạy `/tkm:rebuild-spec` không. Planner dry-run: `mode=full`, fallback `threshold_exceeded (359/37 > 0.3)` kể từ `9c1fa00`. Full core pass = 11 artifact, W0–W9, nhiều agent, ước cả triệu token. Chưa chạy thì `docs/vi/generated/**`, 3 `technical-spec.md`, `_source-to-fcode.json` và confidence-report còn trỏ path trước khi move.
+- [ ] `docs/vi/system/overview.md` stale từ trước refactor (còn mô tả app 2 màn, chưa có F003). Chạy `/tkm:rebuild-spec --artifact overview` hoặc gộp vào lần full ở trên.
+
+### Decisions
+
+- Branch `refactor/src-route-colocation` tách từ `origin/main` `aca6e8e` (PR #6 đã merge lúc bắt đầu). Một PR, ba commit phase + một commit sửa review: `f9e6e33` move vào `src/`, `1f83396` route group + colocation, `580e45f` tách lib + `dal/auth` + lint boundaries + docs, `fd445a5` docblock `proxy.ts`. Plan dir và docs commit riêng.
+- Work-type `feature` (refactor code đã commit là feature-class), SDD on, `spec_lang: vi` kế thừa. 0 intent user-facing mới → không draft feature spec, không cấp F###. `plan.md` ghi `spec_waived` + `system_doc_drafts` thay cho `spec_draft` để Promote Gate và Step 6.b bỏ qua đúng điều kiện (invariant MED-3: `system_docs` phải gắn vào một feature sentinel, ở đây không có).
+- Phase 1 chuyển nguyên cây `app/` cùng lúc với config: researcher xác nhận Next bỏ qua `src/app` khi root `app/` còn tồn tại, nên PR column cũ của migration map (tách `layout.tsx` sang PR 1) là sai và đã sửa.
+- Thêm `src/dal/auth.ts` `getCurrentUser()` cho bốn chỗ đọc session (layout protected, home, login, todo) theo rule 4 của skill colocation, thay quyết định YAGNI của planner (planner đếm một consumer, thực tế bốn).
+- ESLint boundaries dùng option `regex` của `no-restricted-imports` vì `group` (gitignore-glob) không hỗ trợ extglob để loại ancestor; implementer chứng minh hai rule cắn bằng hai probe rồi revert. Đã ghi lại vào migration map.
+- Subagent bị hook `.skignore` chặn token `build` và đường dẫn `.next`, nên orchestrator tự chạy `pnpm build` + `pnpm typecheck` sau mỗi phase rồi commit; implementer không commit.
+- Rest point 2, 3, 4 tự duyệt theo CLAUDE.md. Rebuild-spec full KHÔNG tự chạy vì là quyết định tốn tiền (ngoại lệ được phép hỏi).
+- doc-writer đối soát `docs/vi/system/architecture.md` + `permissions.md` từ hai forward draft đã được reviewer xác minh khớp code; generated/features SKIP chờ rebuild-spec.
+- AC9 tách đôi: phần README do reviewer kiểm; phần `docs/vi` ghi vào blast radius, evidence là cursor `last_rebuild_sha` khi rebuild-spec chạy.
+
+### Nợ lại
+
+- 5 file quá 200 dòng có sẵn từ base, PR không làm dài thêm: `home-copy.ts` 202, `route.test.ts` 221, `use-menu-keyboard-nav.test.ts` 382, e2e `home.spec.ts` 700, `login.spec.ts` 713.
+- Lớp generated, technical-spec F001–F003, `_source-to-fcode.json`, confidence-report trỏ path cũ cho tới khi rebuild-spec chạy.
+- `docs/vi/system/overview.md` stale từ trước refactor.
+- Ba mục "Tôi cần làm" ở trên chặn ship; mọi thứ khác đã xong và commit local.
+
+## 260906-2220 — ship-src-route-colocation
+
+### Tôi cần làm
+
+- [ ] Review và merge PR của branch `refactor/src-route-colocation` vào `main`.
+- [ ] Quyết có chạy `/tkm:rebuild-spec` không (dry-run: `mode=full`, fallback `threshold_exceeded 359/37 > 0.3`). Chưa chạy thì `docs/vi/generated/**`, 3 `technical-spec.md`, `_source-to-fcode.json` và confidence-report còn trỏ path trước khi move. Ước cả triệu token nên không tự chạy.
+- [ ] `docs/vi/system/overview.md` stale từ trước refactor (mô tả app 2 màn, chưa có F003) — gộp vào lần rebuild-spec ở trên.
+
+### Decisions
+
+- riskGate ký duyệt bởi dang.xuan.thang lúc 260906-2225, sau khi soi ba file nhạy cảm: `(protected)/layout.tsx` (gate duy nhất, `getUser()` thật, `null` → redirect), `src/dal/auth.ts` (`server-only`, fail-open `null`), `src/proxy.ts` (hạ xuống pre-check lạc quan). Fail-open ở DAL nhưng fail-closed ở cổng → đúng khuyến nghị Next.
+- `riskGate` có schema đóng: thêm `signoffBy`/`signoffAt` làm gate exit 2 (`unknown/extra key`). Provenance chữ ký ghi ở đây, không nhét vào verdict JSON.
+- Ship mode `official` (base `main`) dù branch là `refactor/*` — bảng suy luận của skill không liệt kê prefix này; chọn theo pattern repo (mọi PR trước đều vào `main`).
+- Bump patch `0.3.0` → `0.3.1`: refactor cấu trúc, zero behavior change. Không có CHANGELOG nên Step 9 bỏ qua.
+- Step 10 (journal) và Step 11 (docs) bỏ qua: `docs/journals/260906-1150-src-route-colocation-refactor.md` và commit `6248003` đã làm xong từ phiên trước.
+- Licenseal 14 warning LGPL đều nằm ở `@img/sharp-*` (binary theo nền tảng, transitive từ Next image), có sẵn ở base, PR không đụng → không chặn.
+- SunLint 19 warning: 5 cái S055 trên `src/proxy.ts` là dương tính giả (proxy Next không phải REST endpoint). 0 error nên không chặn.
+
+### Nợ lại
+
+- 5 file quá 200 dòng vẫn còn, base-identical: `home-copy.ts` 202, `route.test.ts` 221, `use-menu-keyboard-nav.test.ts` 382, e2e `home.spec.ts` 700, `login.spec.ts` 713.
+- Lớp generated + technical-spec F001–F003 + `_source-to-fcode.json` trỏ path cũ tới khi rebuild-spec chạy.
+- 5 link chết trên nav home: `/awards`, `/kudos`, `/standards`, `/profile`, `/admin`. Màn tiếp theo nên làm là `/awards` (MoMorph `zFYDgyj_pD`, design+spec done).

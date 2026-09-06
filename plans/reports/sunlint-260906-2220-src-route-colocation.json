@@ -1,0 +1,72 @@
+{
+  "repository_url": "https://github.com/thangdx-1076/agentic-coding-hands-on",
+  "repository_name": "agentic-coding-hands-on",
+  "project_path": null,
+  "branch": "refactor/src-route-colocation",
+  "commit_hash": "b68e161ebb5a59c0a221ebe6288c4274c5178a1b",
+  "commit_message": "chore(plan): record the src migration blueprint, evidence, reports and journal\n\nPlan dir for the src/ route-colocation refactor: plan.md + 3 phase files,\nStage 1.5 system-doc forward drafts, researcher/scout/tester/reviewer\nreports, and the evidence set (study-context, temper-results, inspection\nverdict SEALED 9/10 with riskGate awaiting human sign-off). Action items\nlog the decisions, the deferred rebuild-spec re-baseline and the 200-line\ndebt; the journal records what broke and what was learned.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>",
+  "author_email": "dang.xuan.thang@sun-asterisk.com",
+  "author_name": "thangdx-1076",
+  "pr_number": null,
+  "score": 94.8,
+  "total_violations": 19,
+  "error_count": 0,
+  "warning_count": 19,
+  "info_count": 0,
+  "lines_of_code": 7328,
+  "files_analyzed": 89,
+  "sunlint_version": "1.3.56",
+  "analysis_duration_ms": 3904,
+  "scoring_mode": "project",
+  "violations": [
+    {
+      "rule_code": "S037",
+      "count": 5,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S055",
+      "count": 5,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C029",
+      "count": 4,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C018",
+      "count": 2,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C030",
+      "count": 2,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C067",
+      "count": 1,
+      "severity": "warning"
+    }
+  ],
+  "metadata": {
+    "generated_at": "2026-09-06T15:22:15.927Z",
+    "tool": "SunLint",
+    "version": "1.3.56",
+    "analysis_duration_ms": 3904,
+    "scoring_mode": "project"
+  },
+  "quality": {
+    "score": 94.8,
+    "grade": "A",
+    "metrics": {
+      "errors": 0,
+      "warnings": 19,
+      "infos": 0,
+      "rulesChecked": 66,
+      "linesOfCode": 7328,
+      "violationsPerKLOC": 2.6
+    }
+  }
+}
