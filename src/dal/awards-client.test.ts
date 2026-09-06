@@ -16,7 +16,9 @@ describe("toAwardsClient", () => {
     const shim = toAwardsClient(fakeSupabase);
     const awaited = await shim
       .from("awards")
-      .select("slug,title,description,quantity_value,quantity_unit,prize_values")
+      .select(
+        "slug,title,description,quantity_value,quantity_unit,prize_values",
+      )
       .eq("locale", "vi")
       .order("sort_order", { ascending: true });
 

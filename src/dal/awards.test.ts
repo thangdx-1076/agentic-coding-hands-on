@@ -120,7 +120,9 @@ describe("getAwards", () => {
   });
 
   it("data null (không có row) → fail-open []", async () => {
-    const client = stubClient(() => Promise.resolve({ data: null, error: null }));
+    const client = stubClient(() =>
+      Promise.resolve({ data: null, error: null }),
+    );
 
     await expect(getAwards(client, "vi")).resolves.toEqual([]);
   });

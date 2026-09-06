@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { KeyvisualBackground } from "../../_components/keyvisual-background";
 import { SiteHeader } from "../../_components/site-header";
 import { SiteFooter } from "../../_components/site-footer";
@@ -64,6 +66,24 @@ export function AwardsScreen({
         logoutAction={logoutAction}
       />
       <main className="relative z-10 mx-auto flex w-full max-w-[1224px] flex-1 flex-col gap-20 px-6 py-16 sm:px-8 lg:px-0 lg:py-24">
+        {/* mm:313:8451 */}
+        <div className="mx-auto flex w-full max-w-[1152px] justify-start">
+          {/* mm:2789:12915 — reuses the same asset as the Homepage hero
+              (`(home)/_components/hero-section.tsx:49`); intrinsic 338×150
+              (aspect 169/75) kept as the `width`/`height` attrs so Next
+              doesn't warn "width or height modified, but not the other",
+              while the className scales the rendered size down for narrow
+              viewports. Decorative — the accessible heading is the `<h1>`
+              in the title block below it. */}
+          <Image
+            src="/home/Root_Further_Logo.png"
+            alt=""
+            aria-hidden="true"
+            width={338}
+            height={150}
+            className="h-auto w-[169px] sm:w-[254px] lg:w-[338px]"
+          />
+        </div>
         {/* mm:313:8453 */}
         <div className="mx-auto flex w-full max-w-[1152px] flex-col items-center gap-4 text-center">
           {/* mm:313:8454 */}
