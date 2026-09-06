@@ -5,7 +5,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { LoginClient } from "./_components/login-client";
 import type { LoginCopy } from "./_shared/login-copy";
 
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/dal/auth";
+import { ROUTES } from "@/constants/routes";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
@@ -30,9 +31,9 @@ type LoginPageProps = {
  * Component render.
  */
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const user = await getAuthenticatedUser();
+  const user = await getCurrentUser();
   if (user) {
-    redirect("/");
+    redirect(ROUTES.HOME);
   }
 
   const rawLocale = await getLocale();
@@ -64,24 +65,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       errorMessage={errorMessage}
     />
   );
-}
-
-/**
- * Authoritative session check (FR-601). Wrapped in try/catch — unlike
- * `/todo`, `/login` must fail OPEN on a Supabase outage: a transient error
- * here must never block a visitor from ever reaching the login form (the
- * optimistic `proxy.ts` guard already covers the common case).
- */
-async function getAuthenticatedUser() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user;
-  } catch {
-    return null;
-  }
 }
 
 /**

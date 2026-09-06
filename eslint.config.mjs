@@ -67,6 +67,68 @@ const eslintConfig = defineConfig([
     },
   },
 
+  // Boundary rules (nextjs-route-colocation-architecture, rules 3 and 5;
+  // migration-map.md § Config changes). Core ESLint `no-restricted-imports`
+  // only — no new dependency; upgrade to `eslint-plugin-boundaries` the
+  // first time a violation slips through both blocks below.
+  {
+    // Zone A (every shared `src/<layer>/` folder) never imports the route
+    // tree: business/UI code grouped by kind must not reach into code
+    // grouped by route.
+    files: ["src/!(app)/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app", "@/app/*", "@/app/**"],
+              message: "Shared layers must not import from src/app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Inside the route tree: a private folder (`_components`, `_hooks`, …)
+    // is reached only by a relative path to your own segment or an
+    // ancestor segment. The `@/app/**/_*` alias form is always a boundary
+    // escape, and a sideways/downward relative import (`../login/...`,
+    // `./todo/...`) crosses into a segment that isn't yours or an ancestor.
+    files: ["src/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**/_*", "@/app/**/_*/**"],
+              message:
+                "Import private folders relatively from your own segment or an ancestor.",
+            },
+            {
+              // A gitignore-style `group` glob has no way to exclude a bare
+              // `..` segment (no extglob support in `no-restricted-imports`
+              // — confirmed empirically: `../*/_*` also matched the
+              // legitimate ancestor walk `../../_components/...`, per
+              // phase-03 insight 6). A `regex` pattern expresses the real
+              // rule instead: ban `../<segment>/_*` only when `<segment>`
+              // is NOT itself another `..` parent-walk step, so
+              // `../login/_components/...` (sideways, banned) is
+              // distinguished from `../../_components/...` (ancestor,
+              // allowed). `./<segment>/_*` (downward, into a child
+              // segment) has no such ambiguity and needs no lookahead.
+              regex:
+                "^(?:\\.\\.\\/(?!\\.\\.(?:\\/|$))[^/]+\\/_|\\.\\/[^/]+\\/_)",
+              message: "No sideways or downward imports between segments.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Playwright spec files only — not the plain .mjs helper scripts, which
   // aren't specs (they don't import @playwright/test's test/expect).
   {

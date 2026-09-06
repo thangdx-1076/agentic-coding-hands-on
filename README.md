@@ -56,29 +56,30 @@ re-checks with an authoritative `getUser()` call before rendering.
    EVENT_START_AT=2026-12-26T18:30:00+07:00
    ```
    `EVENT_START_AT` is server-only (no `NEXT_PUBLIC_` prefix — never inlined into the client bundle),
-   read in `app/page.tsx` and validated by `lib/countdown/countdown.ts`. ISO-8601, drives the homepage
-   countdown. Absent or malformed → the countdown falls back to `00/00/00` (still shows "Coming soon");
-   it never crashes the page.
+   read in `src/app/(public)/(home)/page.tsx` and validated by
+   `src/app/(public)/(home)/_utils/countdown.ts`. ISO-8601, drives the homepage countdown. Absent or
+   malformed → the countdown falls back to `00/00/00` (still shows "Coming soon"); it never crashes
+   the page.
 4. `pnpm install`
 5. `pnpm dev` → http://localhost:3000
 
 ## Scripts
 
-| Command                   | What it does                                                                                                                                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                                        |
-| `pnpm build`              | Production build                                                                                                                                                                                        |
-| `pnpm start`              | Start the production server                                                                                                                                                                             |
-| `pnpm lint`               | ESLint                                                                                                                                                                                                  |
-| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                                                     |
-| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                                                          |
-| `pnpm format`             | Prettier — write formatting to every file                                                                                                                                                               |
-| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                                                   |
-| `pnpm test:unit`          | Vitest unit tests, split into two projects (`vitest.config.ts`): `node` (`lib/**/*.test.ts`, `app/**/*.test.ts`) and `jsdom` (`hooks/**/*.test.ts`) — 13 files                                          |
-| `pnpm test:unit:coverage` | Same, with coverage against an explicit allowlist (`lib/**`, `hooks/**`, `app/actions/**`, `app/todo/actions.ts`, `app/auth/callback/route.ts`) and a real 100% threshold gate — see `vitest.config.ts` |
-| `pnpm storybook`          | Storybook dev server on port 6006                                                                                                                                                                       |
-| `pnpm build-storybook`    | Static Storybook build (also run in CI, see [CI](#ci))                                                                                                                                                  |
-| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000                                 |
+| Command                   | What it does                                                                                                                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                                                                                        |
+| `pnpm build`              | Production build                                                                                                                                                                                                                                        |
+| `pnpm start`              | Start the production server                                                                                                                                                                                                                             |
+| `pnpm lint`               | ESLint                                                                                                                                                                                                                                                  |
+| `pnpm lint:fix`           | ESLint with `--fix`                                                                                                                                                                                                                                     |
+| `pnpm typecheck`          | TypeScript check (`tsc --noEmit`) — run this only after a build, see [CI](#ci)                                                                                                                                                                          |
+| `pnpm format`             | Prettier — write formatting to every file                                                                                                                                                                                                               |
+| `pnpm format:check`       | Prettier — check formatting, no writes (what CI runs)                                                                                                                                                                                                   |
+| `pnpm test:unit`          | Vitest unit tests, split into two projects (`vitest.config.ts`): `node` (`src/**/*.test.ts`, excluding hook folders) and `jsdom` (`src/hooks/**/*.test.ts`, `src/app/**/_hooks/**/*.test.ts`) — 19 files                                                |
+| `pnpm test:unit:coverage` | Same, with coverage against an explicit allowlist (`src/{api,dal,lib,utils,hooks,domain,configs}/**`, `src/app/**/{_hooks,_utils,_actions}/**`, `src/app/**/actions.ts`, `src/app/**/route.ts`) and a real 100% threshold gate — see `vitest.config.ts` |
+| `pnpm storybook`          | Storybook dev server on port 6006                                                                                                                                                                                                                       |
+| `pnpm build-storybook`    | Static Storybook build (also run in CI, see [CI](#ci))                                                                                                                                                                                                  |
+| `pnpm test:e2e`           | Playwright E2E (`tests/e2e/`) — needs the local Supabase instance (`saa-app`) running and a Chromium build available to Playwright; auto-starts `pnpm dev` on port 3000                                                                                 |
 
 ## CI
 
@@ -101,11 +102,11 @@ re-checks with an authoritative `getUser()` call before rendering.
 
 - `public/login/keyvisual.png` is the hero background (Figma node `662:14389`, 2× export,
   2882×2044), served via `next/image` (`fill`, `object-cover`) in
-  `components/login/login-background.tsx`. Copied from the sibling `saa-app` project's Figma
-  export; not re-exported from Figma in this repo.
+  `src/app/(public)/login/_components/login-background.tsx`. Copied from the sibling `saa-app`
+  project's Figma export; not re-exported from Figma in this repo.
 - `public/home/*` (19 files: keyvisual/logo/award-card/Kudos PNGs + bell/pencil/user/arrow SVG
   icons) are the homepage's Figma exports (MoMorph screen `i87tDx10uM`), consumed via `next/image`
-  (bitmaps) or inlined as SVG (icons) across `components/home/**`.
+  (bitmaps) or inlined as SVG (icons) across `src/app/(public)/(home)/_components/**`.
 
 ## Docs
 

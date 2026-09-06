@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getUserRole, type UsersRoleClient } from "./get-user-role";
+import { getUserRole, type UsersRoleClient } from "./users";
 
 /**
  * `getUserRole` never constructs its own Supabase client — the caller

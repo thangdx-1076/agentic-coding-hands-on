@@ -5,7 +5,7 @@ import { setLocale } from "../../../_actions/set-locale";
 
 import { useLoginActions } from "./use-login-actions";
 
-import { signInWithGoogle } from "@/lib/auth/sign-in-with-google";
+import { signInWithGoogle } from "@/api/auth";
 
 /**
  * Cả 2 module ranh giới đều bị mock: `signInWithGoogle` để không chạm
@@ -14,7 +14,7 @@ import { signInWithGoogle } from "@/lib/auth/sign-in-with-google";
  * "use server" — mock ngay ranh giới, không cần chạy round-trip Next.js
  * thật để quan sát `isPending`.
  */
-vi.mock("@/lib/auth/sign-in-with-google", () => ({
+vi.mock("@/api/auth", () => ({
   signInWithGoogle: vi.fn(),
 }));
 vi.mock("../../../_actions/set-locale", () => ({

@@ -9,8 +9,9 @@ import { defaultHomeCopy, type HomeCopy } from "./_shared/home-copy";
 import type { HeaderViewer } from "./_components/header";
 
 import { createClient } from "@/lib/supabase/server";
-import { toUsersRoleClient } from "@/lib/supabase/users-role-client";
-import { getUserRole } from "@/lib/auth/get-user-role";
+import { getCurrentUser } from "@/dal/auth";
+import { toUsersRoleClient } from "@/dal/users-role-client";
+import { getUserRole } from "@/dal/users";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
@@ -146,19 +147,18 @@ export default async function HomePage() {
  * Session + role read for the header (FR-003/FR-601/INT-001/BR-002).
  * Wrapped in try/catch and fails OPEN to `null` — like `/login`, unlike
  * `/todo`: a Supabase outage must never block the public homepage from
- * rendering, it just renders as if nobody were signed in.
+ * rendering, it just renders as if nobody were signed in. The session read
+ * goes through `src/dal/auth.ts`; a second, page-local `createClient()`
+ * stays here only for the `toUsersRoleClient` role read.
  */
 async function getViewer(): Promise<HeaderViewer | null> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await getCurrentUser();
     if (!user) {
       return null;
     }
 
+    const supabase = await createClient();
     const role = await getUserRole(toUsersRoleClient(supabase), user.id);
     return { email: user.email ?? "", isAdmin: role === "admin" };
   } catch {

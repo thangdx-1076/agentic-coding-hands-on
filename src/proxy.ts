@@ -6,6 +6,7 @@ import {
   normalizeLocale,
 } from "@/lib/i18n/locale";
 import { createProxyClient } from "@/lib/supabase/proxy-client";
+import { ROUTES } from "@/constants/routes";
 
 /**
  * Optimistic auth guard + locale-cookie normalization (Next 16's `proxy`,
@@ -30,15 +31,15 @@ export async function proxy(request: NextRequest) {
   const user = await getUserOrNull(request, response);
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login";
-  const isProtectedPage = pathname.startsWith("/todo");
+  const isAuthPage = pathname === ROUTES.LOGIN;
+  const isProtectedPage = pathname.startsWith(ROUTES.TODO);
 
   if (user && isAuthPage) {
-    return redirectPreservingCookies(request, response, "/");
+    return redirectPreservingCookies(request, response, ROUTES.HOME);
   }
 
   if (!user && isProtectedPage) {
-    return redirectPreservingCookies(request, response, "/login");
+    return redirectPreservingCookies(request, response, ROUTES.LOGIN);
   }
 
   return response;
@@ -108,6 +109,11 @@ function redirectPreservingCookies(
  * the guard actually governs. `/auth/callback` is deliberately excluded
  * (it handles its own redirect logic) and no `_next`/asset path is
  * matched, per the phase's risk assessment on proxy overreach.
+ *
+ * Stays a LITERAL array, never `ROUTES.*`: Next statically analyzes
+ * `config.matcher` at build time (it cannot evaluate an imported constant),
+ * so this is the one place in `src/**` that intentionally keeps its own
+ * route strings.
  */
 export const config = {
   matcher: ["/", "/login", "/todo/:path*"],

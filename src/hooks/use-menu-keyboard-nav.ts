@@ -8,7 +8,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { lastIndex, nextIndex, prevIndex } from "@/lib/ui/roving-index";
+import { lastIndex, nextIndex, prevIndex } from "@/utils/a11y/roving-index";
 
 export type MenuKeyboardNavOptions = {
   /** Số item trong menu. Quyết định biên chạy vòng của con trỏ. */

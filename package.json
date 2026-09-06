@@ -55,6 +55,7 @@
     "msw": "2.15.0",
     "msw-storybook-addon": "3.0.0",
     "prettier": "^3.9.6",
+    "server-only": "^0.0.1",
     "storybook": "10.6.0",
     "tailwindcss": "^4",
     "typescript": "^5",

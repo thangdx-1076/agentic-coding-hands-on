@@ -9,6 +9,8 @@ import { AccountMenu } from "./account-menu";
 import { NotificationBell } from "./notification-bell";
 import { IconUser } from "./icons/icon-user";
 
+import { ROUTES } from "@/constants/routes";
+
 export type HeaderViewer = {
   email: string;
   isAdmin: boolean;
@@ -68,7 +70,7 @@ export function Header({
         {/* mm:I2167:9091;178:653 */}
         <nav className="flex flex-wrap items-center gap-6">
           {/* mm:I2167:9091;186:1579 / mm:I2167:9091;186:1587 */}
-          <NavLink href="/">{copy.nav.about}</NavLink>
+          <NavLink href={ROUTES.HOME}>{copy.nav.about}</NavLink>
           <NavLink href="/awards">{copy.nav.awardsInfo}</NavLink>
           <NavLink href="/kudos">{copy.nav.kudos}</NavLink>
         </nav>
@@ -99,7 +101,7 @@ export function Header({
           // mm:I2167:9091;186:1597 (anon: login link reuses the account slot)
           <a
             aria-label={copy.header.loginLabel}
-            href="/login"
+            href={ROUTES.LOGIN}
             className="flex h-10 w-10 items-center justify-center rounded border border-[#998C5F] text-white transition-colors duration-200 ease-out hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background motion-reduce:transition-none"
           >
             {/* mm:I2167:9091;186:1597;186:1420 */}

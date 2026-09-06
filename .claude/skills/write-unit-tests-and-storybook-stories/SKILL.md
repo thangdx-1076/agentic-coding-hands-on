@@ -17,7 +17,7 @@ This skill answers one question: **the code's layer and location are already dec
 
 Answer them in that order. Here the layer and folder are taken as settled. This rule is mandatory, not a suggestion.
 
-Paths below are the target `src/` layout. Until the migration PR lands, `vitest.config.ts` still lists the old root folders (`lib/**`, `hooks/**`, `app/actions/**`, `app/todo/actions.ts`, `app/auth/callback/route.ts`); the rule is identical, only the globs differ.
+Paths below are the real `src/` layout, landed 2026-09-06 on `refactor/src-route-colocation`.
 
 ## Lookup: touch this, ship that
 

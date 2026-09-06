@@ -5,6 +5,8 @@ import { defaultHomeCopy, type HomeCopy } from "../_shared/home-copy";
 
 import { LogoLink } from "./logo-link";
 
+import { ROUTES } from "@/constants/routes";
+
 export type HomeFooterProps = {
   copy?: HomeCopy;
 };
@@ -44,7 +46,7 @@ export function HomeFooter({ copy = defaultHomeCopy }: HomeFooterProps) {
         <nav className="flex flex-wrap items-center justify-center gap-2 sm:gap-6">
           {/* mm:I5001:14800;342:1410 */}
           <Link
-            href="/"
+            href={ROUTES.HOME}
             className="font-montserrat rounded p-4 text-base leading-6 font-bold tracking-[0.15px] text-white transition-colors duration-200 ease-out motion-reduce:transition-none hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background"
           >
             {nav.about}

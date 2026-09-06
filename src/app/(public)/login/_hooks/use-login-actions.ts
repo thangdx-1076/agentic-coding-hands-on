@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 
 import { setLocale } from "../../../_actions/set-locale";
 
-import { signInWithGoogle } from "@/lib/auth/sign-in-with-google";
+import { signInWithGoogle } from "@/api/auth";
 import type { AppLocale } from "@/lib/i18n/locale";
 
 export type LoginActionsOptions = {

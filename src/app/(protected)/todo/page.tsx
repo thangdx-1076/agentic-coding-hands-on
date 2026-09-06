@@ -4,7 +4,7 @@ import { logoutAction } from "../../_actions/logout";
 
 import { TodoScreen } from "./_components/todo-screen";
 
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/dal/auth";
 
 /**
  * Protected `/todo` placeholder (FR-301/FR-302/FR-603/US004). No todo
@@ -14,15 +14,12 @@ import { createClient } from "@/lib/supabase/server";
  *
  * The AUTHORITATIVE session gate now lives in `(protected)/layout.tsx`: an
  * anonymous visitor is redirected to `/login` before this page ever
- * renders. `getUser()` here is kept only to read the email for the
- * greeting — an accepted extra GoTrue round-trip (no `src/dal` session
- * helper is introduced since nothing else would consume it yet).
+ * renders. `getCurrentUser()` here is kept only to read the email for the
+ * greeting — an accepted extra GoTrue round-trip through `src/dal/auth.ts`
+ * (four consumers is past YAGNI for introducing the session helper).
  */
 export default async function TodoPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   const t = await getTranslations("todo");
 

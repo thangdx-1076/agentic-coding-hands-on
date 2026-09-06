@@ -28,6 +28,14 @@ export default defineConfig({
     // (`sign-in-with-google.ts` -> `next-path.ts`) failed to resolve.
     alias: {
       "@": fileURLToPath(new URL("./src/", import.meta.url)),
+      // `server-only` throws by design outside a `react-server` module
+      // condition, which is exactly what vitest's `node`/`jsdom` environments
+      // are (see tests/setup/server-only-stub.ts). Next.js strips the real
+      // import at build time; this alias mirrors that for the DAL's own
+      // tests without weakening the `import "server-only";` guard itself.
+      "server-only": fileURLToPath(
+        new URL("./tests/setup/server-only-stub.ts", import.meta.url),
+      ),
     },
   },
   test: {

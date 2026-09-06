@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { safeNextPath } from "@/lib/supabase/next-path";
+import { safeNextPath } from "@/utils/url/next-path";
 
 export type SignInWithGoogleOptions = {
   /**

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
-import { safeNextPath } from "@/lib/supabase/next-path";
+import { safeNextPath } from "@/utils/url/next-path";
 
 /**
  * PKCE callback handler for Supabase's `signInWithOAuth` redirect

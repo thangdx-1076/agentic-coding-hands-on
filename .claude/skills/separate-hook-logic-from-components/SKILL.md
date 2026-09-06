@@ -15,7 +15,7 @@ A component is the **presentation layer**. It receives props and returns JSX. It
 | Where does the file live? | [nextjs-route-colocation-architecture](../nextjs-route-colocation-architecture/SKILL.md) |
 | What ships next to it: test, story, MSW handler? | [write-unit-tests-and-storybook-stories](../write-unit-tests-and-storybook-stories/SKILL.md) |
 
-Answer them in that order. This skill decides the *kind*; the location skill's scope ladder decides the *folder*. Paths below are the target layout; until the `src/` migration lands, map them through the location skill's migration map.
+Answer them in that order. This skill decides the *kind*; the location skill's scope ladder decides the *folder*. Paths below are the real, landed `src/` layout.
 
 ## Scope: client code only
 

@@ -1,4 +1,7 @@
-import type { UsersRoleClient } from "@/lib/auth/get-user-role";
+import "server-only";
+
+import type { UsersRoleClient } from "./users";
+
 import type { createClient } from "@/lib/supabase/server";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;

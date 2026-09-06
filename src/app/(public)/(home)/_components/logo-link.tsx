@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 
+import { ROUTES } from "@/constants/routes";
+
 export type LogoLinkProps = {
   ariaLabel: string;
   children: ReactNode;
@@ -26,7 +28,7 @@ export function LogoLink({ ariaLabel, children, className }: LogoLinkProps) {
   const pathname = usePathname();
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (pathname === "/") {
+    if (pathname === ROUTES.HOME) {
       event.preventDefault();
       window.scrollTo({ top: 0 });
     }
@@ -34,7 +36,7 @@ export function LogoLink({ ariaLabel, children, className }: LogoLinkProps) {
 
   return (
     <Link
-      href="/"
+      href={ROUTES.HOME}
       aria-label={ariaLabel}
       onClick={handleClick}
       className={`rounded transition-opacity duration-200 ease-out motion-reduce:transition-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background ${className ?? ""}`}

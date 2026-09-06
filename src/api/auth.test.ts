@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { signInWithGoogle } from "./sign-in-with-google";
+import { signInWithGoogle } from "./auth";
 
 import { createClient } from "@/lib/supabase/client";
 

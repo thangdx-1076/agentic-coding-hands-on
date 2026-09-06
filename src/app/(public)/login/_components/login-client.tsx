@@ -5,6 +5,7 @@ import { useLoginActions } from "../_hooks/use-login-actions";
 
 import { LoginScreen } from "./login-screen";
 
+import { ROUTES } from "@/constants/routes";
 import type { AppLocale } from "@/lib/i18n/locale";
 
 export type LoginClientProps = {
@@ -21,7 +22,7 @@ export type LoginClientProps = {
 };
 
 /** Đích quay về sau khi `/auth/callback` đổi code lấy session. */
-const NEXT_PATH = "/";
+const NEXT_PATH = ROUTES.HOME;
 
 /**
  * Ranh giới client của `/login` (A2 · FR-202/FR-203, nấc đổi ngôn ngữ của

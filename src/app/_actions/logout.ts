@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { ROUTES } from "@/constants/routes";
 
 /**
  * Logout Server Action bound to the `/todo` page's logout form
@@ -20,5 +21,5 @@ export async function logoutAction() {
     // is never stuck on a page that no longer reflects their session.
   }
 
-  redirect("/login");
+  redirect(ROUTES.LOGIN);
 }

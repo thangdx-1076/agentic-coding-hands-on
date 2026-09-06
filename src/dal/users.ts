@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Server-side role read for the homepage account menu (FR-003 / FR-601 /
  * INT-001 / BR-002). `role` here is a display label, NOT an authorization
