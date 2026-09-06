@@ -99,7 +99,13 @@ export async function getAwards(
       description: row.description,
       quantityValue: row.quantity_value,
       quantityUnit: row.quantity_unit,
-      prizeValues: row.prize_values,
+      // `prize_values` is jsonb, so the column type guarantees valid JSON but
+      // NOT that it is an array. A non-array value would sail through this
+      // mapping untouched and only blow up later, at `prizeValues.map(...)`
+      // inside the Server Component render — a 500 on the exact page this
+      // DAL's fail-open contract exists to keep serving. Coerce here, where
+      // the shape is still ours to control.
+      prizeValues: Array.isArray(row.prize_values) ? row.prize_values : [],
     }));
   } catch {
     return [];

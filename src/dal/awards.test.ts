@@ -8,16 +8,18 @@ import { getAwards, type Award, type AwardsClient } from "./awards";
  * `.from().select().eq().order()` surface it actually calls. No network,
  * no `@supabase/ssr` boundary to mock.
  */
+type AwardRow = {
+  slug: string;
+  title: string;
+  description: string;
+  quantity_value: string;
+  quantity_unit: string;
+  prize_values: Array<{ amount: string; note: string }>;
+};
+
 function stubClient(
   order: () => Promise<{
-    data: Array<{
-      slug: string;
-      title: string;
-      description: string;
-      quantity_value: string;
-      quantity_unit: string;
-      prize_values: Array<{ amount: string; note: string }>;
-    }> | null;
+    data: AwardRow[] | null;
     error: unknown;
   }>,
 ): AwardsClient {
@@ -135,6 +137,33 @@ describe("getAwards", () => {
     };
 
     await expect(getAwards(client, "vi")).resolves.toEqual([]);
+  });
+
+  it("prize_values không phải mảng → coerce về [], không để component nổ", async () => {
+    // jsonb chỉ bảo đảm JSON hợp lệ, không bảo đảm là mảng. Một giá trị
+    // không phải mảng lọt xuống `prizeValues.map(...)` trong Server
+    // Component là 500 — đúng thứ fail-open sinh ra để chặn.
+    // Cast is the point, not a shortcut: the row type promises an array,
+    // and this test exists precisely because jsonb does not keep that
+    // promise. Only a cast can reproduce the row Postgres can really hand us.
+    const malformedRow = {
+      slug: "mvp",
+      title: "MVP",
+      description: "…",
+      quantity_value: "01",
+      quantity_unit: "Cá nhân",
+      prize_values: { amount: "15.000.000 VNĐ" },
+    } as unknown as AwardRow;
+
+    const client = stubClient(() =>
+      Promise.resolve({ data: [malformedRow], error: null }),
+    );
+
+    const result = await getAwards(client, "vi");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].prizeValues).toEqual([]);
+    expect(() => result[0].prizeValues.map((p) => p.amount)).not.toThrow();
   });
 
   it("truyền đúng bảng/cột/locale/order cho client được inject", async () => {
