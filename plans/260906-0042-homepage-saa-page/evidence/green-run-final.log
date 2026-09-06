@@ -1,0 +1,53 @@
+
+Running 27 tests using 4 workers
+
+  ✓   4 [chromium] › tests/e2e/home.spec.ts:33:9 › Homepage SAA › Unauthenticated User › [TC ID-0] Unauthenticated user can access public homepage (1.0s)
+  ✓   3 [chromium] › tests/e2e/home.spec.ts:52:9 › Homepage SAA › Unauthenticated User › [TC ID-9] Navigation link 'About SAA 2025' active state (1.0s)
+  ✓   1 [chromium] › tests/e2e/home.spec.ts:64:9 › Homepage SAA › Unauthenticated User › [TC ID-10] Language selector shows 'VN' by default (1.1s)
+  ✓   2 [chromium] › tests/e2e/home.spec.ts:43:9 › Homepage SAA › Unauthenticated User › [TC ID-8] Header logo position and alt text (1.1s)
+  ✓   8 [chromium] › tests/e2e/home.spec.ts:152:9 › Homepage SAA › Unauthenticated User › [TC ID-14] Event information text visible (668ms)
+  ✓   5 [chromium] › tests/e2e/home.spec.ts:87:9 › Homepage SAA › Unauthenticated User › [TC ID-12, ID-13] Hero section with countdown timer and 'Coming soon' label (686ms)
+  ✓   6 [chromium] › tests/e2e/home.spec.ts:74:9 › Homepage SAA › Unauthenticated User › [TC ID-1 anon variant] Anonymous user sees login link, no bell (693ms)
+  ✘   7 [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes (729ms)
+  ✓   9 [chromium] › tests/e2e/home.spec.ts:178:9 › Homepage SAA › Unauthenticated User › [TC ID-45] CTA 'ABOUT KUDOS' link navigates to /kudos (439ms)
+  ✓  10 [chromium] › tests/e2e/home.spec.ts:168:9 › Homepage SAA › Unauthenticated User › [TC ID-44] CTA 'ABOUT AWARDS' link navigates to /awards (465ms)
+  ✓  11 [chromium] › tests/e2e/home.spec.ts:188:9 › Homepage SAA › Unauthenticated User › [TC ID-15] Award cards display in 3-column grid on desktop (≥1024px) (493ms)
+  ✓  12 [chromium] › tests/e2e/home.spec.ts:265:9 › Homepage SAA › Unauthenticated User › [TC ID-47, ID-48, ID-49, ID-50] Award cards link to /awards with proper slugs (622ms)
+  ✓  13 [chromium] › tests/e2e/home.spec.ts:292:9 › Homepage SAA › Unauthenticated User › [TC ID-53] Kudos section with 'Chi tiết' link to /kudos (636ms)
+  ✓  15 [chromium] › tests/e2e/home.spec.ts:226:9 › Homepage SAA › Unauthenticated User › [TC ID-16] Award cards display in 2-column grid on mobile (<768px) (524ms)
+  ✓  16 [chromium] › tests/e2e/home.spec.ts:344:9 › Homepage SAA › Unauthenticated User › [TC ID-17] Footer content and links (533ms)
+  ✓  18 [chromium] › tests/e2e/home.spec.ts:412:9 › Homepage SAA › Unauthenticated User › [TC ID-41, ID-42] Zero-state countdown when event time reached (496ms)
+  ✓  14 [chromium] › tests/e2e/home.spec.ts:307:9 › Homepage SAA › Unauthenticated User › [TC ID-30, ID-31, ID-32, ID-33, ID-34, ID-35] Widget button menu keyboard and click behavior (1.3s)
+  ✓  20 [chromium] › tests/e2e/home.spec.ts:463:9 › Homepage SAA › Unauthenticated User › [TC ID-3] Clicking 'About SAA 2025' in header stays on homepage (444ms)
+  ✓  17 [chromium] › tests/e2e/home.spec.ts:372:9 › Homepage SAA › Unauthenticated User › [TC ID-25, ID-26] Language switch to EN and back to VN (1.8s)
+  ✓  19 [chromium] › tests/e2e/home.spec.ts:441:9 › Homepage SAA › Unauthenticated User › [TC ID-2] Clicking header logo navigates to homepage and scrolls to top (1.3s)
+  ✓  21 [chromium] › tests/e2e/home.spec.ts:505:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-1] Authenticated member user sees notification bell and account menu (1.1s)
+  ✓  22 [chromium] › tests/e2e/home.spec.ts:523:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-29] Notification bell has no badge when no unread notifications (994ms)
+  ✓  26 [chromium] › tests/e2e/home.spec.ts:663:9 › Homepage SAA › Authentication Guards › [TC f62b0c97] Unauthenticated user accessing /login is not redirected (659ms)
+  ✓  23 [chromium] › tests/e2e/home.spec.ts:545:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-36, ID-38] Account menu displays correct options for member user (1.1s)
+  ✓  24 [chromium] › tests/e2e/home.spec.ts:576:9 › Homepage SAA › Authenticated Member User › @auth [TC ID-4] Logout button submits and redirects to /login (1.3s)
+  ✓  25 [chromium] › tests/e2e/home.spec.ts:628:9 › Homepage SAA › Authenticated Admin User › @auth [TC ID-5, ID-37] Account menu displays admin dashboard option for admin user (1.5s)
+  ✓  27 [chromium] › tests/e2e/home.spec.ts:671:9 › Homepage SAA › Authentication Guards › @auth [TC f62b0c97 new] Authenticated user accessing /login redirects to / (629ms)
+
+
+  1) [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 55
+    Received: 28
+
+      147 |
+      148 |       // With fixed time 2099-12-31T17:00:00, remaining is 01:30:00, after 1min is 01:29:00
+    > 149 |       expect(newVal).toBe(initialVal - 1);
+          |                      ^
+      150 |     });
+      151 |
+      152 |     test("[TC ID-14] Event information text visible", async ({ page }) => {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/home.spec.ts:149:22
+
+    Error Context: test-results/home-Homepage-SAA-Unauthen-7038b-inute-after-1-minute-passes-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/home.spec.ts:116:9 › Homepage SAA › Unauthenticated User › [TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes 
+  26 passed (9.7s)

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-04T11:20:43Z",
-  "plan": "260904-1633-login-page-google-oauth",
+  "generated_at": "2026-09-05T18:35:15Z",
+  "plan": "260906-0042-homepage-saa-page",
   "features": [
     {
       "fcode": "F001",
@@ -28,6 +28,23 @@
       "type": "ui",
       "related": {
         "screens": [],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    },
+    {
+      "fcode": "F003",
+      "name": "Trang chủ SAA 2025 (Homepage)",
+      "slug": "F003_Homepage",
+      "priority": "P0",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR003_Home"
+        ],
         "user_stories": [],
         "routes": [],
         "models": [],

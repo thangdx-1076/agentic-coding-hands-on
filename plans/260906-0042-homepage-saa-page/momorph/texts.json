@@ -1,0 +1,332 @@
+[
+  {
+    "id": "I2167:9091;186:1579;186:1502",
+    "parent": "Frame 487",
+    "layer": "Awards Information Navigation Links",
+    "character": "About SAA 2025"
+  },
+  {
+    "id": "I2167:9091;186:1587;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Award Information"
+  },
+  {
+    "id": "I2167:9091;186:1593;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Sun* Kudos"
+  },
+  {
+    "id": "I2167:9091;186:1696;186:1821;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "VN"
+  },
+  {
+    "id": "2167:9036",
+    "parent": "mms_B1_Countdown time",
+    "layer": "mms_B1.2_Coming soon",
+    "character": "Comming soon"
+  },
+  {
+    "id": "I2167:9040;186:2617",
+    "parent": "Group 5",
+    "layer": "2",
+    "character": "2"
+  },
+  {
+    "id": "I2167:9041;186:2617",
+    "parent": "Group 4",
+    "layer": "2",
+    "character": "0"
+  },
+  {
+    "id": "2167:9042",
+    "parent": "mms_B1.3.1_Days",
+    "layer": "DAYS",
+    "character": "DAYS"
+  },
+  {
+    "id": "I2167:9045;186:2617",
+    "parent": "Group 5",
+    "layer": "2",
+    "character": "2"
+  },
+  {
+    "id": "I2167:9046;186:2617",
+    "parent": "Group 4",
+    "layer": "2",
+    "character": "0"
+  },
+  {
+    "id": "2167:9047",
+    "parent": "mms_B1.3.2_Hours",
+    "layer": "HOURS",
+    "character": "HOURS"
+  },
+  {
+    "id": "I2167:9050;186:2617",
+    "parent": "Group 5",
+    "layer": "2",
+    "character": "2"
+  },
+  {
+    "id": "I2167:9051;186:2617",
+    "parent": "Group 4",
+    "layer": "2",
+    "character": "0"
+  },
+  {
+    "id": "2167:9052",
+    "parent": "mms_B1.3.3_Minutes",
+    "layer": "MINUTES",
+    "character": "MINUTES"
+  },
+  {
+    "id": "2167:9057",
+    "parent": "Group 417",
+    "layer": "Comming soon",
+    "character": "26/12/2025"
+  },
+  {
+    "id": "2167:9056",
+    "parent": "Group 417",
+    "layer": "Comming soon",
+    "character": "Thời gian: "
+  },
+  {
+    "id": "2167:9059",
+    "parent": "Group 418",
+    "layer": "Comming soon",
+    "character": "Âu Cơ Art Center"
+  },
+  {
+    "id": "2167:9060",
+    "parent": "Group 418",
+    "layer": "Comming soon",
+    "character": "Địa điểm:"
+  },
+  {
+    "id": "2167:9061",
+    "parent": "mms_B2_Thông tin sự kiện",
+    "layer": "Comming soon",
+    "character": "Tường thuật trực tiếp qua sóng Livestream"
+  },
+  {
+    "id": "I2167:9063;186:1568",
+    "parent": "Frame 483",
+    "layer": "Awards Information Navigation Links",
+    "character": "ABOUT AWARDS"
+  },
+  {
+    "id": "I2167:9064;186:2760",
+    "parent": "Frame 483",
+    "layer": "Awards Information Navigation Links",
+    "character": "ABOUT KUDOS"
+  },
+  {
+    "id": "3204:10156",
+    "parent": "mms_B4_content",
+    "layer": "content",
+    "character": "Đứng trước bối cảnh thay đổi như vũ bão của thời đại AI và yêu cầu ngày càng cao từ khách hàng, Sun* lựa chọn chiến lược đa dạng hóa năng lực để không chỉ nỗ lực trở thành tinh anh trong lĩnh vực của mình, mà còn hướng đến một cái đích cao hơn, nơi mọi Sunner đều là “problem-solver” - chuyên gia trong việc giải quyết mọi vấn đề, tìm lời giải cho mọi bài toán của dự án, khách hàng và xã hội.\nLấy cảm hứng từ sự đa dạng năng lực, khả năng phát triển linh hoạt cùng tinh thần đào sâu để bứt phá trong kỷ nguyên AI, “Root Further” đã được chọn để trở thành chủ đề chính thức của Lễ trao giải Sun* Annual Awards 2025.\nVượt ra khỏi nét nghĩa bề mặt, “Root Further” chính là hành trình chúng ta không ngừng vươn xa hơn, cắm rễ mạnh hơn, chạm đến những tầng “địa chất” ẩn sâu để tiếp tục tồn tại, vươn lên và nuôi dưỡng đam mê kiến tạo giá trị luôn cháy bỏng của người Sun*. Mượn hình ảnh bộ rễ liên tục đâm sâu vào lòng đất, mạnh mẽ len lỏi qua từng lớp “trầm tích” để thẩm thấu những gì tinh tuý nhất, người Sun* cũng đang “hấp thụ” dưỡng chất từ thời đại và những thử thách của thị trường để làm mới mình mỗi ngày, mở rộng năng lực và mạnh mẽ “bén rễ” vào kỷ nguyên AI - một tầng “địa chất” hoàn toàn mới, phức tạp và khó đoán, nhưng cũng hội tụ vô vàn tiềm năng cùng cơ hội."
+  },
+  {
+    "id": "3204:10161",
+    "parent": "mms_B4_content",
+    "layer": "content",
+    "character": " “A tree with deep roots fears no storm”\n (Cây sâu bén rễ, bão giông chẳng nề - Ngạn ngữ Anh)"
+  },
+  {
+    "id": "3204:10162",
+    "parent": "mms_B4_content",
+    "layer": "content",
+    "character": "Trước giông bão, chỉ những tán cây có bộ rễ đủ mạnh mới có thể trụ vững. Một tổ chức với những cá nhân tự tin vào năng lực đa dạng, sẵn sàng kiến tạo và đón nhận thử thách, làm chủ sự thay đổi là tổ chức không chỉ vững vàng trước biến động, mà còn khai thác được mọi lợi thế, chinh phục các thách thức của thời cuộc. Không đơn thuần là tên gọi của chương mới trên hành trình phát triển tổ chức, “Root Further” còn như một lời cổ vũ, động viên mỗi chúng ta hãy dám tin vào bản thân, dám đào sâu, khai mở mọi tiềm năng, dám phá bỏ giới hạn, dám trở thành phiên bản đa nhiệm và xuất sắc nhất của mình. Bởi trong thời đại AI, đa dạng năng lực và tận dụng sức mạnh thời cuộc chính là điều kiện tiên quyết để trường tồn.\nKhông ai biết trước ẩn sâu trong “lòng đất” của ngành công nghệ và thị trường hiện đại còn biết bao tầng “địa chất” bí ẩn. Chỉ biết rằng khi “Root Further” đã trở thành tinh thần cội rễ, chúng ta sẽ không sợ hãi, mà càng thấy háo hức trước bất cứ vùng vô định nào trên hành trình tiến về phía trước. Vì ta luôn tin rằng, trong chính những miền vô tận đó, là bao điều kỳ diệu và cơ hội vươn mình đang chờ ta."
+  },
+  {
+    "id": "I5022:15169;214:3839;186:1568",
+    "parent": "icon viết kudos",
+    "layer": "Awards Information Navigation Links",
+    "character": "/"
+  },
+  {
+    "id": "2167:9070",
+    "parent": "mms_C1_Header Giải thưởng",
+    "layer": "Sun* annual awards 2025",
+    "character": "Sun* annual awards 2025"
+  },
+  {
+    "id": "2167:9073",
+    "parent": "Frame 488",
+    "layer": "Hệ thống giải thưởng",
+    "character": "Hệ thống giải thưởng"
+  },
+  {
+    "id": "I2167:9075;214:1021",
+    "parent": "Frame 490",
+    "layer": "mms_C2.1.2_Top Talent",
+    "character": "Top Talent"
+  },
+  {
+    "id": "I2167:9075;214:1022",
+    "parent": "Frame 490",
+    "layer": "mms_C2.1.3_Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": null
+  },
+  {
+    "id": "I2167:9075;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I2167:9076;214:1021",
+    "parent": "Frame 490",
+    "layer": "Top Talent",
+    "character": "Top Project"
+  },
+  {
+    "id": "I2167:9076;214:1022",
+    "parent": "Frame 490",
+    "layer": "Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": "Vinh danh dự án xuất sắc trên mọi phương diện, dự án có doanh thu nổi bật"
+  },
+  {
+    "id": "I2167:9076;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I2167:9077;214:1021",
+    "parent": "Frame 490",
+    "layer": "Top Talent",
+    "character": "Top Project Leader"
+  },
+  {
+    "id": "I2167:9077;214:1022",
+    "parent": "Frame 490",
+    "layer": "Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": "Vinh danh người quản lý truyền cảm hứng và dẫn dắt dự án bứt phá, "
+  },
+  {
+    "id": "I2167:9077;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I2167:9079;214:1021",
+    "parent": "Frame 490",
+    "layer": "Top Talent",
+    "character": "Best Manager"
+  },
+  {
+    "id": "I2167:9079;214:1022",
+    "parent": "Frame 490",
+    "layer": "Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": "Vinh danh người quản lý có năng lực quản lý tốt, dẫn dắt đội nhóm"
+  },
+  {
+    "id": "I2167:9079;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I2167:9080;214:1021",
+    "parent": "Frame 490",
+    "layer": "Top Talent",
+    "character": "Signature 2025 - Creator"
+  },
+  {
+    "id": "I2167:9080;214:1022",
+    "parent": "Frame 490",
+    "layer": "Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": "Vinh danh người quản lý có năng lực quản lý tốt, dẫn dắt đội nhóm"
+  },
+  {
+    "id": "I2167:9080;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I2167:9081;214:1021",
+    "parent": "Frame 490",
+    "layer": "Top Talent",
+    "character": "MVP (Most Valuable Person)"
+  },
+  {
+    "id": "I2167:9081;214:1022",
+    "parent": "Frame 490",
+    "layer": "Vinh danh top cá nhân xuất sắc trên mọi phương diện",
+    "character": "Vinh danh người quản lý có năng lực quản lý tốt, dẫn dắt đội nhóm"
+  },
+  {
+    "id": "I2167:9081;214:1023;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I3390:10349;313:8421",
+    "parent": "Frame 494",
+    "layer": "Phong trào ghi nhận",
+    "character": "Phong trào ghi nhận "
+  },
+  {
+    "id": "I3390:10349;313:8422",
+    "parent": "Frame 494",
+    "layer": "Sun* Kudos",
+    "character": "Sun* Kudos"
+  },
+  {
+    "id": "I3390:10349;313:8423",
+    "parent": "Frame 494",
+    "layer": "ĐIỂM MỚI CỦA SAA 2025 Hoạt động ghi nhận và cảm ơn đồng nghiệp - lần đầu tiên được diễn ra dành cho tất cả Sunner. Hoạt động sẽ được triển khai vào tháng 11/2025, khuyến khích người Sun* chia sẻ những lời ghi nhận, cảm ơn đồng nghiệp trên hệ thống do BTC công bố. Đây sẽ là chất liệu để Hội đồng Heads tham khảo trong quá trình lựa chọn người đạt giải.",
+    "character": "ĐIỂM MỚI CỦA SAA 2025\nHoạt động ghi nhận và cảm ơn đồng nghiệp - lần đầu tiên được diễn ra dành cho tất cả Sunner. Hoạt động sẽ được triển khai vào tháng 11/2025, khuyến khích người Sun* chia sẻ những lời ghi nhận, cảm ơn đồng nghiệp trên hệ thống do BTC công bố. Đây sẽ là chất liệu để Hội đồng Heads tham khảo trong quá trình lựa chọn người đạt giải."
+  },
+  {
+    "id": "I3390:10349;313:8426;186:1568",
+    "parent": "Frame 483",
+    "layer": "Awards Information Navigation Links",
+    "character": "Chi tiết"
+  },
+  {
+    "id": "I3390:10349;329:2949",
+    "parent": "MM_MEDIA_Logo/Kudos",
+    "layer": "KUDOS",
+    "character": "KUDOS"
+  },
+  {
+    "id": "I5001:14800;342:1410;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "About SAA 2025"
+  },
+  {
+    "id": "I5001:14800;342:1411;186:1497",
+    "parent": "Frame 486",
+    "layer": "Awards Information Navigation Links",
+    "character": "Award Information"
+  },
+  {
+    "id": "I5001:14800;342:1412;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Sun* Kudos"
+  },
+  {
+    "id": "I5001:14800;1161:9487;186:1439",
+    "parent": "Frame 485",
+    "layer": "Awards Information Navigation Links",
+    "character": "Tiêu chuẩn chung"
+  },
+  {
+    "id": "I5001:14800;342:1413",
+    "parent": "mms_7_Footer",
+    "layer": "Bản quyền thuộc về Sun* © 2025",
+    "character": "Bản quyền thuộc về Sun* © 2025"
+  }
+]

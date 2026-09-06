@@ -1,0 +1,20 @@
+[
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list",
+    "exitCode": 1,
+    "summary": "RED (defects fixed): 27 tests, 3 passed, 24 failed - homepage does not exist yet, routing still redirects / to /login",
+    "ts": "2026-09-06T01:14:00Z"
+  },
+  {
+    "command": "pnpm lint tests/e2e/home.spec.ts",
+    "exitCode": 0,
+    "summary": "PASS: No lint errors after defect fixes",
+    "ts": "2026-09-06T01:14:00Z"
+  },
+  {
+    "command": "pnpm format:check tests/e2e/home.spec.ts",
+    "exitCode": 0,
+    "summary": "PASS: Code formatting correct",
+    "ts": "2026-09-06T01:14:00Z"
+  }
+]

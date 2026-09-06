@@ -116,4 +116,15 @@ describe("safeNextPath", () => {
     // correct outcome is ACCEPT -- not reject.
     expect(safeNextPath("/todo%80", "/todo")).toBe("/todo%80");
   });
+
+  // Phase 04: the post-login landing changed from `/todo` to `/`, so the
+  // implicit default (no explicit `fallback` argument) must follow -- every
+  // case above passes `fallback` explicitly and is unaffected.
+  it("defaults the fallback to / when raw is null and no fallback is given", () => {
+    expect(safeNextPath(null)).toBe("/");
+  });
+
+  it("defaults the fallback to / when raw is a protocol-relative attack and no fallback is given", () => {
+    expect(safeNextPath("//evil.com")).toBe("/");
+  });
 });

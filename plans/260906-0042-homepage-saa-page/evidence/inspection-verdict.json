@@ -1,0 +1,64 @@
+{
+  "score": 9.5,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "/ renders publicly (anonymous 200, no redirect) with header logo, nav About SAA 2025 (active) / Awards Information / Sun* Kudos, language selector VN, hero heading ROOT FURTHER, Coming soon label, countdown DAYS/HOURS/MINUTES, event info, CTA ABOUT AWARDS and ABOUT KUDOS, Root Further paragraphs, Hệ thống giải thưởng with 6 award cards, Sun* Kudos block with Chi tiết, widget button, footer links and copyright — verified: proxy.ts no redirect on `/`, app/page.tsx unchanged across all 3 rounds; my own independent run of `pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list` (this round) shows TC ID-0/8/9/10/12-14/17/44/45/53 all passing, 27/27 total, exit 0",
+    "countdown is driven by EVENT_START_AT: 2-digit zero-padded values, minutes decrease after one minute, zero-state shows 00 00 00 and hides Coming soon, invalid or missing env falls back to 00 00 00 without crashing — lib/countdown/countdown.ts and hooks/use-countdown.ts unit-tested 100% (unchanged); TC ID-24/ID-39 (minute decrease) and TC ID-41/ID-42 (zero-state) now pass reliably: the rewritten test correctly relies on Playwright's Clock `install({time})` flowing forward in real time (not frozen) until an explicit `pauseAt`/`fastForward`/`runFor`, so the auto-retrying `toHaveText` assertions naturally wait for hydration + the first interval tick to sync to the fake 2099 clock before asserting — confirmed by 4 independent green runs (3 recorded in evidence/raw-green-runs.json at 02:45/46/47Z + my own live run this round), all 27/27 exit 0, including these two tests specifically",
+    "award cards link to /awards#<slug> for all 6 categories, CTA and Kudos links point to /awards and /kudos, footer links point to /, /awards, /kudos, /standards — unaffected across all rounds, verified passing in my own run",
+    "anonymous visitor sees no notification bell and an account icon linking to /login; authenticated member sees bell (panel opens, no badge) and account menu with Hồ sơ and Đăng xuất; admin additionally sees Trang quản trị; sign out returns to /login — unaffected across all rounds; TC ID-1/4/5/29/37 all pass in my own run",
+    "dropdown menus open on click/Enter/Space, close on second click, outside click and Escape — unaffected across all rounds, TC ID-30-35 pass in my own run",
+    "language switch to EN re-renders homepage copy (footer Copyright © Sun* 2025, Details) via NEXT_LOCALE cookie — unaffected across all rounds, TC ID-25/26 pass in my own run",
+    "authenticated /login redirects to / and the OAuth callback default next path is /; /todo stays protected — unaffected across all rounds, TC f62b0c97 (both variants) pass in my own run",
+    "pnpm lint, format:check, typecheck, build, build-storybook exit 0; vitest coverage gate 100% exit 0; Playwright home.spec.ts GREEN with the unchanged RED command and login.spec.ts updated for the new landing — CONFIRMED this round by my own independent execution: `pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list` → 27 passed (9.5s), exit 0; `pnpm lint --max-warnings 0` → exit 0. Plus rebuilt evidence/temper-results.json (11 commands, all exit 0, including 4 separate green playwright runs) and evidence/temper-results-orchestrator-final.json (6 gate commands, all exit 0)"
+  ],
+  "regressionChecked": [
+    "hero-section.tsx accessible-name fix — unchanged since round 2, re-confirmed still correct (alt=\"\", sr-only span is sole accessible name).",
+    "unused SVG assets — unchanged since round 2, re-confirmed public/home/Down.svg and FLAG_VN.svg remain deleted with zero code references.",
+    "promote-to-admin.ts shell-injection fix — unchanged since round 2, re-confirmed execFileSync argv-array form, no shell interpolation, SQL escaping intact.",
+    "data/assets.md stale rows — re-checked: `grep -c 'Down\\|FLAG_VN' plans/260906-0042-homepage-saa-page/data/assets.md` now returns 0. Confirmed removed.",
+    "tests/e2e/home.spec.ts countdown-test rewrite (the round-2 concern) — re-examined the current file (lines 116-146 and 408-432): both the minute-decrease and zero-state tests now use auto-retrying `toHaveText`/`toBeVisible`/`toBeHidden` with NO premature `runFor` call before hydration, which is exactly right given Playwright's actual Clock semantics (`install({time})` starts a flowing fake clock, only `pauseAt`/`fastForward`/`runFor` jump it — my round-2 assumption that it doesn't advance at all was mistaken, corrected by the coordinator with accurate documentation). Independently re-ran the exact gate command myself this round (not just trusting the evidence file): 27 passed, exit 0, including both of these tests. Also cross-checked evidence/raw-green-runs.json's 3 recorded consecutive runs (02:45Z/02:46Z/02:47Z, all 27/0/exit 0) and evidence/green-run.log (tail matches, TC ID-24/39 at line 116 passing in 1.9s). The prior failing run is preserved only in evidence/orchestrator-final-runs.json, correctly excluded from temper-results.json and temper-results-orchestrator-final.json (both rebuilt, both fully green) — confirmed this matches the described history-vs-current separation.",
+    "no new regressions introduced by the round-2/round-3 fixes — re-swept lint (`pnpm lint --max-warnings 0`, my own run, exit 0) and the rebuilt temper-results.json/temper-results-orchestrator-final.json (typecheck, format:check, coverage, build, build-storybook all exit 0) to confirm the test-file rewrite and the 3 original fixes didn't regress anything else."
+  ],
+  "contractStatus": "CHANGED",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Suggestion",
+      "category": "A11y",
+      "location": "components/home/hero-section.tsx:44-57",
+      "summary": "Round 1 finding — hero <h1> double accessible-name announcement. Fixed in round 2, re-verified in round 3: unchanged, still correct.",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Quality",
+      "location": "public/home/Down.svg, public/home/FLAG_VN.svg",
+      "summary": "Round 1 finding — unused downloaded assets shipped in public/home/. Fixed in round 2, re-verified in round 3: still deleted, zero references.",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Security",
+      "location": "tests/e2e/helpers/promote-to-admin.ts:20-30",
+      "summary": "Round 1 finding — theoretical shell-injection surface in a test-only helper. Fixed in round 2, re-verified in round 3: still execFileSync with an argv array, no shell.",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Quality",
+      "location": "plans/260906-0042-homepage-saa-page/data/assets.md:33-34",
+      "summary": "Round 2 finding — stale Down.svg/FLAG_VN.svg rows despite claimed removal. Fixed/verified in round 3: `grep -c` now returns 0, rows confirmed removed.",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Warning",
+      "category": "Correctness",
+      "location": "tests/e2e/home.spec.ts:116-146,408-432",
+      "summary": "Round 2 finding — flagged the rewritten countdown tests as likely desynchronized from the fake clock, based on an incorrect assumption that Playwright's `page.clock.install({time})` freezes time until explicitly advanced. Corrected this round: `install({time})` actually starts a clock that FLOWS in real time until `pauseAt()` is called, so the auto-retrying `toHaveText` assertions correctly wait out hydration + the first interval tick syncing to the fake clock — this is the right pattern, not a bug. Fixed/verified in round 3: independently re-ran `pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list` myself (not just reading evidence) — 27 passed, exit 0, both TC ID-24/ID-39 and TC ID-41/ID-42 green; cross-checked against 3 additional recorded consecutive green runs in evidence/raw-green-runs.json. My round-2 concern is withdrawn.",
+      "disposition": "Reject"
+    }
+  ]
+}

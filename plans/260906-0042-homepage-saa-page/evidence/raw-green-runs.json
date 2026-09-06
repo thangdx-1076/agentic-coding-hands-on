@@ -1,0 +1,69 @@
+[
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list",
+    "exitCode": 0,
+    "summary": "27 passed, 0 failed, 0 skipped (HOME E2E suite)",
+    "ts": "2026-09-06T02:15:00Z",
+    "note": "Initial run after final temper pass"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list (RUN 1 after flake fix)",
+    "exitCode": 0,
+    "summary": "27 passed, 0 failed, 0 skipped",
+    "ts": "2026-09-06T02:45:00Z"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list (RUN 2 after flake fix)",
+    "exitCode": 0,
+    "summary": "27 passed, 0 failed, 0 skipped",
+    "ts": "2026-09-06T02:46:00Z"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list (RUN 3 after flake fix)",
+    "exitCode": 0,
+    "summary": "27 passed, 0 failed, 0 skipped (STABLE - flake resolved)",
+    "ts": "2026-09-06T02:47:00Z"
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0,
+    "summary": "55 passed, 2 skipped (full E2E suite including login.spec.ts)",
+    "ts": "2026-09-06T02:20:00Z"
+  },
+  {
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "summary": "119 tests passed, 100% coverage (stmt/branch/func/line)",
+    "ts": "2026-09-06T02:23:00Z"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "summary": "No lint errors or warnings",
+    "ts": "2026-09-06T02:24:00Z"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "All files properly formatted",
+    "ts": "2026-09-06T02:25:00Z"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "No TypeScript errors",
+    "ts": "2026-09-06T02:26:00Z"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "summary": "Next.js build successful, all routes compiled",
+    "ts": "2026-09-06T02:27:00Z"
+  },
+  {
+    "command": "pnpm build-storybook",
+    "exitCode": 0,
+    "summary": "Storybook build completed successfully",
+    "ts": "2026-09-06T02:28:00Z"
+  }
+]

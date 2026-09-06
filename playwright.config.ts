@@ -41,5 +41,9 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      EVENT_START_AT: "2099-12-31T18:30:00+07:00",
+    },
   },
 });

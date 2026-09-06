@@ -22,6 +22,7 @@
 |------|------|------|------------|----------------|
 | SCR001_LoginScreen | Login | atomic | 10 | MODEL003_LoginCopy, MODEL001_AppLocale |
 | SCR002_TodoScreen | Todo (placeholder) | atomic | 2 | MODEL002_SupabaseUser |
+| SCR003_HomeScreen | Trang chủ (Homepage) | atomic | 14 | MODEL002_SupabaseUser (email, role qua public.users), MODEL001_AppLocale |
 
 ---
 
@@ -31,7 +32,7 @@
 
 ### Description
 
-Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của app khi chưa xác thực. Hiển thị key visual + copy Figma (`vi` mặc định, `en` qua next-intl), cho phép đổi ngôn ngữ và đăng nhập bằng Google (Supabase OAuth). Guard AUTHORITATIVE (`getAuthenticatedUser()`, `app/login/page.tsx:73-83`) fail OPEN — lỗi Supabase không chặn người dùng vào trang này, khác hẳn `/todo`. Nếu đã có session hợp lệ, redirect ngay sang `/todo` trước khi render.
+Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của app khi chưa xác thực. Hiển thị key visual + copy Figma (`vi` mặc định, `en` qua next-intl), cho phép đổi ngôn ngữ và đăng nhập bằng Google (Supabase OAuth). Guard AUTHORITATIVE (`getAuthenticatedUser()`, `app/login/page.tsx:73-83`) fail OPEN — lỗi Supabase không chặn người dùng vào trang này, khác hẳn `/todo`. Nếu đã có session hợp lệ, redirect ngay sang `/` trước khi render (đổi từ `/todo`, xem SCR003_HomeScreen).
 
 **Composite classification (H-rules, `composite-screen-detection.md`)**: atomic. H1 (feature refs) fail — chưa có F### nào tồn tại ở wave này. H2 (domain-module imports) fail — không import nào khớp `features/*`/`modules/*`/`domains/*` (chỉ có `@/lib/supabase/*`, `@/lib/i18n/*`, `@/components/login/*`, đều bị loại theo bảng include/exclude JS/TS). H3 (semantic region wrappers) fail — chỉ có 1 `<section>` (LoginHero); `<header>`/`<footer>` không nằm trong danh sách đếm của H3 (chỉ `section`/`article`/`aside`/`role="region"`), dưới ngưỡng 3. 2-of-3 gate: 0/3 → atomic, không có REG###.
 
@@ -61,7 +62,7 @@ Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của 
 
 ### Related Screens
 
-- SCR002_TodoScreen: Todo (điều hướng khi OAuth thành công qua ROUTE001, hoặc khi guard phát hiện đã đăng nhập)
+- SCR003_HomeScreen: Trang chủ (điều hướng khi OAuth thành công qua ROUTE001, hoặc khi guard phát hiện đã đăng nhập — đổi từ SCR002_TodoScreen)
 
 ---
 
@@ -96,9 +97,52 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 
 ---
 
+## SCR003_HomeScreen
+
+**Type**: atomic
+
+**Feature:** F003 — Trang chủ SAA 2025 (Homepage)
+**Route:** /
+**Description:** Trang chủ công khai SAA 2025 (public, không guard) — hero ROOT FURTHER + đồng hồ đếm ngược (`EVENT_START_AT`), thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ hạng mục giải thưởng, khối Sun* Kudos, widget hành động nhanh, header (nav + ngôn ngữ + bell + menu tài khoản theo role) và footer. `app/page.tsx` (Server Component) đọc session + role (`getUserRole`, fail-open `member`) rồi ủy quyền toàn bộ tương tác cho `app/home-client.tsx` (client boundary) — `HomeScreen`'s function props không thể băng qua render của Server Component.
+**States:** anonymous, member, admin, countdown-running, event-reached (Coming soon ẩn), env-invalid (00 00 00), menu-open
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| HomeClient (`app/home-client.tsx`) | client-boundary | Nối props với `useSelectLocale` (`hooks/use-select-locale.ts`), dựng slot `CountdownTimer` xung quanh `HomeScreen` |
+| HomeScreen (`components/home/home-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: keyvisual nền, header, `<main>` (hero/CTA/Root Further/awards/kudos), footer, widget nổi |
+| KeyvisualBackground | decorative | Ảnh nền hero full-bleed, `aria-hidden` |
+| Header (`components/home/header.tsx`) | header | Logo, nav 3 link, LanguageSelector (F002, tái dùng), bell + menu tài khoản (đã đăng nhập) hoặc link đăng nhập (ẩn danh); sticky top |
+| HeroSection | section | Heading "ROOT FURTHER" + slot đếm ngược + thông tin sự kiện |
+| CountdownTimer (`components/home/countdown-timer.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống |
+| CtaButtons | interactive (link group) | "ABOUT AWARDS" → `/awards`, "ABOUT KUDOS" → `/kudos` |
+| RootFurtherContent | section | Đoạn nội dung Root Further (nhiều paragraph) |
+| AwardsSection (+ AwardCard × 6) | card grid | 6 thẻ hạng mục giải thưởng, mỗi thẻ link `/awards#<slug>` |
+| KudosSection | section | Quảng bá Sun* Kudos, link "Chi tiết" → `/kudos` |
+| HomeFooter | footer | Logo + nav 4 link + dòng bản quyền (tái dùng `login.footer`) |
+| WidgetButton | interactive (dropdown menu) | Nút nổi fixed bottom-right, menu 2 mục (Sun* Kudos, Awards Information) |
+| AccountMenu | interactive (dropdown menu) | Menu tài khoản (Hồ sơ/Trang quản trị theo role/Đăng xuất), dùng `useMenuKeyboardNav` |
+| NotificationBell | interactive (dialog) | Panel thông báo — luôn rỗng ("Bạn chưa có thông báo"), badge chỉ hiện khi `unreadCount > 0` |
+
+### Data Displayed
+
+- Data Entity 1: MODEL002_SupabaseUser (email, mở rộng `role` đọc qua `public.users` — `lib/auth/get-user-role.ts`, fail-open `member`)
+- Data Entity 2: MODEL001_AppLocale (locale hiện tại quyết định nhãn "VN"/"EN" và bản dịch `home.*`)
+
+### Routes/URLs
+
+- `/`
+
+### Related Screens
+
+- SCR001_LoginScreen: Login (đích khi khách ẩn danh click "Đăng nhập", hoặc khi đăng xuất từ menu tài khoản)
+
+---
+
 ## Summary
 
-- **Total Screens**: 2
+- **Total Screens**: 3
 
 ---
 
@@ -107,7 +151,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 - [x] All SCR### codes are unique
 - [x] All SCR### codes are referenced in ScreenFlow.md
 - [x] All related screen references are valid
-- [x] All route URLs are properly formatted (`/login`, `/todo` — khớp route-list.md)
-- [ ] All SCR### codes are referenced in FeatureList.md — FeatureList chưa tồn tại ở wave này (Wave 5, chạy sau)
+- [x] All route URLs are properly formatted (`/`, `/login`, `/todo` — khớp route-list.md)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003)
 - [x] No orphaned screen references
-- [x] No REG### emitted (cả 2 screen đều atomic — xem justification ở từng SCR)
+- [x] No REG### emitted (cả 3 screen đều atomic — xem justification/Type ở từng SCR)

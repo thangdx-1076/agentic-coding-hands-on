@@ -1,0 +1,54 @@
+{
+  "task": "Implement the public SAA 2025 Homepage at / from MoMorph screen i87tDx10uM (hero + countdown + event info + CTA, Root Further content, 6 award cards, Sun* Kudos promo, floating widget, header with nav/language/bell/role-aware account menu, footer) using the local Supabase project saa-app for auth state and public.users.role",
+  "mode": "auto",
+  "acceptanceCriteria": [
+    "/ renders publicly (anonymous 200, no redirect) with header logo, nav About SAA 2025 (active) / Awards Information / Sun* Kudos, language selector VN, hero heading ROOT FURTHER, Coming soon label, countdown DAYS/HOURS/MINUTES, event info, CTA ABOUT AWARDS and ABOUT KUDOS, Root Further paragraphs, Hệ thống giải thưởng with 6 award cards, Sun* Kudos block with Chi tiết, widget button, footer links and copyright",
+    "countdown is driven by EVENT_START_AT: 2-digit zero-padded values, minutes decrease after one minute, zero-state shows 00 00 00 and hides Coming soon, invalid or missing env falls back to 00 00 00 without crashing",
+    "award cards link to /awards#<slug> for all 6 categories, CTA and Kudos links point to /awards and /kudos, footer links point to /, /awards, /kudos, /standards",
+    "anonymous visitor sees no notification bell and an account icon linking to /login; authenticated member sees bell (panel opens, no badge) and account menu with Hồ sơ and Đăng xuất; admin additionally sees Trang quản trị; sign out returns to /login",
+    "dropdown menus open on click/Enter/Space, close on second click, outside click and Escape",
+    "language switch to EN re-renders homepage copy (footer Copyright © Sun* 2025, Details) via NEXT_LOCALE cookie",
+    "authenticated /login redirects to / and the OAuth callback default next path is /; /todo stays protected",
+    "pnpm lint, format:check, typecheck, build, build-storybook exit 0; vitest coverage gate 100% exit 0; Playwright home.spec.ts GREEN with the unchanged RED command and login.spec.ts updated for the new landing"
+  ],
+  "touchpoints": [
+    "app/page.tsx",
+    "app/layout.tsx",
+    "app/login/page.tsx",
+    "app/login/login-client.tsx",
+    "app/auth/callback/route.ts",
+    "lib/supabase/next-path.ts",
+    "proxy.ts",
+    "lib/countdown/countdown.ts",
+    "lib/auth/get-current-user-role.ts",
+    "hooks/use-countdown.ts",
+    "hooks/use-select-locale.ts",
+    "components/home/",
+    "components/login/language-selector.tsx (reused, unchanged)",
+    "messages/vi.json",
+    "messages/en.json",
+    "mocks/handlers.ts",
+    "app/globals.css",
+    "app/fonts.ts",
+    "public/home/",
+    "tests/e2e/home.spec.ts",
+    "tests/e2e/login.spec.ts",
+    "playwright.config.ts",
+    ".env.local (gitignored: EVENT_START_AT)"
+  ],
+  "blastRadius": [
+    "proxy.ts runs on every matched request: narrowing the / redirect must keep session refresh and must not loop /login or /todo",
+    "post-login landing changes from /todo to / (login-client NEXT_PATH, callback default, /login authed redirect) — existing login E2E assertions and F001 docs (PERM001) are affected",
+    "root layout NextIntlClientProvider: new home.* messages must exist in both locales or the parity test and rendering break",
+    "vitest 100% coverage allowlist: every new file under lib/ and hooks/ needs a co-located test or CI goes red",
+    "public.users role query on a public page must fail open — a Supabase outage must not 500 the homepage",
+    "Storybook build: every new common component story must compile"
+  ],
+  "contracts": [
+    "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list (RED exit 1 → GREEN exit 0, same command)",
+    "env: EVENT_START_AT (server-only ISO-8601), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.local; Supabase local http://127.0.0.1:55321 project saa-app (public.users.role member|admin)",
+    "routes: / public; /login authed → /; /todo protected; /auth/callback default next /; link targets /awards(#slug), /kudos, /standards, /profile, /admin",
+    "HomeScreen presentational props contract (viewer: { email, isAdmin } | null, countdown { targetIso, initialNowMs }, locale, copy) ; setLocale(locale) Server Action ; logoutAction()",
+    "LanguageSelector and useMenuKeyboardNav reused unchanged"
+  ]
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix:   27 passed (9.5s)",
+    "ts": "2026-09-06T02:18:06Z"
+  },
+  {
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: All files          |     100 |      100 |     100 |     100 |                   ",
+    "ts": "2026-09-06T02:18:17Z"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: ",
+    "ts": "2026-09-06T02:18:20Z"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: ",
+    "ts": "2026-09-06T02:18:26Z"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: ",
+    "ts": "2026-09-06T02:18:27Z"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: ✓ Compiled successfully in 1039ms",
+    "ts": "2026-09-06T02:18:29Z"
+  },
+  {
+    "command": "pnpm build-storybook",
+    "exitCode": 0,
+    "summary": "final re-run after award-card fill fix: └  Storybook build completed successfully",
+    "ts": "2026-09-06T02:18:34Z"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list",
+    "exitCode": 1,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed):   26 passed (9.7s)",
+    "ts": "2026-09-06T02:33:45Z"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+    "ts": "2026-09-06T02:33:55Z"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+    "ts": "2026-09-06T02:33:57Z"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+    "ts": "2026-09-06T02:34:02Z"
+  },
+  {
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): All files          |     100 |      100 |     100 |     100 |                   ",
+    "ts": "2026-09-06T02:34:03Z"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): ✓ Compiled successfully in 974ms",
+    "ts": "2026-09-06T02:34:07Z"
+  },
+  {
+    "command": "pnpm build-storybook",
+    "exitCode": 0,
+    "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): └  Storybook build completed successfully",
+    "ts": "2026-09-06T02:34:12Z"
+  }
+]

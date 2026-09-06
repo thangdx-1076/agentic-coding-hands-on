@@ -14,7 +14,7 @@ export type SignInWithGoogleOptions = {
    *
    * Giá trị luôn đi qua `safeNextPath` trước khi được nối vào URL, nên một
    * caller truyền nhầm dữ liệu người dùng vào đây cũng không mở được open
-   * redirect — thứ không hợp lệ sẽ rơi về `/todo`. Đây là cùng bộ kiểm tra
+   * redirect — thứ không hợp lệ sẽ rơi về `/`. Đây là cùng bộ kiểm tra
    * mà `/auth/callback` dùng cho chiều đi vào; ràng buộc nằm ở code, không
    * nằm ở lời dặn trong comment.
    */

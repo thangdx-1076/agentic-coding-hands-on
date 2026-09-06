@@ -8,5 +8,9 @@
 - [260904-2016-login-google-oauth-momorph-takumi-pipeline.md](260904-2016-login-google-oauth-momorph-takumi-pipeline.md) — 260904 2016 login google oauth momorph takumi pipeline
 - [260905-1441-login-hero-background-asset-fix.md](260905-1441-login-hero-background-asset-fix.md) — 260905 1441 login hero background asset fix
 - [260905-1553-polish-defer-fixes-and-core-docs-rebuild.md](260905-1553-polish-defer-fixes-and-core-docs-rebuild.md) — 260905 1553 polish defer fixes and core docs rebuild
+- [260905-1930-pnpm-ci-eslint-and-test-gaps.md](260905-1930-pnpm-ci-eslint-and-test-gaps.md) — 260905 1930 pnpm ci eslint and test gaps
+- [260905-2200-hook-extraction-compiler-freeze-specs-gate.md](260905-2200-hook-extraction-compiler-freeze-specs-gate.md) — 260905 2200 hook extraction compiler freeze specs gate
+- [260906-0033-testing-storybook-standards-skill-and-100-percent-coverage.md](260906-0033-testing-storybook-standards-skill-and-100-percent-coverage.md) — 260906 0033 testing storybook standards skill and 100 percent coverage
+- [260906-0042-homepage-saa-public-route-momorph-supabase.md](260906-0042-homepage-saa-public-route-momorph-supabase.md) — 260906 0042 homepage saa public route momorph supabase
 
 <!-- end-generated -->

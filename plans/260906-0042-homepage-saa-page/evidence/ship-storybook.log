@@ -1,0 +1,168 @@
+
+> agentic-coding-hands-on@0.3.0 build-storybook /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+> storybook build
+
+
+┌  Building storybook v10.6.0
+│
+◇  Cleaning outputDir: storybook-static
+│
+◇  Loading presets
+│
+◇  Building manager..
+│
+●  Building open services..
+│
+●  Building preview..
+│
+▲  No story files found for the specified pattern:
+│  app/**/*.stories.@(ts|tsx)
+│
+●  Copying static files: public at storybook-static
+│  Vite vite v8.2.2 building client environment for production...
+transforming...
+✓ 493 modules transformed.
+rendering chunks...
+computing gzip size...
+│  Vite storybook-static/iframe.html
+│  19.77 kB │ gzip:   5.44 kB
+│  storybook-static/assets/iframe-DN1eblvs.css
+│  33.23 kB │ gzip:   6.86 kB
+│  storybook-static/assets/icon-google.stories-Cy8akc8n.js
+│  0.25 kB │ gzip:   0.21 kB
+│  storybook-static/assets/login-footer.stories-CEGftCRb.js
+│  0.33 kB │ gzip:   0.24 kB
+│  storybook-static/assets/login-copy-8NGxp5Mo.js
+│  0.37 kB │ gzip:   0.33 kB
+│  storybook-static/assets/icon-vn-flag.stories-D3xQBB9L.js
+│  0.43 kB │ gzip:   0.32 kB
+│  storybook-static/assets/jsx-runtime-CadfrxEJ.js
+│  0.43 kB │ gzip:   0.30 kB
+│  storybook-static/assets/icon-bell.stories-DZlUEbjs.js
+│  0.44 kB │ gzip:   0.33 kB
+│  storybook-static/assets/icon-down.stories-gvbUQKbH.js
+│  0.44 kB │ gzip:   0.32 kB
+│  storybook-static/assets/icon-user.stories-puyZ0Zek.js
+│  0.44 kB │ gzip:   0.32 kB
+│  storybook-static/assets/google-login-button.stories-pG8srWvY.js
+│  0.44 kB │ gzip:   0.32 kB
+│  storybook-static/assets/icon-pencil.stories-xAAbLkak.js
+│  0.44 kB │ gzip:   0.32 kB
+│  storybook-static/assets/icon-up-right.stories-h0-jjPu1.js
+│  0.44 kB │ gzip:   0.32 kB
+│  storybook-static/assets/logo-link.stories-BAacSusm.js
+│  0.53 kB │ gzip:   0.37 kB
+│  storybook-static/assets/cta-buttons.stories-C3YCNqLp.js
+│  0.55 kB │ gzip:   0.38 kB
+│  storybook-static/assets/login-error-alert.stories-D2NgF1sN.js
+│  0.59 kB │ gzip:   0.45 kB
+│  storybook-static/assets/countdown-tiles.stories-DIICurjO.js
+│  0.59 kB │ gzip:   0.40 kB
+│  storybook-static/assets/icon-down-BhdC92Ql.js
+│  0.60 kB │ gzip:   0.43 kB
+│  storybook-static/assets/nav-link.stories-jDBIvdIa.js
+│  0.63 kB │ gzip:   0.40 kB
+│  storybook-static/assets/login-error-alert-CzEPUP0u.js
+│  0.72 kB │ gzip:   0.49 kB
+│  storybook-static/assets/_interop_require_default-UU6s-o7Q.js
+│  0.75 kB │ gzip:   0.41 kB
+│  storybook-static/assets/login-footer-J1ZZ-eZt.js
+│  0.77 kB │ gzip:   0.50 kB
+│  storybook-static/assets/language-selector.stories-CO2NrrU5.js
+│  0.77 kB │ gzip:   0.52 kB
+│  storybook-static/assets/widget-button.stories-C8NXRb2f.js
+│  0.81 kB │ gzip:   0.54 kB
+│  storybook-static/assets/account-menu.stories-CEYpTeG0.js
+│  0.87 kB │ gzip:   0.60 kB
+│  storybook-static/assets/award-card.stories-CmhsfAYh.js
+│  0.88 kB │ gzip:   0.61 kB
+│  storybook-static/assets/notification-bell.stories-BNedFFG3.js
+│  0.90 kB │ gzip:   0.58 kB
+│  storybook-static/assets/icon-pencil-3FhpOrh9.js
+│  0.94 kB │ gzip:   0.63 kB
+│  storybook-static/assets/icon-up-right-Cou7FWuM.js
+│  0.98 kB │ gzip:   0.71 kB
+│  storybook-static/assets/icon-user-DAnx4Mjs.js
+│  1.02 kB │ gzip:   0.64 kB
+│  storybook-static/assets/icon-bell-DagcPBTo.js
+│  1.09 kB │ gzip:   0.67 kB
+│  storybook-static/assets/rolldown-runtime-CsOFd3vK.js
+│  1.25 kB │ gzip:   0.69 kB
+│  storybook-static/assets/preload-helper-8jINIF9P.js
+│  1.31 kB │ gzip:   0.74 kB
+│  storybook-static/assets/image-context-AajVa0kI.js
+│  1.35 kB │ gzip:   0.54 kB
+│  storybook-static/assets/use-menu-keyboard-nav-mCA0_mS8.js
+│  1.40 kB │ gzip:   0.65 kB
+│  storybook-static/assets/link-DriKXggc.js
+│  1.41 kB │ gzip:   0.81 kB
+│  storybook-static/assets/icon-google-Cnkl1C34.js
+│  1.48 kB │ gzip:   0.86 kB
+│  storybook-static/assets/nav-link-CIMIWAIo.js
+│  1.55 kB │ gzip:   0.94 kB
+│  storybook-static/assets/icon-vn-flag-B4OU-Lcz.js
+│  1.58 kB │ gzip:   0.78 kB
+│  storybook-static/assets/logo-link-D3HbAU2G.js
+│  1.60 kB │ gzip:   0.91 kB
+│  storybook-static/assets/todo-screen.stories-BXgQ0j9N.js
+│  1.99 kB │ gzip:   1.08 kB
+│  storybook-static/assets/google-login-button-BkENe0xV.js
+│  2.18 kB │ gzip:   1.11 kB
+│  storybook-static/assets/notification-bell-B2n1JRDz.js
+│  2.66 kB │ gzip:   1.37 kB
+│  storybook-static/assets/countdown-tiles-CR35m6Xh.js
+│  3.02 kB │ gzip:   1.28 kB
+│  storybook-static/assets/language-selector-DOIGGiAv.js
+│  3.02 kB │ gzip:   1.45 kB
+│  storybook-static/assets/account-menu-DgPnWh7b.js
+│  3.24 kB │ gzip:   1.49 kB
+│  storybook-static/assets/cta-buttons-DxBQyTis.js
+│  3.38 kB │ gzip:   1.34 kB
+│  storybook-static/assets/react-dom-DohlnDi3.js
+│  3.97 kB │ gzip:   1.47 kB
+│  storybook-static/assets/award-card-WpZezdxP.js
+│  4.50 kB │ gzip:   2.04 kB
+│  storybook-static/assets/home-copy-B-LNi7SP.js
+│  6.14 kB │ gzip:   2.77 kB
+│  storybook-static/assets/vi-IlUqxJjM.js
+│  6.20 kB │ gzip:   2.85 kB
+│  storybook-static/assets/widget-button-B-BbFgWO.js
+│  6.73 kB │ gzip:   2.68 kB
+│  storybook-static/assets/fonts-BGDJbLo-.js
+│  7.73 kB │ gzip:   1.29 kB
+│  storybook-static/assets/react-Z7gd5LxR.js
+│  7.90 kB │ gzip:   3.03 kB
+│  storybook-static/assets/login-screen.stories-Bwt2vBuT.js
+│  8.94 kB │ gzip:   3.10 kB
+│  storybook-static/assets/image-DLc0E7iY.js
+│  16.73 kB │ gzip:   6.28 kB
+│  storybook-static/vite-inject-mocker-entry.js
+│  27.84 kB │ gzip:   9.66 kB
+│  storybook-static/assets/navigation-DmGr6UE5.js
+│  70.03 kB │ gzip:  13.88 kB
+│  storybook-static/assets/browser-Ca7NZhp2.js
+│  88.62 kB │ gzip:  25.53 kB
+│  storybook-static/assets/home-screen.stories-VezMfh5V.js
+│  91.62 kB │ gzip:  13.54 kB
+│  storybook-static/assets/react-18-BExPzOkA.js
+│  205.34 kB │ gzip:  64.50 kB
+│  storybook-static/assets/isCommonAssetRequest-BbaSfoJr.js
+│  318.62 kB │ gzip: 130.38 kB
+│  storybook-static/assets/iframe-3GKhsBMG.js
+│  1,254.93 kB │ gzip: 357.43 kB
+
+│
+▲  Vite [plugin builtin:vite-reporter]
+│  (!) Some chunks are larger than 500 kB after minification. Consider:
+│  - Using dynamic import() to code-split the application
+│  - Use build.rolldownOptions.output.codeSplitting to improve chunking:
+│  ]8;;https://rolldown.rs/reference/OutputOptions.codeSplittinghttps://rolldown.rs/reference/OutputOptions.codeSplitting]8;;
+│  - Adjust chunk size limit for this warning via
+│  build.chunkSizeWarningLimit.
+│  Vite ✓ built in 1.00s
+│
+◇  Output directory:
+│  /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/storybook-static
+│
+└  Storybook build completed successfully
+

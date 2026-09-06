@@ -19,7 +19,7 @@ export type LoginClientProps = {
 };
 
 /** Đích quay về sau khi `/auth/callback` đổi code lấy session. */
-const NEXT_PATH = "/todo";
+const NEXT_PATH = "/";
 
 /**
  * Ranh giới client của `/login` (A2 · FR-202/FR-203, nấc đổi ngôn ngữ của

@@ -30,8 +30,14 @@ export type MenuKeyboardNav = {
   registerRoot: (node: HTMLDivElement | null) => void;
   /** Ref callback cho nút mở menu — dùng để trả focus khi đóng. */
   registerButton: (node: HTMLButtonElement | null) => void;
-  /** Ref callback cho từng item, theo chỉ số. */
-  registerItem: (index: number) => (node: HTMLButtonElement | null) => void;
+  /**
+   * Ref callback cho từng item, theo chỉ số. Item có thể là `<button>` hoặc
+   * `<a role="menuitem">` — hook chỉ cần `.focus()` và `tabIndex`, đều có
+   * trên `HTMLElement`. `itemCount` vẫn được coi là cố định trong một lần
+   * mount (menu tài khoản có 2 hoặc 3 item tuỳ role, nhưng role không đổi
+   * giữa các lần render của cùng một phiên).
+   */
+  registerItem: (index: number) => (node: HTMLElement | null) => void;
   /** Đóng menu. `returnFocus` mặc định true — trả focus về nút mở. */
   close: (returnFocus?: boolean) => void;
   handleButtonClick: () => void;
@@ -62,7 +68,7 @@ export function useMenuKeyboardNav({
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const itemRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -93,7 +99,7 @@ export function useMenuKeyboardNav({
   }, []);
 
   function registerItem(index: number) {
-    return (node: HTMLButtonElement | null) => {
+    return (node: HTMLElement | null) => {
       itemRefs.current[index] = node;
     };
   }

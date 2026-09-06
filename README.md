@@ -1,7 +1,9 @@
 # SAA 2025 — Login
 
-Next.js 16 app for Sun* Annual Awards 2025. Visitors sign in with Google (Supabase Auth, PKCE) to
-reach a protected `/todo` placeholder. UI ships in Vietnamese and English via a cookie-driven locale
+Next.js 16 app for Sun* Annual Awards 2025. `/` is the public homepage (hero, countdown, awards,
+Sun* Kudos) — no sign-in required. Visitors can additionally sign in with Google (Supabase Auth,
+PKCE) to reach a protected `/todo` placeholder and see a personalized header (notifications,
+account menu, role-aware admin link). UI ships in Vietnamese and English via a cookie-driven locale
 (no URL prefix).
 
 ## Stack
@@ -21,16 +23,17 @@ reach a protected `/todo` placeholder. UI ships in Vietnamese and English via a 
 
 ## Routes
 
-| Route            | Description                                                                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`              | No UI — redirects to `/todo` (authenticated) or `/login` (anonymous)                                                                                      |
-| `/login`         | Google OAuth login screen: header (logo + VN/EN selector), hero, "LOGIN With Google", footer; shows an inline error when the URL carries `?error=`        |
-| `/auth/callback` | Route Handler (GET) — exchanges the OAuth `code` for a session, then redirects to `next` (default `/todo`) or back to `/login?error=...` on failure       |
-| `/todo`          | Protected placeholder — greets the signed-in user's email and offers logout. No todo feature is implemented; it exists to prove the auth guard end-to-end |
+| Route            | Description                                                                                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`              | Public homepage — hero + countdown (`EVENT_START_AT`), event info, 6 award cards, Sun* Kudos, footer; header is role-aware (anon: login link; member: bell + account menu; admin: adds "Admin" link). No auth guard — anonymous and authenticated visitors both get a 200 |
+| `/login`         | Google OAuth login screen: header (logo + VN/EN selector), hero, "LOGIN With Google", footer; shows an inline error when the URL carries `?error=`; redirects to `/` if already authenticated                                                                             |
+| `/auth/callback` | Route Handler (GET) — exchanges the OAuth `code` for a session, then redirects to `next` (default `/`) or back to `/login?error=...` on failure                                                                                                                           |
+| `/todo`          | Protected placeholder — greets the signed-in user's email and offers logout. No todo feature is implemented; it exists to prove the auth guard end-to-end                                                                                                                 |
 
 Access is guarded in two layers: `proxy.ts` (Next 16's renamed `middleware.ts`) does an optimistic
-redirect on `/`, `/login`, `/todo/:path*`; `/todo` re-checks with an authoritative `getUser()` call
-before rendering.
+redirect on `/login` (authenticated → `/`) and `/todo/:path*` (anonymous → `/login`); `/` stays in
+the matcher only so the session cookie gets refreshed on every visit, it no longer redirects. `/todo`
+re-checks with an authoritative `getUser()` call before rendering.
 
 ## Prerequisites
 
@@ -50,7 +53,12 @@ before rendering.
    ```
    NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<value from supabase status>
+   EVENT_START_AT=2026-12-26T18:30:00+07:00
    ```
+   `EVENT_START_AT` is server-only (no `NEXT_PUBLIC_` prefix — never inlined into the client bundle),
+   read in `app/page.tsx` and validated by `lib/countdown/countdown.ts`. ISO-8601, drives the homepage
+   countdown. Absent or malformed → the countdown falls back to `00/00/00` (still shows "Coming soon");
+   it never crashes the page.
 4. `pnpm install`
 5. `pnpm dev` → http://localhost:3000
 
@@ -78,6 +86,12 @@ before rendering.
 
 - **`quality`** — lint (`--max-warnings 0`), format check, unit tests with a 100% coverage gate (`pnpm test:unit:coverage`), build, typecheck (runs _after_ build on purpose — see the workflow's own comment), then a Storybook build check (`pnpm build-storybook` — catches a story that fails to compile, not whether a story exists for every component).
 - **`e2e` (CI-safe)** — Playwright, excluding tests tagged `@auth` (`--grep-invert @auth`). Tests tagged `@auth` need the local `saa-app` Supabase instance and only run on a developer machine, never in CI. A green `e2e` run does **not** mean the authenticated flow or the OAuth callback success path were exercised — read the file-header comment in `ci.yml` for the exact coverage limit.
+- `@auth` tests that need an admin account (e.g. the homepage's "Trang quản trị" menu item) promote a
+  freshly-created test user via `tests/e2e/helpers/promote-to-admin.ts`, which shells out to
+  `supabase db query "update public.users set role='admin' where email='<email>'"` with `cwd` set to
+  the sibling `saa-app` project directory (`process.env.SAA_APP_DIR ?? "~/Desktop/Claude-and-mormoph/saa-app"`
+  by default; override with `SAA_APP_DIR` if your `saa-app` checkout lives elsewhere). No `psql` or
+  service-role key is needed locally.
 
 ## Known gaps
 
@@ -89,9 +103,13 @@ before rendering.
   2882×2044), served via `next/image` (`fill`, `object-cover`) in
   `components/login/login-background.tsx`. Copied from the sibling `saa-app` project's Figma
   export; not re-exported from Figma in this repo.
+- `public/home/*` (19 files: keyvisual/logo/award-card/Kudos PNGs + bell/pencil/user/arrow SVG
+  icons) are the homepage's Figma exports (MoMorph screen `i87tDx10uM`), consumed via `next/image`
+  (bitmaps) or inlined as SVG (icons) across `components/home/**`.
 
 ## Docs
 
 - `docs/vi/system/architecture.md`, `docs/vi/system/permissions.md` — architecture and access control
 - `docs/vi/generated/feature-list.md`, `docs/vi/generated/screen-list.md` — feature and screen inventory
-- `docs/vi/features/F001_GoogleOAuthLogin/`, `docs/vi/features/F002_LanguageSwitch/` — per-feature specs
+- `docs/vi/features/F001_GoogleOAuthLogin/`, `docs/vi/features/F002_LanguageSwitch/`,
+  `docs/vi/features/F003_Homepage/` — per-feature specs

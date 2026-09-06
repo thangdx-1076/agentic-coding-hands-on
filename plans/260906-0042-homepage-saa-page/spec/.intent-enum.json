@@ -1,0 +1,7 @@
+{
+  "mode": "single",
+  "intents": [
+    "(visitor or signed-in member, browse the SAA 2025 homepage at /, sees event hero + countdown + awards catalogue + Sun* Kudos promo and navigates onward; signed-in users additionally get the notification bell and the role-aware account menu in the same header)"
+  ],
+  "justification": "Smell-flag: task text 'Implement the Homepage SAA page, use Supabase local project' has no ALWAYS-fire conjunction (Supabase is the data/auth backend of the same screen, not a second business domain). Enumeration: one actor group, one action-domain (browse the homepage), one outcome (informed about the event and routed to the detail pages). Header widgets (language, bell, account menu, countdown, widget button) are sub-regions of this single MoMorph screen i87tDx10uM with no independent API boundary in this task (no notifications table exists; account menu is 3 links + existing logoutAction). Language switching reuses F002 as-is. Post-login landing change (/todo -> /) is a one-line side effect on F001 recorded in the spec's cross-cutting notes, not a second feature."
+}

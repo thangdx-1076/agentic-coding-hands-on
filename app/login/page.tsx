@@ -32,7 +32,7 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const user = await getAuthenticatedUser();
   if (user) {
-    redirect("/todo");
+    redirect("/");
   }
 
   const rawLocale = await getLocale();

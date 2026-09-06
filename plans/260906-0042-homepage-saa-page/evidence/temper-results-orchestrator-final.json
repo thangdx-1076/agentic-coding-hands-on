@@ -1,0 +1,46 @@
+{
+  "commands": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+      "ts": "2026-09-06T02:33:55Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+      "ts": "2026-09-06T02:33:57Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): exit 0",
+      "ts": "2026-09-06T02:34:02Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): All files          |     100 |      100 |     100 |     100 |                   ",
+      "ts": "2026-09-06T02:34:03Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): ✓ Compiled successfully in 974ms",
+      "ts": "2026-09-06T02:34:07Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "after reviewer round-1 fixes (hero alt, execFileSync helper, 2 unused svg removed): └  Storybook build completed successfully",
+      "ts": "2026-09-06T02:34:12Z"
+    }
+  ]
+}

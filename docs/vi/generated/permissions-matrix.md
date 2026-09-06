@@ -1,8 +1,8 @@
 # Permissions Matrix
 
 **Project**: agentic-coding-hands-on
-**Generated**: 2026-09-05
-**Analysis Scope**: 2 frontend page guards (`/`, `/login`, `/todo`) + 1 backend redirect-target guard (`/auth/callback`) — no RBAC in scope, see note below
+**Generated**: 2026-09-06
+**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -29,45 +29,47 @@
 
 **Ground-truth note (verified against source, not assumed)**: Dự án này KHÔNG có RBAC — không role, không ownership check, không policy table. Mọi tài khoản Google xác thực thành công đều nhận đúng một mức truy cập giống nhau. Cơ chế phân quyền duy nhất là **route-guard theo trạng thái đăng nhập** (đã auth / chưa auth), thực thi ở HAI lớp cho mỗi route được bảo vệ: `proxy.ts` (optimistic, tên mới của `middleware` trong Next 16) và một lần re-check `getUser()`/tương đương AUTHORITATIVE ở chính trang đó. Vì vậy cột "Role" trong bảng `Permission Rules` bên dưới giữ đúng hai giá trị **Anonymous** / **Authenticated** — đây là trạng thái đăng nhập, không phải vai trò tổ chức (admin/manager/owner không tồn tại trong code).
 
+**Cập nhật 2026-09-06 (F003_Homepage)**: `public.users` nay có cột `role` (`member`|`admin`), đọc qua `lib/auth/get-user-role.ts` để quyết định một mục HIỂN THỊ trong menu tài khoản của SCR003_HomeScreen ("Trang quản trị") — đây KHÔNG phải một route-guard mới (không route nào bị chặn theo `role`), nên KHÔNG được cấp mã `PERM###` mới ở đây; xem "Role-based screen-permission" ở cuối mục này.
+
 ## Permissions Index
 
 | Code | Name | Type | Enforced At |
 |------|------|------|-------------|
-| PERM001_RootRouteGuard | Root Route Guard | route-guard | `proxy.ts` (optimistic) + `app/page.tsx` (authoritative fallback) |
+| PERM001_RootRouteGuard | Root Route Guard — **SUPERSEDED (không còn hoạt động)** | route-guard | ~~`proxy.ts` (optimistic) + `app/page.tsx` (authoritative fallback)~~ — `/` nay public, không guard |
 | PERM002_LoginRouteGuard | Login Route Guard (fail-open) | route-guard | `proxy.ts` (optimistic) + `app/login/page.tsx` (authoritative) |
 | PERM003_TodoRouteGuard | Todo Route Guard (fail-closed) | route-guard | `proxy.ts` (optimistic) + `app/todo/page.tsx` (authoritative) |
 | PERM004_CallbackNextPathGuard | Callback Next-Path Open-Redirect Guard | route-guard | `app/auth/callback/route.ts` via `lib/supabase/next-path.ts:88` (`safeNextPath`) |
 
 ---
 
-## PERM001_RootRouteGuard: Root Route Guard
+## PERM001_RootRouteGuard: Root Route Guard — SUPERSEDED
 
 **Type**: route-guard
-**Enforced At**: `proxy.ts` (optimistic) + `app/page.tsx` (authoritative fallback)
+**Enforced At**: ~~`proxy.ts` (optimistic) + `app/page.tsx` (authoritative fallback)~~ — **không còn route-guard nào tại `/`** (kể từ F003_Homepage, 2026-09-06)
 
 ### Description
 
-Route `/` không tự render UI nào — đây là gate redirect thuần theo trạng thái đăng nhập, thực thi hai lớp. Lớp 1 (optimistic): `proxy.ts` gọi `getUserOrNull()` và redirect ngay `authenticated → /todo`, `anonymous → /login` trước khi bất cứ thứ gì render (matcher bao gồm `"/"`). Lớp 2 (authoritative fallback): `app/page.tsx` tự gọi lại `supabase.auth.getUser()` và redirect y hệt logic trên, phòng trường hợp request không đi qua matcher của proxy. Khác biệt đáng chú ý: lời gọi `getUser()` trong `app/page.tsx` **không** được bọc try/catch — nếu Supabase lỗi, exception văng ra thẳng (không fail-open như `/login`, cũng không fail-closed tường minh như `/todo`); đây là một điểm bất đối xứng đáng ghi nhận, không phải một quyết định thiết kế được tài liệu hoá ở đâu khác trong code.
+**SUPERSEDED — mã này được giữ lại, không xoá, để chỗ cho lịch sử; không mô tả hành vi hiện tại của `/`.** Trước đây route `/` không tự render UI nào — đây là gate redirect thuần theo trạng thái đăng nhập, thực thi hai lớp: `proxy.ts` (optimistic, redirect `authenticated → /todo`, `anonymous → /login`) và `app/page.tsx` (authoritative fallback, redirect y hệt logic trên). **Nay `/` là SCR003_HomeScreen — một trang PUBLIC**: `app/page.tsx` đã được viết lại hoàn toàn để RENDER trang chủ (hero, đếm ngược, giải thưởng, Sun* Kudos, ...) cho MỌI actor, không còn redirect nào. `proxy.ts` vẫn khớp `/` trong `matcher` (`proxy.ts:113`) nhưng chỉ để refresh session cookie — hai predicate `isAuthPage`/`isProtectedPage` bên trong đã thu hẹp lại còn đúng `/login` và `/todo` (`proxy.ts:33-34`), không còn nhánh nào rẽ theo `path === "/"`. Chi tiết đầy đủ (kể cả lý do nghiệp vụ): `docs/vi/system/permissions.md`.
 
 ### Related Routes
 
-- (GET) /
+- (GET) / — nay render SCR003_HomeScreen, không redirect
 
 ### Related Screens
 
-- none — route `/` không bao giờ render một screen nào (chỉ là fallback redirect thuần)
+- SCR003_HomeScreen — Trang chủ (F003_Homepage; trước đây "none" vì `/` chỉ là fallback redirect thuần)
 
 ### Permission Rules
 
 | Role | Allow | Conditions |
 |------|-------|------------|
-| Anonymous | ✗ | Redirect `/login` — không render nội dung nào của `/` |
-| Authenticated | ✗ | Redirect `/todo` — không render nội dung nào của `/` (route này vốn không có nội dung riêng) |
+| Anonymous | ✓ | **(hành vi mới)** Render đầy đủ nội dung công khai của SCR003_HomeScreen — không còn redirect `/login` |
+| Authenticated | ✓ | **(hành vi mới)** Render đầy đủ nội dung, thêm cá nhân hoá header (bell, menu tài khoản, role) — không còn redirect `/todo` |
 
 ### Related Modules
 
-- proxy.ts
-- app/page.tsx
+- proxy.ts (predicate cũ đã gỡ, xem PERM002/PERM003)
+- app/page.tsx (viết lại hoàn toàn — nay thuộc F003_Homepage, không còn thuộc phạm vi guard)
 
 ---
 
@@ -78,7 +80,7 @@ Route `/` không tự render UI nào — đây là gate redirect thuần theo tr
 
 ### Description
 
-Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`); authenticated bị redirect sang `/todo` trước khi form kịp render — thực thi ở cả `proxy.ts` (optimistic) lẫn `getAuthenticatedUser()` AUTHORITATIVE trong `app/login/page.tsx`. Đây là gate duy nhất fail **OPEN**: `getAuthenticatedUser()` bọc `supabase.auth.getUser()` trong try/catch và trả về `null` cho BẤT KỲ lỗi Supabase nào — nghĩa là khi Supabase gián đoạn, trang vẫn render form login (coi như anonymous) thay vì chặn truy cập. Đây là chủ đích: `/login` là cổng vào duy nhất của app, chặn nó khi outage sẽ khoá toàn bộ người dùng ở ngoài vĩnh viễn.
+Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`); authenticated bị redirect sang `/` (đổi từ `/todo`, F003_Homepage) trước khi form kịp render — thực thi ở cả `proxy.ts` (optimistic) lẫn `getAuthenticatedUser()` AUTHORITATIVE trong `app/login/page.tsx`. Đây là gate duy nhất fail **OPEN**: `getAuthenticatedUser()` bọc `supabase.auth.getUser()` trong try/catch và trả về `null` cho BẤT KỲ lỗi Supabase nào — nghĩa là khi Supabase gián đoạn, trang vẫn render form login (coi như anonymous) thay vì chặn truy cập. Đây là chủ đích: `/login` là cổng vào duy nhất của app, chặn nó khi outage sẽ khoá toàn bộ người dùng ở ngoài vĩnh viễn.
 
 ### Related Routes
 
@@ -93,7 +95,7 @@ Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`
 | Role | Allow | Conditions |
 |------|-------|------------|
 | Anonymous | ✓ | Render form đăng nhập bình thường |
-| Authenticated | ✗ | Redirect `/todo` — không render lại form login |
+| Authenticated | ✗ | Redirect `/` (đổi từ `/todo`) — không render lại form login |
 | (Supabase lỗi khi check) | ✓ | Coi như Anonymous, vẫn render form — fail-open chủ đích, không phải bug |
 
 ### Related Modules
@@ -158,7 +160,7 @@ Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có th
 | Role | Allow | Conditions |
 |------|-------|------------|
 | (N/A — value-validation gate, không phải actor/role decision) | ✓ | `next=` same-origin + root-relative + không control char → dùng làm đích redirect |
-| (N/A — value-validation gate, không phải actor/role decision) | ✗ | `next=` off-origin, `//`/`/\` prefix, chứa `://`, hoặc control/line-separator char (thô hoặc percent-encoded) → fallback về `/todo` |
+| (N/A — value-validation gate, không phải actor/role decision) | ✗ | `next=` off-origin, `//`/`/\` prefix, chứa `://`, hoặc control/line-separator char (thô hoặc percent-encoded) → fallback về `/` (đổi từ `/todo`, F003_Homepage) |
 
 ### Related Modules
 
@@ -167,19 +169,31 @@ Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có th
 
 ---
 
+## Role-based screen-permission (chưa cấp mã PERM###)
+
+Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
+(đọc qua `lib/auth/get-user-role.ts`, fail-open về `"member"` khi lỗi/không có row). Đây là một
+`screen-permission` cấp UI (ẩn/hiện một link, không chặn route nào — `/admin` bản thân chưa tồn
+tại) chứ KHÔNG phải một `role-based` route-guard mới, nên KHÔNG được liệt vào Permissions Index ở
+trên với một mã `PERM###` tự đặt. Mã chính thức cho mục này sẽ được cấp bởi lượt `rebuild-spec` Core
+pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận phân loại. Xem thêm
+`docs/vi/system/permissions.md § Identified Roles`.
+
+---
+
 ## Summary
 
-- **Total Permission Items**: 4
-- **By Type**: route-guard: 4, screen-permission: 0, action-permission: 0, data-permission: 0, role-based: 0, resource-ownership: 0, field-permission: 0, api-scope: 0, feature-flag: 0, experiment: 0, env-gate: 0, locale-gate: 0
+- **Total Permission Items**: 4 (PERM001 nay superseded — không tính vào surface đang hoạt động, nhưng vẫn giữ trong tổng số vì mã chưa bị xoá)
+- **By Type**: route-guard: 4 (1 superseded), screen-permission: 0 (1 chưa cấp mã — xem mục trên), action-permission: 0, data-permission: 0, role-based: 0, resource-ownership: 0, field-permission: 0, api-scope: 0, feature-flag: 0, experiment: 0, env-gate: 0, locale-gate: 0
 
 ---
 
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [ ] All PERM### codes are referenced in FeatureList.md (verified in Step 8) — feature-list.md chưa tồn tại ở wave này (Wave 5, chạy sau)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003)
 - [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/login`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen tồn tại trong screen-list.md; PERM001 và PERM004 không target screen nào — lý do nêu ở từng mục)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen tồn tại trong screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 
