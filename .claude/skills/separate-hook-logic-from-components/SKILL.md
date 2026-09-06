@@ -1,68 +1,73 @@
 ---
 name: separate-hook-logic-from-components
-description: Tách logic ra khỏi React component — hook state/effect vào hooks/, logic thuần vào lib/, component chỉ nhận props và render JSX. Kích hoạt MỖI KHI tạo mới hoặc sửa bất kỳ file .tsx nào trong app/ hoặc components/, khi viết useState/useEffect/useRef/useTransition trong component, khi một component vượt 150 dòng, hoặc khi user nói "tách hook", "tách logic", "refactor component", "extract hook".
+description: "WHICH LAYER a piece of React code belongs to: pure logic (no React), hook (state/effect/ref/transition), or component (JSX only). Activate every time you create or edit any .tsx client component under src/app/** or src/components/**, write useState/useEffect/useRef/useTransition inside a component, see a component pass 150 lines, or when the user says 'extract hook', 'split logic', 'refactor component', 'tách hook', 'tách logic'. Answers only the layer question: where the file lives → nextjs-route-colocation-architecture; what ships next to it → write-unit-tests-and-storybook-stories."
 ---
 
-# Tách logic — hook riêng, code riêng, component chỉ render
+# Separate logic from components: which layer is this code?
 
-Component là **lớp trình bày**. Nó nhận props, trả JSX. Nó không giữ quy tắc
-nghiệp vụ, không tự gọi API, không tự quản lý vòng đời.
+A component is the **presentation layer**. It receives props and returns JSX. It holds no business rule, calls no API, manages no lifecycle. This rule is mandatory, not a suggestion: every touch of a `.tsx` file applies it.
 
-Quy tắc này **bắt buộc**, không phải gợi ý. Mỗi lần đụng vào `.tsx` là áp dụng.
+## Three skills, one question each
 
-## Ba lớp
+| Question | Skill |
+|---|---|
+| **Which layer is this code: pure logic, hook, or component?** | this skill |
+| Where does the file live? | [nextjs-route-colocation-architecture](../nextjs-route-colocation-architecture/SKILL.md) |
+| What ships next to it: test, story, MSW handler? | [write-unit-tests-and-storybook-stories](../write-unit-tests-and-storybook-stories/SKILL.md) |
 
-| Lớp | Ở đâu | Được chứa gì | Cấm chứa gì |
-|-----|-------|--------------|-------------|
-| **Logic thuần** | `lib/<domain>/*.ts` | Hàm thuần: validate, format, parse, map dữ liệu, gọi API/SDK. Không import React. | `useState`, JSX, `window`/`document` truy cập trực tiếp |
-| **Hook** | `hooks/use-*.ts` | `useState` / `useEffect` / `useRef` / `useTransition`, event handler, side effect. Uỷ thác mọi tính toán thật xuống `lib/`. | JSX, className, giá trị design (màu, spacing) |
-| **Component** | `components/**/*.tsx`, `app/**/*.tsx` | JSX, className, layout, a11y attribute. Gọi đúng **một** hook của chính nó. | `useEffect`, logic điều kiện nghiệp vụ, `fetch`, gọi SDK |
+Answer them in that order. This skill decides the *kind*; the location skill's scope ladder decides the *folder*. Paths below are the target layout; until the `src/` migration lands, map them through the location skill's migration map.
 
-Đường dẫn import dùng alias `@/` (xem `tsconfig.json` → `paths`).
+## Scope: client code only
 
-## Ranh giới: đặt câu này ở lớp nào?
+Server Components (`page.tsx`, `layout.tsx`, async components in `_components/`) have no hooks. They read through `src/dal`, guard access and pass plain props down. This skill applies from the first `"use client"` boundary downward.
 
-Trả lời theo thứ tự, dừng ở câu "có" đầu tiên:
+## The three layers
 
-1. **Chạy được mà không cần React không?** → `lib/`. Ví dụ: `isAppLocale()`, `nextPath()`, `signInWithGoogle()`.
-2. **Cần state/effect/ref của React không?** → `hooks/`. Ví dụ: mở/đóng menu, roving focus, `useTransition` bọc Server Action.
-3. **Chỉ quyết định trông ra sao?** → component. Ví dụ: `open ? "rotate-180" : ""`.
+| Layer | Lives in (by the scope ladder) | May contain | Must not contain |
+|---|---|---|---|
+| **Pure logic** | segment `_utils/` when it knows the feature; `src/utils/<topic>/` when generic; `src/domain/<entity>/` when it is a shared business rule; `src/api/` / `src/dal/` when it talks to the backend | Pure functions: validate, format, parse, map, call an SDK. No React import. | `useState`, JSX, direct `window` / `document` access |
+| **Hook** | segment `_hooks/use-*.ts`; `src/hooks/` only when it carries no domain knowledge | `useState` / `useEffect` / `useRef` / `useTransition`, event handlers, side effects. Delegates every real computation to the pure layer. | JSX, `className`, design values (colors, spacing) |
+| **Component** | segment `_components/`; `src/components/` only for design-system primitives and business-free widgets | JSX, `className`, layout, a11y attributes. Calls exactly **one** hook of its own. | `useEffect`, business conditionals, `fetch`, SDK calls |
 
-Nếu một dòng vừa tính toán vừa render — tách nó ra. Đó chính là chỗ đang gộp.
+## Boundary test: which layer does this statement belong to?
 
-## Quy trình bắt buộc khi viết component
+Answer in order and stop at the first "yes":
 
-1. **Trước khi gõ JSX**, liệt kê mọi state và side effect component cần.
-2. Cái nào không cần React → viết vào `lib/<domain>/` trước, kèm test `*.test.ts`.
-3. Phần còn lại → viết `hooks/use-<tên>.ts`, trả về một object đặt tên rõ ràng.
-4. Component import hook đó, destructure, render. Không `useState` rải rác.
-5. Chạy `pnpm lint && pnpm typecheck`.
+1. **Does it run without React?** → pure logic. Examples: `isAppLocale()`, `nextPath()`, `signInWithGoogle()`.
+2. **Does it need React state, effect or ref?** → hook. Examples: open/close a menu, roving focus, `useTransition` around a Server Action.
+3. **Does it only decide how things look?** → component. Example: `open ? "rotate-180" : ""`.
 
-## Hook trả về cái gì
+A line that both computes and renders is the exact line to split.
 
-Trả **một object có tên**, không phải mảng vị trí. Thêm field về sau không phá
-call site, và component chỉ lấy đúng thứ nó dùng.
+## Mandatory procedure when writing a component
 
-Hai ràng buộc cứng do React Compiler (bật qua `eslint-plugin-react-hooks`):
+1. **Before typing JSX**, list every state and side effect the component needs.
+2. Whatever runs without React → write it in the pure layer first, with its `*.test.ts` beside it.
+3. The rest → `use-<name>.ts` returning one clearly named object.
+4. The component imports that hook, destructures, renders. No scattered `useState`.
+5. Run `pnpm lint && pnpm typecheck`.
 
-**1. Destructure ngay tại call site — không giữ nguyên object.**
+## What a hook returns
+
+Return **one named object**, not a positional array. Adding a field later breaks no call site, and the component picks only what it uses.
+
+Two hard constraints come from the React Compiler (enabled through `eslint-plugin-react-hooks`):
+
+**1. Destructure at the call site. Never keep the object.**
 
 ```tsx
-// ĐÚNG
+// RIGHT
 const { open, registerRoot, handleMenuKeyDown } = useMenuKeyboardNav({ itemCount });
 <div ref={registerRoot}>{open && …}</div>
 
-// SAI — 10 lỗi `react-hooks/refs`
+// WRONG: 10 `react-hooks/refs` errors
 const menu = useMenuKeyboardNav({ itemCount });
 <div ref={menu.registerRoot}>{menu.open && …}</div>
 ```
 
-Compiler không chứng minh được object trả về từ custom hook là không phải ref,
-nên coi **mọi** truy cập `menu.x` lúc render là đọc `ref.current` và chặn —
-kể cả `menu.open` trong `aria-expanded`. Đây là lỗi thật của `pnpm lint`,
-đã gặp khi refactor `LanguageSelector`, không phải cảnh báo bỏ qua được.
+The compiler cannot prove the object returned by a custom hook is not a ref, so it treats **every** `menu.x` read during render as `ref.current` and blocks it, including `menu.open` in `aria-expanded`. This is a real `pnpm lint` error, hit while refactoring `LanguageSelector`, not a warning to skip.
 
-**2. Không trả `RefObject` ra ngoài — trả ref callback.**
+**2. Never expose a `RefObject`. Return a ref callback.**
 
 ```ts
 const rootRef = useRef<HTMLDivElement>(null);
@@ -72,31 +77,22 @@ const registerRoot = useCallback((node: HTMLDivElement | null) => {
 return { registerRoot /* … */ };
 ```
 
-Ref ở lại trong hook đúng phân lớp hơn: component không có việc gì với
-`.current`. Bọc `useCallback` để identity ổn định, tránh React gỡ/gắn lại ref
-mỗi lần render.
+The ref stays inside the hook, which is the correct layering: a component has no business with `.current`. Wrap in `useCallback` for a stable identity so React does not detach and re-attach the ref on every render.
 
-Ngoại lệ: ref callback **theo chỉ số** (`registerItem(index)`) buộc phải tạo
-closure mới mỗi lần render. Vô hại vì React gỡ/gắn ref đồng bộ trong commit,
-xong trước khi effect đọc `itemRefs.current`. Với danh sách dài hoặc render
-liên tục thì hãy cache lại bằng `Map<number, RefCallback>`.
+Exception: an **indexed** ref callback (`registerItem(index)`) must create a new closure per render. Harmless, because React detaches and attaches refs synchronously during commit, before any effect reads `itemRefs.current`. For long lists or constant re-render, cache with `Map<number, RefCallback>`.
 
-## Nhận diện vi phạm
+## Signs a component is hoarding logic
 
-Component đang gộp logic nếu thấy bất kỳ dấu hiệu nào:
+- A `useEffect` inside a `.tsx` file.
+- More than two `useState` in one component.
+- A `handle*` function longer than five lines.
+- `try/catch`, or a `fetch` / SDK client call.
+- A `.tsx` file past 150 lines (the repo hard limit is 200; see `~/.claude/rules/development-rules.md`).
+- The same block of logic in two components.
 
-- Có `useEffect` trong file `.tsx`
-- Trên 2 `useState` trong một component
-- Có hàm `handle*` dài quá 5 dòng
-- Có `try/catch`, hoặc gọi `fetch` / SDK client
-- File `.tsx` vượt 150 dòng (giới hạn cứng của dự án là 200 — xem `~/.claude/rules/development-rules.md`)
-- Cùng một khối logic xuất hiện ở hai component
+## Example from this repo: `LanguageSelector`
 
-## Ví dụ — trước và sau
-
-Lấy từ chính repo này: `components/login/language-selector.tsx`.
-
-**Trước** — 100+ dòng state, effect, keyboard handler nằm chung với JSX:
+**Before**, 100+ lines of state, effects and keyboard handling mixed with JSX:
 
 ```tsx
 export function LanguageSelector({ label, onSelect }: LanguageSelectorProps) {
@@ -105,38 +101,26 @@ export function LanguageSelector({ label, onSelect }: LanguageSelectorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  useEffect(() => { /* click ngoài thì đóng */ }, [open]);
+  useEffect(() => { /* close on outside click */ }, [open]);
   useEffect(() => { itemRefs.current[activeIndex]?.focus(); }, [open, activeIndex]);
 
-  function handleMenuKeyDown(event) { switch (event.key) { /* 6 nhánh */ } }
-  // ... rồi mới tới JSX
+  function handleMenuKeyDown(event) { switch (event.key) { /* 6 branches */ } }
+  // … then the JSX
 }
 ```
 
-**Sau** — logic điều hướng thuần ở `lib/`, vòng đời ở `hooks/`, component chỉ render:
+**After**: the roving-index arithmetic (`nextIndex`, `prevIndex`) is pure logic in `src/utils/a11y/roving-index.ts`, tested with vitest and no DOM; the lifecycle is the generic hook `src/hooks/use-menu-keyboard-nav.ts`; the component in `src/app/(public)/_components/language-selector/` only renders:
 
 ```tsx
 export function LanguageSelector({ label, onSelect }: LanguageSelectorProps) {
   const {
-    open,
-    activeIndex,
-    registerRoot,
-    registerButton,
-    registerItem,
-    close,
-    handleButtonClick,
-    handleButtonKeyDown,
-    handleMenuKeyDown,
+    open, activeIndex, registerRoot, registerButton, registerItem,
+    close, handleButtonClick, handleButtonKeyDown, handleMenuKeyDown,
   } = useMenuKeyboardNav({ itemCount: OPTIONS.length });
 
   return (
     <div ref={registerRoot} className="relative flex h-14 w-[108px] items-center">
-      <button
-        ref={registerButton}
-        aria-expanded={open}
-        onClick={handleButtonClick}
-        onKeyDown={handleButtonKeyDown}
-      >
+      <button ref={registerButton} aria-expanded={open} onClick={handleButtonClick} onKeyDown={handleButtonKeyDown}>
         …
       </button>
       {open && (
@@ -149,28 +133,16 @@ export function LanguageSelector({ label, onSelect }: LanguageSelectorProps) {
 }
 ```
 
-Chú ý: destructure ngay, và gắn `registerRoot`/`registerButton` (ref callback)
-— không có `menu.rootRef`, ref không bao giờ rời khỏi hook. Đây chính là hai
-ràng buộc ở mục trên, áp dụng thật.
+Destructured immediately, ref callbacks attached, no `menu.rootRef`: the two constraints above, applied for real.
 
-Component còn lại đúng phần trình bày. Logic con trỏ chạy vòng (`nextIndex`,
-`prevIndex`) nằm ở `lib/`, test được bằng `vitest` mà không cần dựng DOM.
+## Why the pure-logic boundary matters in this repo
 
-## Vì sao ở repo này ranh giới `lib/` lại quan trọng
+Logic left inside a `.tsx` file is logic **nobody measures**: components are outside the coverage allowlist on purpose. Pushing it into `_utils/`, `src/utils/`, `src/dal/` or a hook is the only way it enters the report. Which companion files that then requires (colocated test, story, coverage threshold, runner) is the testing skill's job; the configuration is written there and not repeated here.
 
-Logic để trong `.tsx` là logic **không ai đo được** — component không nằm trong
-phạm vi coverage, và đó là chủ ý. Đẩy xuống `lib/` hoặc `hooks/` là cách duy
-nhất để nó vào báo cáo.
+## Does not apply when
 
-Phân lớp xong rồi thì phải kèm file gì bên cạnh (test co-located, story, ngưỡng
-coverage, ranh giới runner) là việc của skill
-[`write-unit-tests-and-storybook-stories`](../write-unit-tests-and-storybook-stories/SKILL.md).
-Cấu hình cụ thể chỉ được chép ở đó, không lặp lại ở đây.
+- A purely presentational component with no state. Do not invent a hook for it.
+- A single boolean `useState` that only toggles a class (hover, for example). Leave it.
+- Icon components and `*-copy.ts` files holding static strings.
 
-## Không áp dụng khi
-
-- Component thuần trình bày, không state — không cần bịa ra hook cho nó.
-- Một `useState` boolean duy nhất chỉ điều khiển class (ví dụ hover) — để tại chỗ.
-- Icon component, file `*-copy.ts` chứa chuỗi tĩnh.
-
-Đừng tách chỉ để cho có. Tách khi có logic thật.
+Do not split for the sake of splitting. Split when there is real logic.
