@@ -22,7 +22,10 @@ type MaybeSingleResult = {
  * The minimal slice of a Supabase (or Supabase-shaped) client this helper
  * touches — `.from("users").select("role").eq("id", userId).maybeSingle()`.
  * Deliberately narrower than `SupabaseClient` so a caller (and a test) can
- * stub it without matching the full SDK surface.
+ * stub it without matching the full SDK surface. `maybeSingle()` is typed as
+ * `PromiseLike` (not `Promise`) on purpose: the real postgrest builder is a
+ * thenable without `catch`/`finally`, so a `Promise` here would force every
+ * caller to wrap the SDK in an adapter.
  */
 export type UsersRoleClient = {
   from: (table: "users") => {
@@ -30,7 +33,7 @@ export type UsersRoleClient = {
       eq: (
         column: "id",
         value: string,
-      ) => { maybeSingle: () => Promise<MaybeSingleResult> };
+      ) => { maybeSingle: () => PromiseLike<MaybeSingleResult> };
     };
   };
 };

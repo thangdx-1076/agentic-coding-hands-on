@@ -5,7 +5,8 @@ import { HomeClient } from "./home-client";
 
 import { logoutAction } from "@/app/todo/actions";
 import { createClient } from "@/lib/supabase/server";
-import { getUserRole, type UsersRoleClient } from "@/lib/auth/get-user-role";
+import { toUsersRoleClient } from "@/lib/supabase/users-role-client";
+import { getUserRole } from "@/lib/auth/get-user-role";
 import { parseTargetDate } from "@/lib/countdown/countdown";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 import { defaultHomeCopy, type HomeCopy } from "@/components/home/home-copy";
@@ -162,35 +163,6 @@ async function getViewer(): Promise<HeaderViewer | null> {
   } catch {
     return null;
   }
-}
-
-/**
- * Adapts `@supabase/ssr`'s server client to `UsersRoleClient`
- * (`lib/auth/get-user-role.ts`) — only the one method actually called is
- * bridged. The real client's `.maybeSingle()` returns a `PromiseLike`
- * postgrest builder, not a literal `Promise` (its own type declaration is
- * missing `catch`/`finally`/`Symbol.toStringTag`), so `Promise.resolve(...)`
- * converts it rather than casting the whole, deeply-generic client.
- */
-function toUsersRoleClient(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): UsersRoleClient {
-  return {
-    from: (table) => ({
-      select: (columns) => ({
-        eq: (column, value) => ({
-          maybeSingle: () =>
-            Promise.resolve(
-              supabase
-                .from(table)
-                .select(columns)
-                .eq(column, value)
-                .maybeSingle(),
-            ),
-        }),
-      }),
-    }),
-  };
 }
 
 /**
