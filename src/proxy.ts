@@ -11,9 +11,10 @@ import { ROUTES } from "@/constants/routes";
 /**
  * Optimistic auth guard + locale-cookie normalization (Next 16's `proxy`,
  * formerly `middleware`). This is the FIRST line of defense only — the
- * authoritative check lives in `/todo`'s `getUser()` call
- * (`app/todo/page.tsx`), per the official Next.js guidance that a
- * proxy/middleware layer "should not be your only line of defense."
+ * authoritative check lives in `src/app/(protected)/layout.tsx`, which reads
+ * the session through `src/dal/auth.ts` (`getCurrentUser`) and redirects to
+ * `/login`, per the official Next.js guidance that a proxy/middleware layer
+ * "should not be your only line of defense."
  *
  * Redirect matrix (§ E2E contract):
  *   authed   & path = /login          → /
