@@ -7,75 +7,123 @@ lang: vi
 
 # Architecture
 
-**Phạm vi**: toàn bộ source hiện có trong repo — 3 screen (`/`, `/login`, `/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage đã lên code kể từ 2026-09-06 (xem `plans/260906-0042-homepage-saa-page/`).
+**Phạm vi**: toàn bộ source hiện có trong repo — 3 screen (`/`, `/login`, `/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage.
 
-Mô tả code THỰC TẾ đang chạy, dựng ngược từ source. **Cập nhật 2026-09-06**: mọi phần trước đây đánh
-dấu `(planned)` cho Homepage SAA đã lên code thật — các trích dẫn `path:N-M` dưới đây đọc từ source
-hiện tại, không còn là forward-draft.
+**Cập nhật 2026-09-06 (đợt 2 — route colocation)**: toàn bộ source đã chuyển vào `src/`
+(`plans/260906-1150-src-route-colocation-refactor/`) — **URL, hành vi runtime, biến môi
+trường, khoá `messages/*.json`, script `package.json` KHÔNG đổi**; chỉ đổi file nào chứa
+logic, ranh giới import giữa các thư mục, và pattern mà config build/test dùng để tìm file.
+Mọi trích dẫn `path:N-M` dưới đây đọc từ vị trí `src/` hiện tại.
 
 ## System Architecture
+
+Layout chia 2 zone:
+- **Zone A — `src/<layer>/`**: code dùng chung, nhóm theo LOẠI — `api`, `dal`, `lib`, `hooks`,
+  `utils`, `constants`, `i18n`, `mocks`, `styles`.
+- **Zone B — `src/app/**`**: code theo FEATURE, nhóm theo ROUTE (`(public)/(home)`,
+  `(public)/login`, `(protected)/todo`, `auth/callback`). Mỗi route segment giữ file riêng
+  trong folder private của nó: `_components`, `_hooks`, `_actions`, `_utils`, `_shared`.
+
+Hướng phụ thuộc: Zone A không bao giờ import `src/app` (`eslint.config.mjs:74-92`, rule
+`no-restricted-imports`). Trong `src/app/**`, một segment chỉ import folder private của
+chính nó, của segment tổ tiên (relative path), hoặc `@/<layer>` — cấm import ngang hàng hay
+xuống con vào `_*` của segment khác (`eslint.config.mjs:93-130`, regex-based).
 
 ```mermaid
 graph TB
     subgraph "Browser"
         Client["Trình duyệt người dùng"]
     end
-    subgraph "Next.js App Router (repo này)"
-        Proxy["proxy.ts — edge guard"]
-        Root["app/page.tsx (route /) — HomePage, Server Component (F003_Homepage)"]
-        HomeClient["app/home-client.tsx — client boundary"]
-        HomeComponents["components/home/** — header/hero/countdown-timer/awards/kudos/footer/widget"]
-        RoleHelper["lib/auth/get-user-role.ts (getUserRole)"]
-        RoleShim["lib/supabase/users-role-client.ts (toUsersRoleClient shim)"]
-        CountdownLib["lib/countdown/countdown.ts"]
-        CountdownHook["hooks/use-countdown.ts"]
-        LocaleHook["hooks/use-select-locale.ts"]
-        EventEnv["env EVENT_START_AT — server-only"]
-        LoginPage["app/login/page.tsx (screen)"]
-        LoginClient["login-client.tsx (use client)"]
-        LoginScreen["components/login/** (presentational)"]
-        TodoPage["app/todo/page.tsx (screen)"]
-        TodoActions["app/todo/actions.ts (logoutAction)"]
-        Callback["app/auth/callback/route.ts"]
-        LocaleAction["app/actions/locale.ts (setLocale)"]
-        SupaServer["lib/supabase/server.ts"]
-        SupaProxyClient["lib/supabase/proxy-client.ts"]
-        SupaBrowserClient["lib/supabase/client.ts"]
-        NextPathGuard["lib/supabase/next-path.ts (safeNextPath)"]
-        I18nCfg["i18n/request.ts + lib/i18n/locale.ts"]
+    subgraph "Next.js App Router (src/)"
+        Proxy["src/proxy.ts — edge guard optimistic"]
+        ProtectedLayout["src/app/(protected)/layout.tsx — auth gate, thay page tự gọi getUser()"]
+        Root["src/app/(public)/(home)/page.tsx — HomePage (F003_Homepage)"]
+        HomeClient["src/app/(public)/(home)/_components/home-client.tsx"]
+        HomeComponents["src/app/(public)/(home)/_components/**"]
+        RoleHelper["src/dal/users.ts (getUserRole)"]
+        RoleShim["src/dal/users-role-client.ts"]
+        CountdownLib["src/app/(public)/(home)/_utils/countdown.ts"]
+        CountdownHook["src/app/(public)/(home)/_hooks/use-countdown.ts"]
+        LocaleHook["src/app/(public)/_hooks/use-select-locale.ts"]
+        LoginPage["src/app/(public)/login/page.tsx — self-check qua src/dal/auth.ts"]
+        LoginClient["src/app/(public)/login/_components/login-client.tsx"]
+        LoginActionsHook["src/app/(public)/login/_hooks/use-login-actions.ts"]
+        TodoPage["src/app/(protected)/todo/page.tsx"]
+        AuthDal["src/dal/auth.ts (getCurrentUser)"]
+        SharedLogout["src/app/_actions/logout.ts — dùng chung (home) và (protected)/todo"]
+        SharedLocaleAction["src/app/_actions/set-locale.ts"]
+        Callback["src/app/auth/callback/route.ts"]
+        SupaServer["src/lib/supabase/server.ts"]
+        SupaProxyClient["src/lib/supabase/proxy-client.ts"]
+        SupaBrowserClient["src/lib/supabase/client.ts"]
+        AuthApi["src/api/auth.ts (signInWithGoogle)"]
+        NextPathGuard["src/utils/url/next-path.ts (safeNextPath)"]
+        I18nCfg["src/i18n/request.ts + src/lib/i18n/locale.ts"]
     end
     subgraph "External (ngoài repo)"
-        Supabase["Supabase Auth + PostgREST — instance local 'saa-app' (http://127.0.0.1:55321)"]
+        Supabase["Supabase Auth + PostgREST — instance local 'saa-app'"]
         Google["Google OAuth"]
     end
 
     Client -->|"mọi request"| Proxy
     Proxy --> SupaProxyClient --> Supabase
-    Proxy -->|"redirect /login hoặc /todo (không còn redirect /)"| Client
+    Proxy -->|"redirect /login hoặc /todo (không redirect /)"| Client
     Client --> Root --> SupaServer
-    EventEnv --> Root
+    Root -->|"getCurrentUser()"| AuthDal --> SupaServer
     Root --> HomeClient --> HomeComponents
     Root -->|"khi đã đăng nhập, đọc role"| RoleHelper --> RoleShim --> SupaServer
     HomeComponents --> CountdownHook --> CountdownLib
-    HomeClient --> LocaleHook --> LocaleAction
-    Client --> LoginPage --> SupaServer
-    LoginPage --> LoginClient --> LoginScreen
-    LoginClient -->|"signInWithOAuth"| SupaBrowserClient --> Supabase --> Google
-    LoginClient -->|"setLocale()"| LocaleAction --> I18nCfg
-    Google -->|"redirect ?code=...&next=/ (mặc định mới)"| Callback
+    HomeClient --> LocaleHook --> SharedLocaleAction
+    HomeComponents --> SharedLogout --> SupaServer
+    Client --> LoginPage -->|"getCurrentUser(), redirect / nếu đã đăng nhập"| AuthDal
+    LoginPage --> LoginClient --> LoginActionsHook
+    LoginActionsHook -->|"signInWithGoogle()"| AuthApi --> SupaBrowserClient --> Supabase --> Google
+    Google -->|"redirect ?code=...&next=/"| Callback
     Callback --> SupaServer
     Callback --> NextPathGuard
-    Client --> TodoPage --> SupaServer
-    TodoPage --> TodoActions --> SupaServer
+    Client --> ProtectedLayout -->|"getCurrentUser(), redirect /login nếu chưa đăng nhập"| AuthDal
+    ProtectedLayout --> TodoPage --> SupaServer
+    TodoPage --> SharedLogout
 ```
 
-Ba khối chính (không đổi): (1) Next.js App Router trong repo này — vừa render UI vừa là "backend" (Server Actions, Route Handler, edge guard), không có service backend riêng; (2) Supabase — nay đóng vai trò kép: Auth (GoTrue, không đổi) VÀ nguồn dữ liệu `public.users` qua PostgREST (mới, kể từ F003_Homepage — chỉ để đọc `role`); (3) Google OAuth, bên thứ ba, app không gọi trực tiếp mà qua Supabase GoTrue.
+Hai lớp guard tách biệt, cơ chế không đổi, chỉ đổi file:
+- `src/proxy.ts` — guard optimistic (matcher `/`, `/login`, `/todo/:path*`, loại trừ
+  `/auth/callback`; `src/proxy.ts:119-121`). Predicate `isAuthPage`/`isProtectedPage`
+  (`src/proxy.ts:35-36`), đọc cookie qua `getUserOrNull` (`src/proxy.ts:77-87`) — chỉ redirect,
+  không phải nguồn sự thật (comment tại `src/proxy.ts:11-17` trỏ thẳng vào layout dưới đây).
+- `src/app/(protected)/layout.tsx` (mới, `src/app/(protected)/layout.tsx:19-29`) — guard
+  authoritative DUY NHẤT cho mọi route trong nhóm `(protected)` (hiện chỉ `/todo`): gọi
+  `getCurrentUser()` (`src/dal/auth.ts:16-27`, fail-open `null` khi lỗi) rồi `redirect("/login")`
+  nếu không có user, trước khi bất kỳ page con nào render. Thay cho việc trước đây
+  `app/todo/page.tsx` tự gọi `getUser()` trong thân trang — `src/app/(protected)/todo/page.tsx`
+  nay chỉ gọi `getCurrentUser()` lại một lần (`src/app/(protected)/todo/page.tsx:22`) để lấy
+  email cho lời chào, KHÔNG phải để gác quyền truy cập (comment giải thích tại
+  `src/app/(protected)/todo/page.tsx:15-19`).
+- `src/app/(public)/login/page.tsx` KHÔNG nằm trong nhóm `(protected)` nên KHÔNG qua layout
+  trên — trang tự gọi `getCurrentUser()` (`src/app/(public)/login/page.tsx:34-37`) và
+  `redirect(ROUTES.HOME)` nếu đã đăng nhập, giữ nguyên hành vi guard cũ của `/login`.
 
-Hai lớp guard tách biệt (không phải một) — **cập nhật cho `/` (F003_Homepage, 2026-09-06)**:
-- `proxy.ts` — guard optimistic, chỉ đọc cookie qua `getUser()` (`proxy.ts:25-44,75-85`), khớp 3 route `/`, `/login`, `/todo/:path*` (`proxy.ts:112-114`), loại trừ `/auth/callback`. Hai predicate bên trong đã thu hẹp còn đúng `isAuthPage = pathname === "/login"` và `isProtectedPage = pathname.startsWith("/todo")` (`proxy.ts:33-34`) — `/` vẫn khớp matcher (để refresh session cookie mỗi lượt ghé) nhưng không còn nhánh redirect nào gắn với nó.
-- Guard authoritative nằm ở từng Server Component: `app/login/page.tsx:73-83`, `app/todo/page.tsx:17-25` — không đổi. `app/page.tsx` (guard `/`, PERM001_RootRouteGuard — mã hiện có trong `docs/vi/generated/permissions-matrix.md`) nay **superseded**: file này đã được viết lại hoàn toàn để RENDER Homepage (`HomePage`, `app/page.tsx:30-142`) thay vì `redirect()`; nó vẫn tự gọi `getUser()` (`getViewer()`, `app/page.tsx:150-166`, try/catch fail-open `null`) và, khi có session, đọc `role` qua `lib/auth/get-user-role.ts` (`getUserRole`) — nhưng chỉ để cá nhân hoá giao diện, không còn chặn truy cập. Chi tiết phân quyền: `docs/vi/system/permissions.md`.
+Server Actions dùng chung nhiều route gộp về `src/app/_actions/`:
+- `logout.ts` (`src/app/_actions/logout.ts`) — dùng bởi cả `(home)` (menu tài khoản) và
+  `(protected)/todo` (form đăng xuất), không còn sideways import giữa hai segment.
+- `set-locale.ts` (`src/app/_actions/set-locale.ts`) — root-shell concern, dùng bởi cả
+  `login` (`use-login-actions.ts`) và `(home)` (`use-select-locale.ts`).
 
-`lib/supabase/{client,server,proxy-client}.ts` là 3 factory khác nhau cho cùng một SDK `@supabase/ssr` (browser / Server Component-Action-Route / proxy) — khác nhau ở nơi đọc/ghi cookie, không phải khác nhau về logic nghiệp vụ. `lib/auth/get-user-role.ts` KHÔNG phải factory thứ 4 — nó nhận một client đã inject (`UsersRoleClient`, kiểu hẹp chỉ có `.from("users").select("role").eq("id",…).maybeSingle()`) và fail-open `"member"` khi lỗi/không có row. Caller thật (`app/page.tsx`) không truyền thẳng client Supabase — nó đi qua shim `lib/supabase/users-role-client.ts` (`toUsersRoleClient`), thu hẹp kiểu builder generic của SDK về đúng slice trên để tránh lỗi TypeScript TS2589 ("type instantiation is excessively deep") khi so khớp cấu trúc trực tiếp.
+DAL: `src/dal/users.ts` (`getUserRole`, `import "server-only"`) và
+`src/dal/users-role-client.ts` (shim `toUsersRoleClient`, thu hẹp kiểu builder tránh lỗi
+TS2589). `src/dal/auth.ts` (`getCurrentUser`) là bổ sung mới của đợt việc này — điểm đọc
+session DÙNG CHUNG cho `(protected)/layout.tsx`, `login/page.tsx`, và
+`(protected)/todo/page.tsx`; browser-side Supabase call cho OAuth nằm ở `src/api/auth.ts`
+(`signInWithGoogle`), gọi từ `use-login-actions.ts` (Zone B, hook).
+
+3 factory `@supabase/ssr` — `src/lib/supabase/{client,server,proxy-client}.ts` — không đổi
+logic, chỉ đổi thư mục cha. `src/utils/url/next-path.ts` (`safeNextPath`, chống open-redirect,
+business-agnostic) tách khỏi `lib/supabase/` vì không phải vendor glue cho Supabase.
+
+`domain/`, `contexts/`, `components/` (shared, ngoài `language-selector`) CHƯA tồn tại — chưa
+tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `src/configs/env.ts` cũng chưa tồn tại:
+`EVENT_START_AT` tiếp tục đọc trực tiếp trong `src/app/(public)/(home)/page.tsx`
+(`resolveTargetIso()`, dòng 177-188) cho tới khi có biến env thứ hai cần đọc.
 
 ## Tech Stack
 
@@ -90,121 +138,113 @@ Hai lớp guard tách biệt (không phải một) — **cập nhật cho `/` (F
 | Auth SDK | `@supabase/supabase-js` | 2.115.0 |
 | Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, ngoài repo | API `http://127.0.0.1:55321` |
 | Backend (in-repo) | Next.js Server Actions + Route Handlers (không có service backend riêng) | — |
-| Database | `public.users` — 1 bảng, cột `role` (`member`\|`admin`), đọc qua PostgREST dưới RLS own-row bằng JWT người dùng hiện tại (`lib/auth/get-user-role.ts`); `auth.users` vẫn do Supabase quản lý riêng, ngoài phạm vi code này | — |
-| Cache | N/A — không tìm thấy | — |
-| Queue | N/A — không tìm thấy | — |
-| Package manager | pnpm, khóa version qua field `packageManager` (không dùng corepack) | 10.33.2 |
-| Node.js | `engines.node` trong `package.json`; CI pin cứng | `>=22 <25` (CI chạy Node `24`) |
-| Testing (unit) | Vitest | ^3.2.7 |
-| Testing (e2e) | `@playwright/test` (1 project: chromium) | 1.62.1 |
-| Testing (DOM env) | `jsdom` — chỉ cho vitest project `jsdom` (`hooks/**`) | ^30.0.1 |
-| Testing (hook API) | `@testing-library/react` + `@testing-library/dom` (`renderHook`/`act`/`waitFor`) | ^16.3.3 / ^10.4.1 |
-| API mocking | `msw` — một bộ handler dùng chung cho cả vitest (`msw/node`) lẫn Storybook (service worker) | 2.15.0 |
+| Database | `public.users` — 1 bảng, cột `role` (`member`\|`admin`), đọc qua PostgREST dưới RLS own-row | — |
+| Package manager | pnpm (`packageManager` field, không dùng corepack) | 10.33.2 |
+| Node.js | `engines.node` | `>=22 <25` (CI chạy Node `24`) |
+| Testing (unit) | Vitest (2 project: `node`, `jsdom`) | ^3.2.7 |
+| Testing (e2e) | `@playwright/test` (chromium) | 1.62.1 |
 | Component docs | Storybook + `@storybook/nextjs-vite` + `msw-storybook-addon` | 10.6.0 / 10.6.0 / 3.0.0 |
-| Lint | ESLint flat config (`eslint.config.mjs`): `eslint-config-next` (`core-web-vitals` + `typescript`) + `typescript-eslint` `recommendedTypeChecked` (scope `**/*.{ts,tsx}`, tắt lại trên `**/*.mjs`) + `import/order` + `jsx-a11y` full `recommended` + `eslint-plugin-playwright` (scope `tests/e2e/**/*.spec.ts`) + `@vitest/eslint-plugin` (scope `lib/**/*.test.ts`, `hooks/**/*.test.ts`, `app/**/*.test.ts`) | ESLint ^9 |
-| Formatter | Prettier + `eslint-config-prettier` (đứng cuối config, chỉ tắt rule style trùng với ESLint, không thêm rule mới) | ^3.9.6 |
+| Lint | ESLint flat config + 2 rule `no-restricted-imports` (boundary) | ESLint ^9 |
 | CI/CD | GitHub Actions (`.github/workflows/ci.yml`) — 2 job độc lập: `quality` và `e2e` | — |
 
-Nguồn: `package.json:1-49`, `eslint.config.mjs:1-112`, `.github/workflows/ci.yml`. Cache/Queue vẫn ghi N/A — Homepage không cần cache hay queue (đếm ngược tính client-side từ giá trị server truyền xuống, không polling). Database KHÔNG còn N/A kể từ khi Homepage lên code (F003_Homepage, 2026-09-06) — trước đây ghi N/A vì repo chưa từng đọc bảng nghiệp vụ nào ngoài `auth.users` (do Supabase quản lý); đây là lần đầu app đọc `public.users` qua PostgREST.
+Nguồn: `package.json`, `eslint.config.mjs`, `tsconfig.json`, `vitest.config.ts`.
 
-Chuyển từ npm sang pnpm: `package-lock.json` không còn tồn tại, `pnpm-lock.yaml` (~198KB) là lockfile hiện tại; không có `.npmrc` tùy chỉnh trong repo. Trong CI, `pnpm/action-setup@v6` không nhận `version:` — version pnpm dùng lấy trực tiếp từ field `packageManager` trong `package.json`, nên CI và máy dev luôn dùng cùng một bản pnpm.
+**Config theo đợt di chuyển vào `src/`:**
+- `tsconfig.json`: `"@/*": ["./src/*"]` (`tsconfig.json:22`).
+- `vitest.config.ts`: alias `@` → `./src` (`vitest.config.ts:29-30`); project `node` =
+  `src/**/*.test.ts` trừ `src/hooks/**` và `src/app/**/_hooks/**`; project `jsdom` =
+  `src/hooks/**/*.test.ts` và `src/app/**/_hooks/**/*.test.ts`. Coverage `include` là allowlist
+  tường minh: `src/{api,dal,lib,utils,hooks,domain,configs}/**/*.ts`,
+  `src/app/**/{_hooks,_utils,_actions}/**/*.ts`, `src/app/**/actions.ts`, `src/app/**/route.ts`
+  (`vitest.config.ts:97-110`). Ngưỡng `100%` giữ nguyên — không có glob `.tsx`, `components/**`
+  (nay `_components/**`) và `page.tsx` vẫn ngoài mẫu số cùng lý do cũ (Storybook tài liệu hoá
+  component; `async` Server Component chưa được Vitest hỗ trợ).
+- `.storybook/main.ts`: `stories: ["../src/**/*.stories.@(ts|tsx)"]`.
+- `eslint.config.mjs`: 2 block `no-restricted-imports` mới — Zone A cấm import `@/app/**`
+  (`:74-92`); trong `src/app/**` cấm import private folder (`_*`) của segment khác qua alias
+  hay đường ngang hàng/xuống con (`:93-130`, dùng `regex` vì glob `group` không phân biệt được
+  `../login/_components` (cấm) với `../../_components` (tổ tiên, cho phép)).
+- `src/constants/routes.ts` (mới) gom URL literal (`ROUTES.LOGIN/HOME/TODO`) dùng bởi
+  `proxy.ts`, các page, và test — trừ `config.matcher` của `src/proxy.ts` (`:119-121`), nơi
+  Next.js phân tích tĩnh tại build time nên bắt buộc giữ mảng literal.
 
-Biến môi trường mới (server-only, KHÔNG `NEXT_PUBLIC_*`): `EVENT_START_AT` (ISO-8601) — đọc trong `app/page.tsx` (`resolveTargetIso()`, `app/page.tsx:176-187`), parse/validate bởi `lib/countdown/countdown.ts` (`parseTargetDate`, hàm thuần, 100% coverage theo `testPolicy: e2e-red-first`). Thiếu hoặc sai định dạng → `parseTargetDate` trả `null`, đếm ngược hiện `00/00/00` nhưng KHÔNG crash trang.
-
-**Test coverage (cổng chặn, không còn là số đo).** `vitest.config.ts` tách hai runner qua `test.projects` (ổn định từ vitest 3.2, repo pin 3.2.7 — `environmentMatchGlobs` đã deprecated từ v3 nên không dùng):
-- project `node` — `lib/**/*.test.ts` và `app/**/*.test.ts`: helper thuần và Server Action/Route Handler, chỉ cần mock ranh giới Next.js/Supabase, không cần DOM.
-- project `jsdom` — `hooks/**/*.test.ts`: hook chạm `document`, focus và bàn phím.
-
-`resolve.alias` (`@/`) và `coverage` khai ở gốc, cả hai project kế thừa (`extends: true`) — một báo cáo, một ngưỡng, một exit code.
-
-Phạm vi đo là **allowlist tường minh**, không phải "tất cả trừ X":
-`lib/**/*.ts`, `hooks/**/*.ts`, `app/actions/**/*.ts`, `app/todo/actions.ts`, `app/auth/callback/route.ts`; `exclude: ["**/*.test.ts"]`; `thresholds: { 100: true }`.
-
-**Bổ sung allowlist (F003_Homepage, 2026-09-06):** `lib/countdown/countdown.ts`, `lib/auth/get-user-role.ts`, `lib/supabase/users-role-client.ts` đã khớp glob `lib/**/*.ts` sẵn có (không cần sửa `vitest.config.ts`); `hooks/use-countdown.ts`, `hooks/use-select-locale.ts` khớp `hooks/**/*.ts` sẵn có — ngưỡng 100% áp dụng nguyên trạng cho cả 5 file mới, không cần thay đổi cấu hình.
-
-Không có glob `.tsx` nào trong `include` — đó chính là cơ chế loại `components/**` và `app/**/page.tsx` ra khỏi mẫu số: sai khác phần mở rộng, không phải một danh sách exclude phải bảo trì. Hai nhóm bị loại có lý do khác nhau và đều là lý do first-party:
-- `app/**/page.tsx` là `async` Server Component — hướng dẫn vitest của chính Next.js nói thẳng là chưa hỗ trợ, khuyến nghị dùng E2E. Đây là giới hạn cấu trúc, không phải việc hoãn lại. (Áp dụng nguyên trạng cho `app/page.tsx` sau khi viết lại thành Homepage.)
-- `components/**` là lớp trình bày: tài liệu hoá bằng Storybook, không bằng unit test (quyết định sản phẩm). (Áp dụng cho `components/home/**`.)
-
-Con số 100% vì thế có nghĩa hẹp và trung thực: **mọi helper thuần, mọi máy trạng thái quan sát được của hook, và logic riêng của từng Server Action/Route Handler đều được test chạy qua.** Nó KHÔNG có nghĩa Server Component render đúng, Supabase/Google OAuth thật chạy được, hay giao diện trông đúng — ba thứ đó thuộc Playwright và Storybook.
-
-Ngưỡng này thay thế quyết định "không đặt threshold" của phase-04 trước đây. Lúc đó chỉ có 2 file logic thuần chạy dưới vitest nên một tỉ lệ phần trăm là trang trí chứ không phải tín hiệu; điều thay đổi là phạm vi đo đã được vẽ lại cho trung thực. Nếu `include` về sau lại âm thầm nuốt `.tsx`/Server Component, phản biện của phase-04 lập tức đúng trở lại — allowlist chính là hàng rào chống việc đó.
-
-Job `quality` trong CI chạy `pnpm test:unit:coverage` (không phải `test:unit`), nên ngưỡng 100% là cổng chặn thật trong pipeline chứ không phải số in ra rồi bỏ qua.
+**Ở lại gốc repo, không di chuyển**: `messages/` (next-intl default), `public/`,
+`tests/{e2e,setup}/` (Playwright `testDir`, vitest `setupFiles`), mọi root config file.
 
 ## Data Flow
 
 ```mermaid
 sequenceDiagram
     participant B as "Browser"
-    participant P as "proxy.ts"
+    participant P as "src/proxy.ts"
     participant LC as "login-client.tsx"
     participant SB as "Supabase Auth (GoTrue)"
     participant G as "Google OAuth"
-    participant CB as "/auth/callback route"
-    participant H as "/ Homepage (SCR003_HomeScreen)"
-    participant T as "/todo page"
+    participant CB as "src/app/auth/callback/route.ts"
+    participant PL as "(protected)/layout.tsx"
+    participant H as "(public)/(home)/page.tsx"
+    participant T as "(protected)/todo/page.tsx"
 
-    Note over B,H: "/" nay PUBLIC — proxy.ts không còn redirect route này (khác bản trước)
-    B->>LC: GET /login (điều hướng trực tiếp, ví dụ từ nút "Đăng nhập" trên Homepage)
-    LC->>SB: signInWithOAuth(google) — PKCE
+    Note over B,H: "/" PUBLIC — proxy.ts không redirect route này
+    B->>LC: GET /login
+    LC->>SB: signInWithOAuth(google) — PKCE, qua src/api/auth.ts
     SB-->>LC: authorize URL
     LC->>G: browser điều hướng sang trang consent Google
-    G-->>CB: redirect ?code=...&next=/ (mặc định mới — trước đây /todo)
+    G-->>CB: redirect ?code=...&next=/
     CB->>SB: exchangeCodeForSession(code)
     SB-->>CB: session + Set-Cookie
-    CB-->>B: redirect safeNextPath(next) — mặc định "/" — hoặc /login?error=auth_code_error
-    B->>H: GET / (kèm session cookie)
-    H->>SB: getUser() — cá nhân hoá header, KHÔNG chặn truy cập
-    H->>SB: getUserRole() qua PostgREST /rest/v1/users?select=role&id=eq.<uuid>
+    CB-->>B: redirect safeNextPath(next) — mặc định "/"
+    B->>H: GET / (kèm session cookie nếu có)
+    H->>SB: getUser() qua src/dal/auth.ts — cá nhân hoá, KHÔNG chặn
+    H->>SB: getUserRole() qua src/dal/users.ts (PostgREST)
     SB-->>H: user + role (fail-open "member" nếu lỗi/không có row)
-    H-->>B: render Homepage — header theo trạng thái đăng nhập + role
-    B->>T: GET /todo (không đổi, vẫn cần session)
-    T->>SB: getUser() — kiểm tra authoritative, fail-closed
-    SB-->>T: user
-    T-->>B: render lời chào + form logout
+    H-->>B: render Homepage
+    B->>PL: GET /todo
+    PL->>SB: getCurrentUser() qua src/dal/auth.ts → redirect("/login") nếu chưa đăng nhập
+    PL->>T: render khi có session (T tự gọi lại getCurrentUser() chỉ để lấy email)
+    T-->>B: render lời chào + form logout (src/app/_actions/logout.ts)
 ```
 
-Luồng OAuth lõi (PKCE, cấp bởi Supabase) KHÔNG đổi cơ chế so với trước — điểm đổi thật (khác với đợt việc trước, vốn chỉ đổi tooling): (1) `/` không còn bước redirect nào — trước đây `GET /` luôn mở đầu bằng redirect `/login` hoặc `/todo`; (2) đích mặc định sau đăng nhập đổi từ `/todo` sang `/`. Trích nguồn không đổi cho phần hành vi giữ nguyên: `hooks/use-login-actions.ts:42-57` (`handleLoginClick`), `lib/auth/sign-in-with-google.ts:39-55` (gọi `signInWithOAuth` thật), `app/auth/callback/route.ts:16-46` (exchange code, redirect matrix — giá trị mặc định của tham số đã đổi, xem `lib/supabase/next-path.ts:88`), `app/todo/page.tsx:17-25` (kiểm tra authoritative, không đổi). Nhánh lỗi (`?error=` từ Google, `exchangeCodeForSession` thất bại) đều redirect về `/login?error=...`, không lộ raw error ra client (`app/auth/callback/route.ts:39-42`) — không đổi.
+Luồng OAuth (PKCE), đích mặc định sau đăng nhập (`/`), và cơ chế `safeNextPath` KHÔNG đổi so
+với trước — chỉ đổi file chứa logic (bảng path ở § System Architecture). Nguồn hành vi giữ
+nguyên: `src/app/(public)/login/_hooks/use-login-actions.ts:43-58` (`handleLoginClick`),
+`src/api/auth.ts:40-56` (`signInWithGoogle`, gọi `signInWithOAuth` thật),
+`src/app/auth/callback/route.ts:17-47` (exchange code, redirect matrix), nhánh lỗi redirect
+`/login?error=...` không lộ raw error (`src/app/auth/callback/route.ts:24-29,40-43`).
 
-Luồng phụ (không vẽ ở trên để giữ diagram gọn): đổi ngôn ngữ trên `/login` — `LoginClient` (qua `useLoginActions`) gọi Server Action `setLocale` (`app/actions/locale.ts:24-41`), ghi cookie `NEXT_LOCALE` (`lib/i18n/locale.ts:17,20`); Homepage dùng lại CÙNG `LanguageSelector` từ `components/login/` nhưng qua một hook riêng `hooks/use-select-locale.ts` (`useTransition` + `setLocale`, gọi từ `app/home-client.tsx`) — không đụng `useLoginActions` (theo quyết định trong `clarifications.md`).
+Locale action (`src/app/_actions/set-locale.ts`) và role/countdown flow (`src/dal/users.ts`,
+`src/app/(public)/(home)/_hooks/use-countdown.ts` + `_utils/countdown.ts`) giữ nguyên cơ chế,
+chỉ đổi path — `use-select-locale.ts` (Homepage) và `use-login-actions.ts` (`/login`) gọi
+CÙNG Server Action nhưng qua hai hook riêng, không chia sẻ transition.
 
-**Luồng role + countdown (F003_Homepage) — không phải round-trip network riêng của user:**
-- Đọc role: `app/page.tsx:161` (`getViewer()`) gọi `getUserRole(toUsersRoleClient(supabase), user.id)` (`lib/auth/get-user-role.ts:49-68`) — `try/catch` + `.maybeSingle()`; lỗi hoặc không có row → `"member"`. Đây là NHÃN cá nhân hoá menu, không phải guard (chi tiết: `docs/vi/system/permissions.md`).
-- Đếm ngược: `app/page.tsx` đọc `EVENT_START_AT` (server-only, `resolveTargetIso()`, `app/page.tsx:176-187`), truyền `targetIso` + `initialNowMs = Date.now()` (`getInitialNowMs()`, `app/page.tsx:197-199`) xuống `app/home-client.tsx` → `components/home/countdown-timer.tsx`; `hooks/use-countdown.ts:33-63` seed `useState(initialNowMs)` rồi tick `setInterval(1000)` — không cần `suppressHydrationWarning` vì lần render client đầu khớp byte với SSR.
+**Test topology.** Bộ Playwright (`tests/e2e/login.spec.ts`, 30 test; `tests/e2e/home.spec.ts`,
+27 test; project `chromium` duy nhất, `playwright.config.ts`) chia 2 tập theo việc có cần một
+Supabase Auth endpoint reachable hay không:
+- **Tập CI-safe** (`--grep-invert @auth`): không cần Supabase thật — `src/proxy.ts` và các
+  Server Component tự bọc `getUser()`/`getCurrentUser()` trong try/catch, coi mọi lỗi là "chưa
+  có session" (fail-open, không đổi qua đợt di chuyển này).
+- **Tập local-only** (tag `{ tag: "@auth" }`): đăng nhập thật qua session cookie, cần Supabase
+  Auth instance reachable (`saa-app` local); `ci.yml` tự ghi rõ job `e2e` KHÔNG phủ đường xác
+  thực và nhánh exchange-code-thành-công của `/auth/callback` không có test tự động nào.
 
-Bản thân luồng chạy (request path) của `/login`→`/auth/callback`→`/todo` không đổi so với bản trước; thay đổi trong đợt việc NÀY (khác đợt tooling trước) nằm ở HÀNH VI RUNTIME thật của `/` và đích mặc định sau đăng nhập — không phải chỉ tooling/CI.
-
-**Test topology.** Ba lớp kiểm chứng, ranh giới không chồng lấn:
-
-| Lớp | Công cụ | Phủ cái gì | Không phủ cái gì |
-|-----|---------|------------|------------------|
-| Unit | Vitest (2 project: `node`, `jsdom`) | Helper thuần `lib/**`, hook `hooks/**`, Server Action + Route Handler (`app/actions/**`, `app/todo/actions.ts`, `app/auth/callback/route.ts`) — ranh giới Next.js/Supabase được mock | Component `.tsx`, `async` Server Component, luồng thật qua mạng |
-| Component docs | Storybook (`@storybook/nextjs-vite`) | Cách dùng từng common component; một story cho mỗi màn hình chính theo route | Assertion tự động — Storybook ở đây là tài liệu sống, không phải test runner |
-| E2E | Playwright (chromium) | Luồng thật xuyên `next dev`: guard route, redirect, GUI `/login`; Homepage — nav, menu, countdown, đổi ngôn ngữ qua `tests/e2e/home.spec.ts` (27 test) | Nhánh PKCE exchange thành công (xem dưới) |
-
-**MSW là lớp mock dùng chung.** Một module handler duy nhất (`mocks/handlers.ts`) phục vụ hai runtime: `msw/node` (`setupServer`) cho vitest, và service worker (`public/mockServiceWorker.js`) cho Storybook. Một giới hạn thật cần nói rõ: `signInWithOAuth` của Supabase gây **điều hướng top-level của trình duyệt**, không phải `fetch`/XHR — MSW không chặn được nó. Nên trong Storybook, hành vi đăng nhập được mock bằng cách truyền thẳng prop `onLoginClick`, không phải bằng handler `/auth/v1/authorize`. Giá trị thật của MSW ở repo này nằm ở phía Node/vitest: `/auth/v1/token`, `/auth/v1/user`, `/auth/v1/logout` đều được gọi server-side, và chúng phủ đúng khoảng trống mà `ci.yml` tự thừa nhận là chưa có test. **Bổ sung (F003_Homepage):** một handler mới `GET {SUPABASE_URL}/rest/v1/users` (`mocks/handlers.ts:67-72`) trả JSON array (`maybeSingle()` trên GET dùng `Accept: application/json`) phục vụ story admin-override — không unit test nào tiêu thụ handler này (`getUserRole` nhận client inject, test bằng stub, không qua MSW).
-
-**Storybook chạy được cho cả 3 route chính** vì cây component của cả 3 đã thuần trình bày và nhận mọi thứ qua props — story chỉ cần truyền `copy`/`locale`/handler, không cần cờ RSC thử nghiệm nào. `/login` (`LoginScreen` và các con) và `/todo` (`components/todo/todo-screen.tsx`, tách ra từ JSX từng viết thẳng trong `async` Server Component) đã theo convention này từ trước. Homepage đi theo ĐÚNG convention đó: `components/home/**` (`home-screen.tsx` + 13 component con) thuần trình bày, có story riêng (`home-screen.stories.tsx` + story cho từng common component); `app/page.tsx` chỉ đọc `getUser()`/`getUserRole()`/`EVENT_START_AT` rồi truyền props xuống qua `app/home-client.tsx`.
-
-**Test topology.** Bộ Playwright (`tests/e2e/login.spec.ts`, 30 test, project `chromium` duy nhất — `playwright.config.ts:31-36`) chia làm 2 tập, theo việc có cần một Supabase Auth endpoint reachable hay không:
-- **Tập CI-safe** (chạy trong job `e2e` của GitHub Actions, `--grep-invert @auth`): không cần Supabase thật — `proxy.ts`/các Server Component tự bọc `getUser()` trong try/catch và coi mọi lỗi (host không reachable, thiếu env) là "chưa có session" (fail-open theo thiết kế sẵn có, không phải hành vi mới). Bao gồm mọi test GUI/tương tác của `/login` không xác thực, các test redirect chưa đăng nhập, 2 test chặn request `signInWithOAuth` phía client bằng `page.route(...).abort()` (không có request thật ra ngoài, không cần secret Google), và các test trong block `"Supabase unavailable"` chỉ chạy khi `process.env.CI` được set. **Hai assertion đã đổi (F003_Homepage):** test cũ "Unauthenticated GET / redirects to /login" bị XOÁ (không còn đúng — `/` public, thay bằng TC riêng "GET / renders the public homepage (no redirect)"); "Authenticated user redirects /login to /todo" → đích `/` ("Authenticated user redirects /login to /").
-- **Tập local-only** (block `"Authenticated"` gắn tag `{ tag: "@auth" }`): đăng nhập thật bằng session cookie lấy qua email/password signup trên Supabase; cần một Supabase Auth instance reachable thật (ví dụ `saa-app` local). Đây là giới hạn có chủ đích, được ghi lại ngay trong `ci.yml`: **job `e2e` không phủ đường xác thực (authenticated path)**, và nhánh exchange-code-thành-công thật của `/auth/callback` (PKCE round-trip Google thật) hiện **không có test tự động nào**, CI hay local — không suy diễn ngược lại rằng CI đã bao phủ toàn bộ luồng đăng nhập. Homepage thêm bộ test riêng `tests/e2e/home.spec.ts` (27 test) và nhánh `@auth` mới cho menu "Trang quản trị" (cần user role=admin, provisioning qua `tests/e2e/helpers/promote-to-admin.ts` → `supabase db query`, không cần psql/service-role key).
+MSW: một handler list (`src/mocks/handlers.ts`, 73 dòng, có handler `GET
+{SUPABASE_URL}/rest/v1/users`) phục vụ cả `msw/node` (vitest) và service worker (Storybook) —
+không đổi cơ chế qua đợt di chuyển này.
 
 ## Deployment View
 
 > Derived from repository infrastructure-as-code — not verified against production.
 
-N/A — no infrastructure-as-code found in repository.
+N/A cho đích triển khai (deployment target) — repo không có infrastructure-as-code hay cấu
+hình host/deploy nào (không `Dockerfile`/`*.tf`/`vercel.json`/`fly.toml`/k8s manifest).
+`.github/workflows/ci.yml` là CI (kiểm tra chất lượng trước khi merge), không phải deployment
+pipeline. **Không có branch protection** (xác minh 2026-09-05, `gh api
+repos/.../branches/main/protection` → 404) — hiện không job nào thực sự chặn được merge.
 
-N/A cho đích triển khai (deployment target) — repo vẫn không có infrastructure-as-code hay cấu hình host/deploy nào (không `Dockerfile`, không `*.tf`, không `vercel.json`/`fly.toml`/k8s manifest). Việc thêm `.github/workflows/ci.yml` là một lớp **CI (kiểm tra chất lượng trước khi merge)**, không phải deployment pipeline — GitHub Actions ở đây không build image, không push artifact, không gọi tới bất kỳ host thật nào. Không suy diễn thêm topology triển khai nào ngoài các sự thật sau.
-
-CI (`.github/workflows/ci.yml`) gồm 2 job, kích hoạt trên `push`/`pull_request` nhắm vào `main`, và `workflow_dispatch` (chạy tay trên bất kỳ branch nào). Cache dependency khóa theo `pnpm-lock.yaml` (qua `actions/setup-node@v4` với `cache: pnpm`); cả 2 job đều pin Node `24` qua `actions/setup-node@v4` và cài pnpm qua `pnpm/action-setup@v6` (không truyền `version:`, đọc từ `packageManager`).
-
-
-> **Không có branch protection.** Xác minh 2026-09-05: `gh api repos/.../branches/main/protection` trả **404** — `main` chưa bật rule nào, nên hiện tại KHÔNG job nào thực sự chặn được merge. Hai job dưới đây mô tả thứ CI *kiểm tra*, không phải thứ nó *cưỡng chế*. Muốn chúng thật sự gác PR thì phải bật branch protection và đặt chúng làm required status check.
-
-- **`quality`** (không phụ thuộc job khác): `pnpm install --frozen-lockfile` → `lint` (ESLint `--max-warnings 0`) → `format:check` (Prettier) → `test:unit:coverage` (Vitest, cả hai project `node`+`jsdom`, ngưỡng 100% là cổng chặn — thay cho `test:unit` trần trước đây) → `build` (Next.js) → `typecheck` (`tsc --noEmit`, chạy **sau** `build` vì Next.js chỉ sinh type `.next/types` sau khi build ít nhất một lần). Hai biến môi trường `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` được set placeholder (không phải giá trị thật) để `build` chạy qua — Next.js inline chúng vào bundle client tại build time nhưng không có lệnh gọi Supabase thật nào trong lúc static generation. **Gap còn mở**: `.github/workflows/ci.yml` CHƯA set `EVENT_START_AT` cho bước `build` này (verify 2026-09-06, cả 2 chỗ set env trong file chỉ có 2 biến Supabase) — thiếu nó không làm fail build (countdown chỉ hiện `00/00/00`), nhưng nên set để giữ hành vi build nhất quán với dev/prod; chưa có ai theo dõi việc này thành action item.
-- **`e2e`** (job riêng, không `needs: quality`): cài Playwright browser `chromium` (cache theo version pin), chạy tập CI-safe (`playwright test --grep-invert @auth`, 48/57 test tổng cộng — 27/30 từ `login.spec.ts`, 21/27 từ `home.spec.ts`) chống lại `next dev` local trong runner — không khởi động Supabase thật, không cần secret Google (mọi request OAuth trong tập CI-safe bị abort phía client trước khi rời browser). Bước "Coverage limitation notice" luôn chạy (`if: always()`) và in ra `$GITHUB_STEP_SUMMARY` số test đã chạy/tổng số và lời nhắc rằng luồng authenticated + nhánh callback PKCE thành công không được job này phủ. `home.spec.ts` CI-safe chạy trong job này bằng `webServer.env.EVENT_START_AT` cố định ở tương lai xa (`playwright.config.ts:44-47`, `2099-12-31T18:30:00+07:00` — deterministic, không phụ thuộc ngày chạy CI); 6 test tag `@auth` (menu admin, cần provisioning) loại khỏi CI như các test `@auth` khác của `login.spec.ts`.
-
-Không job nào trong CI triển khai ứng dụng ra một môi trường chạy thật; Supabase (`saa-app`) tiếp tục là instance local ngoài repo như hiện tại, không được CI quản lý hay khởi tạo.
+CI giữ nguyên 2 job (`quality`, `e2e`), không đổi trigger (`push`/`pull_request` vào `main`,
+`workflow_dispatch`). Cache khoá theo `pnpm-lock.yaml`; job `quality` chạy cùng script
+`package.json` (`lint`, `format:check`, `test:unit:coverage`, `build`, `typecheck`) trên source
+đã dời sang `src/`; job `e2e` build/chạy `next dev` không đổi vì `tests/e2e/` ở nguyên gốc
+repo. **Gap còn mở**: `ci.yml` chưa set `EVENT_START_AT` cho bước `build` của job `quality` —
+thiếu nó không fail build (countdown hiện `00/00/00`). Không job nào triển khai ứng dụng ra
+môi trường chạy thật.
