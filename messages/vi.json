@@ -102,5 +102,13 @@
       "kudosItem": "Sun* Kudos",
       "awardsItem": "Awards Information"
     }
+  },
+  "awards": {
+    "caption": "Sun* annual awards 2025",
+    "heading": "Hệ thống giải thưởng SAA 2025",
+    "navLabel": "Danh mục giải thưởng",
+    "quantityLabel": "Số lượng giải thưởng:",
+    "prizeLabel": "Giá trị giải thưởng:",
+    "empty": "Hiện chưa có thông tin giải thưởng."
   }
 }

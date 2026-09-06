@@ -102,5 +102,13 @@
       "kudosItem": "Sun* Kudos",
       "awardsItem": "Awards Information"
     }
+  },
+  "awards": {
+    "caption": "Sun* annual awards 2025",
+    "heading": "SAA 2025 Award System",
+    "navLabel": "Award categories",
+    "quantityLabel": "Number of awards:",
+    "prizeLabel": "Prize value:",
+    "empty": "No award information available yet."
   }
 }
