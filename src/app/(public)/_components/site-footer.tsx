@@ -1,26 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { defaultHomeCopy, type HomeCopy } from "../_shared/home-copy";
+import {
+  defaultSiteChromeCopy,
+  type SiteChromeCopy,
+} from "../_shared/site-chrome";
 
 import { LogoLink } from "./logo-link";
 
 import { ROUTES } from "@/constants/routes";
 
-export type HomeFooterProps = {
-  copy?: HomeCopy;
+export type SiteFooterProps = {
+  copy?: SiteChromeCopy;
 };
 
 /**
- * Homepage footer (mm:5001:14800 `mms_7_Footer`,
+ * Site footer (mm:5001:14800 `mms_7_Footer`,
  * https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/i87tDx10uM). Unlike
  * the Login screen's footer, this page scrolls — the footer sits at the
  * natural end of page flow, NOT `position: fixed`. Repeats the same 3 header
  * nav links (plain, no active-state) plus "Tiêu chuẩn chung"/`/standards`.
  * Phase 4 polish adds the shared hover/focus-visible treatment (same pattern
- * as `NavLink`'s non-active state) to all 4 links.
+ * as `NavLink`'s non-active state) to all 4 links. Renders on both `/` and
+ * `/awards` (phase-02 promotion out of `(home)`).
  */
-export function HomeFooter({ copy = defaultHomeCopy }: HomeFooterProps) {
+export function SiteFooter({ copy = defaultSiteChromeCopy }: SiteFooterProps) {
   const { nav, header, footer } = copy;
 
   return (

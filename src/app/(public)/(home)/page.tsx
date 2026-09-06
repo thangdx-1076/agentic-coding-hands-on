@@ -2,16 +2,12 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
+import { getViewer } from "../_utils/get-viewer";
 
 import { HomeClient } from "./_components/home-client";
 import { parseTargetDate } from "./_utils/countdown";
 import { defaultHomeCopy, type HomeCopy } from "./_shared/home-copy";
-import type { HeaderViewer } from "./_components/header";
 
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/dal/auth";
-import { toUsersRoleClient } from "@/dal/users-role-client";
-import { getUserRole } from "@/dal/users";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
@@ -141,29 +137,6 @@ export default async function HomePage() {
       logoutAction={logoutAction}
     />
   );
-}
-
-/**
- * Session + role read for the header (FR-003/FR-601/INT-001/BR-002).
- * Wrapped in try/catch and fails OPEN to `null` — like `/login`, unlike
- * `/todo`: a Supabase outage must never block the public homepage from
- * rendering, it just renders as if nobody were signed in. The session read
- * goes through `src/dal/auth.ts`; a second, page-local `createClient()`
- * stays here only for the `toUsersRoleClient` role read.
- */
-async function getViewer(): Promise<HeaderViewer | null> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return null;
-    }
-
-    const supabase = await createClient();
-    const role = await getUserRole(toUsersRoleClient(supabase), user.id);
-    return { email: user.email ?? "", isAdmin: role === "admin" };
-  } catch {
-    return null;
-  }
 }
 
 /**

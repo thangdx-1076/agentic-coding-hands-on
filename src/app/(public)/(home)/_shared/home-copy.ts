@@ -1,3 +1,8 @@
+import {
+  defaultSiteChromeCopy,
+  type SiteChromeCopy,
+} from "../../_shared/site-chrome";
+
 /**
  * Presentational copy contract for the Homepage screen
  * (mm:2167:9026 — https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/i87tDx10uM).
@@ -6,6 +11,14 @@
  * do not translate or edit these values here. Track B mirrors this exact leaf
  * path into `messages/{vi,en}.json` under `home.*` (see plan.md § Integration
  * contract) and supplies the localized `en` variant via next-intl.
+ *
+ * `nav`/`header`/`kudos`/`footer`/`account`/`notifications` live on
+ * `SiteChromeCopy` (`(public)/_shared/site-chrome.ts`) — `SiteHeader`,
+ * `SiteFooter`, `KudosSection`, `AccountMenu` and `NotificationBell` render
+ * on `/awards` too, so their copy contract had to promote out of this
+ * Homepage-only file (phase-02). `HomeCopy` composes it back with the
+ * leaves only the Homepage itself needs; every call site still passes one
+ * `copy` object, unchanged.
  */
 export type AwardItem = {
   slug: string;
@@ -14,19 +27,7 @@ export type AwardItem = {
   image: string;
 };
 
-export type HomeCopy = {
-  nav: {
-    about: string;
-    awardsInfo: string;
-    kudos: string;
-  };
-  header: {
-    logoAlt: string;
-    languageLabel: "VN" | "EN";
-    loginLabel: string;
-    notificationsLabel: string;
-    accountLabel: string;
-  };
+export type HomeCopy = SiteChromeCopy & {
   hero: {
     heading: string;
     comingSoon: string;
@@ -54,24 +55,6 @@ export type HomeCopy = {
     heading: string;
     items: AwardItem[];
   };
-  kudos: {
-    label: string;
-    heading: string;
-    description: string;
-    detailLabel: string;
-  };
-  footer: {
-    standards: string;
-    copyright: string;
-  };
-  account: {
-    profile: string;
-    admin: string;
-    logout: string;
-  };
-  notifications: {
-    empty: string;
-  };
   widget: {
     label: string;
     kudosItem: string;
@@ -80,20 +63,7 @@ export type HomeCopy = {
 };
 
 export const defaultHomeCopy: HomeCopy = {
-  nav: {
-    about: "About SAA 2025",
-    // Design says "Award Information" (singular); spec A1.3/7.3 + TC ID-21/23
-    // win as content acceptance (clarifications.md § Header).
-    awardsInfo: "Awards Information",
-    kudos: "Sun* Kudos",
-  },
-  header: {
-    logoAlt: "Sun* Annual Awards 2025",
-    languageLabel: "VN",
-    loginLabel: "Đăng nhập",
-    notificationsLabel: "Thông báo",
-    accountLabel: "Tài khoản",
-  },
+  ...defaultSiteChromeCopy,
   hero: {
     heading: "ROOT FURTHER",
     // Design typo "Comming soon" fixed per clarifications.md § Header.
@@ -172,25 +142,6 @@ export const defaultHomeCopy: HomeCopy = {
         image: "/home/Award_BG.png",
       },
     ],
-  },
-  kudos: {
-    label: "Phong trào ghi nhận",
-    heading: "Sun* Kudos",
-    description:
-      "ĐIỂM MỚI CỦA SAA 2025\nHoạt động ghi nhận và cảm ơn đồng nghiệp - lần đầu tiên được diễn ra dành cho tất cả Sunner. Hoạt động sẽ được triển khai vào tháng 11/2025, khuyến khích người Sun* chia sẻ những lời ghi nhận, cảm ơn đồng nghiệp trên hệ thống do BTC công bố. Đây sẽ là chất liệu để Hội đồng Heads tham khảo trong quá trình lựa chọn người đạt giải.",
-    detailLabel: "Chi tiết",
-  },
-  footer: {
-    standards: "Tiêu chuẩn chung",
-    copyright: "Bản quyền thuộc về Sun* © 2025",
-  },
-  account: {
-    profile: "Hồ sơ",
-    admin: "Trang quản trị",
-    logout: "Đăng xuất",
-  },
-  notifications: {
-    empty: "Bạn chưa có thông báo",
   },
   widget: {
     label: "Hành động nhanh",

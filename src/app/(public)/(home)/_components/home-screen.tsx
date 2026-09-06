@@ -1,16 +1,17 @@
 import type { ReactNode } from "react";
 
 import { defaultHomeCopy, type HomeCopy } from "../_shared/home-copy";
+import { KeyvisualBackground } from "../../_components/keyvisual-background";
+import { SiteHeader } from "../../_components/site-header";
+import { KudosSection } from "../../_components/kudos-section";
+import { SiteFooter } from "../../_components/site-footer";
+import type { SiteViewer } from "../../_shared/site-chrome";
 
-import { KeyvisualBackground } from "./keyvisual-background";
-import { Header, type HeaderViewer } from "./header";
 import { HeroSection } from "./hero-section";
 import { CountdownTiles } from "./countdown-tiles";
 import { CtaButtons } from "./cta-buttons";
 import { RootFurtherContent } from "./root-further-content";
 import { AwardsSection } from "./awards-section";
-import { KudosSection } from "./kudos-section";
-import { HomeFooter } from "./home-footer";
 import { WidgetButton } from "./widget-button";
 
 import { montserrat, montserratAlternates } from "@/styles/fonts";
@@ -18,7 +19,7 @@ import { montserrat, montserratAlternates } from "@/styles/fonts";
 export type HomeScreenProps = {
   copy?: HomeCopy;
   locale?: "vi" | "en";
-  viewer?: HeaderViewer | null;
+  viewer?: SiteViewer | null;
   /**
    * Countdown slot (mm:2167:9035 `mms_B1_Countdown time`) — a ReactNode so a
    * 1s tick only re-renders this subtree (plan.md § Integration contract).
@@ -42,9 +43,9 @@ export type HomeScreenProps = {
  * the real `viewer`, live `countdown`, locale, and server actions.
  *
  * Structure mirrors mm:2167:9026's direct children in order: Keyvisual+Cover
- * (background, `KeyvisualBackground`) → sticky `Header` → `<main>` (Hero +
+ * (background, `KeyvisualBackground`) → sticky `SiteHeader` → `<main>` (Hero +
  * CTA + RootFurther + Awards + Kudos, the mm:2167:9030 "Bìa" content column)
- * → `HomeFooter` → fixed `WidgetButton`. Exactly one `<h1>` exists on the
+ * → `SiteFooter` → fixed `WidgetButton`. Exactly one `<h1>` exists on the
  * page (inside `HeroSection`) — nothing here adds another heading tag.
  */
 export function HomeScreen({
@@ -81,7 +82,7 @@ export function HomeScreen({
       className={`${montserrat.variable} ${montserratAlternates.variable} relative isolate flex min-h-screen w-full flex-col overflow-x-hidden bg-login-background`}
     >
       <KeyvisualBackground />
-      <Header
+      <SiteHeader
         copy={copy}
         languageLabel={languageLabel}
         viewer={viewer}
@@ -100,7 +101,7 @@ export function HomeScreen({
         <AwardsSection copy={copy} />
         <KudosSection copy={copy} />
       </main>
-      <HomeFooter copy={copy} />
+      <SiteFooter copy={copy} />
       <WidgetButton
         kudosLabel={copy.widget.kudosItem}
         awardsLabel={copy.widget.awardsItem}
