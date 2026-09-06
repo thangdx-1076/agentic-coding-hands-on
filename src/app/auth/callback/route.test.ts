@@ -15,7 +15,7 @@ import { server } from "@/mocks/node";
  * `environment: "node"` — nó chỉ dựng một `Response` chuẩn (status 307 +
  * header `Location`), không đọc AsyncLocalStorage / request context nào của
  * Next runtime. Khác hẳn `redirect()` của `next/navigation` (dùng trong
- * `app/todo/actions.ts`) — hàm đó NÉM để unwind render và đòi request
+ * `app/_actions/logout.ts`) — hàm đó NÉM để unwind render và đòi request
  * context. Route Handler này an toàn để gọi trực tiếp như một hàm thường,
  * không cần dựng request context giả nào.
  *

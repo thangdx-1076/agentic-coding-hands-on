@@ -82,11 +82,10 @@ export default defineConfig({
       //
       // Adding a `.tsx` glob here would silently re-break the number.
       //
-      // "src/app/actions/**/*.ts" is transitional: it covers
-      // `src/app/actions/locale.ts`, which the pattern-based `actions.ts` /
-      // `route.ts` / `_actions/**` globs below do not reach until Phase 2
-      // relocates it under `src/app/_actions/`. Phase 2 deletes this line;
-      // every other glob here is already pattern-based and needs no change.
+      // Every glob below is pattern-based: `src/app/_actions/set-locale.ts`
+      // (formerly the transitional `src/app/actions/locale.ts`) is now
+      // reached by `src/app/**/_actions/**/*.ts` like every other Server
+      // Action, so no dedicated entry is needed anymore (phase-02).
       include: [
         "src/api/**/*.ts",
         "src/dal/**/*.ts",
@@ -100,7 +99,6 @@ export default defineConfig({
         "src/app/**/_actions/**/*.ts",
         "src/app/**/actions.ts",
         "src/app/**/route.ts",
-        "src/app/actions/**/*.ts",
       ],
       exclude: ["**/*.test.ts", "**/*.d.ts"],
       // A real gate, not a printed number: below 100% the process exits
