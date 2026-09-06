@@ -134,7 +134,7 @@
 
 ### Tôi cần làm
 
-- [ ] Review 3 skill vừa viết lại bằng tiếng Anh (`.claude/skills/{nextjs-route-colocation-architecture,separate-hook-logic-from-components,write-unit-tests-and-storybook-stories}/SKILL.md`) rồi commit/mở PR — chưa commit.
+- [ ] Review và merge PR #6 (3 skill viết lại bằng tiếng Anh): https://github.com/thangdx-1076/agentic-coding-hands-on/pull/6
 
 ### Decisions
 
