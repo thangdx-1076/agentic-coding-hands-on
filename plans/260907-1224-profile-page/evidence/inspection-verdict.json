@@ -1,58 +1,49 @@
 {
-  "score": 8.5,
+  "score": 9,
   "criticalCount": 0,
   "decision": "SEALED",
   "acceptanceCovered": [
-    "Anonymous visitor to /profile is redirected to /login — C17, the one CI-safe contract; proxy guard plus (protected)/layout.tsx session read",
-    "Signed-in Sunner with no query string sees their own profile — C14",
-    "?id={other} renders that Sunner's profile via the profile_cards definer view — C7/C8b, read path verified server-side",
-    "?id= that is malformed, unknown, or repeated returns 404 rather than a 500 — C12 and C13; shape-checked before any query by parse-profile-id.ts",
-    "?id= equal to the viewer canonicalizes to the self view — C15, asserts the query string is cleared",
-    "Hero omits department, Hero tier and hoa-thị stars — no source column exists (GUI_009) — C3, asserts absence",
-    "Badge collection renders exactly 6 slots, all greyed, heading first-person on self and neutral on another profile — C4/C5/C6",
-    "Statistics card shows five rows all reading 0 with Mở Secret Box disabled, on the self view only — C8a, and the disabled attribute in C11",
-    "Another Sunner's profile replaces the whole statistics card with a disabled write-Kudo bar, never both — C8b asserts the card is absent",
-    "Direction dropdown offers both directions on self and Received only on another profile (SEC_001) — C9a and C9b, role-scoped",
-    "No email, role or auth identifier reaches the client (SEC_004) — C16, asserts the other Sunner's literal email is absent from rendered HTML and no raw UUID appears in visible UI",
-    "Every profile string is present in both vi and en bundles — messages-parity.test.ts inside the 175-test unit run",
-    "profile_cards exposes exactly (id, full_name, avatar_url); anon cannot read it and authenticated cannot write through it — verified empirically against the committed migration, see security-profile-cards-view.md"
+    "Fix 1 (hero-badge-tier-row.tsx): badge+condition now share one row via flex-row items-center gap-2, matching design node 3204:6161/6163/6162 geometry (same y-band, 8px apart) instead of the prior flex-col stack — verified in src/app/(public)/standards/_components/hero-badge-tier-row.tsx:23-46",
+    "Fix 1: next/image width/height still sourced from HERO_TIERS table (standards-copy.ts:52-58), not hardcoded — the file's own 'width or height modified' trap not reintroduced",
+    "Fix 1: description spacing unaffected — outer flex flex-col gap-2 (row block, then description) and standards-screen.tsx:60 outer flex flex-col gap-4 (between tiers) both untouched",
+    "Fix 1: standards.spec.ts C4/C9/C13 re-run green (VI conditions, 1440x2400 no-scroll fit, EN locale) — pnpm exec playwright test tests/e2e/standards.spec.ts, 14/14 passed",
+    "Fix 2 (awards caption): 'Sun* Annual Awards 2025' now matches design node 313:8454 on /awards only; home-copy.ts:95 caption independently confirmed still lower-case 'Sun* annual awards 2025' per its own design node 2167:9070 — not a regression, a deliberate non-change",
+    "Fix 2: grepped every consumer of the 'caption' key across src/, messages/*.json, tests/e2e/ — no other screen reads awards-copy.ts's caption; /profile uses a distinct pre-existing key (copy.header.logoAlt), unaffected",
+    "Fix 2: tests/e2e/awards.spec.ts TC ID-4 updated to the capitalized string and re-run green",
+    "Fix 3 (nav label singular): 'Award Information' now applied consistently — messages/{en,vi}.json:18,103; site-chrome.ts:51; home-copy.ts:151; nav-link.stories.tsx:53 — grepped src/, messages/, tests/ for residual plural 'Awards Information' as a live string: none found (only a stale comment, logged as a Low finding, not a functional defect)",
+    "Fix 3: awardsItem (inferred widget label, no design text) intentionally aligned to the same singular spelling for consistency — reasonable per-repo call given it has no independent design source",
+    "Independently re-ran (not just trusted) pnpm typecheck (exit 0), pnpm lint --max-warnings 0 (exit 0), pnpm test:unit (28 files/175 tests green), and pnpm exec playwright test on awards.spec.ts+standards.spec.ts+home.spec.ts (53 passed, 1 pre-existing skip) — all match the author-reported gate results",
+    "Diff scope check: all 8 changed files map 1:1 onto the three described fixes; nothing else was touched"
   ],
   "regressionChecked": [
-    "tests/e2e/home.spec.ts, awards.spec.ts, standards.spec.ts, login.spec.ts — 81 passed, 3 skipped; the safety net for moving 31 shared-chrome files out of (public)/_*",
-    "src/proxy.ts — /todo guard behavior unchanged after widening to PROTECTED_ROUTES; config.matcher confirmed still a literal array for Next's static analysis",
-    "phase-02 chrome promotion verified with git diff -M rename detection rather than the diffstat; every nonzero diff is a pure import-path fix, vitest.config.ts unchanged, no orphaned stories or colocated tests",
-    "pnpm build — /, /awards, /standards, /login, /todo, /auth/callback all still present alongside the new /profile",
-    "migration 0005 re-applied from the committed file after DROP VIEW; grants reproduced identically (authenticated SELECT only, anon absent)"
+    "tests/e2e/home.spec.ts — 26/26 passed, confirms home-copy.ts's untouched lower-case caption and the awardsItem widget-menu rename didn't break homepage chrome/widget behavior",
+    "tests/e2e/awards.spec.ts — 12/13 passed (1 pre-existing @local-db-independent skip), confirms the caption capitalization change and no fallout on nav/section/kudos assertions",
+    "tests/e2e/standards.spec.ts — 14/14 passed, confirms the flex-row layout change didn't break C1-C14 (structure, scroll-fit at two viewports, locale, no page errors)",
+    "pnpm test:unit — 175/175 passed including messages-parity.test.ts, confirming en/vi bundles stayed structurally identical after the three string edits",
+    "grep across src/, messages/, tests/ for stale plural 'Awards Information' and for other consumers of the changed 'caption' key — no live occurrence outside the one flagged stale comment"
   ],
-  "contractStatus": "tests/e2e/profile.spec.ts C1-C18 all green (22 tests, exit 0). Contract was authored RED before implementation (exit 1, 17 failures) and never weakened to reach green.",
+  "contractStatus": "OK — no exported component prop, i18n key shape, or database contract changed; only three string values and one internal flex-direction changed. No public interface or schema touched.",
   "refuted": [],
   "unproven": [],
   "reachableRegressions": [],
   "findings": [
     {
-      "severity": "medium",
-      "category": "test-coverage",
-      "location": "tests/e2e/profile.spec.ts:353",
-      "summary": "C10 asserted the direction→empty-copy mapping without ever switching direction, so swapping the mapping keys would not have failed it. Rewritten to select Đã gửi, assert sent copy present and received absent, then switch back and assert the inverse. Fixed and re-verified green.",
-      "disposition": "Accept"
-    },
-    {
       "severity": "low",
-      "category": "efficiency",
-      "location": "src/app/(protected)/profile/page.tsx:90-101",
-      "summary": "getProfileCard and getUserRole are awaited sequentially though neither depends on the other; Promise.all would save one round trip. Cosmetic, left as-is to keep the read path readable.",
+      "category": "documentation",
+      "location": "src/app/(public)/(home)/_components/widget-button.tsx:21",
+      "summary": "JSDoc comment still says 'Awards Information' (plural) after the singular rename landed elsewhere in the same feature (home-copy.ts:151 is now singular). Comment-only, no runtime effect.",
       "disposition": "Defer"
     },
     {
       "severity": "low",
-      "category": "documentation",
-      "location": "messages/vi.json:1",
-      "summary": "Three copy strings ship as committed values while the spec still marks them unconfirmed against design. Logged honestly in clarifications.md and action-items.md rather than silently treated as final.",
+      "category": "craft",
+      "location": "src/app/(public)/standards/_components/hero-badge-tier-row.tsx:35",
+      "summary": "New badge+condition row has no whitespace-nowrap/overflow guard; the design's 72px row height assumes the condition text fits one line. Longest current string ('More than 20 people send you Kudos', messages/en.json:137) likely fits, but no test asserts row height or line count, so a future locale/copy change could silently grow the row past spec with nothing catching it.",
       "disposition": "Defer"
     }
   ],
   "riskGate": {
-    "touchesSensitiveArea": true,
+    "touchesSensitiveArea": false,
     "signoffRequired": false,
     "humanSignedOff": false
   }

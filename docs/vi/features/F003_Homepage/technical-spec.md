@@ -121,7 +121,7 @@ Trang chủ công khai (`/`) của SAA 2025 — trước đây route này chỉ 
 `FR-210` `FR-401` · `SCR003_Home` · `SM-001` · `US004`
 
 **Who** · Bất kỳ khách truy cập nào (không phân biệt trạng thái đăng nhập)
-**FE** · `components/home/widget-button.tsx` render pill cố định góc dưới phải (`button[aria-haspopup="menu"]`); mở `[role="menu"]` 2 `menuitem` ("Sun* Kudos" → `/kudos`, "Awards Information" → `/awards`) — nội dung 2 mục là `[INFERRED]` từ 2 icon thiết kế, chưa xác nhận với người dùng thật (xem functional-spec.md § 3 D001). Mở/đóng dùng chung `useMenuKeyboardNav` *(BR-006 — § 4.4)*.
+**FE** · `components/home/widget-button.tsx` render pill cố định góc dưới phải (`button[aria-haspopup="menu"]`); mở `[role="menu"]` 2 `menuitem` ("Sun* Kudos" → `/kudos`, "Award Information" → `/awards`) — nội dung 2 mục là `[INFERRED]` từ 2 icon thiết kế, chưa xác nhận với người dùng thật (xem functional-spec.md § 3 D001). Mở/đóng dùng chung `useMenuKeyboardNav` *(BR-006 — § 4.4)*.
 **Request** · không có
 **BE** · không có
 **Rule** · Không có business rule riêng ngoài `BR-006` (§ 4.4) và `SM-001` (§ 4.3).
@@ -300,7 +300,7 @@ EVENT_START_AT   # server-only ISO-8601 datetime (không NEXT_PUBLIC_), mốc s�
 1. **Áp dụng RLS qua code path thật** *(A1)*: report 02 xác nhận quyền SELECT bằng `supabase db query` (superuser), chưa xác nhận bằng chính request thật từ `app/page.tsx` một khi code được viết.
 2. **`itemCount` cố định của `useMenuKeyboardNav`** *(A4)*: hook giả định `itemCount` không đổi trong vòng đời component — menu tài khoản có 2 hoặc 3 mục tuỳ role; chưa xác nhận role đổi giữa các lần render trong cùng phiên có vi phạm giả định này hay không.
 
-3. **Menu widget hành động nhanh** *(gap ux — auto-resolved theo recommended 2026-09-06)*: 2 mục suy diễn từ icon (bút chì → Sun* Kudos `/kudos`, icon SAA → Awards Information `/awards`); options đã cân nhắc: giữ suy diễn / đổi thứ tự / thêm-bớt mục / TBD. Chờ product owner xác nhận nội dung thật.
+3. **Menu widget hành động nhanh** *(gap ux — auto-resolved theo recommended 2026-09-06)*: 2 mục suy diễn từ icon (bút chì → Sun* Kudos `/kudos`, icon SAA → Award Information `/awards`); options đã cân nhắc: giữ suy diễn / đổi thứ tự / thêm-bớt mục / TBD. Chờ product owner xác nhận nội dung thật. *(Sửa 2026-09-07: nhãn đổi "Awards Information" → "Award Information" — vẫn `[INFERRED]`, chưa xác nhận nội dung thật; chỉ chính tả đổi, không phải xác nhận mới.)*
 4. **Thông tin sự kiện** *(gap other — auto-resolved theo recommended 2026-09-06)*: dùng giá trị spec/TC (18h30 · Nhà hát nghệ thuật quân đội · Group Facebook Sun* Family) thay cho design (26/12/2025 · Âu Cơ Art Center · Livestream); options: theo spec/TC / theo design / giá trị khác / TBD. Chờ chốt trước sự kiện.
 
 ### 5.4 Source References

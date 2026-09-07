@@ -89,7 +89,7 @@
 ### F003: Trang chủ SAA 2025 (Homepage)
 
 **Type**: mixed
-**Description**: Khách (ẩn danh hoặc đã đăng nhập) xem trang chủ công khai `/` của SAA 2025: hero ROOT FURTHER với đồng hồ đếm ngược tới `EVENT_START_AT`, thông tin sự kiện, CTA sang Awards Information / Sun* Kudos, nội dung Root Further, 6 thẻ hạng mục giải thưởng (link `/awards#<slug>`), khối Sun* Kudos, widget hành động nhanh; header hiển thị bell + menu tài khoản theo role (`public.users.role`, fail-open `member`) cho người đã đăng nhập. `/` không còn redirect (PERM001 hết hiệu lực); đích sau đăng nhập đổi từ `/todo` sang `/`.
+**Description**: Khách (ẩn danh hoặc đã đăng nhập) xem trang chủ công khai `/` của SAA 2025: hero ROOT FURTHER với đồng hồ đếm ngược tới `EVENT_START_AT`, thông tin sự kiện, CTA sang Award Information / Sun* Kudos, nội dung Root Further, 6 thẻ hạng mục giải thưởng (link `/awards#<slug>`), khối Sun* Kudos, widget hành động nhanh; header hiển thị bell + menu tài khoản theo role (`public.users.role`, fail-open `member`) cho người đã đăng nhập. `/` không còn redirect (PERM001 hết hiệu lực); đích sau đăng nhập đổi từ `/todo` sang `/`.
 
 **Workspace**: agentic-coding-hands-on
 **Languages**: TypeScript

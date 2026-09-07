@@ -303,7 +303,8 @@ function tường minh thay vì `as unknown as`.
 
 ### 4.6 DOM / a11y Contract (authoritative — E2E viết đúng theo đây)
 
-- `<h1>` text `Hệ thống giải thưởng SAA 2025`; caption phụ phía trên `Sun* annual awards 2025`.
+- `<h1>` text `Hệ thống giải thưởng SAA 2025`; caption phụ phía trên `Sun* Annual Awards 2025`
+  (viết hoa, đúng `character` node `313:8454` — *sửa 2026-09-07*, trước đó ghi nhầm chữ thường).
 - `<nav aria-label="Danh mục giải thưởng">` chứa ĐÚNG 6 `<a>` theo thứ tự với href:
   `#top-talent`, `#top-project`, `#top-project-leader`, `#best-manager`,
   `#signature-2025-creator`, `#mvp`.

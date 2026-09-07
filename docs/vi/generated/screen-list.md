@@ -124,7 +124,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 | AwardsSection (+ AwardCard × 6) | card grid | 6 thẻ hạng mục giải thưởng, mỗi thẻ link `/awards#<slug>` |
 | KudosSection | section | Quảng bá Sun* Kudos, link "Chi tiết" → `/kudos` |
 | HomeFooter | footer | Logo + nav 4 link + dòng bản quyền (tái dùng `login.footer`) |
-| WidgetButton | interactive (dropdown menu) | Nút nổi fixed bottom-right, menu 2 mục (Sun* Kudos, Awards Information) |
+| WidgetButton | interactive (dropdown menu) | Nút nổi fixed bottom-right, menu 2 mục (Sun* Kudos, Award Information) |
 | AccountMenu | interactive (dropdown menu) | Menu tài khoản (Hồ sơ/Trang quản trị theo role/Đăng xuất), dùng `useMenuKeyboardNav` |
 | NotificationBell | interactive (dialog) | Panel thông báo — luôn rỗng ("Bạn chưa có thông báo"), badge chỉ hiện khi `unreadCount > 0` |
 

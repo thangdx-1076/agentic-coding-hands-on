@@ -15,7 +15,7 @@
   "home": {
     "nav": {
       "about": "About SAA 2025",
-      "awardsInfo": "Awards Information",
+      "awardsInfo": "Award Information",
       "kudos": "Sun* Kudos"
     },
     "header": {
@@ -100,11 +100,11 @@
     "widget": {
       "label": "Quick actions",
       "kudosItem": "Sun* Kudos",
-      "awardsItem": "Awards Information"
+      "awardsItem": "Award Information"
     }
   },
   "awards": {
-    "caption": "Sun* annual awards 2025",
+    "caption": "Sun* Annual Awards 2025",
     "heading": "SAA 2025 Award System",
     "navLabel": "Award categories",
     "quantityLabel": "Number of awards:",

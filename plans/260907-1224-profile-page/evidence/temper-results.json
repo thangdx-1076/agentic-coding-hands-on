@@ -1,11 +1,53 @@
 {
   "commands": [
-    { "command": "E2E_PORT=3100 pnpm test:e2e tests/e2e/profile.spec.ts", "exitCode": 0, "status": "pass", "summary": "22 passed — the full C1-C18 DOM contract for /profile, run against a verified-correct dev server on port 3100", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "E2E_PORT=3100 pnpm test:e2e tests/e2e/home.spec.ts tests/e2e/awards.spec.ts tests/e2e/standards.spec.ts tests/e2e/login.spec.ts", "exitCode": 0, "status": "pass", "summary": "81 passed, 3 skipped — regression net for the 31-file chrome promotion; skips are the pre-existing @auth/@local-db gating", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "pnpm test:unit:coverage", "exitCode": 0, "status": "pass", "summary": "28 files, 175 tests passed, 100% statements/branches/functions/lines on the allowlist", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "pnpm lint --max-warnings 0", "exitCode": 0, "status": "pass", "summary": "clean repo-wide after ignoring the gitignored tool-generated .sunlint-eslint.config.js", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "pnpm format:check", "exitCode": 0, "status": "pass", "summary": "all matched files use Prettier code style", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "pnpm typecheck", "exitCode": 0, "status": "pass", "summary": "tsc --noEmit clean", "ts": "2026-09-07T08:02:20Z" },
-    { "command": "pnpm build", "exitCode": 0, "status": "pass", "summary": "compiled successfully, 10 static pages generated, /profile present in the route table", "ts": "2026-09-07T08:02:20Z" }
+    {
+      "command": "pnpm test:e2e --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "103 passed, 3 skipped — the full e2e suite (login, home, awards, standards, profile) on branch fix/momorph-ui-fidelity, run against a server Playwright started itself after freeing port 3000",
+      "ts": "2026-09-07T09:18:00Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "28 files, 175 tests passed, 100% statements/branches/functions/lines on the allowlist; includes messages-parity confirming vi/en stayed structurally identical after the three string edits",
+      "ts": "2026-09-07T09:18:00Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "clean repo-wide",
+      "ts": "2026-09-07T09:19:00Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "all matched files use Prettier code style",
+      "ts": "2026-09-07T09:19:00Z"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean",
+      "ts": "2026-09-07T09:19:00Z"
+    },
+    {
+      "command": "sunlint check --format summary",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "140 files, 0 errors, 31 warnings — all pre-existing; includes 3 false-positive S012 'hardcoded secret' hits where sunlint matches the word 'secret' inside the Secret Box feature's i18n keys",
+      "ts": "2026-09-07T09:19:00Z"
+    },
+    {
+      "command": "licenseal check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "157 ok, 14 warnings (weak-copyleft sharp binaries, transitive from Next's image optimizer), 0 violations, 0 policy denies",
+      "ts": "2026-09-07T09:19:00Z"
+    }
   ]
 }

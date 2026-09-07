@@ -12,13 +12,15 @@ import type { Award } from "@/dal/awards";
  * (`(home)/_shared/home-copy.ts`) — one `copy` object still flows through
  * `SiteHeader`/`SiteFooter`/`KudosSection` unchanged.
  *
- * `caption` deliberately keeps lower-case "annual" (design node 313:8454
- * renders "Sun* Annual Awards 2025", capitalized) — the Homepage's own
- * `awards.caption` already accepted "Sun* annual awards 2025" as the content
- * override for this exact phrase (`(home)/_shared/home-copy.ts:95`), and
- * `tests/e2e/awards.spec.ts` TC ID-4 asserts that same lower-case string.
- * Re-deriving a different case here would fork one phrase into two
- * spellings across the site for no reason.
+ * `caption` is capitalized — "Sun* Annual Awards 2025" — because that is what
+ * this screen's own design node renders (`313:8454`, `character`:
+ * "Sun* Annual Awards 2025"). An earlier version lower-cased it to match the
+ * Homepage, on the reasoning that one phrase should not have two spellings.
+ * That reasoning was wrong here: the two designs genuinely differ. The
+ * Homepage's node (`2167:9070`) really does render lower-case
+ * "Sun* annual awards 2025", so `(home)/_shared/home-copy.ts` is correct as
+ * it stands, while `/profile`'s node (`362:5085`) is capitalized like this
+ * one. Each screen follows its own design node; do not "unify" them again.
  */
 export type AwardsCopy = SiteChromeCopy & {
   caption: string;
@@ -31,7 +33,7 @@ export type AwardsCopy = SiteChromeCopy & {
 
 export const defaultAwardsCopy: AwardsCopy = {
   ...defaultSiteChromeCopy,
-  caption: "Sun* annual awards 2025",
+  caption: "Sun* Annual Awards 2025",
   heading: "Hệ thống giải thưởng SAA 2025",
   navAriaLabel: "Danh mục giải thưởng",
   quantityLabel: "Số lượng giải thưởng:",

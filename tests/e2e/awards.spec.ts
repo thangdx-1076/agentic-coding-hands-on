@@ -30,7 +30,7 @@ test.describe("Awards page chrome (CI-safe)", () => {
     await expect(h1).toContainText("Hệ thống giải thưởng SAA 2025");
 
     // Caption text above h1
-    const caption = page.locator("text=Sun* annual awards 2025");
+    const caption = page.locator("text=Sun* Annual Awards 2025");
     await expect(caption).toBeVisible();
   });
 

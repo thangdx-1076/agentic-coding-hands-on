@@ -65,7 +65,7 @@ chung.
 |----|---------|------|----------|---------|------------|--------|--------|--------|-----------------|-----------|
 | E01 | Header (logo, nav, ngôn ngữ, bell/account hoặc đăng nhập) | group | — | — | Always | Như SCR003_Home | shared | raw | — | binding: `SiteHeader`, dùng chung F003 |
 | E02 | Ảnh hero trang trí | image | — | — | Always | — | static | raw (decorative, `alt=""`) | — | tái dùng `/home/Root_Further_Logo.png` |
-| E03 | Caption "Sun* annual awards 2025" | display field | — | — | Always | — | static | raw | — | binding: `awards.caption` |
+| E03 | Caption "Sun* Annual Awards 2025" | display field | — | — | Always | — | static | raw | — | binding: `awards.caption` |
 | E04 | `<h1>` "Hệ thống giải thưởng SAA 2025" | display field | — | — | Always | — | static | raw | — | binding: `awards.heading` |
 | E05 | Nav danh mục 6 mục (`aria-label="Danh mục giải thưởng"`) | nav (group) | — | mục đầu active | Conditional (`awards` không rỗng) | Click cuộn tới section; scroll-spy tự cập nhật active | computed | raw | Ẩn khi `awards=[]` (E10 hiện thay) | binding: `AwardCategoryNav` |
 | E06 | 6 section giải (ảnh+h2+mô tả+số lượng+giá trị) | card (group) | — | — | Conditional (`awards` không rỗng) | — | computed | mô tả `white-space: pre-line` | Ẩn khi `awards=[]` | binding: `AwardSection` |
