@@ -1,52 +1,36 @@
 {
-  "task": "F006_ProfilePage — implement the auth-gated /profile screen from MoMorph screen 3FoIx6ALVb (Profile bản thân), against the system that actually exists: the Kudos domain is absent, so Kudos-dependent surfaces render honest deferred states rather than invented data.",
+  "task": "Audit the UI of all 5 designed screens (Login, Home, Awards, Standards, Profile) against their MoMorph design frames and fix the genuine deviations. /todo has no design frame (F001 scaffold) and is out of scope. Three deviations found and fixed: the Standards hero-tier row stacked vertically instead of one row, the /awards caption was lower-cased against its own design node, and the nav label used the design node's itemName instead of its character.",
   "mode": "interactive",
   "acceptanceCriteria": [
-    "Anonymous visitor to /profile is redirected to /login",
-    "Signed-in Sunner with no query string sees their own profile",
-    "?id={other} renders that Sunner's profile via the profile_cards definer view",
-    "?id= that is malformed, unknown, or repeated returns 404 rather than a 500",
-    "?id= equal to the viewer canonicalizes to the self view",
-    "Hero omits department, Hero tier and hoa-thị stars — no source column exists (GUI_009)",
-    "Badge collection renders exactly 6 slots, all greyed, heading first-person on self and neutral on another profile",
-    "Statistics card shows five rows all reading 0 with Mở Secret Box disabled, on the self view only",
-    "Another Sunner's profile replaces the whole statistics card with a disabled write-Kudo bar, never both",
-    "Direction dropdown offers both directions on self and Received only on another profile (SEC_001)",
-    "No email, role or auth identifier reaches the client (SEC_004)",
-    "Every profile string is present in both vi and en bundles",
-    "profile_cards exposes exactly (id, full_name, avatar_url); anon cannot read it and authenticated cannot write through it"
+    "badge+condition now share one row",
+    "next/image width/height still sourced from HERO_TIERS table",
+    "description spacing unaffected",
+    "'Sun* Annual Awards 2025' now matches design node 313:8454",
+    "'Award Information' now applied consistently",
+    "Diff scope check"
   ],
   "touchpoints": [
-    "src/app/(protected)/profile/page.tsx",
-    "src/app/(protected)/profile/_components/",
-    "src/app/(protected)/profile/_shared/",
-    "src/app/(protected)/profile/_utils/parse-profile-id.ts",
-    "src/dal/profile-cards.ts",
-    "src/dal/profile-cards-client.ts",
-    "supabase/migrations/0005_profile_cards_view.sql",
-    "src/proxy.ts",
-    "src/constants/routes.ts",
+    "src/app/(public)/standards/_components/hero-badge-tier-row.tsx",
+    "src/app/(public)/awards/_shared/awards-copy.ts",
+    "src/app/(public)/(home)/_shared/home-copy.ts",
+    "src/app/(public)/(home)/_components/widget-button.tsx",
+    "src/app/_shared/site-chrome.ts",
+    "src/app/_components/nav-link.stories.tsx",
     "messages/vi.json",
     "messages/en.json",
-    "src/app/_components/",
-    "src/app/_shared/site-chrome.ts",
-    "src/app/_utils/get-viewer.ts",
-    "src/app/_hooks/use-select-locale.ts",
-    "tests/e2e/profile.spec.ts",
-    "tests/e2e/helpers/sign-in.ts",
-    "playwright.config.ts",
-    "eslint.config.mjs"
+    "tests/e2e/awards.spec.ts",
+    "package.json"
   ],
   "blastRadius": [
-    "31 shared-chrome files moved from src/app/(public)/_* to src/app/_*, rewriting imports in 10 consumers across /, /awards, /standards and /login — the four existing e2e specs are the safety net",
-    "src/proxy.ts guard widened from a single ROUTES.TODO prefix test to a PROTECTED_ROUTES list, so /todo behavior must stay unchanged",
-    "new database object public.profile_cards is a SECURITY DEFINER view over public.users, which carries FORCE ROW LEVEL SECURITY — a second read path around own-row RLS",
-    "tests/e2e/helpers/sign-in.ts is shared by every auth-gated spec; its metadata payload was corrected",
-    "messages/{vi,en}.json are covered by messages-parity.test.ts"
+    "src/app/_shared/site-chrome.ts feeds SiteHeader and SiteFooter on every page, so the nav-label change is visible on /, /awards, /standards, /login, /todo and /profile",
+    "messages/{vi,en}.json are covered by messages-parity.test.ts, which asserts the two bundles stay structurally identical",
+    "hero-badge-tier-row.tsx renders 4 times on /standards; its height change affects whether the 6-icon Secret Box grid falls above or below the fold, which contract C9 checks at 1440x2400",
+    "the /awards caption is asserted verbatim by tests/e2e/awards.spec.ts TC ID-4",
+    "home's caption was deliberately left lower-case, so home.spec.ts must stay green against the unchanged string"
   ],
   "contracts": [
-    "tests/e2e/profile.spec.ts C1-C18 — the authoritative DOM contract, tester-owned",
-    "plans/260907-1224-profile-page/clarifications.md — 18 of 30 MoMorph test cases in scope, 10 deferred to F007+",
-    "docs/vi/features/F006_ProfilePage/technical-spec.md § Verification"
+    "MoMorph design frames are authoritative: node `character` is the content, `itemName` is only a designer's layer label",
+    "tests/e2e/standards.spec.ts C1-C14, tests/e2e/awards.spec.ts, tests/e2e/home.spec.ts",
+    "docs/vi/features/F004_AwardSystemPage and F005_StandardsRulesPage content contracts"
   ]
 }
