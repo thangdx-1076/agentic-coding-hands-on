@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-05
-**Analysis Scope**: toàn bộ source hiện có — 2 screen (`/login`, `/todo`), 1 backend route, 3 US###, 3 BL###, 4 PERM###, 3 MODEL###
+**Analysis Scope**: toàn bộ source hiện có — 4 screen (`/`, `/awards`, `/login`, `/todo`), 1 backend route, 3 US###, 3 BL###, 4 PERM###, 3 MODEL### (+ `Award`, chưa cấp MODEL### riêng)
 
 **F-code stability note**: F001/F002 và slug của chúng được giữ nguyên từ `docs/vi/_canonical-fcodes.json` (đã promote ở lần chạy trước) — wave này chỉ bổ sung các trường Related bằng mã thật (US###/SCR###/ROUTE###/MODEL###/BL###/PERM###) hiện đã tồn tại, không renumber/rename/split/merge.
 
@@ -13,6 +13,7 @@
 | F001_GoogleOAuthLogin | Đăng nhập Google OAuth & Bảo vệ truy cập | mixed | TypeScript | agentic-coding-hands-on | P0 |
 | F002_LanguageSwitch | Chuyển đổi ngôn ngữ giao diện (VN/EN) | ui | TypeScript | agentic-coding-hands-on | P1 |
 | F003_Homepage | Trang chủ SAA 2025 (Homepage) | mixed | TypeScript | agentic-coding-hands-on | P0 |
+| F004_AwardSystemPage | Hệ thống giải thưởng SAA 2025 (Awards) | ui | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
@@ -114,32 +115,62 @@
 
 ---
 
+### F004: Hệ thống giải thưởng SAA 2025 (Awards)
+
+**Type**: ui
+**Description**: Khách (ẩn danh hoặc đã đăng nhập) xem trang công khai `/awards`: 6 hạng mục giải thưởng SAA 2025 (Top Talent, Top Project, Top Project Leader, Best Manager, Signature 2025 - Creator, MVP) với đầy đủ mô tả/số lượng/giá trị, nav trái điều hướng nội-trang (click-scroll + scroll-spy), và khối quảng bá Sun* Kudos — trang chi tiết hoá đúng 6 thẻ tóm tắt mà F003_Homepage đã hiển thị trên `/`. Không route BE mới, không action nào ghi DB.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components**: `src/app/(public)/awards/page.tsx` + `awards/_components/**` + `awards/_hooks/use-award-category-nav.ts` + `awards/_utils/scroll-spy.ts` + `src/dal/{awards,awards-client}.ts`
+
+**Related Screens**:
+- SCR004_Awards: Hệ thống giải thưởng SAA 2025
+
+**Related User Stories**:
+- TBD (draft) — xem `features/F004_AwardSystemPage/functional-spec.md § 7`
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — đọc `public.awards` qua PostgREST (Supabase) bằng client hẹp `toAwardsClient`, không có route BE nào tự viết
+
+**Related Data Models**:
+- `Award` (chưa có MODEL### — cấp bởi core pass kế tiếp, xem `entities.md`)
+- MODEL001_AppLocale (tái dùng nguyên trạng từ F002)
+
+**Related Background Logic**:
+- Không có BL### mới
+
+**Related Permissions**:
+- Không có PERM### mới — `/awards` PUBLIC, không route-guard (cùng nhóm với `/`, xem `permissions-matrix.md`)
+
+---
+
 ## Summary
 
-- **Total Features**: 3
-- **Total Screens**: 3 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003; cả ba đều được ít nhất một F### tham chiếu)
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003`)
-- **Total Routes**: 1 — ROUTE001 (F001)
-- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới)
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002)
-- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`)
+- **Total Features**: 4
+- **Total Screens**: 4 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004; cả bốn đều được ít nhất một F### tham chiếu)
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003, F004 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004 không có ROUTE### mới (chỉ 1 frontend page, không route BE)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004) chưa có MODEL### riêng (TBD, xem `entities.md`)
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004 không có BL### mới
+- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004 không tạo PERM### mới (`/awards` PUBLIC, cùng nhóm `/`)
 - **Languages Detected**: TypeScript
 
 **Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001, F002, F003 — không trùng, không renumber)
-- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003 chưa có US### (TBD)
-- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen tồn tại trong `screen-list.md`)
+- [x] All F### codes are unique (F001, F002, F003, F004 — không trùng, không renumber)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003, F004 chưa có US### (TBD)
+- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards tồn tại trong `screen-flow.md`/`screen-list.md`)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
-- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`)
-- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004 không có ROUTE### mới)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004) thêm mới, chưa có MODEL### riêng)
 - [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
-- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004 không tạo PERM### mới)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004
 - [x] Every route maps to a feature (F###) — ROUTE001→F001
-- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004
 - [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003)
 - [x] Every permission maps to a feature (F###) — PERM001-004→F001

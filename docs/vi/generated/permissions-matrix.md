@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) — no RBAC in scope, see note below
+**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 1 route xác nhận PUBLIC không guard (`/awards`, F004_AwardSystemPage, xem mục cuối) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -169,6 +169,31 @@ Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có th
 
 ---
 
+## `/awards` — PUBLIC, không route-guard (F004_AwardSystemPage, chưa cấp mã PERM###)
+
+Route `/awards` gia nhập ĐÚNG nhóm PUBLIC với `/` (PERM001 superseded) — không guard nào ở
+`proxy.ts` lẫn `src/app/(public)/awards/page.tsx`; Anonymous và Authenticated đều nhận `200` với
+cùng nội dung. Không cấp `PERM###` mới vì đây là "không có guard nào", không phải một permission
+item cần theo dõi. `proxy.ts`'s `config.matcher` KHÔNG bao gồm `/awards` (khác `/`, vốn vẫn nằm
+trong matcher chỉ để refresh session cookie) — quyết định để implementer đánh giá sau, không ảnh
+hưởng nội dung public. MoMorph TC ID-1 gốc (kỳ vọng redirect `/login` khi ẩn danh) bị supersede
+bởi cùng quyết định kiến trúc đã supersede PERM001 cho `/` — xem `docs/vi/system/permissions.md`.
+
+### Related Routes
+- (GET) /awards — SCR004_Awards, không redirect
+
+### Related Screens
+- SCR004_Awards — Hệ thống giải thưởng SAA 2025 (F004_AwardSystemPage)
+
+### Permission Rules
+
+| Role | Allow | Conditions |
+|------|-------|------------|
+| Anonymous | ✓ | Render đầy đủ nội dung công khai của SCR004_Awards |
+| Authenticated | ✓ | Render đầy đủ nội dung, giống hệt Anonymous — trang không cá nhân hoá theo vai trò (chỉ header dùng chung với `/` đổi theo trạng thái đăng nhập) |
+
+---
+
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
@@ -191,9 +216,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/login`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen tồn tại trong screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004 không tạo PERM### mới)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/todo` khớp bảng Frontend Routes/Pages)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

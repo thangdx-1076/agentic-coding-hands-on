@@ -230,3 +230,28 @@
 - `skills-lock.json` không ghi commit SHA của upstream, chỉ có `source` + `computedHash` — provenance yếu nếu sau này cần audit chính xác. Giới hạn của CLI, chưa có cách vá tại chỗ.
 - README trong 3 skill vendored mô tả layout của repo tác giả upstream (nhắc `pnpm build`, `src/`, `test-cases.json` không tồn tại trong bản cài). Để nguyên, việc sửa thuộc về upstream.
 - Chưa chạy `pnpm build` và `pnpm test:e2e` trong lượt này — thay đổi không chạm `src/` nên hai gate đó không có input mới; nếu muốn chắc tuyệt đối thì chạy trước khi merge.
+
+## 260907-0045 — award-system-page
+
+### Tôi cần làm
+
+- [ ] **Chốt `/awards` công khai hay phải đăng nhập.** MoMorph TC ID-1 đòi khách chưa đăng nhập bị đẩy về `/login`; tôi đã làm ngược lại (công khai) theo quyết định đã ghi ở `docs/vi/system/permissions.md:54`. Cần chủ spec xác nhận — nếu họ muốn gác thật thì phải sửa `src/proxy.ts` và chuyển route vào nhóm `(protected)`.
+- [ ] **Quyết định có làm `/kudos` không.** Nút "Chi tiết" ở khối Sun* Kudos trỏ `/kudos` (giữ cho khớp trang chủ) nhưng route đó chưa tồn tại → TC ID-12/ID-14 không thoả được.
+- [ ] **Cấp bản dịch tiếng Anh cho nội dung 6 giải.** Nguồn MoMorph chỉ có tiếng Việt; bảng `public.awards` mới seed `locale='vi'`. Tôi không tự dịch nội dung marketing.
+- [ ] **Biết rằng CI không kiểm nội dung giải.** Test nội dung gắn tag `@local-db` và bị loại khỏi CI vì CI không với tới Supabase local. CI chỉ chứng minh `/awards` render được và suy biến êm khi mất DB.
+
+### Decisions
+
+- Route là `/awards`, không phải `/he-thong-giai` như test case ghi — repo đã có 6 link + 5 assertion E2E trỏ `/awards`, và `docs/vi/features/F003_Homepage` ghi rõ đó là trang đích. Đổi sang `/he-thong-giai` phải sửa 8 file và phá 5 assertion đang xanh.
+- `/awards` công khai, TC ID-1 superseded — cùng lý lẽ đã dùng để mở công khai `/`.
+- Nội dung 6 giải đọc từ Supabase local (`public.awards`), chrome tĩnh vẫn ở `messages/*.json`. Seed nằm trong chính migration `0003_awards_table.sql` với `ON CONFLICT DO NOTHING`; không tạo `supabase/seed.sql` vì file đó chỉ được đọc bởi `db reset` — thứ bị cấm (142 auth user thật).
+- Bác bỏ kết luận "4/6 thẻ giải thiếu nội dung trong design". Bốn node đó là component instance, MoMorph trả text mặc định chứ không phải override. Ảnh render từng thẻ cho thấy đủ 6 mô tả riêng. Thứ tự tin cậy cho màn hình này: **ảnh render > specs CSV > text node**. Nội dung thật chốt tại `spec/award-seed-content.md`.
+- Chrome dùng chung (`SiteHeader`/`SiteFooter`/`KudosSection` + dependency bắc cầu) leo từ `(home)/_components/` lên `(public)/_components/` — hai route anh em không được import ngang `_components` của nhau.
+- Test outage dùng lại nghịch đảo `supabaseReachable` sẵn có: chạy trong CI (nơi Supabase chết) và tự skip ở máy dev khi có dữ liệu. Đây là test DUY NHẤT chứng minh `/awards` suy biến thay vì 500.
+
+### Nợ lại
+
+- Reviewer Medium ×2, cố ý không sửa: `award-category-nav.tsx:46-55` tra section bằng `document.getElementById` qua ranh giới server/client, và `use-award-category-nav.ts:82-103` gọi `IntersectionObserver.observe()` một lần. Cả hai đúng ở hiện tại (một lượt render đồng bộ, không Suspense) nhưng sẽ hỏng âm thầm nếu sau này đưa award section vào streaming/Suspense.
+- Reviewer Low ×1: thiếu PNG tên giải theo slug thì `award-section.tsx:37` render rỗng, không cảnh báo gì ở dev — bẫy nếu thêm giải thứ 7.
+- Bảng `public.awards` sống ở project Supabase ngoài repo (`~/Desktop/Claude-and-mormoph/saa-app`). Máy khác clone repo này về sẽ không có bảng đó → `/awards` hiện empty-state. Chưa có đường seed nào cho môi trường khác.
+- Test `home.spec.ts` từng bị báo nhầm là "flaky". Không phải: dev server cũ trên :3000 giữ `EVENT_START_AT` từ `.env.local` (2026-12-26) trong khi `playwright.config.ts` cần 2099-12-31, và `reuseExistingServer` dùng lại server cũ đó. Giết dev server trước mỗi lần chạy regression.

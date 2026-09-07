@@ -1,0 +1,46 @@
+{
+  "commands": [
+    {
+      "command": "pnpm exec tsc --noEmit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "no output",
+      "ts": "2026-09-06T18:03:37.000Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "no output",
+      "ts": "2026-09-06T18:03:43.000Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style!",
+      "ts": "2026-09-06T18:03:44.000Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "      Tests  151 passed (151)",
+      "ts": "2026-09-06T18:03:51.000Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "✓ Compiled successfully in 1579ms",
+      "ts": "2026-09-06T18:03:58.000Z"
+    },
+    {
+      "command": "pnpm exec playwright test",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "  66 passed (19.2s)",
+      "ts": "2026-09-06T18:04:18.000Z"
+    }
+  ]
+}

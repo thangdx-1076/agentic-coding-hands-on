@@ -8,5 +8,6 @@ Mọi tính năng trong sản phẩm. Mở một cái và đọc trọn vẹn qu
 - [F001_GoogleOAuthLogin](F001_GoogleOAuthLogin/)
 - [F002_LanguageSwitch](F002_LanguageSwitch/)
 - [F003_Homepage](F003_Homepage/)
+- [F004_AwardSystemPage](F004_AwardSystemPage/)
 
 <!-- end-generated -->

@@ -51,6 +51,23 @@
         "bl": [],
         "perms": []
       }
+    },
+    {
+      "fcode": "F004",
+      "name": "Hệ thống giải thưởng SAA 2025 (Awards)",
+      "slug": "F004_AwardSystemPage",
+      "priority": "P1",
+      "type": "ui",
+      "related": {
+        "screens": [
+          "SCR004_Awards"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
     }
   ]
 }

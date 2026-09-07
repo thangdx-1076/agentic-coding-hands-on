@@ -49,6 +49,21 @@
     ],
     "hooks/use-select-locale.ts": [
       "F003"
+    ],
+    "src/app/(public)/awards/page.tsx": [
+      "F004"
+    ],
+    "src/dal/awards.ts": [
+      "F004"
+    ],
+    "src/dal/awards-client.ts": [
+      "F004"
+    ],
+    "src/app/(public)/awards/_hooks/use-award-category-nav.ts": [
+      "F004"
+    ],
+    "src/app/(public)/awards/_utils/scroll-spy.ts": [
+      "F004"
     ]
   }
 }
