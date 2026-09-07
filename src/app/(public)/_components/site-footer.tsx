@@ -71,7 +71,7 @@ export function SiteFooter({ copy = defaultSiteChromeCopy }: SiteFooterProps) {
           </Link>
           {/* mm:I5001:14800;1161:9487 */}
           <Link
-            href="/standards"
+            href={ROUTES.STANDARDS}
             className="font-montserrat rounded p-4 text-base leading-6 font-bold tracking-[0.15px] text-white transition-colors duration-200 ease-out motion-reduce:transition-none hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background"
           >
             {footer.standards}

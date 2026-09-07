@@ -110,5 +110,55 @@
     "quantityLabel": "Number of awards:",
     "prizeLabel": "Prize value:",
     "empty": "No award information available yet."
+  },
+  "standards": {
+    "title": "Rules",
+    "heroSection": {
+      "heading": "KUDOS Receiver: Hero badge for positive influence",
+      "intro": "Based on how many teammates send you Kudos, you'll receive the corresponding Hero badge, displayed right next to your profile name.",
+      "tiers": {
+        "newHero": {
+          "alt": "New Hero",
+          "condition": "1-4 people send you Kudos",
+          "description": "The journey of spreading kindness begins – the first words of thanks and recognition have found you."
+        },
+        "risingHero": {
+          "alt": "Rising Hero",
+          "condition": "5-9 people send you Kudos",
+          "description": "Your image is growing in your teammates' hearts through your kindness and dedication."
+        },
+        "superHero": {
+          "alt": "Super Hero",
+          "condition": "10–20 people send you Kudos",
+          "description": "You've become a trusted and beloved icon, always ready to help and remembered by many teammates."
+        },
+        "legendHero": {
+          "alt": "Legend Hero",
+          "condition": "More than 20 people send you Kudos",
+          "description": "You've become a legend – someone who leaves an unforgettable mark on the team through heart and action."
+        }
+      }
+    },
+    "secretBoxSection": {
+      "heading": "SEND KUDOS: COLLECT ALL 6 ICONS, GET A MYSTERY GIFT",
+      "intro": "Every Kudos message you send is posted on the system and receives ❤️ from the Sunner community. For every 5 ❤️, you unlock 1 Secret Box, with a chance to receive one of 6 exclusive SAA icons.",
+      "badges": {
+        "revival": { "caption": "REVIVAL" },
+        "touchOfLight": { "caption": "TOUCH OF LIGHT" },
+        "stayGold": { "caption": "STAY GOLD" },
+        "flowToHorizon": { "caption": "FLOW TO HORIZON" },
+        "beyondTheBoundary": { "caption": "BEYOND THE BOUNDARY" },
+        "rootFurther": { "caption": "ROOT FURTHER" }
+      },
+      "closing": "Sunners who collect all 6 icons will receive a mystery gift from SAA 2025."
+    },
+    "nationKudosSection": {
+      "heading": "NATION KUDOS",
+      "body": "The 5 Kudos messages that receive the most ❤️ across all of Sun* will officially become Nation Kudos and receive a special gift from SAA 2025: Root Further."
+    },
+    "footer": {
+      "close": "Close",
+      "writeKudos": "Write KUDOS"
+    }
   }
 }
