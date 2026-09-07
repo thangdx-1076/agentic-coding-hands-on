@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: route-view (Next.js 16 App Router) — 6 screens (`/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
+**Analysis Scope**: route-view (Next.js 16 App Router) — 7 screens (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
 
 **Code Format**: All SCR codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped transitions
 
@@ -27,15 +27,22 @@ graph TD
     Start -->|bất kỳ ai, path '/standards'| SCR005[SCR005_Standards]
     SCR005 -->|Click 'Đóng', có lịch sử điều hướng| Back["router.back - trang trước đó"]
     SCR005 -->|Click 'Đóng', direct-load không có lịch sử| SCR003
-    SCR005 -->|Click 'Viết KUDOS'| Kudos["/kudos - chưa implement, 404"]
+    SCR005 -->|Click 'Viết KUDOS'| SCR007[SCR007_KudosLiveBoard]
     SCR003 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006[SCR006_Profile]
     SCR004 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006
     Start -->|đã đăng nhập, path '/profile'| SCR006
     Start -->|chưa đăng nhập, path '/profile'| SCR001
     SCR006 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
+    Start -->|bất kỳ ai, path '/kudos'| SCR007
+    SCR003 -->|Click link 'Sun Kudos' ở header, hoặc nút 'Chi tiết' khối Sun Kudos| SCR007
+    SCR004 -->|Click link 'Sun Kudos' ở header, hoặc nút 'Chi tiết' khối Sun Kudos| SCR007
+    SCR006 -->|Click link 'Sun Kudos' ở header dùng chung| SCR007
+    SCR007 -->|Click 'Đăng nhập' - ẩn danh| SCR001
+    SCR007 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
+    SCR007 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`.
+> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`. Từ 2026-09-07 đợt 3 (F007_KudosLiveBoard + F008_KudosHeartReaction): `/kudos` (SCR007_KudosLiveBoard) cũng PUBLIC, không guard, dùng chung `SiteHeader`/`SiteFooter` với SCR003/SCR004/SCR006 — tới được bằng URL trực tiếp, bằng link "Sun Kudos" trên `SiteHeader` (hiện diện trên mọi trang dùng `SiteHeader`: SCR003, SCR004, SCR006), nút "Chi tiết" của khối `KudosSection` (SCR003, SCR004 — SCR006 KHÔNG có khối này), `WidgetButton` (chỉ trên SCR003), hoặc nút "Viết KUDOS" trên SCR005 (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng). Khác mọi screen PUBLIC trước đó: đây là route đầu tiên có đường GHI vào DB (thả tim, `toggleKudoHeart`) — chi tiết ở § Guard Logic và `permissions-matrix.md`.
 
 ## Feature Entry Points
 
@@ -84,6 +91,24 @@ graph TD
 - **Exit screens**: SCR001_LoginScreen (chưa đăng nhập bị redirect ngay, hoặc click "Đăng xuất"
   trong menu tài khoản dùng chung `SiteHeader`)
 
+### F007_KudosLiveBoard
+
+- **Entry screen**: SCR007_KudosLiveBoard — `/kudos`
+- **Owned screens**:
+  - SCR007_KudosLiveBoard — `/kudos` (composite; dùng CHUNG với F008 — F007 sở hữu board/render nút
+    tim, F008 sở hữu bảng `kudo_hearts` và đường ghi)
+- **Exit screens**: SCR001_LoginScreen (click "Đăng nhập" khi ẩn danh, hoặc "Đăng xuất" trong menu
+  tài khoản); SCR006_Profile (click "Hồ sơ" trong menu tài khoản, dùng chung `SiteHeader` với
+  F003/F004/F006)
+
+### F008_KudosHeartReaction
+
+- **Entry screen**: (không có — F008 không tạo screen mới, chỉ cấp đường ghi cho nút tim mà F007
+  render trên SCR007_KudosLiveBoard)
+- **Owned screens**: SCR007_KudosLiveBoard (dùng chung với F007 — xem mục trên)
+- **Exit screens**: none (thả/bỏ tim không điều hướng đi đâu — `toggleKudoHeart` chỉ
+  `revalidatePath(ROUTES.KUDOS)`, ở lại đúng trang)
+
 ---
 
 ## Screen Access Paths
@@ -106,10 +131,16 @@ graph TD
 | (bất kỳ trang nào có `SiteFooter`) | SCR005_Standards | Click link "Tiêu chuẩn chung" ở footer | Không điều kiện — public, mọi actor | |
 | SCR005_Standards | (trang trước đó, bất kỳ) | Click "Đóng", có lịch sử điều hướng | `window.navigation.canGoBack === true` → `router.back()` | |
 | SCR005_Standards | SCR003_HomeScreen | Click "Đóng", direct-load không có lịch sử | `window.navigation.canGoBack` là `false`/`undefined` → `router.push(ROUTES.HOME)` | |
-| SCR003_HomeScreen, SCR004_Awards | SCR006_Profile | Click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`) | Đã đăng nhập | |
+| SCR003_HomeScreen, SCR004_Awards, SCR007_KudosLiveBoard | SCR006_Profile | Click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`) | Đã đăng nhập | |
 | Start | SCR006_Profile | Initial load / truy cập URL trực tiếp | Đã đăng nhập, truy cập `/profile` (không tham số → self; `?id={uuid}` hợp lệ khác self → other) | |
 | Start | SCR001_LoginScreen | proxy + `(protected)/layout.tsx` redirect | Chưa đăng nhập, truy cập `/profile` | |
 | SCR006_Profile | SCR001_LoginScreen | Click "Đăng xuất" trong menu tài khoản (`logoutAction`) | Đã đăng nhập; luôn xảy ra kể cả khi `signOut()` lỗi | |
+| Start | SCR007_KudosLiveBoard | Initial load | Truy cập `/kudos` trực tiếp — public, mọi actor (đã hoặc chưa đăng nhập; F007_KudosLiveBoard); tuỳ chọn `?hashtag=`/`?department=` | |
+| SCR003_HomeScreen, SCR004_Awards, SCR006_Profile | SCR007_KudosLiveBoard | Click link "Sun Kudos" ở `SiteHeader` (mọi trang dùng `SiteHeader`) | Không điều kiện — public, mọi actor | |
+| SCR003_HomeScreen, SCR004_Awards | SCR007_KudosLiveBoard | Click nút "Chi tiết" khối `KudosSection` (SCR006 không có khối này) | Không điều kiện — public, mọi actor | |
+| SCR005_Standards | SCR007_KudosLiveBoard | Click nút "Viết KUDOS" | Không điều kiện — public, mọi actor | |
+| SCR007_KudosLiveBoard | SCR001_LoginScreen | Click link "Đăng nhập" (chỉ ẩn danh) | Chưa đăng nhập | |
+| SCR007_KudosLiveBoard | SCR001_LoginScreen | Click "Đăng xuất" trong menu tài khoản (`logoutAction`) | Đã đăng nhập; luôn xảy ra kể cả khi `signOut()` lỗi | |
 
 > Region column: để trống — app này không có REG### nào (xem screen-list.md).
 
@@ -141,7 +172,9 @@ graph TD
 **Exit Points**:
 - Đến SCR001_LoginScreen: click link "Đăng nhập" ở góc phải header (chỉ hiện khi ẩn danh)
 - Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction` — tái dùng nguyên trạng từ `app/todo/actions.ts`, luôn redirect dù `signOut()` thành công hay lỗi)
-- (Ngoài phạm vi phân tích) 3 link tới route chưa tồn tại: `/kudos`, `/profile`, `/admin` — không phải SCR### nào trong tài liệu này (`/awards` → SCR004_Awards, `/standards` → SCR005_Standards, cả hai nay đã có SCR### riêng, không còn thuộc nhóm này)
+- Đến SCR007_KudosLiveBoard: click link "Sun Kudos" ở `SiteHeader`, nút "Chi tiết" khối `KudosSection`, hoặc `WidgetButton` (3 điểm vào riêng biệt, cùng đích — F007_KudosLiveBoard, mới từ 2026-09-07; trước đây gộp vào "route chưa tồn tại" bên dưới)
+- Đến SCR006_Profile: click "Hồ sơ" trong menu tài khoản (sửa lại từ ghi chú cũ — `/profile` đã có SCR006 từ F006_ProfilePage, không còn là "route chưa tồn tại")
+- (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/admin` — không phải SCR### nào trong tài liệu này (mục menu "Trang quản trị", chỉ hiện khi `role === "admin"`)
 
 **Decision Points**:
 - Không có guard chặn truy cập (`app/page.tsx` không redirect ai) — `getUser()`/`getUserRole()` chỉ đọc để cá nhân hoá header (bell + menu tài khoản + role, hoặc link đăng nhập), không quyết định có được xem trang hay không (PERM001_RootRouteGuard superseded, xem `permissions-matrix.md`)
@@ -157,7 +190,7 @@ graph TD
 **Exit Points**:
 - Đến SCR001_LoginScreen: click link "Đăng nhập" ở header (chỉ hiện khi ẩn danh, dùng chung `SiteHeader` với SCR003_HomeScreen)
 - Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
-- (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/kudos` (nút "Chi tiết" khối Sun* Kudos) — không phải SCR### nào trong tài liệu này
+- Đến SCR007_KudosLiveBoard: click link "Sun Kudos" ở `SiteHeader`, hoặc nút "Chi tiết" khối `KudosSection` (2 điểm vào, F007_KudosLiveBoard, mới từ 2026-09-07; trước đây "1 link tới route chưa tồn tại")
 
 **Decision Points**:
 - Không có guard chặn truy cập (`src/app/(public)/awards/page.tsx` không redirect ai) — `getViewer()` chỉ đọc để cá nhân hoá header, giống hệt SCR003_HomeScreen
@@ -174,7 +207,7 @@ graph TD
 **Exit Points**:
 - (không tới SCR### nào cụ thể) click "Đóng" khi có lịch sử điều hướng → `router.back()`, trả về đúng trang khách vừa rời (có thể là SCR003, SCR004, hoặc bất kỳ trang nào khác trong site)
 - Đến SCR003_HomeScreen: click "Đóng" khi direct-load, không có lịch sử điều hướng trong tab → `router.push(ROUTES.HOME)`
-- (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/kudos` (nút "Viết KUDOS") — không phải SCR### nào trong tài liệu này
+- Đến SCR007_KudosLiveBoard: click nút "Viết KUDOS" (F007_KudosLiveBoard, mới từ 2026-09-07; trước đây "1 link tới route chưa tồn tại")
 
 **Decision Points**:
 - Không có guard chặn truy cập (`src/app/(public)/standards/page.tsx` không redirect ai, không đọc session/role) — khác SCR003/SCR004, trang này không cá nhân hoá theo trạng thái đăng nhập vì không có header/footer chrome nào cần đọc `viewer`
@@ -191,11 +224,34 @@ graph TD
 **Exit Points**:
 - Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
 - Đến SCR001_LoginScreen: guard `(protected)/layout.tsx` phát hiện chưa đăng nhập (redirect trước khi trang render)
-- (Ngoài phạm vi phân tích) Không có link nào từ SCR006_Profile tới `/kudos` hay screen khác — trang không có nav-out riêng ngoài chrome dùng chung
+- Đến SCR007_KudosLiveBoard: click link "Sun Kudos" ở `SiteHeader` dùng chung (F007_KudosLiveBoard, mới từ 2026-09-07) — **sửa lại ghi chú cũ**: `SiteHeader` có link "/kudos" cố định bất kể trang nào dùng nó (`site-header.tsx:70`), nên nhận định trước đây "không có nav-out riêng ngoài chrome dùng chung" đã bỏ sót chính cạnh này; SCR006 KHÔNG có khối `KudosSection` (khác SCR003/SCR004), nên đây là điểm vào /kudos DUY NHẤT từ màn này
 
 **Decision Points**:
 - `(protected)/layout.tsx` (fail-closed, dùng chung với `/todo`): `!user` → redirect `/login` trước khi `page.tsx` chạy
 - `parseProfileId(rawId, viewerId)` (`_utils/parse-profile-id.ts`): rỗng/vắng mặt → self; non-string (lặp key) → `notFound()`; sai định dạng UUID → `notFound()`; trùng chính người xem → `redirect("/profile")` canonical; hợp lệ khác self → query `profile_cards`, không có hàng → `notFound()`, có hàng → render other view
+
+---
+
+### SCR007_KudosLiveBoard (Bảng Kudos trực tiếp)
+
+**Entry Points**:
+- Truy cập URL trực tiếp `/kudos` — public, không điều kiện (anonymous hoặc authenticated đều render cùng bố cục; tuỳ chọn `?hashtag=`/`?department=`)
+- Click link "Sun Kudos" ở `SiteHeader` trên SCR003_HomeScreen, SCR004_Awards, hoặc SCR006_Profile (mọi trang dùng `SiteHeader`)
+- Click nút "Chi tiết" khối `KudosSection` trên SCR003_HomeScreen hoặc SCR004_Awards (SCR006 không có khối này)
+- Click `WidgetButton` (chỉ có trên SCR003_HomeScreen)
+- Click nút "Viết KUDOS" trên SCR005_Standards (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng tới `/kudos`)
+
+**Exit Points**:
+- Đến SCR001_LoginScreen: click link "Đăng nhập" ở header (chỉ hiện khi ẩn danh, dùng chung `SiteHeader`)
+- Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
+- Đến SCR006_Profile: click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`)
+- (không điều hướng) Thả/bỏ tim (`toggleKudoHeart`) — chỉ `revalidatePath(ROUTES.KUDOS)`, ở lại đúng trang; không phải một cạnh điều hướng
+
+**Decision Points**:
+- Không có guard chặn truy cập (`src/app/(public)/kudos/page.tsx` không redirect ai) — `getViewer()`/`getCurrentUser()` chỉ đọc để cá nhân hoá header + sidebar thống kê, giống triết lý SCR003/SCR004; route này KHÔNG nằm trong `matcher` của `proxy.ts` (khác SCR003/SCR004/SCR006 — xem § Guard Logic)
+- `getKudosBoard()`/`getViewerHeartedKudoIds()`/`getKudosStats()` fail-open: lỗi Supabase hoặc rỗng → board/heart-set/stats rỗng, render empty state (`kudos-empty-state`), KHÔNG 500
+- `toggleKudoHeart(kudoId)` (Server Action, F008): fail CLOSED — `!user` → `{ok:false, reason:"unauthenticated"}`; lỗi Postgres/DAL khác `23505` → `{ok:false, reason:"error"}`; RLS `kudo_hearts_insert_own` (`WITH CHECK user_id = auth.uid() AND user_id <> kudos.sender_id`) chặn người gửi tự thả tim NGAY CẢ khi action bị gọi trực tiếp, bỏ qua nút đã disable trên UI
+- `loadMoreKudos({cursor, hashtag, department})` (Server Action, F007): fail-open trả `{items: [], nextCursor: null}` khi `cursor` không phải ISO timestamp hợp lệ hoặc có lỗi bất kỳ; KHÔNG `revalidatePath` (khác `toggleKudoHeart`) — tránh việc revalidate làm mất các trang feed đã tải thêm phía client
 
 ---
 
@@ -240,6 +296,7 @@ graph LR
 | SCR004_Awards | Không — public cho mọi actor (F004_AwardSystemPage, cùng nhóm với `/`); nội dung 6 hạng mục giải không cá nhân hoá theo vai trò, chỉ header dùng chung đổi theo trạng thái đăng nhập | Public (toàn bộ nội dung, không riêng theo `member`/`admin`) |
 | SCR005_Standards | Không — public cho mọi actor (F005_StandardsRulesPage, cùng nhóm với `/`, `/awards`); KHÔNG có phần nào cá nhân hoá — trang không đọc session/role, không có header/footer chrome nào (khác SCR003/SCR004) | Public (toàn bộ nội dung, giống hệt cho mọi actor) |
 | SCR006_Profile | Có — gác bởi `(protected)/layout.tsx`, cùng gate với SCR002_TodoScreen (F006_ProfilePage) | User (bất kỳ user Supabase hợp lệ nào — không phân role); `?id=` quyết định self/other, không phải một authorization level khác |
+| SCR007_KudosLiveBoard | Không — public cho mọi actor (F007_KudosLiveBoard, cùng nhóm với `/`, `/awards`; KHÔNG nằm trong `matcher` của `proxy.ts`, khác cả 3 route public còn lại); đọc board/tim/thống kê cá nhân hoá theo trạng thái đăng nhập, nhưng ĐỌC luôn public — GHI (thả tim, F008) mới cần đăng nhập | Public (đọc); Authenticated bắt buộc cho hành động GHI duy nhất của app tính tới nay (thả tim) — xem `permissions-matrix.md` § trục phân quyền GHI |
 
 ---
 
@@ -258,6 +315,12 @@ graph LR
 | SCR006_Profile | `(protected)/layout.tsx` phát hiện chưa đăng nhập | Redirect `/login` (fail closed, cùng cơ chế SCR002_TodoScreen) | screen |
 | SCR006_Profile | `?id=` sai định dạng UUID, lặp key, hoặc không có hàng tương ứng trong `profile_cards` | `notFound()` — trang "Not found" mặc định Next.js, không phải lỗi 500 | screen |
 | SCR006_Profile | `getProfileCard()` lỗi Supabase (thoáng qua) | Fail-open trả `null` → cùng `notFound()` như "không có hàng" (không phân biệt được 2 nguyên nhân từ phía người dùng) | screen |
+| SCR007_KudosLiveBoard | `getKudosBoard()` lỗi Supabase/thoáng qua (bất kỳ trong 3 read `Promise.all`) | Fail-open trả board rỗng toàn bộ (`highlight`/`feed`/`spotlight`/`filters` đều rỗng) → render `kudos-empty-state`, không 500 | screen |
+| SCR007_KudosLiveBoard | `getViewerHeartedKudoIds()` lỗi Supabase | Fail-open trả `Set` rỗng → mọi nút tim hiện "chưa thả", không chặn render | screen |
+| SCR007_KudosLiveBoard | `getKudosStats()` lỗi Supabase (chỉ chạy khi đã đăng nhập) | Fail-open trả `{received:0, sent:0, hearts:0}` → sidebar hiện số 0, không 500 | screen |
+| SCR007_KudosLiveBoard | `toggleKudoHeart()` gọi khi chưa đăng nhập (bỏ qua nút đã disable trên UI) | `{ok:false, reason:"unauthenticated"}` — không ghi gì, không đổi `heart_count` | screen |
+| SCR007_KudosLiveBoard | `toggleKudoHeart()` bị RLS `kudo_hearts_insert_own` từ chối (người gửi tự thả tim trên kudo của chính mình) | INSERT bị Postgres bác — action bắt lỗi, trả `{ok:false, reason:"error"}`, không ghi | screen |
+| SCR007_KudosLiveBoard | `loadMoreKudos()` nhận `cursor` không phải ISO timestamp hợp lệ, hoặc lỗi bất kỳ | Fail-open trả `{items:[], nextCursor:null}` — `useInfiniteFeed` dừng tải thêm, không lỗi hiển thị | screen |
 
 > Scope values: `screen` (không có REG### trong app này nên không có case `region:REG###`).
 
@@ -265,7 +328,7 @@ graph LR
 
 ## Circular Dependencies Check
 
-- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào; SCR005 không tạo cạnh vào SCR001 nào cả (không có header/menu tài khoản) — "Đóng" chỉ là `router.back()`/`push("/")`, không phải một cạnh điều hướng có điều kiện tới một SCR### cụ thể, nên không góp thêm chu trình nào; SCR006 ⇄ SCR001 (login/logout, guard redirect) cùng hình dạng với SCR002/SCR003/SCR004 ⇄ SCR001, không tạo chu trình mới; SCR003/SCR004 → SCR006 (click "Hồ sơ") là cạnh một chiều, không có cạnh ngược SCR006 → SCR003/SCR004 nào trong tài liệu này (chrome dùng chung chỉ dẫn tới SCR001 khi đăng xuất)
+- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào; SCR005 không tạo cạnh vào SCR001 nào cả (không có header/menu tài khoản) — "Đóng" chỉ là `router.back()`/`push("/")`, không phải một cạnh điều hướng có điều kiện tới một SCR### cụ thể, nên không góp thêm chu trình nào; SCR006 ⇄ SCR001 (login/logout, guard redirect) cùng hình dạng với SCR002/SCR003/SCR004 ⇄ SCR001, không tạo chu trình mới; SCR003/SCR004 → SCR006 (click "Hồ sơ") là cạnh một chiều, không có cạnh ngược SCR006 → SCR003/SCR004 nào trong tài liệu này (chrome dùng chung chỉ dẫn tới SCR001 khi đăng xuất); SCR007 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003/SCR004/SCR006 ⇄ SCR001, không tạo chu trình mới; SCR003/SCR004/SCR005/SCR006 → SCR007 (4 điểm vào khác nhau: header, `KudosSection`, `WidgetButton`, nút "Viết KUDOS") đều là cạnh một chiều, không có cạnh ngược SCR007 → bất kỳ màn nào trong nhóm này (trừ SCR006 qua "Hồ sơ", cùng hình dạng SCR003/SCR004 → SCR006 đã có, không phải chu trình mới)
 - [x] All screens have valid entry/exit points
 - [x] All navigation paths terminate
 
@@ -273,7 +336,7 @@ graph LR
 
 ## Guard Logic
 
-### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*`, `/profile` (`/`, `/awards`, `/standards` vẫn khớp matcher, không còn redirect)
+### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*`, `/profile` (`/`, `/awards`, `/standards` vẫn khớp matcher, không còn redirect; `/kudos` KHÔNG khớp matcher — xem ghi chú bên dưới)
 **trigger:** `proxy` (Next 16, tên cũ `middleware`)
 **source:** `proxy.ts` (`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]`)
 **logic:**
@@ -284,6 +347,14 @@ path === "/" → pass-through LUÔN (không redirect — vẫn khớp matcher ch
 else → pass-through
 ```
 **failure path:** lỗi gọi Supabase (`getUserOrNull` catch) → coi như `user = null`, không 500 toàn site
+
+**Cập nhật 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction)**: `/kudos` KHÔNG được thêm
+vào `matcher` (`proxy.ts:139` không đổi) — route này nằm HOÀN TOÀN ngoài `proxy`, khác `/`/`/awards`/
+`/standards` (vẫn khớp matcher để refresh cookie dù không redirect) và khác `/profile` (protected
+thật). Hệ quả: không có refresh session cookie hay chuẩn hoá `NEXT_LOCALE` nào chạy riêng cho
+`/kudos` — trang tự đọc session qua `getCurrentUser()`/`getViewer()` trong `page.tsx`. Guard GHI của
+F008 (chặn người gửi tự thả tim, chặn thả tim lần 2) không nằm ở lớp này — nó nằm ở RLS Postgres,
+xem `permissions-matrix.md`.
 
 ---
 
@@ -352,6 +423,19 @@ redirect(user ? "/todo" : "/login")
 **Failure mode:** bất kỳ giá trị `error` non-empty nào (kể cả mảng do Next.js parse `?error=` lặp lại) đều bật CÙNG một thông báo cố định — giá trị thô không bao giờ được render (an toàn XSS nhưng không mô tả chi tiết lỗi thật).
 
 > Ghi chú (ngoài phạm vi SCR, không tự render UI): `ROUTE001 GET /auth/callback?next={path}` — param `next` phục hồi đích redirect sau đăng nhập qua `safeNextPath()` (`lib/supabase/next-path.ts`); giá trị không hợp lệ/không an toàn (không bắt đầu bằng đúng 1 `/`, chứa `://`, `//`, hoặc control-char/line-separator thô hay percent-encoded) sẽ fallback về `/` (đổi từ `/todo`).
+
+---
+
+### SCR007_KudosLiveBoard
+**URL pattern:** `/kudos?hashtag={value}&department={value}`
+**State restored:**
+
+| Param | Restores | Default if missing |
+|-------|----------|--------------------|
+| hashtag | Lọc Highlight + Feed theo hashtag đã chọn (`KudosFilterBar`) | Không lọc (`null`) |
+| department | Lọc Highlight + Feed theo phòng ban đã chọn | Không lọc (`null`) |
+
+**Failure mode:** `firstNonEmpty()` (`page.tsx`) chỉ nhận `string` không rỗng, lấy phần tử đầu nếu Next.js parse thành mảng (key lặp lại); giá trị rỗng/mảng rỗng đều fallback về `null` (không lọc) — không có thông báo lỗi nào hiển thị cho giá trị không khớp bất kỳ hashtag/department thật nào (kết quả tự nhiên: board rỗng, không phải một lỗi riêng).
 
 ---
 

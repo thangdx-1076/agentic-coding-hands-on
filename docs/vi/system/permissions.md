@@ -4,6 +4,15 @@ authored_by: takumi
 created: 2026-09-06
 lang: vi
 ---
+<!--
+FORWARD-DRAFT NOTICE (F007_KudosLiveBoard + F008_KudosHeartReaction,
+plans/260907-1725-kudos-live-board):
+Nội dung dưới đây là bản SAO NGUYÊN VĂN của `docs/vi/system/permissions.md` (đọc 2026-09-07), cộng
+CHỈ phần delta mà F007/F008 giới thiệu. Mọi dòng gốc giữ nguyên 100% — không sửa, không xoá.
+Phần MỚI nằm trọn trong mục cuối file. File này CHƯA merge vào `docs/vi/system/permissions.md` thật;
+nó được promote ở implement-start và được đối chiếu lại với as-built ở Delivery.
+-->
+
 
 # Permissions
 
@@ -128,3 +137,58 @@ chế mới.
   không. Cùng triết lý `getAwards`/`getUserRole` đã ghi ở trên.
 - **Fail-open cho nội dung giải, không phải cho quyền truy cập (F004):** DAL `getAwards` fail-open trả `[]` khi Supabase lỗi — đây là fail-open NỘI DUNG (empty-state), không phải fail-open QUYỀN (trang vẫn luôn public, không có nhánh nào biến `/awards` thành protected khi lỗi). Cùng triết lý `getUserRole` fail-open `"member"` ở F003: một lỗi đọc dữ liệu không được phép biến thành một quyết định phân quyền.
 - Không có time-based restriction, IP-based rule, hay feature-flag nào gate quyền truy cập — không đổi. Biến môi trường mới `EVENT_START_AT` (đếm ngược sự kiện) KHÔNG phải một permission env-gate — nó chỉ đổi chữ hiển thị ("Coming soon" ẩn/hiện, số đếm ngược), không chặn hay mở bất kỳ route/nội dung nào.
+
+
+## Bổ sung dự kiến — F007_KudosLiveBoard + F008_KudosHeartReaction
+
+> **[F007/F008 draft — chưa merge]** Toàn bộ mục này là delta của hai feature đang được xây
+> trong `plans/260907-1725-kudos-live-board/`. Quyết định gốc: `clarifications.md § Quyết định`.
+
+### `/kudos` là route CÔNG KHAI
+
+`/kudos` rời khỏi danh sách "route đích chưa tồn tại" ở mục trên (`/admin` vẫn ở lại). Nó vào
+cùng nhóm với `/`, `/awards`, `/standards`: **không route-guard**, người chưa đăng nhập đọc được
+toàn bộ nội dung.
+
+Căn cứ không phải suy đoán mà là chính test case của màn: precondition của TC
+`Check access condition / Authentication required` ghi nguyên văn *"User is unauthenticated but
+can view Kudos UI"*, và expected result chỉ đòi redirect/prompt khi người dùng **bấm vào một
+profile hoặc vào chi tiết kudo** — tức là gate nằm ở ĐÍCH ĐẾN, không nằm ở `/kudos`.
+
+Hệ quả kèm theo: 5 điểm vào đang hardcode `href="/kudos"` (site-header, site-footer,
+`KudosSection`, widget-button, `/standards`) thôi 404 cùng lúc. Không cái nào trong số đó cần
+đổi quyền.
+
+### Trục phân quyền MỚI đầu tiên của dự án: quyền GHI
+
+Từ F001 tới F006, mọi PERM### chỉ trả lời đúng một câu hỏi: *đã đăng nhập hay chưa*. Không có
+ownership, không có policy table (`permissions-matrix.md § Ground-truth note`: "Dự án này KHÔNG
+có RBAC").
+
+F008 thêm trục thứ hai thật sự — **quyền ghi gắn với danh tính hàng dữ liệu**:
+
+| Chủ thể | Đọc kudos | Thả tim |
+|---|---|---|
+| Anonymous | được | **không** — nút render nhưng disabled |
+| Đã đăng nhập, không phải người gửi kudo đó | được | được, tối đa 1 lượt |
+| Đã đăng nhập, LÀ người gửi kudo đó | được | **không** — nút disabled trên kudo của chính mình |
+
+Hai điều cấm ở cột phải KHÔNG được để UI tự giữ. Chúng phải được enforce ở tầng dữ liệu:
+- "1 lượt/người/kudo" → UNIQUE constraint `(kudo_id, user_id)`, không phải một lần đọc-rồi-ghi.
+- "người gửi không tự thả tim" → điều kiện trong RLS policy `WITH CHECK`, đối chiếu
+  `auth.uid()` với `kudos.sender_id`.
+Lý do ghi rõ ở đây: đây là lần đầu trong dự án một quy tắc phân quyền KHÔNG thể suy ra từ
+"đã đăng nhập chưa", nên nó cũng là lần đầu route-guard không đủ để bảo vệ.
+
+### Fail-open tiếp tục áp cho ĐỌC, KHÔNG áp cho GHI
+
+DAL đọc kudos giữ nguyên triết lý `getAwards`/`getProfileCard`: lỗi Supabase → trả `[]`/`null`,
+trang vẫn public, hiện empty-state. Nhưng server action thả tim **fail-closed**: lỗi thì không
+ghi và báo lỗi, tuyệt đối không "cứ cho qua". Một lỗi đọc biến thành empty-state là chấp nhận
+được; một lỗi ghi biến thành lượt tim ma thì không.
+
+### Bề mặt cần cấp PERM### thật khi promote
+
+`PERM001`–`PERM004` đã dùng. Bốn bề mặt mới dưới đây chờ mã ở bước promote:
+đọc `/kudos` khi anonymous · thả tim khi đã đăng nhập · chặn tự thả tim trên kudo mình gửi ·
+chặn thả tim lần hai trên cùng một kudo.

@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 2 route xác nhận PUBLIC không guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage — xem mục cuối) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 3 route xác nhận PUBLIC không route-guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard — xem mục cuối) + 1 trục phân quyền GHI mới ở tầng RLS Postgres (F008_KudosHeartReaction, KHÔNG phải route-guard — xem mục `/kudos`) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -263,6 +263,79 @@ phải một permission item cần theo dõi — cùng lý do `/awards` không c
 
 ---
 
+## `/kudos` — PUBLIC (đọc) + trục phân quyền GHI đầu tiên của dự án (F007_KudosLiveBoard + F008_KudosHeartReaction, chưa cấp mã PERM### riêng)
+
+Route `/kudos` gia nhập ĐÚNG nhóm PUBLIC với `/`, `/awards`, `/standards` cho phần ĐỌC — không
+route-guard nào ở `proxy.ts` lẫn `src/app/(public)/kudos/page.tsx`; Anonymous và Authenticated đều
+nhận `200` với cùng bố cục. Không cấp `PERM###` mới cho phần đọc vì đây vẫn là "không có guard nào",
+cùng lý do `/awards`/`/standards` không cấp mã. Căn cứ: precondition test case của màn ghi nguyên văn
+*"User is unauthenticated but can view Kudos UI"* — gate (nếu có) nằm ở ĐÍCH ĐẾN (click vào 1 profile
+hoặc chi tiết kudo), không nằm ở `/kudos` (`docs/vi/system/permissions.md § /kudos là route CÔNG KHAI`).
+`proxy.ts`'s `config.matcher` KHÔNG bao gồm `/kudos` — khác cả `/awards`/`/standards` (vẫn khớp
+matcher chỉ để refresh cookie) VÀ `/profile` (protected thật): `/kudos` nằm HOÀN TOÀN ngoài lớp proxy.
+
+**Khác mọi route PUBLIC trước đó**: `/kudos` có một hành động GHI — thả tim (F008). Đây là trục phân
+quyền THỨ HAI thật sự của dự án, sau "đã đăng nhập hay chưa" (PERM001-004): **quyền ghi gắn với danh
+tính hàng dữ liệu**, không suy ra được chỉ từ trạng thái đăng nhập. Route-guard không đủ bảo vệ trục
+này — enforcement nằm ở RLS Postgres, không phải ở `proxy.ts` hay Server Component nào:
+
+| Chủ thể | Đọc `/kudos` | Thả tim (`toggleKudoHeart`) |
+|---|---|---|
+| Anonymous | ✓ | ✗ — nút render nhưng `disabled`, có `title` mời đăng nhập (C22); action tự thân cũng trả `{ok:false, reason:"unauthenticated"}` nếu bị gọi trực tiếp |
+| Authenticated, KHÔNG phải người gửi kudo đó | ✓ | ✓ — tối đa 1 lượt/người/kudo |
+| Authenticated, LÀ người gửi kudo đó | ✓ | ✗ — nút `disabled` trên kudo của chính mình; action bị RLS bác NGAY CẢ khi gọi trực tiếp, bỏ qua UI |
+
+Hai điều cấm ở cột phải được enforce Ở TẦNG DỮ LIỆU, không phải UI hay application code:
+- **1 lượt/người/kudo**: `UNIQUE (kudo_id, user_id)` trên `public.kudo_hearts` (`0007_kudo_hearts.sql`)
+  — 2 click nhanh cùng lúc đụng constraint này, `toggleKudoHeart` bắt mã lỗi Postgres `23505` và đọc
+  lại thay vì coi là lỗi.
+- **Người gửi không tự thả tim**: RLS policy `kudo_hearts_insert_own` trên `kudo_hearts`, `FOR INSERT
+  TO authenticated WITH CHECK (user_id = auth.uid() AND user_id <> (SELECT sender_id FROM kudos WHERE
+  id = kudo_id))` — verify trực tiếp trên DB: `authenticated` chỉ có `SELECT` trên `kudos` (không có
+  UPDATE/INSERT/DELETE), và có đúng `SELECT, INSERT, DELETE` trên `kudo_hearts`. `heart_count` trên
+  `kudos` vì vậy CHỈ đổi được qua trigger `sync_kudo_heart_count` (`SECURITY DEFINER`), không đường
+  nào khác ghi được cột này kể cả một client Postgres tuỳ ý cầm JWT hợp lệ.
+- Đối xứng: RLS policy `kudo_hearts_delete_own`, `FOR DELETE TO authenticated USING (user_id =
+  auth.uid())` — chỉ xoá được tim của chính mình.
+
+**Fail-open cho ĐỌC, fail-CLOSED cho GHI**: `getKudosBoard`/`getViewerHeartedKudoIds`/`getKudosStats`
+giữ nguyên triết lý `getAwards`/`getProfileCard` — lỗi Supabase → trả rỗng, trang vẫn public, hiện
+empty-state. Nhưng `toggleKudoHeart` fail **CLOSED**: bất kỳ lỗi nào (khác `23505` unique-violation,
+tức đụng race) đều trả `{ok:false, reason:"error"}` và không ghi gì — một lỗi đọc biến thành
+empty-state là chấp nhận được, một lỗi ghi biến thành lượt tim ma thì không.
+
+Không cấp `PERM###` mới ở đây (cùng tiền lệ `/awards`/`/standards`/`/profile` — mã chính thức cho cả
+2 trục, ĐỌC lẫn GHI, để `rebuild-spec` Core pass kế tiếp quyết định, xem `docs/vi/system/permissions.md
+§ Bề mặt cần cấp PERM### thật khi promote`). Bốn bề mặt đang chờ mã: đọc `/kudos` khi anonymous ·
+thả tim khi đã đăng nhập · chặn tự thả tim trên kudo mình gửi · chặn thả tim lần hai trên cùng một kudo.
+
+### Related Routes
+- (GET) /kudos — SCR007_KudosLiveBoard, không redirect
+- Server Action `toggleKudoHeart(kudoId)` — không phải route HTTP có path, xem `api-map.md`
+- Server Action `loadMoreKudos(input)` — đọc lại, không phải một permission surface mới (cùng
+  `getKudosBoard`, cùng fail-open)
+
+### Related Screens
+- SCR007_KudosLiveBoard — Bảng Kudos trực tiếp (F007_KudosLiveBoard + F008_KudosHeartReaction)
+
+### Permission Rules
+
+| Role | Allow | Conditions |
+|------|-------|------------|
+| Anonymous | ✓ (đọc) / ✗ (ghi) | Đọc toàn bộ nội dung công khai; nút tim `disabled`, action trả `unauthenticated` nếu gọi trực tiếp |
+| Authenticated, không phải người gửi | ✓ (đọc) / ✓ (ghi, tối đa 1 lượt) | Thả/bỏ tim bình thường qua `toggleKudoHeart` |
+| Authenticated, là người gửi kudo đó | ✓ (đọc) / ✗ (ghi) | Nút `disabled` trên kudo của chính mình; RLS `kudo_hearts_insert_own` bác INSERT nếu action bị gọi trực tiếp |
+
+### Related Modules
+
+- src/app/(public)/kudos/page.tsx
+- src/app/(public)/kudos/_actions/toggle-kudo-heart.ts (`toggleKudoHeart`)
+- src/app/(public)/kudos/_actions/load-more-kudos.ts (`loadMoreKudos`)
+- src/dal/kudos.ts, src/dal/kudo-hearts.ts, src/dal/kudos-stats.ts
+- supabase/migrations/0006_kudos.sql, supabase/migrations/0007_kudo_hearts.sql (RLS policies + trigger)
+
+---
+
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
@@ -285,9 +358,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006 không tạo PERM### mới)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008 không tạo PERM### mới)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

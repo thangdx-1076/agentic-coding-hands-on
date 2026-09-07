@@ -35,7 +35,7 @@ authored_by: rebuild-spec
 | Code | Name | Trigger | Payload | File Schema |
 |------|------|---------|---------|--------------|
 | BL001_SupabaseBrowserClient | SupabaseBrowserClient | Client component cần Supabase Auth phía trình duyệt (hiện tại: `useLoginActions.handleLoginClick` gọi `signInWithGoogle` trước khi gọi `signInWithOAuth`) | — | N/A — not a file-exchange type |
-| BL002_SupabaseServerClient | SupabaseServerClient | Server Component / Server Action / Route Handler cần Supabase Auth phía server, mỗi request | — | N/A — not a file-exchange type |
+| BL002_SupabaseServerClient | SupabaseServerClient | Server Component / Server Action / Route Handler cần Supabase Auth phía server, mỗi request — nay còn gồm `/kudos` page + 2 Server Action `toggleKudoHeart`/`loadMoreKudos` (F007/F008, 2026-09-07) | — | N/A — not a file-exchange type |
 | BL003_SupabaseProxyClient | SupabaseProxyClient | `proxy.ts` trên mọi request khớp matcher `["/", "/login", "/todo/:path*"]` | — | N/A — not a file-exchange type |
 
 ---
@@ -108,7 +108,7 @@ _(none — instance chỉ dùng để gọi `signInWithOAuth`, không có dòng 
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory async bọc `createServerClient` từ `@supabase/ssr`, cookie-store-backed; `setAll` bọc try/catch vì cookie store của Server Component là read-only (session refresh thật sự nằm ở `proxy.ts`, không phải bug bị nuốt lỗi). **Intent matched**: integration — external API/service client (Supabase Auth SDK cho Server Components/Actions/Route Handlers). **No-row reason**: giống BL001 — Next.js App Router không có dòng trong bảng, analog NestJS không khớp cấu trúc factory thuần. **Observed pattern**: export `async createClient()` được gọi độc lập tại 5 nơi: `app/login/page.tsx:75` (guard fail-open), `app/todo/page.tsx:21` (guard fail-closed + đọc email), `app/page.tsx:11` (fallback redirect), `app/todo/actions.ts:15` (`logoutAction` gọi `signOut()`), và `app/auth/callback/route.ts:32` (`exchangeCodeForSession`).
+`[SIGNAL_INFERRED]` Factory async bọc `createServerClient` từ `@supabase/ssr`, cookie-store-backed; `setAll` bọc try/catch vì cookie store của Server Component là read-only (session refresh thật sự nằm ở `proxy.ts`, không phải bug bị nuốt lỗi). **Intent matched**: integration — external API/service client (Supabase Auth SDK cho Server Components/Actions/Route Handlers). **No-row reason**: giống BL001 — Next.js App Router không có dòng trong bảng, analog NestJS không khớp cấu trúc factory thuần. **Observed pattern**: export `async createClient()` được gọi độc lập tại 8 nơi: `app/login/page.tsx:75` (guard fail-open), `app/todo/page.tsx:21` (guard fail-closed + đọc email), `app/page.tsx:11` (fallback redirect), `app/todo/actions.ts:15` (`logoutAction` gọi `signOut()`), `app/auth/callback/route.ts:32` (`exchangeCodeForSession`), cộng (F007/F008, 2026-09-07) `src/app/(public)/kudos/page.tsx:72` (đọc board + stats, `/kudos` KHÔNG có guard nào gọi trước), `src/app/(public)/kudos/_actions/toggle-kudo-heart.ts:44` (fail-closed — tự `getUser()` bên trong, ghi/xoá `kudo_hearts`), và `src/app/(public)/kudos/_actions/load-more-kudos.ts:53` (fail-open — đọc lại `getKudosBoard`, không ghi).
 
 ### Related Modules
 
@@ -116,6 +116,9 @@ _(none — instance chỉ dùng để gọi `signInWithOAuth`, không có dòng 
 - app/todo/page.tsx (guard + đọc `user.email`)
 - app/page.tsx (fallback redirect)
 - app/todo/actions.ts (`logoutAction`)
+- src/app/(public)/kudos/page.tsx (đọc board + stats, F007_KudosLiveBoard, 2026-09-07)
+- src/app/(public)/kudos/_actions/toggle-kudo-heart.ts (`toggleKudoHeart`, fail-closed, F008_KudosHeartReaction)
+- src/app/(public)/kudos/_actions/load-more-kudos.ts (`loadMoreKudos`, fail-open, F007_KudosLiveBoard)
 
 ### Related Routes
 

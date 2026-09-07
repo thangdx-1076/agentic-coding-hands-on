@@ -3,7 +3,7 @@
 **Project**: SAA 2025 — Login
 **Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 5 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 2 do repo định nghĩa qua SQL migration và đọc trọn vẹn read-only) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`, `0006_kudos.sql`, `0007_kudo_hearts.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`, cộng (từ F007_KudosLiveBoard + F008_KudosHeartReaction, 2026-09-07) bảng thứ 4 `public.kudos` + view thứ 5 `public.kudos_cards` (schema ở `0006_kudos.sql`, đọc qua `src/dal/kudos.ts`/`kudos-cards-query.ts`) và bảng thứ 6 `public.kudo_hearts` (schema ở `0007_kudo_hearts.sql`, đọc/ghi qua `src/dal/kudo-hearts.ts` + Server Action `toggleKudoHeart`) — cộng một cột mới `department` (nullable) trên `public.users`, chỉ lộ ra qua view `kudos_cards`, KHÔNG đọc trực tiếp `public.users.department` ở bất kỳ đâu khác trong app. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 7 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 4 do repo định nghĩa qua SQL migration và đọc/ghi qua DAL — `kudos`/`kudo_hearts` là 2 bảng ĐẦU TIÊN trong ERD này có FK thật, xem ghi chú dưới sơ đồ) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -40,9 +40,29 @@ erDiagram
         string fullName "nullable, fallback 'Sunner' khi null"
         string avatarUrl "nullable, placeholder xam khi null"
     }
+    KUDOS_KudosCard {
+        string id PK "UUID - id cua public.kudos"
+        string content
+        json hashtags "text[] o DB - mang chuoi"
+        json imageUrls "text[] o DB - toi da 5 phan tu, BR-007"
+        int heartCount "denormalized, CHI ghi boi trigger 0007"
+        string createdAt "cung la cursor keyset cua Feed"
+        string senderId FK "-> public.users.id"
+        string receiverId FK "-> public.users.id"
+        string senderDepartment "nullable - cot users.department moi"
+        string receiverDepartment "nullable - cot users.department moi"
+    }
+    KUDOS_KudoHeart {
+        string id PK "UUID"
+        string kudoId FK "-> public.kudos.id"
+        string userId FK "-> public.users.id"
+        boolean special "luon false - luat +2 tim da hoan"
+        string createdAt
+    }
+    KUDOS_KudosCard ||--o{ KUDOS_KudoHeart : "heart_count duoc trigger tinh tu"
 ```
 
-Không vẽ đường quan hệ (FK) nào — cả 3 shape đều độc lập, không entity nào tham chiếu entity khác qua khóa ngoại. Xem mục **Relationships** của từng entity bên dưới để biết cách chúng được *dùng* (không phải *liên kết CSDL*).
+7 shape trong ERD này, nhưng chỉ 2 cái CUỐI (`KUDOS_KudosCard`/`public.kudos`, `KUDOS_KudoHeart`/`public.kudo_hearts`) có FK thật ở tầng DB — 5 shape còn lại (`MODEL001-003`, `AWARD_Award`, `PROFILE_ProfileCard`) không có FK nào, giữ nguyên nhận định trước đây. `kudos.sender_id`/`kudos.receiver_id` VÀ `kudo_hearts.kudo_id`/`kudo_hearts.user_id` đều là FK thật (`REFERENCES ... ON DELETE CASCADE`, xem `0006_kudos.sql`/`0007_kudo_hearts.sql`) — đây là bảng ĐẦU TIÊN trong dự án ràng buộc quan hệ ở tầng DB thay vì chỉ "dùng chung một id" như `profile_cards`. Cạnh `KUDOS_KudosCard ||--o{ KUDOS_KudoHeart` trong sơ đồ trên diễn tả đúng 1 quan hệ thật (1 kudo có 0..N heart) — không vẽ 2 cạnh còn lại (`sender_id`/`receiver_id`/`user_id` → `users.id`) vì `MODEL002_SupabaseUser` không phải một bảng CSDL độc lập trong ERD này (là object SDK, xem mục riêng bên dưới), nên không có node `users` nào để nối tới. Xem mục **Relationships** của từng entity bên dưới để biết chi tiết.
 
 ## Entities
 
@@ -164,6 +184,80 @@ Sunner đã đăng nhập nào đọc 3 cột này của BẤT KỲ hàng nào, 
 
 ---
 
+### KUDOS_KudosCard
+
+**Description**: Board đọc-được cho `/kudos` (F007_KudosLiveBoard) — KHÔNG phải bảng `public.kudos`
+trực tiếp, mà là view `public.kudos_cards` (migration `0006_kudos.sql`) join `kudos` với `public.users`
+2 lần (sender + receiver). View chạy `security_invoker = false` (SECURITY DEFINER-equivalent, bỏ qua
+RLS) nên `anon` VÀ `authenticated` đều đọc được — khác `profile_cards` (chỉ `authenticated`), vì
+`/kudos` là trang PUBLIC (BR-015). Danh sách cột tường minh, KHÔNG `SELECT *`: `public.users` còn có
+`email`/`role`/`locale`/`created_at`/`updated_at`, không cột nào trong số đó lọt qua view này. Nguồn:
+`supabase/migrations/0006_kudos.sql` (định nghĩa view), `src/dal/kudos-cards-query.ts` (`CardRow`,
+`selectCards`), `src/dal/kudos.ts` (`KudosCard`, `KudosPerson`, `toCard` — ráp lại 10 cột phẳng
+`sender_*`/`receiver_*` của view thành 2 object lồng nhau `sender`/`receiver`, thuần app-layer, view
+không có cấu trúc lồng nào ở DB).
+
+| Attribute | Type (as consumed) | Constraints | Description |
+|-----------|------|-------------|-------------|
+| id | `string` (UUID) | PK, NOT NULL | `kudos.id` |
+| content | `string` | NOT NULL | Nội dung lời cảm ơn |
+| hashtags | `string[]` | NOT NULL, `text[]` ở DB | Lọc qua GIN index (`idx_kudos_hashtags_gin`) |
+| imageUrls | `string[]` | NOT NULL, tối đa 5 phần tử (BR-007, ràng buộc UI — KHÔNG phải CHECK constraint ở DB) | Ảnh đính kèm |
+| heartCount | `number` | NOT NULL, `integer` ở DB, default `0` | Denormalized — CHỈ được ghi bởi trigger `sync_kudo_heart_count` (`0007_kudo_hearts.sql`); `authenticated` không có quyền UPDATE trực tiếp trên `kudos` (`REVOKE ALL`, chỉ `GRANT SELECT`) |
+| createdAt | `string` (ISO timestamp) | NOT NULL | Cũng là giá trị cursor keyset của Feed (AD-5 — không dùng `OFFSET`) |
+| sender.id, sender.fullName, sender.avatarUrl, sender.department, sender.kudosReceived | `string` / `string\|null` ×3 / `number` | `id` NOT NULL, còn lại nullable | Người gửi, join qua `kudos.sender_id`; `kudosReceived` là subquery đếm số kudo người NÀY từng NHẬN — không phải cột thật, tính lại mỗi lần đọc view; `department` đọc cột MỚI `public.users.department` (nullable, thêm ở `0006_kudos.sql`) |
+| receiver.id, receiver.fullName, receiver.avatarUrl, receiver.department, receiver.kudosReceived | (giống hệt 5 field trên) | (giống hệt trên) | Người nhận, join qua `kudos.receiver_id` — cùng 5 field, cùng nguồn `department` mới |
+
+**Relationships**:
+- `kudos.sender_id` VÀ `kudos.receiver_id` là FK THẬT tới `public.users.id` (`ON DELETE CASCADE`,
+  `0006_kudos.sql`) — 2 bảng ĐẦU TIÊN trong ERD này (`kudos`, `kudo_hearts`) có ràng buộc FK ở tầng
+  DB, khác 5 shape phía trên (không FK nào). Không vẽ node `users` riêng trong ERD vì `public.users`
+  không có entity riêng ở đây — `MODEL002_SupabaseUser` chỉ mô hình hoá object SDK, không phải bảng.
+- `KUDOS_KudoHeart.kudo_id` → `KUDOS_KudosCard.id` (vẽ trong ERD, `||--o{`) — 1 kudo có 0..N heart.
+- Đọc thêm bằng client hẹp `toKudosClient` (`src/dal/kudos-client.ts`), cùng shim pattern
+  `toAwardsClient`/`toProfileCardsClient` (tránh lỗi TS2589).
+
+**Discriminator Fields**: None.
+
+**Fail-open note**: `getKudosBoard` fail-open trả board rỗng toàn bộ (`highlight`/`feed`/`spotlight`/
+`filters` đều rỗng) khi BẤT KỲ trong 3 read `Promise.all` lỗi Supabase, trả null, hoặc throw — không
+phân biệt nguyên nhân, không có board "một phần" nào được render.
+
+---
+
+### KUDOS_KudoHeart
+
+**Description**: Một lượt thả tim của một Sunner trên một Kudo (F008_KudosHeartReaction) — bảng
+`public.kudo_hearts` (migration `0007_kudo_hearts.sql`). Đây là bảng ĐẦU TIÊN của dự án app code
+GHI trực tiếp (INSERT/DELETE), không chỉ đọc — mọi entity khác trong tài liệu này là read-only từ
+phía app. Nguồn: `supabase/migrations/0007_kudo_hearts.sql`, `src/dal/kudo-hearts.ts`
+(`getViewerHeartedKudoIds` — chỉ đọc `kudo_id`), `src/app/(public)/kudos/_actions/toggle-kudo-heart.ts`
+(`toggleKudoHeart` — đọc/ghi `id`, ghi `kudo_id`+`user_id`).
+
+| Attribute | Type (as consumed) | Constraints | Description |
+|-----------|------|-------------|-------------|
+| id | `string` (UUID) | PK, NOT NULL | Đọc lại trong `toggleKudoHeart` (`selectHeartId`) để biết có xoá hay không |
+| kudoId | `string` (UUID) | NOT NULL, FK → `kudos.id` `ON DELETE CASCADE` | Đọc trong `getViewerHeartedKudoIds`; ghi trong `toggleKudoHeart` |
+| userId | `string` (UUID) | NOT NULL, FK → `public.users.id` `ON DELETE CASCADE` | Chỉ dùng để lọc (`.eq()`) hoặc ghi khi INSERT — KHÔNG có dòng code app nào SELECT lại giá trị này |
+| special | `boolean` | NOT NULL, default `false` | KHÔNG có dòng code APP nào đọc/ghi `true` — dành cho luật "+2 tim ngày đặc biệt" đã hoãn (chưa có màn admin cấu hình, `plan.md`/`clarifications.md`); trigger DB đọc field này (logic DB, không phải app code) |
+| createdAt | `string` (ISO timestamp) | NOT NULL, default `now()` | Không có dòng code app nào đọc field này |
+
+**Relationships**:
+- `kudo_id` → `KUDOS_KudosCard.id` (FK thật, `ON DELETE CASCADE`) — vẽ trong ERD.
+- `user_id` → `public.users.id` (FK thật, `ON DELETE CASCADE`) — không vẽ node `users` riêng, cùng lý
+  do đã nêu ở `KUDOS_KudosCard`.
+- `UNIQUE (kudo_id, user_id)` — ràng buộc DB duy nhất chống race 2 click nhanh (BR-001), KHÔNG được
+  re-check bằng application code (đọc-rồi-ghi).
+
+**Discriminator Fields**: None.
+
+**Write-path note (khác mọi entity khác trong tài liệu này)**: `toggleKudoHeart` fail **CLOSED** —
+khác triết lý fail-open của mọi DAL đọc kể trên. `!user` → `{ok:false, reason:"unauthenticated"}`;
+mọi lỗi Postgres/DAL khác `23505` (unique-violation, tức đụng race) → `{ok:false, reason:"error"}`,
+không ghi gì. RLS enforce ở tầng Postgres, không phải application code — xem Validation Rules bên dưới.
+
+---
+
 ## Validation Rules
 
 ### AppLocale
@@ -194,9 +288,26 @@ No data. (Không có CHECK constraint nào ở view `profile_cards` — kế th�
 lỗi HOẶC không có hàng khớp `id` — không throw; caller chuyển thành `notFound()`, không có message
 hiển thị riêng.
 
+### KudosCard
+
+| Rule | Field | Constraint | Error Message |
+|------|-------|------------|----------------|
+| Không có UPDATE ngoài trigger | heartCount | `authenticated` không có `GRANT UPDATE` trên `public.kudos` (`REVOKE ALL` rồi chỉ `GRANT SELECT`, `0006_kudos.sql`) — chỉ trigger `SECURITY DEFINER` mới ghi được | N/A — ràng buộc DB, không có message vì app không bao giờ tự ghi cột này |
+| Fail-open | (toàn bộ board) | `getKudosBoard` fail-open trả board rỗng khi Supabase lỗi/không có dòng — không throw | N/A — không có message, trang render empty-state |
+
+### KudoHeart
+
+| Rule | Field | Constraint | Error Message |
+|------|-------|------------|----------------|
+| Một tim/người/kudo | (kudo_id, user_id) | `UNIQUE (kudo_id, user_id)` ở DB (`0007_kudo_hearts.sql`) — INSERT thứ 2 văng lỗi Postgres `23505`, `toggleKudoHeart` bắt mã này và đọc lại thay vì coi là lỗi | N/A — không throw ra ngoài, `applyToggle` tự re-read và trả `hearted: true` |
+| Chặn tự thả tim | user_id | RLS policy `kudo_hearts_insert_own`: `WITH CHECK (user_id = auth.uid() AND user_id <> (SELECT sender_id FROM kudos WHERE id = kudo_id))` — chặn cả khi action bị gọi trực tiếp, bỏ qua nút đã disable trên UI | N/A — Postgres bác INSERT, `toggleKudoHeart` bắt lỗi trả `{ok:false, reason:"error"}` |
+| Chỉ xoá tim của chính mình | user_id | RLS policy `kudo_hearts_delete_own`: `USING (user_id = auth.uid())` | N/A — Postgres bác DELETE nếu cố xoá tim người khác (không có đường nào trong UI thử làm việc này) |
+| Fail-open (đọc) | (toàn bộ set đã thả tim) | `getViewerHeartedKudoIds` fail-open trả `Set` rỗng khi Supabase lỗi/không có dòng | N/A — mọi nút tim hiện "chưa thả", không có message |
+| Fail-closed (ghi) | (toàn bộ thao tác thả/bỏ tim) | `toggleKudoHeart` fail-closed — bất kỳ lỗi nào (khác `unauthenticated`/`23505`) đều trả `{ok:false, reason:"error"}`, không ghi gì | Không có message cố định trong DAL — UI tự quyết định hiển thị gì cho `ok:false` |
+
 ---
 
 ## Summary
 
-- **Total Entities**: 5 (2 shape đọc read-only từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
-- **Total Relationships**: 0 (không có FK nào giữa 5 shape trong ERD; `profile_cards.id` phái sinh 1-1 từ `public.users.id` nhưng không vẽ FK — xem ghi chú "as field type"/"Relationships" trong từng mục ở trên)
+- **Total Entities**: 7 (4 shape đọc/ghi từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`, view `public.kudos_cards`, bảng `public.kudo_hearts`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
+- **Total Relationships**: 2 FK thật (`kudos.sender_id`/`kudos.receiver_id` → `public.users.id`, biểu diễn qua `KUDOS_KudosCard`; `kudo_hearts.kudo_id` → `kudos.id` VÀ `kudo_hearts.user_id` → `public.users.id`, biểu diễn qua `KUDOS_KudoHeart`) — 2 bảng ĐẦU TIÊN trong ERD này có FK ở tầng DB, chỉ 1 cạnh (`KUDOS_KudosCard ||--o{ KUDOS_KudoHeart`) được vẽ trong sơ đồ vì `public.users` không có node riêng trong ERD (xem ghi chú dưới sơ đồ); 5 shape còn lại vẫn 0 FK như trước
