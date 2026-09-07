@@ -82,8 +82,8 @@ graph TB
         NextPathGuard["src/utils/url/next-path.ts (safeNextPath)"]
         I18nCfg["src/i18n/request.ts + src/lib/i18n/locale.ts"]
     end
-    subgraph "External (ngoài repo)"
-        Supabase["Supabase Auth + PostgREST — instance local 'saa-app'"]
+    subgraph "External Services"
+        Supabase["Supabase Auth + PostgREST — instance local 'saa-app' (config/migrations committed tai supabase/)"]
         Google["Google OAuth"]
     end
 
@@ -169,7 +169,7 @@ tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `src/configs
 | i18n | next-intl (no-routing, cookie `NEXT_LOCALE`) | 4.14.2 |
 | Auth SDK | `@supabase/ssr` | 0.12.5 |
 | Auth SDK | `@supabase/supabase-js` | 2.115.0 |
-| Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, ngoài repo | API `http://127.0.0.1:55321` |
+| Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, config/migrations committed tại `supabase/` | API `http://127.0.0.1:55321` |
 | Backend (in-repo) | Next.js Server Actions + Route Handlers (không có service backend riêng) | — |
 | Database | `public.users` (cột `role`, RLS own-row) + `public.awards` (F004, 6 hàng × locale, RLS mở cho `anon`+`authenticated`) — 2 bảng, cả hai đọc qua PostgREST | — |
 | Package manager | pnpm (`packageManager` field, không dùng corepack) | 10.33.2 |

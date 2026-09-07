@@ -169,7 +169,7 @@ Không vẽ quan hệ — bảng độc lập, không tham chiếu `public.users
 
 | Entity | Table | Used for | Action |
 |---|---|---|---|
-| `Award` (chưa có MODEL### — cấp bởi `rebuild-spec` Core pass kế tiếp) | `public.awards` *(saa-app, Supabase ngoài repo)* | Nguồn sự thật nội dung 6 hạng mục giải | A1 |
+| `Award` (chưa có MODEL### — cấp bởi `rebuild-spec` Core pass kế tiếp) | `public.awards` *(Supabase `saa-app`, schema committed tại `supabase/migrations/` trong repo)* | Nguồn sự thật nội dung 6 hạng mục giải | A1 |
 | `AppLocale` (MODEL001, tái dùng nguyên trạng từ F002) | `NEXT_LOCALE` cookie | Lọc `awards.locale`, nhãn chrome tĩnh | A1 |
 
 #### Polymorphic Behavior
@@ -179,11 +179,13 @@ phải nhánh hành vi theo `code-formats.md` § DISC vs DEC.
 
 ### 4.3 Schema — bảng mới `public.awards`
 
-Migration `0003_awards_table.sql` — **đã shipped, KHÔNG nằm trong repo này**: repo agentic-coding-
-hands-on không có thư mục `supabase/` và không được phép có. Migration thật sống ở dự án Supabase
-external `saa-app` (`~/Desktop/Claude-and-mormoph/saa-app/supabase/migrations/0003_awards_table.sql`),
-áp bằng `supabase migration up` — **không** `supabase db reset` (instance local đang giữ 142 tài
-khoản `auth.users` thật, reset sẽ xoá sạch).
+Migration `supabase/migrations/0003_awards_table.sql` — **đã shipped, committed trong chính repo
+này** cùng `supabase/config.toml`. `supabase start` từ repo root áp toàn bộ migration (bao gồm
+seed rows của bảng này); để áp migration mới lên một stack đang chạy, dùng `supabase migration
+up` — **không** `supabase db reset` (instance local đang giữ 166 tài khoản `auth.users` thật,
+reset sẽ xoá sạch). Seed rows nằm trong chính migration này thay vì `supabase/seed.sql` vì
+Supabase chỉ đọc `seed.sql` khi `supabase db reset` chạy — đặt seed ở đó nghĩa là nó chỉ tới được
+qua đúng lệnh không được phép gọi.
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.awards (

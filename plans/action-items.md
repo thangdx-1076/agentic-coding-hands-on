@@ -297,3 +297,7 @@
 - Bản ghi cũ trong memory nói ngược ("repo không có `supabase/` là cố ý, đừng bao giờ `supabase init` ở đây") — đã sửa lại.
 - Vài file trong `docs/vi/**` còn mô tả Supabase là "project ngoài repo" — đang giao doc-writer sửa. `docs/journals/**` cố ý giữ nguyên vì là ghi chép lịch sử.
 - `supabase migration up` chỉ áp file pending, không kiểm nội dung file đã áp. Sửa một migration đã chạy sẽ không tự áp lại — phải viết migration mới.
+
+### Nợ lại (bổ sung 0830)
+
+- `docs/vi/system/overview.md:9` còn câu sai: "Không có database nghiệp vụ riêng của app này" — nay đã có `public.awards`. File này machine-owned, chỉ `rebuild-spec` được ghi đè toàn bộ; sửa tay sẽ bị ghi đè lượt sau. Chạy `/tkm:rebuild-spec --artifact overview` khi tiện. Cùng dòng đó còn trỏ `README.md:35-42`, số dòng đã đổi sau khi thêm mục Database.

@@ -3,7 +3,7 @@
 **Project**: SAA 2025 — Login
 **Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không sở hữu schema CSDL nào (không có ORM model, không có migration). Toàn bộ persistence nghiệp vụ nằm ở một instance Supabase local bên ngoài repo (`saa-app`, `http://127.0.0.1:55321`) — thứ duy nhất app đọc được từ đó là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` mà repo không sở hữu schema, cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards`, đọc read-only qua DAL `src/dal/awards.ts`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 4 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa, 1 do SDK/bảng ngoài định nghĩa và chỉ bị đọc một phần, 1 do bảng ngoài định nghĩa và đọc trọn vẹn read-only) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 4 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 1 do repo định nghĩa qua SQL migration và đọc trọn vẹn read-only) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -109,7 +109,7 @@ Các field khác của kiểu `User` thật (vd. `user_metadata`, `app_metadata`
 
 ### AWARD_Award
 
-**Description**: 6 hạng mục giải thưởng SAA 2025 hiển thị trên `/awards` (F004_AwardSystemPage) — bảng THỨ 2 mà repo đọc từ Supabase `saa-app` (sau `public.users`), read-only, không tham chiếu entity nào khác. Nguồn: `src/dal/awards.ts` (`Award`, `getAwards`), migration `0003_awards_table.sql` (đã shipped, sống ở dự án Supabase `saa-app`, KHÔNG nằm trong repo này).
+**Description**: 6 hạng mục giải thưởng SAA 2025 hiển thị trên `/awards` (F004_AwardSystemPage) — bảng THỨ 2 mà repo đọc từ Supabase `saa-app` (sau `public.users`), read-only, không tham chiếu entity nào khác. Nguồn: `src/dal/awards.ts` (`Award`, `getAwards`), migration `supabase/migrations/0003_awards_table.sql` (đã shipped, committed trong chính repo này — áp bằng `supabase migration up`).
 
 | Attribute | Type (as consumed) | Constraints | Description |
 |-----------|------|-------------|-------------|
