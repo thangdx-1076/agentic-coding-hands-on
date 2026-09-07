@@ -198,5 +198,52 @@
       "emptyReceived": "You haven't received any Kudos yet.",
       "emptySent": "You haven't sent any Kudos yet."
     }
+  },
+  "kudos": {
+    "banner": {
+      "title": "Recognition and Appreciation System",
+      "logoAlt": "SAA 2025 KUDOS"
+    },
+    "compose": {
+      "placeholder": "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
+      "ariaLabel": "Write Kudos"
+    },
+    "highlight": {
+      "eyebrow": "Sun* Annual Awards 2025",
+      "heading": "HIGHLIGHT KUDOS",
+      "filterHashtag": "Hashtag",
+      "filterDepartment": "Department",
+      "prev": "View previous kudo",
+      "next": "View next kudo",
+      "counter": "{current}/{total}"
+    },
+    "spotlight": {
+      "eyebrow": "Sun* Annual Awards 2025",
+      "heading": "SPOTLIGHT BOARD",
+      "totalSuffix": "KUDOS",
+      "searchPlaceholder": "Tìm kiếm",
+      "searchSubmit": "Search"
+    },
+    "feed": {
+      "eyebrow": "Sun* Annual Awards 2025",
+      "heading": "ALL KUDOS",
+      "empty": "Hiện tại chưa có Kudos nào.",
+      "detail": "View details",
+      "copyLink": "Copy Link",
+      "copiedToast": "Link copied — ready to share!",
+      "heartLabel": "{count} hearts",
+      "signInToHeart": "Sign in to give a heart"
+    },
+    "sidebar": {
+      "received": "Kudos received:",
+      "sent": "Kudos sent:",
+      "hearts": "Hearts received:",
+      "boxOpened": "Secret Boxes opened:",
+      "boxUnopened": "Secret Boxes left:",
+      "openGift": "Open Secret Box 🎁",
+      "rankBoard": "10 SUNNERS WITH THE NEWEST RANK-UP",
+      "giftBoard": "10 SUNNERS WHO JUST RECEIVED GIFTS",
+      "emptyBoard": "Chưa có dữ liệu"
+    }
   }
 }
