@@ -1,0 +1,43 @@
+Command: pnpm test:e2e tests/e2e/standards.spec.ts --reporter=list
+Exit code: 0
+Status: ALL PASS (14/14)
+
+Test Results:
+✓ [C1] Main panel renders with h1 title 'Thể lệ' and overflow-y:auto
+✓ [C2] No header or footer chrome elements
+✓ [C3] Three sections with correct h2 headings in order
+✓ [C4] Section 1: Four hero badge images with correct alt texts and conditions
+✓ [C5] Section 2: Six badge images with caption text in correct order
+✓ [C6] Section 2 intro and Section 3 body contain heart emoji
+✓ [C7] Footer: One close button, one write KUDOS link, no disabled attributes
+✓ [C8] Panel scrolls when content overflows at 1280x720 viewport
+✓ [C9] At 1440x2400 viewport, content fits without scrolling (scrollHeight - clientHeight <= 1)
+✓ [C10] From home via footer link to standards, close button returns to home
+✓ [C11] Direct load to standards, close button fallback to home when no history
+✓ [C12] Write KUDOS button navigates to /kudos
+✓ [C13] English locale renders correct text: 'Rules', 'Close', 'Write KUDOS'
+✓ [C14] No page errors on load
+
+Total time: 10.2s
+
+Root Cause Analysis:
+Tests C10, C11, C12 were failing due to a race condition with Next.js App Router's
+async navigation. The application's `<Link>` and `router.push()` transitions happen
+asynchronously (RSC fetch inside useTransition), but the test assertions checked
+page.url() immediately after the click, before the transition completed.
+
+Fix Applied:
+Added `await page.waitForURL(targetPath, { timeout: 5000 })` guards after each navigation,
+following the same pattern established in home.spec.ts and login.spec.ts. This ensures
+the navigation transition completes before assertions run.
+
+Changes:
+- C10: Added `await page.waitForURL("/standards")` after standards link click
+- C10: Added `await page.waitForURL("/")` after close button click
+- C11: Added `await page.waitForURL("/")` after close button click
+- C12: Added `await page.waitForURL("/kudos")` after write KUDOS link click
+
+Assertions Remain Tight:
+- C10/C11 assertions still verify exact pathname match (pathname === "/")
+- C12 assertion verifies URL contains "/kudos"
+- No assertions were weakened; no `.first()` was added; no timeouts were extended

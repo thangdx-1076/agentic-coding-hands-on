@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit, no output",
+      "ts": "2026-09-07T04:45:00.000Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint, no output",
+      "ts": "2026-09-07T04:45:10.000Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style!",
+      "ts": "2026-09-07T04:45:20.000Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "25 files / 156 tests passed; All files 100% stmts/branch/funcs/lines",
+      "ts": "2026-09-07T04:45:40.000Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Storybook build completed successfully",
+      "ts": "2026-09-07T04:46:30.000Z"
+    },
+    {
+      "command": "pnpm test:e2e tests/e2e/standards.spec.ts --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "14 passed (19.2s) \u2014 C1-C14 all green after the badge-asset re-crop",
+      "ts": "2026-09-07T04:43:00.000Z"
+    },
+    {
+      "command": "pnpm test:e2e tests/e2e/home.spec.ts tests/e2e/awards.spec.ts tests/e2e/login.spec.ts --grep-invert \"@auth|@local-db\"",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "51 passed, 3 skipped (@local-db), 0 failed \u2014 no regression from the site-footer change or the IconPencil promotion",
+      "ts": "2026-09-07T04:44:00.000Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Next.js 16.3.4 (Turbopack) \u2014 compiled in 6.8s, TypeScript clean, 9/9 static pages generated; route table includes /standards",
+      "ts": "2026-09-07T04:58:00.000Z"
+    }
+  ]
+}

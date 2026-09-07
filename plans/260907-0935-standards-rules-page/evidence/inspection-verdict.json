@@ -1,0 +1,43 @@
+{
+  "score": 9.3,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "GET /standards renders for an anonymous visitor: title, 3 sections, 4 Hero tiers, 6-badge grid, footer actions",
+    "No site chrome: 0 <header>, 0 <footer>, exactly one a[href=\"/kudos\"] — the MoMorph design draws none | evidence: No site chrome: 0 <header>, 0 <footer>, exactly one a[href=\"/kudos\"] — verified via src/proxy.ts matcher (not in isProtectedPage) and standards-screen.tsx (no SiteHeader/SiteFooter import)",
+    "Panel itself scrolls (overflow-y:auto), not the window; no scroll when content fits | evidence: main is the sole scroll container in standards-screen.tsx",
+    "\"Đóng\" returns to the previous page, falling back to ROUTES.HOME on a direct load; \"Viết KUDOS\" navigates to /kudos | evidence: \"Đóng\" returns to the previous page via navigation.canGoBack, falling back to ROUTES.HOME on a direct load; \"Viết KUDOS\" navigates to /kudos",
+    "vi and en both render from the standards i18n namespace; badge 6 reads ROOT FURTHER | evidence: (verified no 'FUTHER' string remains in messages/ or src/)",
+    "MoMorph TC_THELE_GUI_001/002/004 + TC_THELE_FUN_001/002/003/004 asserted by tests/e2e/standards.spec.ts (C1-C14) | evidence: , C10/C11 confirmed tightened to exact-pathname checks with waitForURL guards, no vacuous assertions remain",
+    "Repo gate holds: tsc, lint, format, unit coverage 100%, storybook, full Playwright suite | evidence: Repo gate holds: tsc, lint, format, unit coverage 100% (use-standards-close.ts covered by colocated test, 3/3 branches), storybook build, full Playwright suite (14/14 standards + 51 passed/3 skipped regression)"
+  ],
+  "regressionChecked": [
+    "site-footer.tsx: only href literal -> ROUTES.STANDARDS swap, same value, no behavior change",
+    "widget-button.tsx: only IconPencil import path updated, no behavior change",
+    "IconPencil promotion: old (home)/_components/icons/icon-pencil.tsx(+.stories.tsx) removed, grep confirms zero remaining references to the old path, new location correctly consumed by both widget-button.tsx and standards-footer-actions.tsx",
+    "proxy.ts: /standards added to matcher array only, NOT added to isProtectedPage (which only tests ROUTES.TODO) — route is genuinely public, confirmed by reading proxy() body",
+    "asset dimensions verified with `file`: all 6 badge PNGs are exactly 64x64 matching SECRET_BOX_BADGE_SIZE; 4 hero PNGs match their declared width/height in standards-copy.ts — no next/image dimension-mismatch risk",
+    "vitest.config.ts include glob src/app/**/_hooks/**/*.ts covers use-standards-close.ts, confirming the 100% coverage gate is real for this file",
+    "messages/{vi,en}.json standards namespace keys are structurally parallel (spot-checked both diffs), consistent with messages-parity.test.ts passing"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "maintainability",
+      "location": "src/app/(public)/standards/_components/secret-box-badge.stories.tsx:19",
+      "summary": "Stale comment: \"80×88 source — shorter badge, still lines up in the fixed 104px frame.\" This describes the PRE-fix asset shape and a fixed h-[104px] frame that clarifications.md § Session bổ sung 5 says was deliberately removed from secret-box-badge.tsx after the badge assets were re-cropped to a uniform 64×64 (confirmed: the component has no h-[104px] frame and no per-badge height table). The comment now describes behavior that no longer exists and will mislead the next reader into thinking Revival is still a differently-sized asset. Fix: replace with something like \"All 6 badges are the uniform 64×64 circle after the session-5 re-crop; caption is the sibling <p>, never baked into the image.\"",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "low",
+      "category": "style",
+      "location": "tests/e2e/standards.spec.ts:357",
+      "summary": "C12's final assertion (`expect(page.url()).toContain(\"/kudos\")`) is still the loose \"contains\" form the clarifications log called out as a pattern to avoid, though here it's preceded by `page.waitForURL(\"/kudos\", ...)` which already forces an exact match, so it isn't vacuous in practice — the redundant loose check afterward is just noise, not a gap.",
+      "disposition": "Defer"
+    }
+  ]
+}

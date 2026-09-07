@@ -1,0 +1,410 @@
+[
+  {
+    "filePath": "src/app/_actions/set-locale.ts",
+    "messages": [
+      {
+        "ruleId": "C018",
+        "severity": 1,
+        "message": "Error logging should use structured format (object) instead of string concatenation",
+        "line": 40,
+        "column": 4,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": "error-handling"
+      },
+      {
+        "ruleId": "C018",
+        "severity": 1,
+        "message": "Error logging should provide guidance on what to do next",
+        "line": 40,
+        "column": 4,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": "error-handling"
+      },
+      {
+        "ruleId": "C030",
+        "severity": 1,
+        "message": "Use custom error classes instead of generic system error constructors",
+        "line": 40,
+        "column": 5,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 3,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/_actions/logout.ts",
+    "messages": [
+      {
+        "ruleId": "C029",
+        "severity": 1,
+        "message": "Empty catch block - errors are silently ignored",
+        "line": 19,
+        "column": 5,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/auth/callback/route.ts",
+    "messages": [
+      {
+        "ruleId": "C029",
+        "severity": 1,
+        "message": "Empty catch block - errors are silently ignored",
+        "line": 40,
+        "column": 7,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S037",
+        "severity": 1,
+        "message": "Handler missing anti-cache headers: Cache-Control, Pragma, Expires (nextjs)",
+        "line": 17,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S055",
+        "severity": 1,
+        "message": "REST endpoint 'anonymous function' does not validate Content-Type header. Add validation for 'application/json' or other expected types.",
+        "line": 17,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 3,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/i18n/request.ts",
+    "messages": [
+      {
+        "ruleId": "C029",
+        "severity": 1,
+        "message": "Catch block does not log exception",
+        "line": 33,
+        "column": 5,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/lib/supabase/server.ts",
+    "messages": [
+      {
+        "ruleId": "C029",
+        "severity": 1,
+        "message": "Empty catch block - errors are silently ignored",
+        "line": 32,
+        "column": 13,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/(public)/(home)/_utils/countdown.ts",
+    "messages": [
+      {
+        "ruleId": "C030",
+        "severity": 1,
+        "message": "Use custom error classes instead of throwing variables",
+        "line": 7,
+        "column": 64,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/mocks/handlers.ts",
+    "messages": [
+      {
+        "ruleId": "C067",
+        "severity": 1,
+        "message": "Hardcoded token detected. Move to secure environment variable",
+        "line": 43,
+        "column": 21,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": "configuration"
+      },
+      {
+        "ruleId": "S037",
+        "severity": 1,
+        "message": "Handler missing anti-cache headers: Cache-Control, Pragma, Expires (express)",
+        "line": 41,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S037",
+        "severity": 1,
+        "message": "Handler missing anti-cache headers: Cache-Control, Pragma, Expires (express)",
+        "line": 52,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S037",
+        "severity": 1,
+        "message": "Handler missing anti-cache headers: Cache-Control, Pragma, Expires (express)",
+        "line": 57,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S037",
+        "severity": 1,
+        "message": "Handler missing anti-cache headers: Cache-Control, Pragma, Expires (express)",
+        "line": 67,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 5,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/(public)/standards/_components/secret-box-badge.tsx",
+    "messages": [
+      {
+        "ruleId": "S006",
+        "severity": 1,
+        "message": "Template literal exposes sensitive code 'SECRET_BOX_BADGE_SIZE' - avoid including codes in templates",
+        "line": 33,
+        "column": 19,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/(public)/standards/_shared/build-standards-copy.ts",
+    "messages": [
+      {
+        "ruleId": "S006",
+        "severity": 1,
+        "message": "Returning sensitive code 'secretBoxSection' in plaintext - codes should be encrypted or excluded from responses",
+        "line": 42,
+        "column": 5,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S006",
+        "severity": 1,
+        "message": "Object property 'secretBoxSection' exposes sensitive code in plaintext - use encrypted transmission or exclude from response",
+        "line": 42,
+        "column": 5,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 2,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/app/(public)/standards/_shared/standards-copy.ts",
+    "messages": [
+      {
+        "ruleId": "S006",
+        "severity": 1,
+        "message": "Object property 'secretBoxSection' exposes sensitive code in plaintext - use encrypted transmission or exclude from response",
+        "line": 152,
+        "column": 3,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  },
+  {
+    "filePath": "src/proxy.ts",
+    "messages": [
+      {
+        "ruleId": "S055",
+        "severity": 1,
+        "message": "REST endpoint 'anonymous function' does not validate Content-Type header. Add validation for 'application/json' or other expected types.",
+        "line": 27,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S055",
+        "severity": 1,
+        "message": "REST endpoint 'anonymous function' does not validate Content-Type header. Add validation for 'application/json' or other expected types.",
+        "line": 57,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S055",
+        "severity": 1,
+        "message": "REST endpoint 'anonymous function' does not validate Content-Type header. Add validation for 'application/json' or other expected types.",
+        "line": 77,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      },
+      {
+        "ruleId": "S055",
+        "severity": 1,
+        "message": "REST endpoint 'anonymous function' does not validate Content-Type header. Add validation for 'application/json' or other expected types.",
+        "line": 96,
+        "column": 1,
+        "nodeType": null,
+        "messageId": null,
+        "endLine": null,
+        "endColumn": null,
+        "category": null
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "warningCount": 4,
+    "fatalErrorCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": null
+  }
+]

@@ -352,3 +352,28 @@
 ### Nợ lại
 
 - (không có)
+
+## 260907-0935 — standards-rules-page
+
+### Tôi cần làm
+
+- [ ] Duyệt 20 chuỗi EN của namespace `standards` trong `messages/en.json` — toàn bộ là máy dịch từ MoMorph (`is_reviewed: false`), chưa ai đọc lại. Riêng `heroSection.tiers.superHero.description` không có bản MoMorph nào nên là dịch tay.
+- [ ] Quyết định khi nào làm `/kudos` — nút "Viết KUDOS" ở `/standards` hiện dẫn 404, cùng 4 link cũ đã trỏ sẵn vào đó.
+- [ ] Cân nhắc chạy `/tkm:rebuild-spec` một lượt Core: doc-writer phát hiện `docs/vi/generated/*` vẫn trích đường dẫn cũ trước khi migrate sang `src/` (vd `app/page.tsx`, `lib/supabase/client.ts`) cho F001–F003. Ngoài phạm vi F005 nên chưa sửa.
+
+### Decisions
+
+- Làm `/standards` thành route page thay vì modal — footer đã trỏ sẵn `href="/standards"`, và không chỗ nào trong code mở modal này.
+- Không bọc SiteHeader/SiteFooter — design không vẽ chrome, lối ra là nút "Đóng".
+- Nội dung tĩnh qua i18n namespace `standards`, không thêm bảng Supabase (khác `/awards`).
+- Nút "Đóng" dùng `window.navigation.canGoBack` (đo thật trong Chromium), fallback `push(ROUTES.HOME)` cho Firefox/Safari.
+- Promote `IconPencil` từ `(home)/_components/icons/` lên `(public)/_components/icons/` thay vì dùng `public/home/Pen.svg` — file SVG đó `fill="white"`, tàng hình trên nút vàng.
+- Badge dùng `ROOT FURTHER` (theo `character`), không theo tên layer `ROOT FUTHER`.
+- Thêm `!build` vào `~/.claude/.skignore` để chạy được `pnpm build` — user chốt khi evidence gate chặn.
+
+### Nợ lại
+
+- Trạng thái `disabled` của 2 nút footer (TC_THELE_GUI_003 / TC_THELE_FUN_005) chưa làm — không có điều kiện runtime nào kích hoạt. Mở lại nếu sau này có (vd chưa đăng nhập).
+- Chưa làm overlay thật bằng intercepting route (`@modal` + `(.)standards`). Muốn đúng hành vi drawer thì đó là đường đi, không phải viết lại.
+- Nhánh "Navigation API vắng mặt" của `useStandardsClose` chỉ được unit test phủ — Playwright ở repo này chỉ chạy Chromium nên e2e không chạm tới.
+- Bump minor 0.4.0 → 0.5.0 (không hỏi): khớp tiền lệ awards — route công khai mới cũng đã bump minor lên 0.4.0.
