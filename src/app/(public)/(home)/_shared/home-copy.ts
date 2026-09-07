@@ -148,6 +148,6 @@ export const defaultHomeCopy: HomeCopy = {
     // Menu content inferred from the 2 widget icons — user override pending,
     // see clarifications.md § Widget button.
     kudosItem: "Sun* Kudos",
-    awardsItem: "Awards Information",
+    awardsItem: "Award Information",
   },
 };

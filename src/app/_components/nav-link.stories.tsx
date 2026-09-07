@@ -50,7 +50,7 @@ export const Active: Story = {
 export const Inactive: Story = {
   args: {
     href: "/awards",
-    children: "Awards Information",
+    children: "Award Information",
   },
   parameters: {
     nextjs: {

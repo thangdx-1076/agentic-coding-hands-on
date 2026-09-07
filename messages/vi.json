@@ -15,7 +15,7 @@
   "home": {
     "nav": {
       "about": "About SAA 2025",
-      "awardsInfo": "Awards Information",
+      "awardsInfo": "Award Information",
       "kudos": "Sun* Kudos"
     },
     "header": {
@@ -100,11 +100,11 @@
     "widget": {
       "label": "Hành động nhanh",
       "kudosItem": "Sun* Kudos",
-      "awardsItem": "Awards Information"
+      "awardsItem": "Award Information"
     }
   },
   "awards": {
-    "caption": "Sun* annual awards 2025",
+    "caption": "Sun* Annual Awards 2025",
     "heading": "Hệ thống giải thưởng SAA 2025",
     "navLabel": "Danh mục giải thưởng",
     "quantityLabel": "Số lượng giải thưởng:",

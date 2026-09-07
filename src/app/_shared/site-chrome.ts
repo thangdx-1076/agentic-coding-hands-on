@@ -48,7 +48,7 @@ export const defaultSiteChromeCopy: SiteChromeCopy = {
     about: "About SAA 2025",
     // Design says "Award Information" (singular); spec A1.3/7.3 + TC ID-21/23
     // win as content acceptance (clarifications.md § Header).
-    awardsInfo: "Awards Information",
+    awardsInfo: "Award Information",
     kudos: "Sun* Kudos",
   },
   header: {

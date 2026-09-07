@@ -18,7 +18,7 @@ const ITEM_COUNT = 2;
  * Fixed bottom-right "quick actions" widget (mm:5022:15169
  * `mms_6_Widget Button`,
  * https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/i87tDx10uM). Menu
- * content (Sun* Kudos / Awards Information) is INFERRED from the trigger's
+ * content (Sun* Kudos / Award Information) is INFERRED from the trigger's
  * 2 icons, user override pending — see clarifications.md § Widget button.
  * Open/close + keyboard nav reuse `useMenuKeyboardNav`, same hook and
  * pattern as `components/login/language-selector.tsx`.
