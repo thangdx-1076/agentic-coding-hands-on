@@ -26,7 +26,7 @@ truy cập không có cách nào xem thông tin sự kiện SAA 2025 mà không 
 kiện, danh sách giải thưởng, quảng bá Sun* Kudos, và một header/footer nhận biết trạng thái đăng
 nhập (đã đăng nhập thấy thêm chuông thông báo + menu tài khoản; admin thấy thêm Trang quản trị).
 **Scope:** Hiển thị công khai toàn bộ nội dung marketing SAA 2025; điều hướng tới các trang chi
-tiết (Awards Information, Sun* Kudos, Tiêu chuẩn chung, Hồ sơ, Trang quản trị); header/footer nhận
+tiết (Award Information, Sun* Kudos, Tiêu chuẩn chung, Hồ sơ, Trang quản trị); header/footer nhận
 biết trạng thái đăng nhập và vai trò.
 **Non-Scope:** Không tự implement 5 trang đích (`/awards`, `/kudos`, `/standards`, `/profile`,
 `/admin`) — chỉ link tới; không có bảng notifications thật (panel luôn rỗng); không đổi hành vi
@@ -50,7 +50,7 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 
 | D### | Decision | Default proposal | Rationale | Blocks work |
 |------|----------|-------------------|-----------|--------------|
-| D001 | Nội dung thật của menu widget hành động nhanh (spec không liệt kê option) | Suy diễn từ 2 icon: bút chì → "Sun* Kudos" (`/kudos`), icon SAA → "Awards Information" (`/awards`) — đã implement theo suy diễn này | Cần ship được cái gì đó thay vì để trống; 2 route suy ra đều đã có trong nav nên rủi ro thấp nếu sai | no |
+| D001 | Nội dung thật của menu widget hành động nhanh (spec không liệt kê option) | Suy diễn từ 2 icon: bút chì → "Sun* Kudos" (`/kudos`), icon SAA → "Award Information" (`/awards`) — đã implement theo suy diễn này. *(Sửa 2026-09-07: chữ hiển thị đổi "Awards Information" → "Award Information" — implementation trước đó lấy nhầm tên node MoMorph "Awards Information Navigation Links" làm nội dung, đúng ra content thật là `character` của node = "Award Information", số ít.)* | Cần ship được cái gì đó thay vì để trống; 2 route suy ra đều đã có trong nav nên rủi ro thấp nếu sai | no |
 | D002 | Nội dung thật của khối thông tin sự kiện — design ghi "26/12/2025 · Âu Cơ Art Center · Livestream", spec/TC ghi "18h30 · Nhà hát nghệ thuật quân đội · Group Facebook Sun* Family" | Dùng theo spec/TC (TC ID-14 là acceptance criteria, design chỉ là authority cho phần nhìn) | TC là nguồn xác nhận nội dung được chấp nhận, ưu tiên hơn văn bản trong file design | no |
 
 ## 4. Requirements
@@ -182,7 +182,7 @@ không để người dùng chờ một tính năng chưa tồn tại mà không
 ### US004_UseQuickActionWidget — Use Quick Action Widget
 
 **Actor:** Khách truy cập (Anonymous hoặc Authenticated)
-**Goal:** Mở menu hành động nhanh nổi để đi thẳng tới Sun* Kudos hoặc Awards Information.
+**Goal:** Mở menu hành động nhanh nổi để đi thẳng tới Sun* Kudos hoặc Award Information.
 **Business value:** Rút ngắn thao tác tới 2 tính năng thường dùng mà không cần cuộn/tìm trong
 header, đặc biệt hữu ích khi đang ở cuối trang.
 

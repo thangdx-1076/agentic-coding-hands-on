@@ -281,7 +281,13 @@ promote.)*
   `NGƯỜI GỬI KUDOS: SƯU TẬP TRỌN BỘ 6 ICON, NHẬN NGAY PHẦN QUÀ BÍ ẨN`, `KUDOS QUỐC DÂN`.
   Container panel bọc cả 3 `<section>` có `overflow-y: auto` (FR-301/302).
 - Section 1: đúng 4 khối tier (mỗi khối = `<img alt="{tên tier}">` + dòng điều kiện text + đoạn
-  mô tả text), thứ tự New → Rising → Super → Legend.
+  mô tả text), thứ tự New → Rising → Super → Legend. Badge ảnh và dòng điều kiện nằm **cùng 1
+  hàng** (`flex flex-row`, cùng y-band theo design frame `3204:6161` 400×72px), đoạn mô tả xuống
+  hàng dưới. *(Sửa 2026-09-07: implementation ban đầu xếp badge/điều kiện/mô tả thành cột dọc
+  [`flex flex-col`] — mỗi khối tier cao ~102px thay vì 72px, đẩy lưới 6 icon Secret Box xuống dưới
+  fold. `HeroBadgeTierRow` sửa lại `flex flex-row items-center` cho badge+điều kiện. Lưu ý: TC
+  GUI_001/SC-002 chỉ assert 4 chuỗi điều kiện TỒN TẠI trong DOM, không assert layout — bug này lọt
+  qua test string-match, chỉ lộ ra khi so khớp hình học (x/y) với design.)*
 - Section 2: đúng 6 ô badge (mỗi ô = `<img alt="">` decorative + `<p>{CAPTION}</p>` text thật,
   KHÔNG alt-text thay caption — caption phải là DOM text để E2E assert được), lưới 3 cột.
 - Section 3: 1 đoạn `<p>` chứa emoji ❤️ nguyên văn.

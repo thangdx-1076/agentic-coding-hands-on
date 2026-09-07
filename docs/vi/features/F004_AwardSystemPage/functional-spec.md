@@ -97,8 +97,12 @@ nhận mỗi thẻ có tiêu đề + mô tả + số lượng + giá trị riên
 
 ### Trang Hệ thống giải thưởng (2xx)
 
-- **FR-201** Trang hiển thị `<h1>` "Hệ thống giải thưởng SAA 2025" với caption phụ "Sun* annual
-  awards 2025" phía trên. *(TC ID-4)*
+- **FR-201** Trang hiển thị `<h1>` "Hệ thống giải thưởng SAA 2025" với caption phụ "Sun* Annual
+  Awards 2025" phía trên (viết hoa — design node `313:8454`, `character`: "Sun* Annual Awards
+  2025"). *(TC ID-4)* *(Sửa 2026-09-07: trước đó ghi chữ thường "Sun* annual awards 2025" theo
+  suy luận thống nhất với caption trang chủ — sai; trang chủ (node `2167:9070`) và `/awards`
+  (node `313:8454`) có 2 design node khác nhau thật, mỗi trang theo đúng node của mình, không
+  thống nhất.)*
 - **FR-202** Thứ tự DOM tổng thể: header → h1+caption → nav → 6 section giải → khối Sun* Kudos
   → footer. *(TC ID-3)*
 - **FR-203** 6 section giải xen kẽ layout ảnh trái/nội dung phải (mục 1,3,5) và nội dung

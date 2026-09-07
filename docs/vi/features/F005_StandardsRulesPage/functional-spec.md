@@ -55,7 +55,7 @@ nút, disabled scope, bản dịch EN). Liệt kê lại đây để dễ tra c�
 |------|----------|------------|-----------|
 | D001 | TC_THELE_GUI_003 + TC_THELE_FUN_005 (disabled state của 2 nút footer) | **Không implement** — ghi "Nợ lại" | Không tồn tại điều kiện thật nào làm nút disabled trên trang tĩnh này; implement một state không đạt tới được vi phạm YAGNI |
 | D002 | Bản dịch EN | Lấy nguyên văn từ MoMorph `list_file_localizations`; `is_reviewed: false` | Máy dịch, chưa người duyệt — ghi vào "Tôi cần làm" cho spec owner (§ 11 RISK-02) |
-| D003 | Nút "Đóng" không có entry localization trong design | vi: "Đóng" (literal từ render); EN: "Close" (suy luận UI chuẩn) | Node tên "Awards Information Navigation Links" là label mặc định của component, không phải bản dịch thật của nội dung |
+| D003 | Nút "Đóng" không có entry localization trong design | vi: "Đóng" (literal từ render); EN: "Close" (suy luận UI chuẩn) | Node tên "Awards Information Navigation Links" là label mặc định của component, không phải bản dịch thật của nội dung — *vindicated 2026-09-07*: đúng phân biệt này (tên node ≠ nội dung thật) là lý do fix nav label F003/F004 (`site-chrome.ts`) đổi "Awards Information" → "Award Information" — implementation từng lấy nhầm tên node đó làm content, đáng lẽ phải đọc `character` của node |
 
 ## 4. Requirements
 
