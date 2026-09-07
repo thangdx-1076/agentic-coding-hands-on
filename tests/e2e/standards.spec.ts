@@ -19,7 +19,7 @@ import { test, expect } from "@playwright/test";
  * | C9 | Viewport 1440×2400: `main.scrollHeight - main.clientHeight <= 1` | FUN_002 |
  * | C10 | Vào `/` → click link `Tiêu chuẩn chung` ở footer → ở `/standards` → click `Đóng` → URL về `/` | FUN_003 (nhánh có history) |
  * | C11 | `page.goto("/standards")` trực tiếp (context mới) → click `Đóng` → URL là `/` | FUN_003 (nhánh fallback) |
- * | C12 | Click `Viết KUDOS` → URL chứa `/kudos` (trang đích 404, **không** assert nội dung đích) | FUN_004 |
+ * | C12 | Click `Viết KUDOS` → URL chứa `/kudos` (trang đích 200, **không** assert nội dung đích) | FUN_004 |
  * | C13 | Cookie `NEXT_LOCALE=en` → `<h1>` là `Rules`, nút là `Close` / `Write KUDOS` — bản EN không rỗng | RISK EN |
  * | C14 | Không `pageerror` nào khi load | SC-003 |
  * ========================================================
