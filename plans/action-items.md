@@ -278,3 +278,22 @@
 - `0003_awards_table.sql` tồn tại ở hai nơi: `db/migrations/` (canonical, portable) và `~/Desktop/Claude-and-mormoph/saa-app/supabase/migrations/` (bản đã áp trên máy này). Hiện đã đồng bộ byte-for-byte. Nếu sau này sửa, phải sửa cả hai — hoặc quyết định bỏ hẳn bản saa-app.
 - `pnpm db:migrate` không có ledger: nó chạy lại toàn bộ thư mục mỗi lần. Đúng với quy mô hiện tại (1 file idempotent), nhưng khi có nhiều migration thì nên cân nhắc bảng version.
 - Bảng `public.users` (auth) vẫn do saa-app sở hữu, không nằm trong `db/migrations/`. Máy mới hoàn toàn vẫn cần dựng auth riêng.
+
+## 260907-0825 — supabase project vào repo (đảo lại quyết định trước)
+
+### Tôi cần làm
+
+- [ ] Xoá hoặc lưu trữ `~/Desktop/Claude-and-mormoph/saa-app` — nó là clone cũ của chính repo này, đứng ở một commit đã phân kỳ và chưa từng đẩy lên. Giữ lại chỉ gây nhầm về việc SQL nằm ở đâu.
+
+### Decisions
+
+- **Đưa cả `supabase/` vào repo**, gỡ `db/migrations/`, `scripts/apply-db-migrations.mjs`, dependency `pg` và script `pnpm db:migrate`. Ít code hơn trước khi tôi thêm chúng.
+- Lý do đảo: `pnpm db:migrate` chỉ mang được bảng `awards`. `origin/main` chưa bao giờ có `supabase/config.toml` lẫn migration `0001`/`0002`, nên máy khác clone về vẫn không có bảng `users`, không auth được. Vá 1/3 cái lỗ mà lại thêm một dependency.
+- Vì sao `saa-app` đánh lừa: nó là clone của **chính repo này**, remote giống hệt, nhưng đứng trên một nhánh cục bộ đã phân kỳ và chưa đẩy. Commit `026f909` của nó không tồn tại trong repo này, và không commit nào trong lịch sử repo từng chạm `supabase/`. Nhìn qua tưởng "project ngoài", thật ra là một bản sao lạc.
+- Không mất dữ liệu: config giữ nguyên `project_id` "saa-app" và port 55321/55322, nên `supabase migration up` từ gốc repo báo "up to date" với stack đang chạy. `auth.users` vẫn 166 dòng.
+
+### Nợ lại
+
+- Bản ghi cũ trong memory nói ngược ("repo không có `supabase/` là cố ý, đừng bao giờ `supabase init` ở đây") — đã sửa lại.
+- Vài file trong `docs/vi/**` còn mô tả Supabase là "project ngoài repo" — đang giao doc-writer sửa. `docs/journals/**` cố ý giữ nguyên vì là ghi chép lịch sử.
+- `supabase migration up` chỉ áp file pending, không kiểm nội dung file đã áp. Sửa một migration đã chạy sẽ không tự áp lại — phải viết migration mới.

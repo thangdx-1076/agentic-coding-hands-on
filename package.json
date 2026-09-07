@@ -19,8 +19,7 @@
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "db:migrate": "node scripts/apply-db-migrations.mjs"
+    "build-storybook": "storybook build"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -55,7 +54,6 @@
     "jsdom": "^30.0.1",
     "msw": "2.15.0",
     "msw-storybook-addon": "3.0.0",
-    "pg": "^8.23.0",
     "prettier": "^3.9.6",
     "server-only": "^0.0.1",
     "storybook": "10.6.0",

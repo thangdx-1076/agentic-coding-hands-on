@@ -46,57 +46,54 @@ re-checks with an authoritative `getUser()` call before rendering.
 
 ## Setup
 
-1. Start the local Supabase instance `saa-app` (in its own project directory): `supabase start`.
-2. Read its API URL and publishable key: `supabase status` (run inside the `saa-app` project). Confirm
-   the Google provider is enabled there and `additional_redirect_urls` includes
-   `http://localhost:3000/auth/callback`.
+1. `supabase start` from this repo's root. `supabase/config.toml` is committed, so this brings up the
+   project's own stack (`project_id` `saa-app`, API on 55321) and applies every migration in
+   `supabase/migrations/` — including the seed rows behind `/awards`. See [Database](#database).
+2. Read the API URL and publishable key: `supabase status`. Confirm the Google provider is enabled
+   and `additional_redirect_urls` includes `http://localhost:3000/auth/callback`.
 3. Create `.env.local` at this repo's root (gitignored, never commit it):
    ```
    NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<value from supabase status>
-   SUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres
    EVENT_START_AT=2026-12-26T18:30:00+07:00
    ```
-   `SUPABASE_DB_URL` is the direct Postgres connection (`DB_URL` in `supabase status -o env`), used
-   only by `pnpm db:migrate` — never by the app at runtime, which talks to PostgREST through
-   `NEXT_PUBLIC_SUPABASE_URL`.
    `EVENT_START_AT` is server-only (no `NEXT_PUBLIC_` prefix — never inlined into the client bundle),
    read in `src/app/(public)/(home)/page.tsx` and validated by
    `src/app/(public)/(home)/_utils/countdown.ts`. ISO-8601, drives the homepage countdown. Absent or
    malformed → the countdown falls back to `00/00/00` (still shows "Coming soon"); it never crashes
    the page.
 4. `pnpm install`
-5. `pnpm db:migrate` — creates the app's own tables and their seed rows. This is what puts the six
-   award categories behind `/awards`; skip it and the page renders its empty state. See
-   [Database](#database).
-6. `pnpm dev` → http://localhost:3000
+5. `pnpm dev` → http://localhost:3000
 
 ## Database
 
-`db/migrations/` holds the SQL this app owns, and `pnpm db:migrate` applies every file in it, in
-filename order, to whatever `SUPABASE_DB_URL` points at.
+The Supabase project is committed here — `supabase/config.toml` plus `supabase/migrations/`:
 
-Why it exists: the Supabase project that provides auth lives outside this repo, so a fresh clone
-has the code that reads `public.awards` but no table to read. Keeping the SQL here is what makes a
-new machine reproducible.
+| Migration                          | What it creates                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `0001_users_table.sql`             | `public.users` (`role` `member`\|`admin`), RLS own-row                      |
+| `0002_handle_new_user_trigger.sql` | `handle_new_user()` — mirrors `auth.users` → `public.users` on sign-up      |
+| `0003_awards_table.sql`            | `public.awards` + its six seed rows, readable by `anon` and `authenticated` |
 
-**Every migration in this directory must be idempotent** — `CREATE TABLE IF NOT EXISTS`,
-`DROP POLICY IF EXISTS` before `CREATE POLICY`, `ON CONFLICT DO NOTHING` on seed rows. There is no
-ledger of what has already run: re-running the whole directory is the normal operation, and a
-migration that cannot survive a second run is a bug in the migration. Each file runs inside its own
-transaction, so a failure rolls that file back whole.
+`supabase start` applies all of them, so a fresh clone reaches a working database in one command.
+To apply new migrations to a stack that is already up, use `supabase migration up` — it runs only
+what is pending and leaves existing rows alone.
 
-Seed rows live inside the migration that creates their table rather than in a separate `seed.sql`,
-because Supabase only reads `seed.sql` during `supabase db reset` — and a reset drops the database,
-including every real sign-in in `auth.users`. Use `pnpm db:migrate`; never `supabase db reset` on a
-shared instance.
+**Never run `supabase db reset` on a stack anyone is using.** It drops and rebuilds the database,
+taking every real sign-in in `auth.users` with it. That is also why seed rows live inside
+`0003_awards_table.sql` rather than in a `supabase/seed.sql`: Supabase only reads `seed.sql` during
+a reset, so a seed file there would be reachable exclusively through the one command you must not
+run.
+
+Prefer idempotent migrations — `CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS` before
+`CREATE POLICY`, `ON CONFLICT DO NOTHING` on seed rows — so a file can be replayed against a
+database that already has part of it.
 
 ## Scripts
 
 | Command                   | What it does                                                                                                                                                                                                                                            |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                                                                                        |
-| `pnpm db:migrate`         | Apply every `db/migrations/*.sql` to `SUPABASE_DB_URL` — creates `public.awards` and its seed rows. Idempotent, safe to re-run. See [Database](#database)                                                                                               |
 | `pnpm build`              | Production build                                                                                                                                                                                                                                        |
 | `pnpm start`              | Start the production server                                                                                                                                                                                                                             |
 | `pnpm lint`               | ESLint                                                                                                                                                                                                                                                  |
