@@ -509,3 +509,31 @@
 - `docs/vi/system/permissions.md` từng nói `/standards` chưa tồn tại (lệch có trước F006) —
   đã giao `doc-writer` reconcile.
 - Chi tiết đầy đủ: `plans/260907-1224-profile-page/evidence/known-limitations.md`.
+
+## 260907-1528 — profile-page ship
+
+### Tôi cần làm
+
+- [ ] Review PR #11, đọc kỹ `supabase/migrations/0005_profile_cards_view.sql` (view SECURITY
+      DEFINER + lỗ leo thang quyền `authenticated` đã đóng). PR là chỗ review, không phải chốt
+      chặn trước PR.
+
+### Decisions
+
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/11
+- Bump minor 0.5.0 → 0.6.0 (không hỏi): khớp tiền lệ 0.4.0 (awards) và 0.5.0 (standards) — route
+  người dùng thấy được là minor.
+- **Sửa sai của chính tôi:** trước đó tôi tự set `riskGate.signoffRequired: true` rồi lấy nó làm
+  lý do dừng cả `--flow`. `riskGate` là optional, reviewer không đòi, plan không đòi, và mở PR
+  trên feature branch không mất dữ liệu/tốn tiền/lộ secret — không thuộc carve-out được phép
+  dừng hỏi trong CLAUDE.md. Đã sửa thành `touchesSensitiveArea: true` +
+  `signoffRequired: false` (giữ tín hiệu cho người review PR, không chặn). KHÔNG set
+  `humanSignedOff: true` vì user chưa đọc migration — ghi thế là ghi sai vào artifact.
+- Không đổi tên `secretBox*` để làm vui SunLint: 3 warning S012 "hardcoded secret" là false
+  positive, sunlint bắt chữ "secret" trong tên tính năng Secret Box.
+
+### Nợ lại
+
+- C042 (`locked` → `isLocked` trong `badge-collection.tsx`) — nit thật, warning không block, để lại.
+- 31 SunLint warning tổng (phần lớn có trước: `src/mocks/handlers.ts`, `src/lib/supabase/server.ts`,
+  và S055 false positive trên `src/proxy.ts` vì nó không phải REST endpoint).
