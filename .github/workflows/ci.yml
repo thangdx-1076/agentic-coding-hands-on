@@ -220,7 +220,10 @@ jobs:
           {
             echo "## Authenticated path and database-dependent tests are NOT covered by this CI run"
             echo ""
-            echo "This job ran **${{ steps.e2e-counts.outputs.ran }}** of **${{ steps.e2e-counts.outputs.total }}** e2e tests (\`--grep-invert "@auth|@local-db"\`)."
+            # Single quotes around the pattern on purpose: nesting double quotes
+            # inside this double-quoted echo ends the string early and turns the
+            # `|` into a real pipe, which is how this step once exited 127.
+            echo "This job ran **${{ steps.e2e-counts.outputs.ran }}** of **${{ steps.e2e-counts.outputs.total }}** e2e tests (\`--grep-invert '@auth|@local-db'\`)."
             echo "**${{ steps.e2e-counts.outputs.excluded }}** test(s) tagged \`@auth\` or \`@local-db\` were excluded and did NOT run in this job."
             echo ""
             echo "- Tests tagged \`@auth\` require a live Supabase instance (\`saa-app\`, local to a developer machine) that this runner cannot reach. They run only on a developer machine with \`saa-app\` up, never in CI."
