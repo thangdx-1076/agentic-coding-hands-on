@@ -1,0 +1,59 @@
+{
+  "score": 8.5,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Anonymous visitor to /profile is redirected to /login — C17, the one CI-safe contract; proxy guard plus (protected)/layout.tsx session read",
+    "Signed-in Sunner with no query string sees their own profile — C14",
+    "?id={other} renders that Sunner's profile via the profile_cards definer view — C7/C8b, read path verified server-side",
+    "?id= that is malformed, unknown, or repeated returns 404 rather than a 500 — C12 and C13; shape-checked before any query by parse-profile-id.ts",
+    "?id= equal to the viewer canonicalizes to the self view — C15, asserts the query string is cleared",
+    "Hero omits department, Hero tier and hoa-thị stars — no source column exists (GUI_009) — C3, asserts absence",
+    "Badge collection renders exactly 6 slots, all greyed, heading first-person on self and neutral on another profile — C4/C5/C6",
+    "Statistics card shows five rows all reading 0 with Mở Secret Box disabled, on the self view only — C8a, and the disabled attribute in C11",
+    "Another Sunner's profile replaces the whole statistics card with a disabled write-Kudo bar, never both — C8b asserts the card is absent",
+    "Direction dropdown offers both directions on self and Received only on another profile (SEC_001) — C9a and C9b, role-scoped",
+    "No email, role or auth identifier reaches the client (SEC_004) — C16, asserts the other Sunner's literal email is absent from rendered HTML and no raw UUID appears in visible UI",
+    "Every profile string is present in both vi and en bundles — messages-parity.test.ts inside the 175-test unit run",
+    "profile_cards exposes exactly (id, full_name, avatar_url); anon cannot read it and authenticated cannot write through it — verified empirically against the committed migration, see security-profile-cards-view.md"
+  ],
+  "regressionChecked": [
+    "tests/e2e/home.spec.ts, awards.spec.ts, standards.spec.ts, login.spec.ts — 81 passed, 3 skipped; the safety net for moving 31 shared-chrome files out of (public)/_*",
+    "src/proxy.ts — /todo guard behavior unchanged after widening to PROTECTED_ROUTES; config.matcher confirmed still a literal array for Next's static analysis",
+    "phase-02 chrome promotion verified with git diff -M rename detection rather than the diffstat; every nonzero diff is a pure import-path fix, vitest.config.ts unchanged, no orphaned stories or colocated tests",
+    "pnpm build — /, /awards, /standards, /login, /todo, /auth/callback all still present alongside the new /profile",
+    "migration 0005 re-applied from the committed file after DROP VIEW; grants reproduced identically (authenticated SELECT only, anon absent)"
+  ],
+  "contractStatus": "tests/e2e/profile.spec.ts C1-C18 all green (22 tests, exit 0). Contract was authored RED before implementation (exit 1, 17 failures) and never weakened to reach green.",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "test-coverage",
+      "location": "tests/e2e/profile.spec.ts:353",
+      "summary": "C10 asserted the direction→empty-copy mapping without ever switching direction, so swapping the mapping keys would not have failed it. Rewritten to select Đã gửi, assert sent copy present and received absent, then switch back and assert the inverse. Fixed and re-verified green.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "low",
+      "category": "efficiency",
+      "location": "src/app/(protected)/profile/page.tsx:90-101",
+      "summary": "getProfileCard and getUserRole are awaited sequentially though neither depends on the other; Promise.all would save one round trip. Cosmetic, left as-is to keep the read path readable.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "low",
+      "category": "documentation",
+      "location": "messages/vi.json:1",
+      "summary": "Three copy strings ship as committed values while the spec still marks them unconfirmed against design. Logged honestly in clarifications.md and action-items.md rather than silently treated as final.",
+      "disposition": "Defer"
+    }
+  ],
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": false,
+    "humanSignedOff": false
+  }
+}

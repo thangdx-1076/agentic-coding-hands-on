@@ -432,3 +432,80 @@
 ### Nợ lại
 
 - (không có)
+
+## 260907-1335 — profile-page-asset-blocker-resolved
+
+### Tôi cần làm
+
+- [ ] (không có — mục export asset ở entry 1330 đã được giải quyết, xem Decisions)
+
+### Decisions
+
+- **Huỷ yêu cầu export 7 asset MoMorph ở entry `260907-1330`.** Không cần export gì cả — toàn bộ
+  artwork đã có trong repo từ F005:
+  - 6 badge Secret Box: `public/standards/badge-{revival,touch-of-light,stay-gold,flow-to-horizon,beyond-the-boundary,root-further}.png`
+    → đúng 6 icon mà `mms_B2..B7` (`362:5066`–`362:5071`) tham chiếu, cùng bộ với section 2 của `/standards`.
+  - Hero keyvisual: `public/home/Keyvisual_BG.png` (đã dùng cho `/` và `/awards` qua `KeyvisualBackground`).
+  **Vì:** GUI_002 yêu cầu "real badge image desaturated", không phải placeholder mới → dùng lại
+  asset sẵn có + CSS `filter: grayscale(1)`, đúng DRY. Tạo `public/profile/**` là nhân bản ảnh
+  y hệt sang đường dẫn thứ 2 — YAGNI, và làm tăng bundle vô ích.
+  Hệ quả: `public/profile/**` KHÔNG được tạo, `evidence/asset-dimensions.md` không cần thiết,
+  phase 05 đọc thẳng 2 đường dẫn trên.
+
+### Nợ lại
+
+- (không có)
+
+## 260907-1224 — profile-page (F006)
+
+### Tôi cần làm
+
+- [ ] **Ký duyệt migration `0005_profile_cards_view.sql` trước khi merge.** Evidence gate đang
+      BLOCK đúng ở chỗ này (`riskGate.signoffRequired: true`, `humanSignedOff: false`) — thay đổi
+      chạm auth + migration nên không được tự finalize. Cần đọc: view SECURITY DEFINER cố tình đọc
+      vòng qua RLS own-row của `public.users`; `REVOKE ALL ... FROM anon, PUBLIC, authenticated`
+      phải nằm TRƯỚC `GRANT SELECT`. Đã verify thực nghiệm: anon read/write 401, authenticated
+      write 403, đúng 3 cột. Chi tiết: `evidence/security-profile-cards-view.md`.
+- [ ] Quyết định sản phẩm: department / Hero tier / hoa-thị stars (`362:5056`) lấy từ đâu —
+      Sun*-HR hay app tự suy? Chưa có cột nào trên `public.users`, hero đang bỏ hẳn dòng đó
+      (đúng theo GUI_009 cho sparse profile, nhưng là bỏ vô thời hạn).
+- [ ] Xác nhận với design 3 chuỗi copy: `profile.hero.fallbackName` = `"Sunner"`,
+      `profile.kudos.emptyReceived`, `profile.kudos.emptySent`. Đang chọn ngược từ regex trong
+      DOM contract, chưa ai bên design nhìn.
+- [ ] Cân nhắc: `public.users.id` CHÍNH LÀ `auth.users.id` (migration 0001, PK+FK). Nên
+      `/profile?id=<uuid>` phơi auth user id ra URL. SEC_004 viết với giả định có profileId
+      riêng — schema này không có. Muốn đóng thì phải thêm cột id công khai (opaque) vào `users`.
+
+### Decisions
+
+- **Scope: KHÔNG xây Kudos domain.** 18/30 TC làm được ngay, 10 hoãn F007+. Kudos-dependent
+  surface render trạng thái deferred trung thực (6 badge xám, 5 dòng stats = 0, "Mở Secret Box"
+  disabled, thanh Viết Kudo disabled thay CẢ statistics card, dropdown `(0)` trên feed rỗng).
+  **Vì:** spec tự nó đã defer Secret Box y hệt; `account-menu.tsx:84` đã trỏ `/profile` (link chết,
+  đúng loại khoảng trống F005 lấp cho `/standards`); và `/standards` đang ship `<a href="/kudos">`
+  mà DOM contract của nó tự ghi là đích 404. Xây Kudos là F007+, không phải "implement màn profile".
+- Promote chrome `(public)/_*` → `src/app/_*` (31 file): `/profile` ở `(protected)` mà chrome ở
+  `(public)` là import ngang giữa 2 route group — F005 đã xử y hệt bằng promote. Giữ
+  `award-name-graphics.ts` ở chỗ cũ (chỉ `/awards` dùng — YAGNI).
+- `playwright.config.ts` nhận `E2E_PORT` (default 3000, CI không đổi). **Vì:**
+  `reuseExistingServer` = true off-CI, nên khi project khác giữ :3000 thì Playwright lái app SAI
+  mà vẫn báo xanh — đã xảy ra thật, cả một lượt visual evidence chụp trang 404 của app khác.
+- `eslint.config.mjs` ignore `.sunlint-eslint.config.js` (gitignored, tool sinh ra) và
+  `.playwright-mcp/**`. **Vì:** `eslint` chạy trần nên quét cả file không ai commit, làm
+  `--max-warnings 0` đỏ local (và do đó `/tkm:ship` đỏ) vì nội dung không phải người viết.
+- Bỏ yêu cầu export 7 asset MoMorph — 6 badge + keyvisual đã có sẵn từ F005
+  (`public/standards/badge-*.png`, `public/home/Keyvisual_BG.png`), dùng lại + `grayscale(1)`.
+
+### Nợ lại
+
+- 10 TC hoãn F007+ (FUN_006/007/010/013/014/015, GUI_006/007, SEC_002/003) — cần Kudos domain thật.
+- DEBT: "Mở Secret Box" và "Viết Kudo" render `disabled` vĩnh viễn, không handler.
+- CI xanh gần như không chứng minh gì về `/profile`: 21/22 contract tag `@auth`, `ci.yml`
+  grep-invert `@auth|@local-db` → đúng 1 test (C17) chạy trong CI. Muốn verify thật phải chạy local
+  `supabase start` + `E2E_PORT=3100 pnpm test:e2e tests/e2e/profile.spec.ts`.
+- Không có pixel-diff baseline cho màn này — regression thị giác sau này không tự bắt được.
+- `CREATE OR REPLACE VIEW` chỉ append được cột; đổi SHAPE của `profile_cards` sau này phải
+  DROP+CREATE và lặp lại REVOKE-trước-GRANT, không thì default privileges mở lại cả 2 lỗ.
+- `docs/vi/system/permissions.md` từng nói `/standards` chưa tồn tại (lệch có trước F006) —
+  đã giao `doc-writer` reconcile.
+- Chi tiết đầy đủ: `plans/260907-1224-profile-page/evidence/known-limitations.md`.
