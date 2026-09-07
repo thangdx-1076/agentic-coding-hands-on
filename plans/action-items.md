@@ -706,3 +706,44 @@
 - **Bài học quy trình:** `pnpm test:e2e -- <file>` KHÔNG lọc file trong repo này, nó chạy đủ 135
   test. Dùng `npx playwright test <file>`. Và assert ảnh tải xong phải dùng `naturalWidth > 0`,
   KHÔNG dùng `complete` — ảnh lazy ngoài viewport có `complete: false` dù đã decode đúng.
+
+## 260907-2310 — fix CI (E2E CI-safe đỏ ở PR #13)
+
+### Tôi cần làm
+
+- [ ] **DAL fail-open không fail NHANH: mọi route đọc Supabase treo ~7,1 giây khi DB không với tới
+      được.** Đây là hành vi **có sẵn của repo**, không phải do `/kudos` gây ra — đo trên cùng một
+      dev server trỏ vào port chết:
+
+      | Route | Thời gian | Ghi chú |
+      |---|---|---|
+      | `/kudos` | 7,10s / 7,12s / 7,16s | route mới |
+      | `/awards` | 7,07s / 7,11s | **F004, branch này không đụng tới** |
+      | `/standards` | 0,04s | không đọc DB |
+      | `/` | 0,04s | không đọc DB |
+      | `fetch()` trần tới cùng port | **17ms** | ECONNREFUSED tức thì |
+
+      `fetch` trần chết sau 17ms nhưng route mất 7,1s → độ trễ nằm trong tầng client Supabase
+      (nhiều khả năng là retry), không phải ở TCP. Các lượt đọc DAL **đã** song song bằng
+      `Promise.all` rồi, nên song song hoá thêm không cứu được.
+      Hệ quả thật: Supabase sập thì người dùng thấy trang trắng 7 giây rồi mới ra empty state —
+      trong khi cả thiết kế fail-open sinh ra là để tránh đúng điều đó.
+      Hướng sửa (ngoài phạm vi PR #13, ảnh hưởng mọi route): đặt `AbortSignal.timeout()` hoặc
+      cấu hình retry cho Supabase client, rồi thêm một test khẳng định ngân sách đó.
+
+### Decisions
+
+- **Bỏ `{ timeout: 5000 }` khỏi `waitForURL` trong `standards.spec.ts` C12 thay vì nâng lên một
+  con số to hơn.** Ngân sách 5s được đặt khi `/kudos` chưa tồn tại và cú click rơi vào trang 404
+  tức thì. Nay đích đến là Server Component động có đọc Supabase. Bỏ hẳn tuỳ chọn để nó hưởng
+  ngân sách điều hướng mặc định của suite — **giống hệt cách `awards.spec.ts` điều hướng tới route
+  đọc DB bằng `page.goto()` trần**, nên không phải ngoại lệ mà là về đúng quy ước.
+  Khẳng định không đổi: URL phải trở thành `/kudos`. Chỉ ngân sách chờ được sửa cho khớp đích mới.
+  Mọi `waitForURL(..., {timeout: 5000})` còn lại trong repo đều trỏ route KHÔNG đọc DB
+  (`/login`, `/`) nên giữ nguyên, không đụng.
+
+### Nợ lại
+
+- Không nới timeout để làm CI xanh: đã tái hiện đúng điều kiện CI ở máy
+  (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, `CI=1`,
+  `pnpm exec playwright test --grep-invert "@auth|@local-db"`) → **exit 0, 79/79 pass**.
