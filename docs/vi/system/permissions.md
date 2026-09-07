@@ -8,8 +8,8 @@ lang: vi
 # Permissions
 
 **Project**: agentic-coding-hands-on
-**Generated**: 2026-09-07 (cập nhật sau khi F004_AwardSystemPage `/awards` lên code thật — xem `plans/260906-2258-award-system-page/clarifications.md`)
-**Analysis Scope**: `/` và `/awards` (cả hai PUBLIC, không route-guard), `/login`, `/todo`, `/auth/callback` — toàn bộ authorization surface của app. 4 route Homepage liên kết còn lại (`/kudos`, `/standards`, `/profile`, `/admin`) CHƯA tồn tại, ngoài phạm vi phân tích quyền vì chưa có code.
+**Generated**: 2026-09-07 (cập nhật sau khi F006_ProfilePage `/profile` lên code thật — xem `plans/260907-1224-profile-page/clarifications.md`; đồng thời vá khoảng lệch có trước F006: `/standards` đã lên code PUBLIC từ F005_StandardsRulesPage nhưng file này chưa từng phản ánh điều đó)
+**Analysis Scope**: `/`, `/awards`, `/standards` (cả ba PUBLIC, không route-guard), `/login`, `/todo`, `/profile` (route-guard, nhóm `(protected)`, mới từ F006_ProfilePage), `/auth/callback` — toàn bộ authorization surface của app. 2 route Homepage liên kết còn lại (`/kudos`, `/admin`) CHƯA tồn tại, ngoài phạm vi phân tích quyền vì chưa có code.
 
 > **Curated, plain-language view.** This document is for PM, BA, and client audiences who
 > need to understand access without reading raw codes. The raw PERM### matrix lives at
@@ -44,7 +44,14 @@ Vẫn chọn `other`, nhưng lý do đã thay đổi một phần kể từ F003
 - **Người dùng đã đăng nhập bằng Google, vai trò `member`** xem được `/` và `/todo` như nhau; menu tài khoản trên `/` có "Hồ sơ", "Đăng xuất" — KHÔNG có "Trang quản trị".
 - **Người dùng đã đăng nhập, vai trò `admin`** có thêm mục "Trang quản trị" (`/admin`) trong menu tài khoản — mục này hiện dẫn tới một route CHƯA implement (404 cho tới khi được xây), không phải một lỗi phân quyền.
 - **Người đã đăng nhập** không thể quay lại xem `/login` — tự động chuyển hướng, nhưng đích đã đổi: sang `/` (trước đây là `/todo`). Ngược lại, người đã đăng nhập VẪN xem được `/` bình thường — khác hành vi cũ (trước đây `/` cũng redirect người đã đăng nhập, sang `/todo`).
-- **Không ai** — dù đã đăng nhập hay chưa, dù vai trò gì — có thể xem hoặc chỉnh sửa quyền/thông tin của một tài khoản khác. RLS own-row trên `public.users` đảm bảo mỗi người chỉ đọc được đúng hàng của chính mình; không có API nào trong app trả dữ liệu role/profile của người khác.
+- **Không ai** — dù đã đăng nhập hay chưa, dù vai trò gì — có thể xem hoặc chỉnh sửa quyền/thông tin của một tài khoản khác qua `public.users` trực tiếp. RLS own-row trên `public.users` đảm bảo mỗi người chỉ đọc được đúng hàng của chính mình qua bảng đó; không có API nào trong app trả `email`/`role` của người khác.
+- **Người dùng đã đăng nhập** (bất kỳ vai trò nào) xem được `/profile` — hồ sơ của chính mình
+  (không tham số) hoặc hồ sơ MỘT Sunner khác qua `?id={uuid}` hợp lệ (F006_ProfilePage, mới). Đây
+  là ngoại lệ DUY NHẤT cho câu "không ai xem được thông tin của một tài khoản khác" ở trên:
+  `/profile?id=...` cho xem đúng `id, full_name, avatar_url` của người đó — KHÔNG BAO GIỜ `email`
+  hay `role` — qua 1 view mới (`public.profile_cards`, xem Access Boundaries bên dưới). `?id=` sai
+  định dạng, lặp key, hoặc không khớp Sunner nào đều trả "Not found", không lộ lỗi hệ thống.
+  **Người dùng chưa đăng nhập** bị chặn `/profile` giống hệt `/todo` — chuyển hướng ngay `/login`.
 
 ## Access Boundaries
 
@@ -89,6 +96,21 @@ Hai lớp kiểm tra optimistic (`src/proxy.ts`) + authoritative vẫn áp dụn
 
 **Cập nhật 2026-09-06 (route colocation)**: lớp authoritative của `/todo` không còn nằm trong bản thân trang — `src/app/(protected)/layout.tsx` (mới) là điểm gác DUY NHẤT cho mọi route trong nhóm `(protected)`, đọc session qua `src/dal/auth.ts` (`getCurrentUser`) rồi `redirect("/login")` khi chưa đăng nhập, trước khi `src/app/(protected)/todo/page.tsx` render. `/login` không nằm trong nhóm `(protected)` nên không qua layout này — trang tự gọi lại `getCurrentUser()` và `redirect` về `/` nếu đã đăng nhập, như cơ chế cũ. Route/URL/hành vi quan sát được không đổi — chỉ đổi file nào thực thi từng lớp.
 
+**`/profile` (F006_ProfilePage) gia nhập ĐÚNG nhóm `(protected)` mà đoạn "route colocation" ở
+trên mô tả** — KHÔNG có gate riêng, KHÔNG có mã machine-owned mới cho chính route-guard này
+(route-guard vẫn là `(protected)/layout.tsx`, chỉ thêm 1 route con vào danh sách nó bảo vệ, cùng
+cơ chế `/todo`). Điểm THẬT SỰ MỚI là 1 ranh giới đọc dữ liệu, không phải 1 ranh giới route:
+migration `0005` thêm view `public.profile_cards` — chạy với quyền của owner (role có `BYPASSRLS`,
+không phải người gọi), phơi ra ĐÚNG 3 cột (`id, full_name, avatar_url`) của MỌI hàng
+`public.users` cho `authenticated` (không `anon`), và giữ kín `email`/`role`/`locale` — khác hẳn
+RLS own-row (`users_select_own`) đang áp dụng cho chính `public.users`. Đây là ranh giới đọc THỨ 2
+của toàn hệ thống (sau RLS own-row) — không phải `rbac`/`abac` mới, chỉ là 1 view giới hạn cột cho
+1 nhu cầu hiển thị cụ thể (xem `docs/vi/features/F006_ProfilePage/technical-spec.md` § 3.1 cho cơ
+chế đầy đủ). `src/proxy.ts` cũng thêm `/profile` vào `config.matcher` VÀ mở rộng `isProtectedPage`
+khỏi phép so khớp `startsWith(ROUTES.TODO)` đơn lẻ thành so khớp theo danh sách
+(`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]`) — cùng lý do `/todo` đã có, không phải 1 cơ
+chế mới.
+
 `/auth/callback` (`src/app/auth/callback/route.ts`) vẫn nằm ngoài ranh giới đăng nhập/chưa đăng nhập như trước — không đổi; chỉ đổi giá trị mặc định của `safeNextPath` (`src/utils/url/next-path.ts`, xem Special Conditions).
 
 ## Special Conditions
@@ -96,6 +118,13 @@ Hai lớp kiểm tra optimistic (`src/proxy.ts`) + authoritative vẫn áp dụn
 - **Bất đối xứng fail-open/fail-closed giữa `/login` và `/todo`** — không đổi so với trước: `/login` fail mở (Supabase lỗi vẫn hiện form, coi như chưa đăng nhập), `/todo` fail đóng (Supabase lỗi thì không có đường nào lộ nội dung bảo vệ).
 - **Chống mở-redirect (`safeNextPath`) ở `/auth/callback`** — cơ chế không đổi (same-origin, root-relative-only; chặn `//`, `/\`, `://`, control/line-separator char thô hoặc percent-encoded); chỉ đổi GIÁ TRỊ mặc định khi `?next=` thiếu hoặc không hợp lệ: từ `/todo` sang `/` (khớp đích đăng nhập mặc định mới).
 - **Nhãn vai trò (`role`) đọc fail-open về `member`** (`src/dal/users.ts`, hàm `getUserRole`) — nếu PostgREST lỗi, timeout, hoặc không có row cho user, hệ thống coi như `member` thay vì chặn trang hoặc hiện lỗi. Rationale: đây là một NHÃN hiển thị (ẩn/hiện một mục menu), không phải một cổng bảo vệ tài nguyên — chặn cả trang chủ chỉ vì không đọc được `role` sẽ tệ hơn nhiều so với việc một admin thấy tạm thời thiếu mục "Trang quản trị" trong một request lỗi thoáng qua. Cùng triết lý với `/login` fail-open ở trên: ưu tiên không khoá người dùng ngoài ý muốn hơn là phòng thủ tuyệt đối cho một chi tiết hiển thị.
-- **4 route đích được Homepage liên kết chưa tồn tại**: `/kudos`, `/standards`, `/profile`, `/admin` — tất cả trả 404 cho tới khi từng screen được implement (mỗi cái là một MoMorph screen riêng, việc của các phiên sau; `/awards` đã ra khỏi danh sách này kể từ F004_AwardSystemPage). Đây KHÔNG phải khoảng trống phân quyền — không có route nghĩa là không có gì để phân quyền; ghi nợ tại `clarifications.md § Unresolved` (TC ID-59). Nút "Chi tiết" của khối Kudos trên cả `/` và `/awards` cùng trỏ `/kudos`, cùng 404 tạm thời — không phải khoảng trống phân quyền mới. Khi `/admin` được xây, cần quyết định RIÊNG có nên thêm route-guard theo `role` hay không (hiện KHÔNG có — mục menu chỉ ẩn/hiện, chưa gác route) — ngoài phạm vi phiên làm việc này.
+- **2 route đích được Homepage liên kết chưa tồn tại**: `/kudos`, `/admin` — tất cả trả 404 cho tới khi từng screen được implement (mỗi cái là một MoMorph screen riêng, việc của các phiên sau; `/awards` đã ra khỏi danh sách này kể từ F004_AwardSystemPage, `/standards` kể từ F005_StandardsRulesPage, `/profile` kể từ F006_ProfilePage — 3 route này nay đều có code thật). Đây KHÔNG phải khoảng trống phân quyền — không có route nghĩa là không có gì để phân quyền; ghi nợ tại `clarifications.md § Unresolved` (TC ID-59). Nút "Chi tiết" của khối Kudos trên `/`, `/awards`, `/standards`, `/profile` cùng trỏ `/kudos`, cùng 404 tạm thời — không phải khoảng trống phân quyền mới. Khi `/admin` được xây, cần quyết định RIÊNG có nên thêm route-guard theo `role` hay không (hiện KHÔNG có — mục menu chỉ ẩn/hiện, chưa gác route) — ngoài phạm vi phiên làm việc này.
+- **Fail-open cho việc đọc hồ sơ, không phải cho quyền truy cập (F006):** `getProfileCard`
+  (`src/dal/profile-cards.ts`) fail-open trả `null` khi Supabase lỗi HOẶC khi không có hàng khớp
+  `id` — cả 2 nguyên nhân dẫn tới CÙNG một hành vi quan sát được (`notFound()`, trang "Not
+  found"). Đây là fail-open NỘI DUNG (không tìm thấy gì để hiển thị), không phải một quyết định
+  phân quyền: KHÔNG có nhánh nào biến `/profile` thành công khai hay thành bị chặn dựa trên lỗi
+  đọc — gate đăng nhập của `(protected)/layout.tsx` không đổi bất kể `getProfileCard` có lỗi hay
+  không. Cùng triết lý `getAwards`/`getUserRole` đã ghi ở trên.
 - **Fail-open cho nội dung giải, không phải cho quyền truy cập (F004):** DAL `getAwards` fail-open trả `[]` khi Supabase lỗi — đây là fail-open NỘI DUNG (empty-state), không phải fail-open QUYỀN (trang vẫn luôn public, không có nhánh nào biến `/awards` thành protected khi lỗi). Cùng triết lý `getUserRole` fail-open `"member"` ở F003: một lỗi đọc dữ liệu không được phép biến thành một quyết định phân quyền.
 - Không có time-based restriction, IP-based rule, hay feature-flag nào gate quyền truy cập — không đổi. Biến môi trường mới `EVENT_START_AT` (đếm ngược sự kiện) KHÔNG phải một permission env-gate — nó chỉ đổi chữ hiển thị ("Coming soon" ẩn/hiện, số đếm ngược), không chặn hay mở bất kỳ route/nội dung nào.

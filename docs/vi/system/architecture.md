@@ -7,9 +7,9 @@ lang: vi
 
 # Architecture
 
-**Phạm vi**: toàn bộ source hiện có trong repo — 5 screen (`/`, `/awards`, `/login`, `/standards`,
-`/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage, F004_AwardSystemPage và
-F005_StandardsRulesPage.
+**Phạm vi**: toàn bộ source hiện có trong repo — 6 screen (`/`, `/awards`, `/login`, `/profile`,
+`/standards`, `/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage, F004_AwardSystemPage,
+F005_StandardsRulesPage và F006_ProfilePage.
 
 **Cập nhật 2026-09-06 (đợt 2 — route colocation)**: toàn bộ source đã chuyển vào `src/`
 (`plans/260906-1150-src-route-colocation-refactor/`) — **URL, hành vi runtime, biến môi
@@ -45,14 +45,40 @@ dùng cho `SiteHeader`/`SiteFooter`/`KudosSection` ở đợt F004, nhưng phạ
 file, không đổi tên, 2 consumer: `widget-button.tsx` và `standards-footer-actions.tsx`). Chi
 tiết đầy đủ: `docs/vi/features/F005_StandardsRulesPage/technical-spec.md`.
 
+**Cập nhật 2026-09-07 (đợt 3 — F006_ProfilePage)**: thêm 1 route segment PROTECTED mới trong
+group `(protected)`, ngang hàng `todo`: `src/app/(protected)/profile/` (Server Component
+`page.tsx`, gác bởi ĐÚNG `(protected)/layout.tsx` mà `/todo` dùng — không gate riêng). Điểm hạ
+tầng mới: migration `0005_profile_cards_view.sql` thêm view `public.profile_cards`
+(`security_invoker = false`, chạy quyền owner/`BYPASSRLS`) — ranh giới đọc THỨ 2 của hệ thống
+(sau RLS own-row của `public.users`), phơi đúng 3 cột (`id, full_name, avatar_url`) cho
+`authenticated`, không `anon`. DAL mới: `src/dal/profile-cards.ts` (`getProfileCard`, fail-open
+`null`) + `src/dal/profile-cards-client.ts` (shim `toProfileCardsClient`, cùng pattern
+`toAwardsClient`/`toUsersRoleClient` tránh TS2589).
+
+**Đợt việc này cũng promote toàn bộ chrome dùng chung (`SiteHeader`/`SiteFooter`/`AccountMenu`/
+`LogoLink`/`NavLink`/`NotificationBell`/`KeyvisualBackground`/`KudosSection`/`LanguageSelector`/
+`icons/*`, cộng `site-chrome.ts`, `get-viewer.ts`, `use-select-locale.ts`, `logout.ts`,
+`set-locale.ts`) TỪ `src/app/(public)/_*` LÊN `src/app/_*`** (thư mục private ở gốc `src/app/`,
+ngang hàng mọi route-group) — vì `/profile` (nhóm `(protected)`) cần tái dùng CÙNG `SiteHeader`/
+`SiteFooter` mà `(public)/(home)` và `(public)/awards` đang dùng, và rule `no-restricted-imports`
+cấm 1 segment import `_*` của segment khác qua đường ngang hàng (`(protected)` không được import
+`(public)/_components`). Promote lên `src/app/_*` (tổ tiên chung của cả `(public)` và
+`(protected)`) là cách hợp lệ DUY NHẤT theo rule đó, không phải một ngoại lệ. `(public)/_shared/
+award-name-graphics.ts` CỐ Ý KHÔNG promote — chỉ 2 consumer trong `(public)` (`award-card.tsx`,
+`awards/_components/award-section.tsx`), `/profile` không dùng map asset này.
+
 ## System Architecture
 
 Layout chia 2 zone:
 - **Zone A — `src/<layer>/`**: code dùng chung, nhóm theo LOẠI — `api`, `dal`, `lib`, `hooks`,
   `utils`, `constants`, `i18n`, `mocks`, `styles`.
 - **Zone B — `src/app/**`**: code theo FEATURE, nhóm theo ROUTE (`(public)/(home)`,
-  `(public)/login`, `(protected)/todo`, `auth/callback`). Mỗi route segment giữ file riêng
-  trong folder private của nó: `_components`, `_hooks`, `_actions`, `_utils`, `_shared`.
+  `(public)/awards`, `(public)/standards`, `(public)/login`, `(protected)/todo`,
+  `(protected)/profile`, `auth/callback`). Mỗi route segment giữ file riêng trong folder private
+  của nó: `_components`, `_hooks`, `_actions`, `_utils`, `_shared`. `src/app/_*` (gốc, KHÔNG thuộc
+  route-group nào) giữ chrome/action dùng chung bởi CẢ `(public)` lẫn `(protected)` — promote lên
+  đây từ F006_ProfilePage vì `(protected)/profile` cần tái dùng `SiteHeader`/`SiteFooter` mà
+  trước đó chỉ `(public)/_components` giữ.
 
 Hướng phụ thuộc: Zone A không bao giờ import `src/app` (`eslint.config.mjs:74-92`, rule
 `no-restricted-imports`). Trong `src/app/**`, một segment chỉ import folder private của
@@ -73,8 +99,8 @@ graph TB
         AwardsRoute["src/app/(public)/awards/page.tsx — AwardsPage (F004_AwardSystemPage, PUBLIC)"]
         AwardsClient["src/app/(public)/awards/_components/awards-client.tsx"]
         AwardsComponents["src/app/(public)/awards/_components/**"]
-        SiteChrome["src/app/(public)/_components/{site-header,site-footer,kudos-section}.tsx (promoted, dùng chung (home)+awards)"]
-        GetViewer["src/app/(public)/_utils/get-viewer.ts (promoted, dùng chung (home)+awards)"]
+        SiteChrome["src/app/_components/{site-header,site-footer,kudos-section,account-menu,...}.tsx (promoted lên gốc src/app/_*, dùng chung (home)+awards+profile)"]
+        GetViewer["src/app/_utils/get-viewer.ts (promoted lên gốc, dùng chung (home)+awards+profile)"]
         AwardsDal["src/dal/awards.ts (getAwards)"]
         AwardsDalShim["src/dal/awards-client.ts"]
         StandardsRoute["src/app/(public)/standards/page.tsx — StandardsPage (F005_StandardsRulesPage, PUBLIC, static i18n only)"]
@@ -84,13 +110,19 @@ graph TB
         RoleShim["src/dal/users-role-client.ts"]
         CountdownLib["src/app/(public)/(home)/_utils/countdown.ts"]
         CountdownHook["src/app/(public)/(home)/_hooks/use-countdown.ts"]
-        LocaleHook["src/app/(public)/_hooks/use-select-locale.ts"]
+        LocaleHook["src/app/_hooks/use-select-locale.ts (promoted lên gốc)"]
         LoginPage["src/app/(public)/login/page.tsx — self-check qua src/dal/auth.ts"]
         LoginClient["src/app/(public)/login/_components/login-client.tsx"]
         LoginActionsHook["src/app/(public)/login/_hooks/use-login-actions.ts"]
         TodoPage["src/app/(protected)/todo/page.tsx"]
+        ProfileRoute["src/app/(protected)/profile/page.tsx — ProfilePage (F006_ProfilePage, PROTECTED)"]
+        ProfileClient["src/app/(protected)/profile/_components/profile-client.tsx"]
+        ProfileComponents["src/app/(protected)/profile/_components/**"]
+        ProfileDal["src/dal/profile-cards.ts (getProfileCard)"]
+        ProfileDalShim["src/dal/profile-cards-client.ts"]
+        ProfileCardsView[("public.profile_cards — view, security_invoker=false")]
         AuthDal["src/dal/auth.ts (getCurrentUser)"]
-        SharedLogout["src/app/_actions/logout.ts — dùng chung (home) và (protected)/todo"]
+        SharedLogout["src/app/_actions/logout.ts — dùng chung (home), (protected)/todo, (protected)/profile"]
         SharedLocaleAction["src/app/_actions/set-locale.ts"]
         Callback["src/app/auth/callback/route.ts"]
         SupaServer["src/lib/supabase/server.ts"]
@@ -131,28 +163,40 @@ graph TB
     Client --> ProtectedLayout -->|"getCurrentUser(), redirect /login nếu chưa đăng nhập"| AuthDal
     ProtectedLayout --> TodoPage --> SupaServer
     TodoPage --> SharedLogout
+    ProtectedLayout --> ProfileRoute
+    ProfileRoute -->|"parseProfileId(), lại getCurrentUser()"| AuthDal
+    ProfileRoute -->|"đọc role cho header (dùng chung F003)"| RoleHelper --> RoleShim
+    ProfileRoute --> ProfileDal --> ProfileDalShim --> SupaServer
+    ProfileDalShim -.->|"security_invoker=false, BYPASSRLS"| ProfileCardsView --> Supabase
+    ProfileRoute --> ProfileClient --> ProfileComponents
+    ProfileComponents -.->|"dùng chung, promoted lên gốc"| SiteChrome
+    ProfileComponents --> SharedLogout
 ```
 
 Hai lớp guard tách biệt, cơ chế không đổi, chỉ đổi file:
-- `src/proxy.ts` — guard optimistic (matcher `/`, `/login`, `/todo/:path*`, loại trừ
-  `/auth/callback`; `src/proxy.ts:119-121`). Predicate `isAuthPage`/`isProtectedPage`
-  (`src/proxy.ts:35-36`), đọc cookie qua `getUserOrNull` (`src/proxy.ts:77-87`) — chỉ redirect,
-  không phải nguồn sự thật (comment tại `src/proxy.ts:11-17` trỏ thẳng vào layout dưới đây).
-- `src/app/(protected)/layout.tsx` (mới, `src/app/(protected)/layout.tsx:19-29`) — guard
-  authoritative DUY NHẤT cho mọi route trong nhóm `(protected)` (hiện chỉ `/todo`): gọi
+- `src/proxy.ts` — guard optimistic (matcher `/`, `/login`, `/todo/:path*`, `/awards`,
+  `/standards`, `/profile`; loại trừ `/auth/callback`). Predicate `isAuthPage`/`isProtectedPage`
+  đọc từ mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` (mở rộng từ F006_ProfilePage,
+  trước đó chỉ so khớp `ROUTES.TODO` đơn lẻ), đọc cookie qua `getUserOrNull` — chỉ redirect,
+  không phải nguồn sự thật (comment trong `src/proxy.ts` trỏ thẳng vào layout dưới đây).
+- `src/app/(protected)/layout.tsx` (`src/app/(protected)/layout.tsx:19-29`) — guard
+  authoritative DUY NHẤT cho mọi route trong nhóm `(protected)` (`/todo` VÀ `/profile`, mở rộng
+  từ F006_ProfilePage — không có gate thứ 2 nào viết riêng cho `/profile`): gọi
   `getCurrentUser()` (`src/dal/auth.ts:16-27`, fail-open `null` khi lỗi) rồi `redirect("/login")`
   nếu không có user, trước khi bất kỳ page con nào render. Thay cho việc trước đây
   `app/todo/page.tsx` tự gọi `getUser()` trong thân trang — `src/app/(protected)/todo/page.tsx`
   nay chỉ gọi `getCurrentUser()` lại một lần (`src/app/(protected)/todo/page.tsx:22`) để lấy
   email cho lời chào, KHÔNG phải để gác quyền truy cập (comment giải thích tại
-  `src/app/(protected)/todo/page.tsx:15-19`).
+  `src/app/(protected)/todo/page.tsx:15-19`); `src/app/(protected)/profile/page.tsx` cũng gọi lại
+  `getCurrentUser()` một lần, cùng lý do — lấy `viewer.id` cho `parseProfileId()`.
 - `src/app/(public)/login/page.tsx` KHÔNG nằm trong nhóm `(protected)` nên KHÔNG qua layout
   trên — trang tự gọi `getCurrentUser()` (`src/app/(public)/login/page.tsx:34-37`) và
   `redirect(ROUTES.HOME)` nếu đã đăng nhập, giữ nguyên hành vi guard cũ của `/login`.
 
 Server Actions dùng chung nhiều route gộp về `src/app/_actions/`:
-- `logout.ts` (`src/app/_actions/logout.ts`) — dùng bởi cả `(home)` (menu tài khoản) và
-  `(protected)/todo` (form đăng xuất), không còn sideways import giữa hai segment.
+- `logout.ts` (`src/app/_actions/logout.ts`) — dùng bởi `(home)` (menu tài khoản),
+  `(protected)/todo` (form đăng xuất), và `(protected)/profile` (menu tài khoản của `SiteHeader`
+  dùng chung, F006_ProfilePage) — không còn sideways import giữa các segment.
 - `set-locale.ts` (`src/app/_actions/set-locale.ts`) — root-shell concern, dùng bởi cả
   `login` (`use-login-actions.ts`) và `(home)` (`use-select-locale.ts`).
 
@@ -166,7 +210,14 @@ session DÙNG CHUNG cho `(protected)/layout.tsx`, `login/page.tsx`, và
 `src/dal/awards-client.ts` (shim `toAwardsClient`, cùng pattern thu hẹp kiểu builder tránh
 TS2589 như `users-role-client.ts`) — đọc bảng mới `public.awards` (Supabase `saa-app`, thứ 2
 sau `public.users`), RLS mở cho cả `anon` và `authenticated` vì `/awards` là route public không
-có khái niệm chủ sở hữu dòng.
+có khái niệm chủ sở hữu dòng. Bổ sung F006_ProfilePage: `src/dal/profile-cards.ts`
+(`getProfileCard`, `import "server-only"`, fail-open `null`) và `src/dal/profile-cards-client.ts`
+(shim `toProfileCardsClient`, cùng pattern thu hẹp kiểu builder) — đọc view mới
+`public.profile_cards` (migration `0005`, thứ 3 sau `public.users`/`public.awards`), CHẠY VỚI
+QUYỀN OWNER (`security_invoker = false`, role `BYPASSRLS`) để bỏ qua RLS own-row của
+`public.users` — khác hẳn 2 DAL trước, đây là ranh giới đọc "vượt quyền own-row có chủ đích",
+không phải RLS mở như `public.awards`. `GRANT SELECT` chỉ cho `authenticated`, không `anon`
+(khác `public.awards`) vì `/profile` là route protected.
 
 3 factory `@supabase/ssr` — `src/lib/supabase/{client,server,proxy-client}.ts` — không đổi
 logic, chỉ đổi thư mục cha. `src/utils/url/next-path.ts` (`safeNextPath`, chống open-redirect,
@@ -190,7 +241,7 @@ tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `src/configs
 | Auth SDK | `@supabase/supabase-js` | 2.115.0 |
 | Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, config/migrations committed tại `supabase/` | API `http://127.0.0.1:55321` |
 | Backend (in-repo) | Next.js Server Actions + Route Handlers (không có service backend riêng) | — |
-| Database | `public.users` (cột `role`, RLS own-row) + `public.awards` (F004, 6 hàng × locale, RLS mở cho `anon`+`authenticated`) — 2 bảng, cả hai đọc qua PostgREST | — |
+| Database | `public.users` (cột `role`, RLS own-row) + `public.awards` (F004, 6 hàng × locale, RLS mở cho `anon`+`authenticated`) + `public.profile_cards` (F006, view SECURITY-DEFINER-equivalent phái sinh từ `public.users`, `GRANT SELECT` chỉ `authenticated`) — 2 bảng + 1 view, cả ba đọc qua PostgREST | — |
 | Package manager | pnpm (`packageManager` field, không dùng corepack) | 10.33.2 |
 | Node.js | `engines.node` | `>=22 <25` (CI chạy Node `24`) |
 | Testing (unit) | Vitest (2 project: `node`, `jsdom`) | ^3.2.7 |

@@ -3,7 +3,7 @@
 **Project**: SAA 2025 — Login
 **Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 4 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 1 do repo định nghĩa qua SQL migration và đọc trọn vẹn read-only) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 5 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 2 do repo định nghĩa qua SQL migration và đọc trọn vẹn read-only) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -34,6 +34,11 @@ erDiagram
         string quantityValue "chuoi, giu leading-zero, vd 02"
         string quantityUnit
         json prizeValues "array cua amount/note - Signature 2025 co 2 phan tu"
+    }
+    PROFILE_ProfileCard {
+        string id PK "UUID - trung id cua public.users"
+        string fullName "nullable, fallback 'Sunner' khi null"
+        string avatarUrl "nullable, placeholder xam khi null"
     }
 ```
 
@@ -128,6 +133,37 @@ Các field khác của kiểu `User` thật (vd. `user_metadata`, `app_metadata`
 
 ---
 
+### PROFILE_ProfileCard
+
+**Description**: Hồ sơ hiển thị trên `/profile` (F006_ProfilePage) — KHÔNG phải một bảng CSDL độc
+lập, mà là view `public.profile_cards` (migration `0005_profile_cards_view.sql`) phái sinh 1-1 từ
+`public.users`, phơi ra ĐÚNG 3 cột. View chạy với quyền của owner (`security_invoker = false`,
+role `BYPASSRLS`) để bỏ qua RLS own-row (`users_select_own`) của `public.users` — cho phép bất kỳ
+Sunner đã đăng nhập nào đọc 3 cột này của BẤT KỲ hàng nào, trong khi `email`/`role`/`locale`/
+`created_at`/`updated_at` không bao giờ lọt qua (`REVOKE ALL` rồi chỉ `GRANT SELECT` cho
+`authenticated`, không `anon`). Nguồn: `src/dal/profile-cards.ts` (`ProfileCard`,
+`getProfileCard`), `supabase/migrations/0005_profile_cards_view.sql`.
+
+| Attribute | Type (as consumed) | Constraints | Description |
+|-----------|------|-------------|-------------|
+| id | `string` (UUID) | PK, NOT NULL | Trùng `id` của hàng `public.users` tương ứng — khoá tra cứu duy nhất, dùng cho cả nhánh self và other |
+| fullName | `string \| null` | nullable | Tên hiển thị ở hero (`ProfileHero`); `null` → fallback `copy.hero.fallbackName` ("Sunner") |
+| avatarUrl | `string \| null` | nullable | Ảnh avatar tròn; `null` → placeholder nền `#323231`, không ảnh |
+
+**Relationships**:
+- None trong ERD (không vẽ FK) — nhưng `id` phái sinh 1-1 từ `MODEL002_SupabaseUser.id`/
+  `public.users.id` qua view `profile_cards`; đọc bằng client hẹp `toProfileCardsClient`
+  (`src/dal/profile-cards-client.ts`), cùng shim pattern `toAwardsClient`/`toUsersRoleClient`
+  (tránh lỗi TS2589).
+
+**Discriminator Fields**: None.
+
+**Fail-open note**: `getProfileCard` fail-open trả `null` khi Supabase lỗi HOẶC không có hàng khớp
+`id` — cả 2 nguyên nhân dẫn tới cùng `notFound()` phía caller (`page.tsx`); không phải một quyết
+định phân quyền, xem `docs/vi/system/permissions.md` § Special Conditions.
+
+---
+
 ## Validation Rules
 
 ### AppLocale
@@ -151,9 +187,16 @@ No data. (Object hằng số tĩnh, không qua runtime validation nào.)
 | Locale check | locale | `CHECK (locale IN ('vi', 'en'))` ở DB (`0003_awards_table.sql`) | N/A — ràng buộc DB, app chỉ đọc, không ghi nên không kích hoạt |
 | Fail-open | (toàn bộ hàng) | `getAwards` fail-open trả `[]` khi Supabase lỗi/không có dòng — không throw | N/A — không có message, trang render empty-state |
 
+### ProfileCard
+
+No data. (Không có CHECK constraint nào ở view `profile_cards` — kế thừa nguyên vẹn ràng buộc của
+`public.users`, app chỉ đọc read-only qua view.) `getProfileCard` fail-open trả `null` khi Supabase
+lỗi HOẶC không có hàng khớp `id` — không throw; caller chuyển thành `notFound()`, không có message
+hiển thị riêng.
+
 ---
 
 ## Summary
 
-- **Total Entities**: 4 (1 bảng CSDL thật đọc read-only bởi repo — `public.awards`; 3 còn lại là in-memory/type-level shape, không bảng nào trong số đó được persist bởi repo này)
-- **Total Relationships**: 0 (không có FK nào giữa 4 shape; xem ghi chú "as field type" trong từng mục Relationships ở trên)
+- **Total Entities**: 5 (2 shape đọc read-only từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
+- **Total Relationships**: 0 (không có FK nào giữa 5 shape trong ERD; `profile_cards.id` phái sinh 1-1 từ `public.users.id` nhưng không vẽ FK — xem ghi chú "as field type"/"Relationships" trong từng mục ở trên)

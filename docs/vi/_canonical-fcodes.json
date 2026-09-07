@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-05T18:35:15Z",
-  "plan": "260906-0042-homepage-saa-page",
+  "generated_at": "2026-09-07T07:50:14Z",
+  "plan": "260907-1224-profile-page",
   "features": [
     {
       "fcode": "F001",
@@ -78,6 +78,23 @@
       "related": {
         "screens": [
           "SCR005_Standards"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    },
+    {
+      "fcode": "F006",
+      "name": "Hồ sơ Sunner (Profile)",
+      "slug": "F006_ProfilePage",
+      "priority": "P1",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR006_Profile"
         ],
         "user_stories": [],
         "routes": [],

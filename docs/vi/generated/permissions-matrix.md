@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 2 route xác nhận PUBLIC không guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage — xem mục cuối) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 2 route xác nhận PUBLIC không guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage — xem mục cuối) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -194,6 +194,49 @@ bởi cùng quyết định kiến trúc đã supersede PERM001 cho `/` — xem 
 
 ---
 
+## `/profile` — PROTECTED, gia nhập cơ chế PERM003 (F006_ProfilePage, chưa cấp mã PERM### riêng)
+
+Route `/profile` nằm trong nhóm `(protected)` và được gác bởi ĐÚNG `src/app/(protected)/layout.tsx`
+mà PERM003_TodoRouteGuard mô tả cho `/todo` — KHÔNG có gate riêng, KHÔNG có cơ chế mới. Điểm khác
+biệt duy nhất với PERM003 là route đích: `layout.tsx` bảo vệ CẢ `/todo` lẫn `/profile` (danh sách
+con của nó, không phải 2 gate riêng). Không cấp `PERM###` mới ở đây vì đây là "cùng 1 permission
+item, thêm 1 route được nó bảo vệ", không phải một quyết định phân quyền độc lập — mã chính thức
+(có thể là mở rộng PERM003 hoặc một mã riêng) để `rebuild-spec` Core pass kế tiếp quyết định, cùng
+tiền lệ "TBD (draft)" mà `role`-based screen-permission đã dùng ở F003 (xem mục cuối trang này).
+`proxy.ts`'s `config.matcher` VÀ `PROTECTED_ROUTES` (mảng, thay vì so khớp 1 route đơn) đều gồm
+`/profile` — optimistic pre-check, không phải nguồn sự thật.
+
+**Ranh giới đọc mới (khác PERM003):** self VÀ other đều đọc qua view mới `public.profile_cards`
+(migration `0005`, SECURITY DEFINER-equivalent, `GRANT SELECT` chỉ cho `authenticated`) thay vì
+`public.users` trực tiếp — cho phép bất kỳ Sunner đã đăng nhập nào đọc `id, full_name, avatar_url`
+của BẤT KỲ Sunner khác, hẹp hơn hẳn RLS own-row của bảng gốc, và KHÔNG BAO GIỜ phơi `email`/`role`.
+Đây KHÔNG phải `rbac`/`abac` mới (§ Authorization System Type không đổi) — chỉ là 1 view giới hạn
+cột cho 1 nhu cầu hiển thị cụ thể. Chi tiết: `docs/vi/system/permissions.md`,
+`docs/vi/features/F006_ProfilePage/technical-spec.md` § 3.1.
+
+### Related Routes
+- (GET) /profile — SCR006_Profile, redirect `/login` nếu chưa đăng nhập
+- (GET) /profile?id={uuid} — SCR006_Profile (other view); redirect canonical về `/profile` nếu `id` trùng chính người xem; `notFound()` nếu sai định dạng/lặp key/không có hàng
+
+### Related Screens
+- SCR006_Profile — Hồ sơ Sunner (F006_ProfilePage)
+
+### Permission Rules
+
+| Role | Allow | Conditions |
+|------|-------|------------|
+| Anonymous | ✗ | Redirect `/login` — cùng cơ chế PERM003_TodoRouteGuard |
+| Authenticated | ✓ | Render hồ sơ (self hoặc other qua `?id=` hợp lệ); `?id=` sai định dạng/lặp key/không có hàng → `notFound()` |
+
+### Related Modules
+
+- src/proxy.ts (`PROTECTED_ROUTES` — mảng, thêm `/profile`)
+- src/app/(protected)/layout.tsx (gate dùng chung với `/todo`)
+- src/app/(protected)/profile/page.tsx
+- src/dal/profile-cards.ts (`getProfileCard`, đọc `public.profile_cards`)
+
+---
+
 ## `/standards` — PUBLIC, không route-guard (F005_StandardsRulesPage, chưa cấp mã PERM###)
 
 Route `/standards` gia nhập ĐÚNG nhóm PUBLIC với `/` (PERM001 superseded) và `/awards` (F004) —
@@ -234,17 +277,17 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 
 ## Summary
 
-- **Total Permission Items**: 4 (PERM001 nay superseded — không tính vào surface đang hoạt động, nhưng vẫn giữ trong tổng số vì mã chưa bị xoá)
-- **By Type**: route-guard: 4 (1 superseded), screen-permission: 0 (1 chưa cấp mã — xem mục trên), action-permission: 0, data-permission: 0, role-based: 0, resource-ownership: 0, field-permission: 0, api-scope: 0, feature-flag: 0, experiment: 0, env-gate: 0, locale-gate: 0
+- **Total Permission Items**: 4 (PERM001 nay superseded — không tính vào surface đang hoạt động, nhưng vẫn giữ trong tổng số vì mã chưa bị xoá; `/profile` PROTECTED join cơ chế PERM003 — chưa cấp mã riêng, không cộng thêm vào tổng số)
+- **By Type**: route-guard: 4 (1 superseded; `/profile` gia nhập PERM003, chưa có mã riêng), screen-permission: 0 (1 chưa cấp mã — xem mục cuối), action-permission: 0, data-permission: 0, role-based: 0, resource-ownership: 0, field-permission: 0, api-scope: 0, feature-flag: 0, experiment: 0, env-gate: 0, locale-gate: 0
 
 ---
 
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005 không tạo PERM### mới)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006 không tạo PERM### mới)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 
