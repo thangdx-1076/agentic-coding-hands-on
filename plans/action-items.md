@@ -317,3 +317,21 @@
 
 - **E2E không bắt được lỗi này.** Toàn bộ `awards.spec.ts` chạy ở locale mặc định `vi`, nên nhánh EN chưa từng được thử. Nên có một test đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section vẫn render.
 - Ghi chú nợ cũ ("chỉ seed locale='vi'; nguồn MoMorph chỉ có tiếng Việt") nói nhẹ hơn thực tế — hậu quả thật là trang trắng ở EN, không phải chữ chưa dịch. Đã sửa cách diễn đạt ở đây.
+
+## 260907-0905 — bản tiếng Anh cho nội dung giải
+
+### Tôi cần làm
+
+- [ ] **Duyệt bản dịch tiếng Anh của 6 mô tả giải** — `supabase/migrations/0004_awards_en_seed.sql`. Đây là chỗ DUY NHẤT trong feature này mà chữ không lấy nguyên văn từ design; MoMorph không có bản EN nên tôi dịch. Nội dung marketing đối ngoại nên cần người đọc lại.
+
+### Decisions
+
+- Seed 6 dòng `locale='en'` bằng bản dịch tự làm (theo yêu cầu của bạn), migration mới `0004` chứ không sửa `0003` — `0003` đã áp rồi, sửa vào đó sẽ không chạy lại.
+- Giữ nguyên không dịch: tên giải (vốn đã tiếng Anh trong design), "Sun*", "Wasshoi", "Aim High – Be Agile", "Creator".
+- **Đổi định dạng số cho bản EN**: `7.000.000 VNĐ` → `7,000,000 VND`. Dấu chấm ngăn nghìn đọc theo lối Anh là dấu thập phân, tức sai giá trị giải đi một triệu lần.
+- Giữ nguyên fallback về `DEFAULT_LOCALE` trong `getAwards` dù giờ đã có `en`: nó là lưới an toàn cho locale thứ ba trong tương lai, và cho môi trường chỉ mới chạy tới `0003`.
+
+### Nợ lại
+
+- Đã trả nợ E2E: thêm `[REG 2026-09-07]` đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section render kèm chữ tiếng Anh. Đã kiểm ngược — xoá 6 dòng `en` thì test đỏ đúng chỗ, không phải test xanh suông.
+- Test này gắn `@local-db` nên CI không chạy. Nhánh EN chỉ được canh trên máy dev.

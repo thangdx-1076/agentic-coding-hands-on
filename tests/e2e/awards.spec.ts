@@ -363,4 +363,39 @@ test.describe("Awards content", { tag: "@local-db" }, () => {
       await expect(navLink).toHaveAttribute("aria-current", "true");
     }
   });
+
+  test("[REG 2026-09-07] English locale renders award content, not the empty state", async ({
+    page,
+    context,
+  }) => {
+    // `getAwards` filters on the viewer's locale. While `public.awards` held
+    // vi-only rows, switching the site to English returned zero rows and the
+    // page fell back to its empty state — a blank page, while `/` still listed
+    // all six awards from `messages/en.json`. Nothing in this suite caught it
+    // because every other test runs at the default locale.
+    await context.addCookies([
+      {
+        name: "NEXT_LOCALE",
+        value: "en",
+        url: "http://localhost:3000",
+      },
+    ]);
+
+    await page.goto("/awards");
+
+    await expect(page.locator("section[id]")).toHaveCount(6);
+    await expect(
+      page.getByText("No award information available yet."),
+    ).toBeHidden();
+
+    // English copy, not the Vietnamese fallback.
+    await expect(
+      page.locator("section#top-talent").getByText(/The Top Talent award/),
+    ).toBeVisible();
+
+    // Amounts are re-formatted for English: comma thousands, "VND" not "VNĐ".
+    await expect(
+      page.locator("section#mvp").getByText("15,000,000 VND"),
+    ).toBeVisible();
+  });
 });
