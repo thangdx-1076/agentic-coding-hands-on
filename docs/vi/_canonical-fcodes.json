@@ -102,6 +102,40 @@
         "bl": [],
         "perms": []
       }
+    },
+    {
+      "fcode": "F007",
+      "name": "Bảng Kudos trực tiếp (/kudos)",
+      "slug": "F007_KudosLiveBoard",
+      "priority": "P0",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR007_KudosLiveBoard"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    },
+    {
+      "fcode": "F008",
+      "name": "Thả tim cho Kudos",
+      "slug": "F008_KudosHeartReaction",
+      "priority": "P1",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR007_KudosLiveBoard"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
     }
   ]
 }
