@@ -9,5 +9,6 @@ Mọi tính năng trong sản phẩm. Mở một cái và đọc trọn vẹn qu
 - [F002_LanguageSwitch](F002_LanguageSwitch/)
 - [F003_Homepage](F003_Homepage/)
 - [F004_AwardSystemPage](F004_AwardSystemPage/)
+- [F005_StandardsRulesPage](F005_StandardsRulesPage/)
 
 <!-- end-generated -->

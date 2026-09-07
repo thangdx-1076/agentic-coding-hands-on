@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-05
-**Analysis Scope**: route-view (Next.js 16 App Router) — 2 screens (`/login`, `/todo`)
+**Analysis Scope**: route-view (Next.js 16 App Router) — 2 screens (`/login`, `/todo`) + SCR003-SCR005 bổ sung ở các wave sau (`/`, `/awards`, `/standards`)
 
 **Code Format**: All codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped references within a composite screen
 
@@ -23,6 +23,8 @@
 | SCR001_LoginScreen | Login | atomic | 10 | MODEL003_LoginCopy, MODEL001_AppLocale |
 | SCR002_TodoScreen | Todo (placeholder) | atomic | 2 | MODEL002_SupabaseUser |
 | SCR003_HomeScreen | Trang chủ (Homepage) | atomic | 14 | MODEL002_SupabaseUser (email, role qua public.users), MODEL001_AppLocale |
+| SCR004_Awards | Hệ thống giải thưởng SAA 2025 | composite | 10 | MODEL002_SupabaseUser (email, dùng chung header F003), `Award` (chưa cấp MODEL### riêng) |
+| SCR005_Standards | Thể lệ SAA 2025 | atomic | 9 | MODEL001_AppLocale (không đọc MODEL002 — trang không cá nhân hoá, không header) |
 
 ---
 
@@ -140,9 +142,79 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 
 ---
 
+## SCR004_Awards
+
+**Type**: composite
+
+**Feature:** F004 — Hệ thống giải thưởng SAA 2025 (Awards)
+**Route:** /awards
+**Description:** Trang công khai chi tiết 6 hạng mục giải thưởng SAA 2025 (public, không guard) — header/footer dùng chung với `/` (`SiteHeader`/`SiteFooter`, promoted lên `(public)/_components/`), hero ảnh + caption + h1, nav trái điều hướng nội-trang (click-scroll + scroll-spy) + 6 section giải (ảnh/mô tả/số lượng/giá trị) hoặc empty-state khi Supabase trả rỗng, khối Sun* Kudos tái dùng nguyên trạng từ F003. `src/app/(public)/awards/page.tsx` đọc `Award[]` qua DAL `getAwards()` (fail-open `[]`), không cá nhân hoá theo vai trò.
+**States:** anonymous, member, admin, awards-empty (Supabase lỗi/rỗng → `AwardsEmptyState`), nav-scroll-spy-active
+
+Chi tiết đầy đủ (layout region, 25 UI element, DOM contract): `docs/vi/screens/SCR004_Awards/spec.md`.
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| AwardsClient (`_components/awards-client.tsx`) | client-boundary | Nối `viewer`/`awards` với `useAwardCategoryNav` (scroll-spy) |
+| AwardCategoryNav | nav (sticky) | 6 mục điều hướng nội-trang, `aria-current` theo scroll-spy |
+| AwardSection × 6 | card | 1 hạng mục giải: ảnh + h2 + mô tả + số lượng + giá trị |
+| AwardsEmptyState | display field | Thay thế nav+6 section khi `awards=[]` |
+| SiteHeader / SiteFooter / KudosSection | shared (F003) | Header, footer, khối Sun* Kudos — dùng chung nguyên trạng với SCR003_HomeScreen |
+
+### Data Displayed
+
+- Data Entity 1: `Award` (6 hàng — tiêu đề, mô tả, số lượng, giá trị, slug; chưa cấp MODEL### riêng, xem `entities.md`)
+- Data Entity 2: MODEL002_SupabaseUser (email — chỉ để cá nhân hoá header dùng chung, không phải nội dung trang)
+
+### Routes/URLs
+
+- `/awards`
+
+### Related Screens
+
+- SCR003_HomeScreen: Trang chủ (nguồn — CTA "ABOUT AWARDS" + 6 thẻ giải; đích khi click "Đăng nhập"/"Đăng xuất")
+
+---
+
+## SCR005_Standards
+
+**Type**: atomic
+
+**Feature:** F005 — Thể lệ SAA 2025 (Standards)
+**Route:** /standards
+**Description:** Trang công khai trình bày đầy đủ thể lệ SAA 2025 (public, không guard, không header/footer — KHÁC SCR003/SCR004) — panel phải màn hình nền `#00101A`: tiêu đề "Thể lệ" + 3 section (Hero badge 4 hạng, Secret Box 6-icon, Kudos Quốc dân) + footer 2 nút ("Đóng" → `router.back()`/fallback `/`, "Viết KUDOS" → `/kudos`). Nội dung 100% tĩnh từ i18n namespace `standards` — `src/app/(public)/standards/page.tsx` không đọc session/role, không cá nhân hoá theo actor.
+**States:** scroll (nội dung dài hơn khung), không-scroll (nội dung vừa khung)
+
+Chi tiết đầy đủ (layout region, 9 UI element, DOM contract): `docs/vi/screens/SCR005_Standards/spec.md`.
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| StandardsClient (`_components/standards-client.tsx`) | client-boundary | Sở hữu `handleClose` (`useStandardsClose`, dùng Navigation API `window.navigation.canGoBack`) |
+| StandardsScreen | layout (root) | Tiêu đề + 3 `<section>` + footer 2 nút |
+| HeroBadgeTierRow × 4 | card | 1 tier (badge ảnh + điều kiện + mô tả) |
+| SecretBoxBadge × 6 | card | 1 icon badge (ảnh + caption text thật trong DOM) |
+
+### Data Displayed
+
+- Data Entity 1: MODEL001_AppLocale (locale hiện tại quyết định bản dịch `standards.*`) — KHÔNG đọc MODEL002_SupabaseUser (trang không có header, không cá nhân hoá)
+
+### Routes/URLs
+
+- `/standards`
+
+### Related Screens
+
+- (Entry only) Bất kỳ trang nào có `SiteFooter` — link "Tiêu chuẩn chung"; thoát về trang trước (`router.back()`) hoặc `/` khi không có lịch sử điều hướng
+
+---
+
 ## Summary
 
-- **Total Screens**: 3
+- **Total Screens**: 5
 
 ---
 
@@ -151,7 +223,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 - [x] All SCR### codes are unique
 - [x] All SCR### codes are referenced in ScreenFlow.md
 - [x] All related screen references are valid
-- [x] All route URLs are properly formatted (`/`, `/login`, `/todo` — khớp route-list.md)
-- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003)
+- [x] All route URLs are properly formatted (`/`, `/awards`, `/login`, `/standards`, `/todo` — khớp route-list.md)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005)
 - [x] No orphaned screen references
-- [x] No REG### emitted (cả 3 screen đều atomic — xem justification/Type ở từng SCR)
+- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 5 spec.md) — SCR001-003, SCR005 atomic có justification 2-of-3 gate; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005, không tự ý vá ở đây

@@ -64,6 +64,49 @@
     ],
     "src/app/(public)/awards/_utils/scroll-spy.ts": [
       "F004"
+    ],
+    "src/app/(public)/standards/page.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_components/standards-client.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_components/standards-screen.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_components/hero-badge-tier-row.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_components/secret-box-badge.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_components/standards-footer-actions.tsx": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_hooks/use-standards-close.ts": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_shared/standards-copy.ts": [
+      "F005"
+    ],
+    "src/app/(public)/standards/_shared/build-standards-copy.ts": [
+      "F005"
+    ],
+    "src/constants/routes.ts": [
+      "F004",
+      "F005"
+    ],
+    "proxy.ts:125": [
+      "F004",
+      "F005"
+    ],
+    "src/app/(public)/_components/site-footer.tsx": [
+      "F004",
+      "F005"
+    ],
+    "src/app/(public)/_components/icons/icon-pencil.tsx": [
+      "F003",
+      "F005"
     ]
   }
 }

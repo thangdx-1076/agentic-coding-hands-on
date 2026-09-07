@@ -7,8 +7,9 @@ lang: vi
 
 # Architecture
 
-**Phạm vi**: toàn bộ source hiện có trong repo — 4 screen (`/`, `/awards`, `/login`, `/todo`; route
-phụ `/auth/callback`), gồm cả F003_Homepage và F004_AwardSystemPage.
+**Phạm vi**: toàn bộ source hiện có trong repo — 5 screen (`/`, `/awards`, `/login`, `/standards`,
+`/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage, F004_AwardSystemPage và
+F005_StandardsRulesPage.
 
 **Cập nhật 2026-09-06 (đợt 2 — route colocation)**: toàn bộ source đã chuyển vào `src/`
 (`plans/260906-1150-src-route-colocation-refactor/`) — **URL, hành vi runtime, biến môi
@@ -29,6 +30,20 @@ lưới giải trên `/` KHÔNG đổi vị trí — vẫn ở `(home)/_componen
 import sang map asset dùng chung `(public)/_shared/award-name-graphics.ts` (`AWARD_NAME_GRAPHIC`,
 2 consumer: `award-card.tsx` và `awards/_components/award-section.tsx`). Chi tiết đầy đủ:
 `docs/vi/features/F004_AwardSystemPage/technical-spec.md`.
+
+**Cập nhật 2026-09-07 (đợt 2 — F005_StandardsRulesPage)**: thêm 1 route segment PUBLIC ngang
+hàng `awards`/`login` trong group `(public)`: `src/app/(public)/standards/` (Server Component
+`page.tsx`, không qua guard nào, không đọc session/role — xem `permissions.md`). **Khác hẳn
+`/awards`**: route này KHÔNG dùng lại `SiteHeader`/`SiteFooter`/`getViewer()` — design chỉ vẽ 1
+panel, không có chrome nào trong node tree (xác nhận bởi E2E: `header`/`footer` count 0) — nên
+không có thêm hoisting nào ở tầng `(public)/_utils` hay `(public)/_components` cho phần
+header/footer. Nội dung 100% tĩnh từ i18n namespace `standards` — không DAL, không bảng Supabase
+mới, không client Supabase nào được gọi từ route này. Một component DUY NHẤT climb scope-ladder:
+`IconPencil` (`(home)/_components/icons/icon-pencil.tsx` → `(public)/_components/icons/icon-pencil.tsx`),
+vì nút "Viết KUDOS" cần icon bút giống hệt `WidgetButton` trên `/` — cùng pattern climb-1-nấc đã
+dùng cho `SiteHeader`/`SiteFooter`/`KudosSection` ở đợt F004, nhưng phạm vi hẹp hơn nhiều (1
+file, không đổi tên, 2 consumer: `widget-button.tsx` và `standards-footer-actions.tsx`). Chi
+tiết đầy đủ: `docs/vi/features/F005_StandardsRulesPage/technical-spec.md`.
 
 ## System Architecture
 
@@ -62,6 +77,9 @@ graph TB
         GetViewer["src/app/(public)/_utils/get-viewer.ts (promoted, dùng chung (home)+awards)"]
         AwardsDal["src/dal/awards.ts (getAwards)"]
         AwardsDalShim["src/dal/awards-client.ts"]
+        StandardsRoute["src/app/(public)/standards/page.tsx — StandardsPage (F005_StandardsRulesPage, PUBLIC, static i18n only)"]
+        StandardsClient["src/app/(public)/standards/_components/standards-client.tsx"]
+        StandardsScreen["src/app/(public)/standards/_components/standards-screen.tsx"]
         RoleHelper["src/dal/users.ts (getUserRole)"]
         RoleShim["src/dal/users-role-client.ts"]
         CountdownLib["src/app/(public)/(home)/_utils/countdown.ts"]
@@ -103,6 +121,7 @@ graph TB
     AwardsRoute --> AwardsClient --> AwardsComponents
     HomeComponents -.->|"dùng chung, promoted"| SiteChrome
     AwardsComponents -.->|"dùng chung, promoted"| SiteChrome
+    Client --> StandardsRoute --> StandardsClient --> StandardsScreen
     Client --> LoginPage -->|"getCurrentUser(), redirect / nếu đã đăng nhập"| AuthDal
     LoginPage --> LoginClient --> LoginActionsHook
     LoginActionsHook -->|"signInWithGoogle()"| AuthApi --> SupaBrowserClient --> Supabase --> Google
