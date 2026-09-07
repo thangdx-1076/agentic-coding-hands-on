@@ -16,20 +16,26 @@ vi.mock("next/navigation", () => ({
 }));
 
 /**
- * jsdom's `window.history.length` is a real, read-only property that
- * defaults to `1`. `Object.defineProperty` with `configurable: true` lets
- * each test stub its own value and `afterEach` restores the original
- * descriptor so no test leaks state into the next.
+ * The Navigation API (`window.navigation`) isn't implemented by jsdom, so
+ * each test defines or deletes it directly on `window` and `afterEach`
+ * restores the absent-by-default state — same pattern as stubbing
+ * `history.length` in the sibling hook test, just for a property jsdom
+ * never defines at all rather than one it defines read-only.
+ *
+ * Real-Chromium values behind these three cases (measured against the dev
+ * server, Chromium via Playwright, see the hook's own doc comment for the
+ * full numbers): in-app `<Link>` navigation → `canGoBack: true`; a direct
+ * `page.goto()` load → `canGoBack: false`; Firefox/Safari, which don't
+ * implement `window.navigation` at all → the API is simply absent.
  */
-const originalHistoryLength = Object.getOwnPropertyDescriptor(
-  window.history,
-  "length",
-);
-
-function stubHistoryLength(length: number) {
-  Object.defineProperty(window.history, "length", {
+function stubNavigationApi(canGoBack: boolean | undefined) {
+  if (canGoBack === undefined) {
+    Reflect.deleteProperty(window, "navigation");
+    return;
+  }
+  Object.defineProperty(window, "navigation", {
     configurable: true,
-    get: () => length,
+    value: { canGoBack },
   });
 }
 
@@ -46,13 +52,11 @@ describe("useStandardsClose", () => {
   });
 
   afterEach(() => {
-    if (originalHistoryLength) {
-      Object.defineProperty(window.history, "length", originalHistoryLength);
-    }
+    Reflect.deleteProperty(window, "navigation");
   });
 
-  it("có lịch sử (history.length > 1) → gọi router.back(), không push", () => {
-    stubHistoryLength(2);
+  it("Navigation API present, canGoBack true (in-app nav từ /) → gọi router.back(), không push", () => {
+    stubNavigationApi(true);
 
     const { result } = renderHook(() => useStandardsClose());
 
@@ -64,8 +68,21 @@ describe("useStandardsClose", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("không có lịch sử (history.length <= 1, direct-load) → gọi router.push(ROUTES.HOME), không back", () => {
-    stubHistoryLength(1);
+  it("Navigation API present, canGoBack false (direct-load / tab mới) → gọi router.push(ROUTES.HOME), không back", () => {
+    stubNavigationApi(false);
+
+    const { result } = renderHook(() => useStandardsClose());
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    expect(push).toHaveBeenCalledExactlyOnceWith(ROUTES.HOME);
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it("Navigation API vắng mặt (Firefox/Safari) → fallback an toàn router.push(ROUTES.HOME), không back", () => {
+    stubNavigationApi(undefined);
 
     const { result } = renderHook(() => useStandardsClose());
 

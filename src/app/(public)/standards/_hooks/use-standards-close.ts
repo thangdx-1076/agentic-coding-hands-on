@@ -11,20 +11,52 @@ export type StandardsClose = {
 };
 
 /**
+ * Minimal Navigation API surface this hook reads. Not yet in TypeScript's
+ * bundled `lib.dom.d.ts` (checked: TS 5.9.3 ships no `Navigation` interface
+ * and no `Window.navigation` member), so this is a local, narrow type
+ * documenting exactly the one member read — not an unjustified `any`.
+ * Chromium (Chrome/Edge) implements the real API at runtime; Firefox and
+ * Safari do not implement it at all, which is exactly the case the `?.`
+ * below and the "absent" branch in the colocated test cover.
+ */
+type NavigationApiWindow = Window & {
+  navigation?: { canGoBack: boolean };
+};
+
+/**
  * "Đóng" (close) button behavior for the `/standards` route page (BR-003,
  * technical-spec.md § 3.2).
  *
- * `window.history.length > 1` is a heuristic, not a guaranteed API
- * (technical-spec § 5.2) — accepted because clarifications.md requires
- * exactly this behavior and the App Router exposes no better signal:
- * `router.back()` when there is history to go back to, falling back to
- * `router.push(ROUTES.HOME)` (never a hardcoded `"/"`) for a direct load or
- * a new tab, where there is nothing to go back to.
+ * `window.history.length` is NOT usable here — measured (2026-09-07,
+ * Chromium via Playwright against this repo's own dev server) to give
+ * conflicting readings for the same "should push HOME, not go back" case:
+ * a direct `page.goto("/standards")` lands `history.length === 2` (an
+ * artifact of Playwright's pages starting from a real `about:blank` entry),
+ * while an in-app `<Link>` navigation from `/` lands `history.length === 3`.
+ * No fixed threshold on that raw count separates "came from within this
+ * app" from "direct-loaded" — the whole point of the fallback.
  *
- * No `typeof window !== "undefined"` guard: `handleClose` only ever runs
- * from a DOM click event, at which point `window` always exists — adding
- * the guard would create a branch no test can legitimately reach, failing
- * the project's 100%-branch coverage gate with dead code.
+ * `document.referrer` was also measured and ruled out: it stayed `""` in
+ * BOTH scenarios, because Next's `<Link>` performs a same-document (SPA)
+ * transition, and `document.referrer` only changes on a cross-document
+ * navigation.
+ *
+ * `window.navigation.canGoBack` (the Navigation API) is what this hook
+ * uses instead — measured, same setup: `canGoBack: false` on a direct load
+ * (`entriesCount: 1`), `canGoBack: true` after the in-app `<Link>` click
+ * (`entriesCount: 2`). Unlike raw `history.length`, the API's own entry
+ * list does not carry the `about:blank`-artifact noise, so it agrees with
+ * what a real fresh tab would also show. It is Chromium-only today
+ * (Firefox/Safari do not implement `window.navigation`), so the `?.`
+ * degrades to the `undefined` branch there — the deliberately safe
+ * default is `router.push(ROUTES.HOME)`, never a guess at `back()`, since
+ * landing on HOME is always a defensible destination while an incorrect
+ * `back()` on a direct load is not.
+ *
+ * Net effect: `router.back()` only when the browser can positively confirm
+ * same-session history to return to; `router.push(ROUTES.HOME)` (never a
+ * hardcoded `"/"`) for a direct load, a new tab, or any engine without the
+ * Navigation API.
  *
  * Returns a named object (`{ handleClose }`) — destructure it immediately
  * at the call site (`const { handleClose } = useStandardsClose()`) rather
@@ -35,7 +67,8 @@ export function useStandardsClose(): StandardsClose {
   const router = useRouter();
 
   const handleClose = useCallback(() => {
-    if (window.history.length > 1) {
+    const { navigation } = window as NavigationApiWindow;
+    if (navigation?.canGoBack) {
       router.back();
       return;
     }
