@@ -377,3 +377,4 @@
 - Chưa làm overlay thật bằng intercepting route (`@modal` + `(.)standards`). Muốn đúng hành vi drawer thì đó là đường đi, không phải viết lại.
 - Nhánh "Navigation API vắng mặt" của `useStandardsClose` chỉ được unit test phủ — Playwright ở repo này chỉ chạy Chromium nên e2e không chạm tới.
 - Bump minor 0.4.0 → 0.5.0 (không hỏi): khớp tiền lệ awards — route công khai mới cũng đã bump minor lên 0.4.0.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/10
