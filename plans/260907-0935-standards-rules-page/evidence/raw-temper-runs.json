@@ -1,0 +1,7 @@
+[
+  {
+    "command": "pnpm test:e2e tests/e2e/standards.spec.ts --reporter=list",
+    "exitCode": 1,
+    "summary": "Valid RED: 14 tests total, 12 failed (screen assertion: h1 expected 'Thể lệ' got '404'), 2 passed (no chrome, no pageerror). Exit 1 = correct RED via assertion failure, not infrastructure."
+  }
+]

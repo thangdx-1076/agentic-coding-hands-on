@@ -335,3 +335,46 @@
 
 - Đã trả nợ E2E: thêm `[REG 2026-09-07]` đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section render kèm chữ tiếng Anh. Đã kiểm ngược — xoá 6 dòng `en` thì test đỏ đúng chỗ, không phải test xanh suông.
 - Test này gắn `@local-db` nên CI không chạy. Nhánh EN chỉ được canh trên máy dev.
+
+## 260907-1037 — standards-page-i18n-en-copy
+
+### Tôi cần làm
+
+- [ ] **Duyệt bản dịch tiếng Anh của namespace `standards`** — `messages/en.json` § `standards`. Không có MCP MoMorph trong phiên làm việc này nên không gọi được `list_file_localizations` để lấy bản dịch chính thức của design cho các chuỗi sau; đã dịch tay (`is_reviewed: false`), cần người duyệt trước khi coi là nội dung chính thức: `heroSection.intro`, `heroSection.tiers.{risingHero,superHero,legendHero}.condition`, tất cả 4 `heroSection.tiers.*.description`, `secretBoxSection.heading`, `secretBoxSection.intro`, `secretBoxSection.closing`, `nationKudosSection.body`.
+- [ ] Đã dùng nguyên văn từ MoMorph (không cần duyệt lại, ghi ở đây để đối chiếu): `title`→"Rules", `heroSection.heading`→"KUDOS Receiver: Hero badge for positive influence", `tiers.newHero.condition`→"1-4 people send you Kudos", `footer.writeKudos`→"Write KUDOS", `nationKudosSection.heading`→"NATION KUDOS", `footer.close`→"Close" (suy luận D003, không phải nội dung design).
+
+### Decisions
+
+- 6 caption badge (`REVIVAL`, `TOUCH OF LIGHT`, `STAY GOLD`, `FLOW TO HORIZON`, `BEYOND THE BOUNDARY`, `ROOT FURTHER`) và 4 alt tier (`New Hero`, `Rising Hero`, `Super Hero`, `Legend Hero`) giữ y hệt ở cả 2 locale — tên riêng của icon/tier, không dịch, theo clarifications.md.
+- `ROOT FURTHER` lấy từ `character` của node, không phải tên layer `ROOT FUTHER` (thiếu R) — đã grep xác nhận `ROOT FUTHER` không xuất hiện trong `messages/`.
+- Icon bút: promote `IconPencil` (`currentColor`) lên `(public)/_components/icons/` bằng `git mv`, KHÔNG dùng `public/home/Pen.svg` (`fill="white"`, vô hình trên nút vàng) — quyết định đã RESOLVED sẵn trong `plan.md`, không mở lại ở đây.
+
+### Nợ lại
+
+- (không có)
+
+## 260907-0935 — standards-rules-page
+
+### Tôi cần làm
+
+- [ ] Duyệt 20 chuỗi EN của namespace `standards` trong `messages/en.json` — toàn bộ là máy dịch từ MoMorph (`is_reviewed: false`), chưa ai đọc lại. Riêng `heroSection.tiers.superHero.description` không có bản MoMorph nào nên là dịch tay.
+- [ ] Quyết định khi nào làm `/kudos` — nút "Viết KUDOS" ở `/standards` hiện dẫn 404, cùng 4 link cũ đã trỏ sẵn vào đó.
+- [ ] Cân nhắc chạy `/tkm:rebuild-spec` một lượt Core: doc-writer phát hiện `docs/vi/generated/*` vẫn trích đường dẫn cũ trước khi migrate sang `src/` (vd `app/page.tsx`, `lib/supabase/client.ts`) cho F001–F003. Ngoài phạm vi F005 nên chưa sửa.
+
+### Decisions
+
+- Làm `/standards` thành route page thay vì modal — footer đã trỏ sẵn `href="/standards"`, và không chỗ nào trong code mở modal này.
+- Không bọc SiteHeader/SiteFooter — design không vẽ chrome, lối ra là nút "Đóng".
+- Nội dung tĩnh qua i18n namespace `standards`, không thêm bảng Supabase (khác `/awards`).
+- Nút "Đóng" dùng `window.navigation.canGoBack` (đo thật trong Chromium), fallback `push(ROUTES.HOME)` cho Firefox/Safari.
+- Promote `IconPencil` từ `(home)/_components/icons/` lên `(public)/_components/icons/` thay vì dùng `public/home/Pen.svg` — file SVG đó `fill="white"`, tàng hình trên nút vàng.
+- Badge dùng `ROOT FURTHER` (theo `character`), không theo tên layer `ROOT FUTHER`.
+- Thêm `!build` vào `~/.claude/.skignore` để chạy được `pnpm build` — user chốt khi evidence gate chặn.
+
+### Nợ lại
+
+- Trạng thái `disabled` của 2 nút footer (TC_THELE_GUI_003 / TC_THELE_FUN_005) chưa làm — không có điều kiện runtime nào kích hoạt. Mở lại nếu sau này có (vd chưa đăng nhập).
+- Chưa làm overlay thật bằng intercepting route (`@modal` + `(.)standards`). Muốn đúng hành vi drawer thì đó là đường đi, không phải viết lại.
+- Nhánh "Navigation API vắng mặt" của `useStandardsClose` chỉ được unit test phủ — Playwright ở repo này chỉ chạy Chromium nên e2e không chạm tới.
+- Bump minor 0.4.0 → 0.5.0 (không hỏi): khớp tiền lệ awards — route công khai mới cũng đã bump minor lên 0.4.0.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/10

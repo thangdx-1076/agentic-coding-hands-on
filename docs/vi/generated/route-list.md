@@ -24,7 +24,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 ## Frontend Routes/Pages
 
-Năm route frontend: bốn route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+Sáu route frontend: năm route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
 ### File: app/page.tsx
 
@@ -41,6 +41,14 @@ Route `/` render SCR003_HomeScreen — trang chủ công khai (hero + đếm ng�
 | /awards | AwardsPage | awards (F004_AwardSystemPage) |
 
 Route `/awards` render SCR004_Awards — trang chi tiết công khai 6 hạng mục giải thưởng SAA 2025 (nav trái + 6 section ảnh/mô tả/số lượng/giá trị + khối Sun* Kudos + header/footer dùng chung với `/`). PUBLIC by design, không qua guard nào (giống `/`, khác `/todo`) — anonymous và authenticated đều nhận `200` với cùng nội dung, trang không cá nhân hoá theo vai trò (chỉ header dùng chung đổi theo trạng thái đăng nhập, xem `docs/vi/generated/permissions-matrix.md`). Mới từ 2026-09-06 (F004_AwardSystemPage) — trước đó 6 link `/awards#<slug>` trên `/` trỏ tới route chưa tồn tại (404).
+
+### File: src/app/(public)/standards/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /standards | StandardsPage | standards (F005_StandardsRulesPage) |
+
+Route `/standards` render SCR005_Standards — panel công khai thể lệ SAA 2025 (huy hiệu Hero 4 hạng, Secret Box 6-icon, Kudos Quốc dân, footer 2 nút "Đóng"/"Viết KUDOS"). PUBLIC by design, không qua guard nào (giống `/`, `/awards`; khác `/todo`). **Khác `/awards`**: nội dung 100% tĩnh i18n (`getTranslations("standards")`), không đọc Supabase/DAL nào, và KHÔNG dùng lại `SiteHeader`/`SiteFooter` — trang chỉ render đúng 1 panel, không có chrome nào (xác nhận bởi E2E `tests/e2e/standards.spec.ts` C2: `header`/`footer` count 0). Mới từ 2026-09-07 (F005_StandardsRulesPage) — trước đó link "Tiêu chuẩn chung" ở `site-footer.tsx:74` trỏ tới route chưa tồn tại (404).
 
 ### File: app/login/page.tsx
 
@@ -69,8 +77,13 @@ Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có 
 `proxy.ts` (root) là lớp `proxy` của Next 16 (tên cũ: `middleware`) — guard optimistic, KHÔNG phải authoritative. Matcher whitelist tường minh:
 
 ```
-matcher: ["/", "/login", "/todo/:path*"]
+matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards"]
 ```
+
+**Cập nhật 2026-09-07 (F005_StandardsRulesPage)**: `/awards` (F004, đã thêm trước đó) và `/standards`
+(F005) khớp matcher vì CÙNG lý do `/` khớp — chỉ để refresh session cookie + chuẩn hoá
+`NEXT_LOCALE` cho một trang public, KHÔNG vì có nhánh guard nào rẽ theo hai path này (hai
+predicate bên dưới chỉ test `ROUTES.LOGIN`/`ROUTES.TODO`, không test `/awards`/`/standards`).
 
 Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và `/todo/:path*`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
 
@@ -79,6 +92,8 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | đã login & path === /login | / (đổi từ /todo) |
 | chưa login & path bắt đầu bằng /todo | /login |
 | path === / | pass-through LUÔN — không redirect (public, F003_Homepage; trước đây redirect theo trạng thái đăng nhập) |
+| path === /awards | pass-through LUÔN — không redirect (public, F004_AwardSystemPage) |
+| path === /standards | pass-through LUÔN — không redirect (public, F005_StandardsRulesPage) |
 | còn lại | pass-through (giữ cookie đã refresh) |
 
 `/auth/callback` bị loại khỏi matcher một cách tường minh — route đó tự xử lý redirect riêng (xem Backend Routes). `proxy.ts` cũng chuẩn hoá cookie `NEXT_LOCALE` (ghi đè cả trên `request` lẫn `response` nếu giá trị không hợp lệ) trước khi chạy auth guard.
@@ -88,5 +103,5 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | Category | Count |
 |----------|-------|
 | Backend Routes | 1 |
-| Frontend Pages | 5 |
-| Total | 6 |
+| Frontend Pages | 6 |
+| Total | 7 |

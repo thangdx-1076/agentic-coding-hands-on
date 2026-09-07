@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: route-view (Next.js 16 App Router) — 4 screens (`/`, `/awards`, `/login`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
+**Analysis Scope**: route-view (Next.js 16 App Router) — 5 screens (`/`, `/awards`, `/login`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
 
 **Code Format**: All SCR codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped transitions
 
@@ -24,9 +24,13 @@ graph TD
     SCR004 -->|Click 'Đăng nhập' - ẩn danh| SCR001
     SCR004 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
     SCR002[SCR002_TodoScreen] -->|Click nút Đăng xuất, logoutAction| SCR001
+    Start -->|bất kỳ ai, path '/standards'| SCR005[SCR005_Standards]
+    SCR005 -->|Click 'Đóng', có lịch sử điều hướng| Back["router.back - trang trước đó"]
+    SCR005 -->|Click 'Đóng', direct-load không có lịch sử| SCR003
+    SCR005 -->|Click 'Viết KUDOS'| Kudos["/kudos - chưa implement, 404"]
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại).
+> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab).
 
 ## Feature Entry Points
 
@@ -60,6 +64,13 @@ graph TD
   - SCR004_Awards — `/awards` (atomic)
 - **Exit screens**: SCR001_LoginScreen (click "Đăng nhập" khi ẩn danh, hoặc "Đăng xuất" trong menu tài khoản — dùng chung `SiteHeader` với F003)
 
+### F005_StandardsRulesPage
+
+- **Entry screen**: SCR005_Standards — `/standards`
+- **Owned screens**:
+  - SCR005_Standards — `/standards` (atomic)
+- **Exit screens**: không có SCR### nào khác trong tài liệu này (nút "Đóng" thoát bằng `router.back()`/`push("/")` — không phải một điều hướng có điều kiện tới màn hình cụ thể nào, mà là "trả khách về nơi họ đã ở"; nút "Viết KUDOS" trỏ `/kudos`, chưa có SCR### nào)
+
 ---
 
 ## Screen Access Paths
@@ -78,6 +89,10 @@ graph TD
 | SCR003_HomeScreen | SCR001_LoginScreen | Click "Đăng xuất" trong menu tài khoản (submit `logoutAction`) | Đã đăng nhập; luôn xảy ra kể cả khi `signOut()` lỗi | |
 | SCR002_TodoScreen | SCR001_LoginScreen | Click nút đăng xuất (submit `logoutAction`) | Luôn xảy ra, kể cả khi `signOut()` lỗi | |
 | SCR002_TodoScreen | SCR001_LoginScreen | Guard xác thực `getUser()` thất bại | `!user` (không có session hợp lệ) | |
+| Start | SCR005_Standards | Initial load | Truy cập `/standards` trực tiếp — public, mọi actor (đã hoặc chưa đăng nhập; F005_StandardsRulesPage) | |
+| (bất kỳ trang nào có `SiteFooter`) | SCR005_Standards | Click link "Tiêu chuẩn chung" ở footer | Không điều kiện — public, mọi actor | |
+| SCR005_Standards | (trang trước đó, bất kỳ) | Click "Đóng", có lịch sử điều hướng | `window.navigation.canGoBack === true` → `router.back()` | |
+| SCR005_Standards | SCR003_HomeScreen | Click "Đóng", direct-load không có lịch sử | `window.navigation.canGoBack` là `false`/`undefined` → `router.push(ROUTES.HOME)` | |
 
 > Region column: để trống — app này không có REG### nào (xem screen-list.md).
 
@@ -109,7 +124,7 @@ graph TD
 **Exit Points**:
 - Đến SCR001_LoginScreen: click link "Đăng nhập" ở góc phải header (chỉ hiện khi ẩn danh)
 - Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction` — tái dùng nguyên trạng từ `app/todo/actions.ts`, luôn redirect dù `signOut()` thành công hay lỗi)
-- (Ngoài phạm vi phân tích) 5 link tới route chưa tồn tại: `/awards`, `/kudos`, `/standards`, `/profile`, `/admin` — không phải SCR### nào trong tài liệu này
+- (Ngoài phạm vi phân tích) 3 link tới route chưa tồn tại: `/kudos`, `/profile`, `/admin` — không phải SCR### nào trong tài liệu này (`/awards` → SCR004_Awards, `/standards` → SCR005_Standards, cả hai nay đã có SCR### riêng, không còn thuộc nhóm này)
 
 **Decision Points**:
 - Không có guard chặn truy cập (`app/page.tsx` không redirect ai) — `getUser()`/`getUserRole()` chỉ đọc để cá nhân hoá header (bell + menu tài khoản + role, hoặc link đăng nhập), không quyết định có được xem trang hay không (PERM001_RootRouteGuard superseded, xem `permissions-matrix.md`)
@@ -130,6 +145,23 @@ graph TD
 **Decision Points**:
 - Không có guard chặn truy cập (`src/app/(public)/awards/page.tsx` không redirect ai) — `getViewer()` chỉ đọc để cá nhân hoá header, giống hệt SCR003_HomeScreen
 - `awards.length > 0` → render nav + 6 section; `=== 0` (Supabase lỗi/rỗng) → render `AwardsEmptyState` thay thế trong cùng khung trang
+
+---
+
+### SCR005_Standards (Thể lệ SAA 2025)
+
+**Entry Points**:
+- Truy cập URL trực tiếp `/standards` — public, không điều kiện (anonymous hoặc authenticated đều render cùng một trang, không props nào khác nhau giữa hai actor)
+- Click link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào (`site-footer.tsx:74`)
+
+**Exit Points**:
+- (không tới SCR### nào cụ thể) click "Đóng" khi có lịch sử điều hướng → `router.back()`, trả về đúng trang khách vừa rời (có thể là SCR003, SCR004, hoặc bất kỳ trang nào khác trong site)
+- Đến SCR003_HomeScreen: click "Đóng" khi direct-load, không có lịch sử điều hướng trong tab → `router.push(ROUTES.HOME)`
+- (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/kudos` (nút "Viết KUDOS") — không phải SCR### nào trong tài liệu này
+
+**Decision Points**:
+- Không có guard chặn truy cập (`src/app/(public)/standards/page.tsx` không redirect ai, không đọc session/role) — khác SCR003/SCR004, trang này không cá nhân hoá theo trạng thái đăng nhập vì không có header/footer chrome nào cần đọc `viewer`
+- `window.navigation?.canGoBack` (Navigation API) quyết định "Đóng": `true` → `router.back()`; `false`/`undefined` (Firefox/Safari không implement API này) → `router.push(ROUTES.HOME)`, không bao giờ đoán `back()` sai hướng
 
 ---
 
@@ -172,6 +204,7 @@ graph LR
 | SCR002_TodoScreen | Có | User (bất kỳ user Supabase hợp lệ nào — không phân role) |
 | SCR003_HomeScreen | Không — public cho mọi actor (PERM001_RootRouteGuard superseded); nội dung header cá nhân hoá theo trạng thái đăng nhập + role, không phải một guard | Public (nội dung); cá nhân hoá theo `member`/`admin` khi đã đăng nhập |
 | SCR004_Awards | Không — public cho mọi actor (F004_AwardSystemPage, cùng nhóm với `/`); nội dung 6 hạng mục giải không cá nhân hoá theo vai trò, chỉ header dùng chung đổi theo trạng thái đăng nhập | Public (toàn bộ nội dung, không riêng theo `member`/`admin`) |
+| SCR005_Standards | Không — public cho mọi actor (F005_StandardsRulesPage, cùng nhóm với `/`, `/awards`); KHÔNG có phần nào cá nhân hoá — trang không đọc session/role, không có header/footer chrome nào (khác SCR003/SCR004) | Public (toàn bộ nội dung, giống hệt cho mọi actor) |
 
 ---
 
@@ -194,7 +227,7 @@ graph LR
 
 ## Circular Dependencies Check
 
-- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào
+- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào; SCR005 không tạo cạnh vào SCR001 nào cả (không có header/menu tài khoản) — "Đóng" chỉ là `router.back()`/`push("/")`, không phải một cạnh điều hướng có điều kiện tới một SCR### cụ thể, nên không góp thêm chu trình nào
 - [x] All screens have valid entry/exit points
 - [x] All navigation paths terminate
 

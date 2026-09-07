@@ -68,6 +68,23 @@
         "bl": [],
         "perms": []
       }
+    },
+    {
+      "fcode": "F005",
+      "name": "Thể lệ SAA 2025 (Standards)",
+      "slug": "F005_StandardsRulesPage",
+      "priority": "P2",
+      "type": "ui",
+      "related": {
+        "screens": [
+          "SCR005_Standards"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
     }
   ]
 }

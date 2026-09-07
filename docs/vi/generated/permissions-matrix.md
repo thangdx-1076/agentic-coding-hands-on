@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 1 route xác nhận PUBLIC không guard (`/awards`, F004_AwardSystemPage, xem mục cuối) — no RBAC in scope, see note below
+**Analysis Scope**: 2 active frontend page guards (`/login`, `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 2 route xác nhận PUBLIC không guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage — xem mục cuối) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -194,6 +194,32 @@ bởi cùng quyết định kiến trúc đã supersede PERM001 cho `/` — xem 
 
 ---
 
+## `/standards` — PUBLIC, không route-guard (F005_StandardsRulesPage, chưa cấp mã PERM###)
+
+Route `/standards` gia nhập ĐÚNG nhóm PUBLIC với `/` (PERM001 superseded) và `/awards` (F004) —
+không guard nào ở `proxy.ts` lẫn `src/app/(public)/standards/page.tsx`; Anonymous và Authenticated
+đều nhận `200` với cùng nội dung. Không cấp `PERM###` mới vì đây là "không có guard nào", không
+phải một permission item cần theo dõi — cùng lý do `/awards` không cấp mã ở mục trên. **Khác
+`/awards`**: trang không đọc session/role nào cả (không có header dùng chung cần cá nhân hoá) —
+`getUser()`/`getViewer()` không được gọi từ route này. `proxy.ts`'s `config.matcher` bao gồm
+`/standards` (cùng lý do đã nêu cho `/awards` ở trên: chỉ refresh session cookie + chuẩn hoá
+`NEXT_LOCALE`, không có nhánh redirect nào rẽ theo path này).
+
+### Related Routes
+- (GET) /standards — SCR005_Standards, không redirect
+
+### Related Screens
+- SCR005_Standards — Thể lệ SAA 2025 (F005_StandardsRulesPage)
+
+### Permission Rules
+
+| Role | Allow | Conditions |
+|------|-------|------------|
+| Anonymous | ✓ | Render đầy đủ nội dung công khai của SCR005_Standards |
+| Authenticated | ✓ | Render đầy đủ nội dung, giống hệt Anonymous — trang không đọc session/role, không có phần nào cá nhân hoá (khác `/awards`, vốn còn cá nhân hoá header) |
+
+---
+
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
@@ -216,9 +242,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004 không tạo PERM### mới)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005 không tạo PERM### mới)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/login`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

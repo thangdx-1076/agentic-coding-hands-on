@@ -1,0 +1,34 @@
+{
+  "task": "Implement MoMorph screen \"Thể lệ UPDATE\" (b1Filzi9i6) as the public route /standards, rendering the SAA 2025 rules panel from static i18n copy.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "GET /standards renders for an anonymous visitor: title, 3 sections, 4 Hero tiers, 6-badge grid, footer actions",
+    "No site chrome: 0 <header>, 0 <footer>, exactly one a[href=\"/kudos\"] — the MoMorph design draws none",
+    "Panel itself scrolls (overflow-y:auto), not the window; no scroll when content fits",
+    "\"Đóng\" returns to the previous page, falling back to ROUTES.HOME on a direct load; \"Viết KUDOS\" navigates to /kudos",
+    "vi and en both render from the standards i18n namespace; badge 6 reads ROOT FURTHER",
+    "MoMorph TC_THELE_GUI_001/002/004 + TC_THELE_FUN_001/002/003/004 asserted by tests/e2e/standards.spec.ts (C1-C14)",
+    "Repo gate holds: tsc, lint, format, unit coverage 100%, storybook, full Playwright suite"
+  ],
+  "touchpoints": [
+    "src/app/(public)/standards/page.tsx",
+    "src/app/(public)/standards/_components/{standards-client,standards-screen,hero-badge-tier-row,secret-box-badge,standards-footer-actions}.tsx",
+    "src/app/(public)/standards/_shared/{standards-copy,build-standards-copy}.ts",
+    "src/app/(public)/standards/_hooks/use-standards-close.ts",
+    "src/constants/routes.ts",
+    "src/proxy.ts",
+    "src/app/(public)/_components/site-footer.tsx",
+    "src/app/(public)/_components/icons/icon-pencil.tsx",
+    "src/app/(public)/(home)/_components/widget-button.tsx",
+    "messages/vi.json",
+    "messages/en.json",
+    "public/standards/",
+    "tests/e2e/standards.spec.ts"
+  ],
+  "blastRadius": "Additive route. Existing surfaces touched: site-footer.tsx swaps a literal for ROUTES.STANDARDS (fixes a dead link); IconPencil promoted from (home)/_components/icons to (public)/_components/icons, so widget-button.tsx changes one import; proxy matcher gains \"/standards\". No database, no auth, no schema. Regression risk concentrated in home.spec.ts.",
+  "contracts": [
+    "tests/e2e/standards.spec.ts C1-C14 is the DOM contract; components satisfy it, never the reverse",
+    "messages/{vi,en}.json standards namespace key parity enforced by messages-parity.test.ts",
+    "vitest 100% coverage allowlist covers src/app/(public)/standards/_hooks/use-standards-close.ts"
+  ]
+}
