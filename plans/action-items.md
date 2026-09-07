@@ -378,3 +378,57 @@
 - Nhánh "Navigation API vắng mặt" của `useStandardsClose` chỉ được unit test phủ — Playwright ở repo này chỉ chạy Chromium nên e2e không chạm tới.
 - Bump minor 0.4.0 → 0.5.0 (không hỏi): khớp tiền lệ awards — route công khai mới cũng đã bump minor lên 0.4.0.
 - PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/10
+
+## 260907-1253 — profile-page-blueprint
+
+### Tôi cần làm
+
+- [ ] Quyết định sản phẩm cho department / Hero tier / hoa-thị stars (`362:5064`): nguồn từ Sun*-HR hay app tự suy? Chưa có cột nào trên `public.users`, nên hero bỏ hẳn dòng đó vô thời hạn (RISK-02).
+- [ ] Review kỹ migration `0005` trước khi merge — view SECURITY DEFINER là ranh giới đọc thứ 2 của cả hệ; sai `security_invoker` hoặc quên REVOKE `anon` là lộ tên+avatar toàn công ty.
+- [ ] Xác nhận với design 3 chuỗi chưa có trong dữ liệu MoMorph: `profile.hero.fallbackName`, `profile.kudos.emptyReceived`, `profile.kudos.emptySent`.
+
+### Decisions
+
+- Thêm phase 02 (promote chrome `(public)/_{components,shared,utils,hooks}` → `src/app/_*`) vào plan dù brief không nêu: `/profile` ở `(protected)` mà `SiteHeader`/`SiteFooter`/`getViewer`/`useSelectLocale` ở `(public)` → import ngang giữa 2 route group, đúng thứ F005 đã xử bằng promote (`IconPencil`). Tổ tiên chung là `src/app/`.
+- `parseProfileId` đặt ở `_utils/` chứ không `_shared/` — `vitest.config.ts` include `src/app/**/_utils/**/*.ts`, nên đặt đúng chỗ là điều kiện để logic validate input rơi vào gate coverage 100%.
+- Hàm phân giải trả discriminated union (`self` / `canonical` / `other` / `reject`) thay vì `string | null` — `page.tsx` mới `switch` vét cạn được, và `null` không phân biệt "self" với "404".
+- `profile.spec.ts` tách 2 describe: 1 test CI-safe (anonymous → `/login`) + phần còn lại tag `@auth`. Không sửa `ci.yml` — `--grep-invert "@auth|@local-db"` đã có sẵn ở cả 2 chỗ.
+- `sign-in.ts` nhận thêm tham số `metadata` optional: trigger `0002` đọc `raw_user_meta_data->>'full_name'` và `ON CONFLICT DO NOTHING`, nên user fixture không có metadata sẽ có `full_name` NULL vĩnh viễn.
+- Không promote `award-name-graphics.ts` cùng cụm chrome — chỉ `/awards` dùng (YAGNI).
+
+### Nợ lại
+
+- 10 TC hoãn sang F007+ (FUN_006, FUN_007, FUN_010, FUN_013-015, GUI_006, GUI_007, SEC_002, SEC_003) — cần Kudos domain thật.
+- `docs/vi/system/permissions.md` chưa merge delta F006 (chỉ merge sau khi có code, đúng quy trình F004/F005); ngoài ra file đó vẫn nói `/standards` chưa tồn tại — lệch có trước F006.
+- DEBT-01: "Mở Secret Box" và "Viết Kudo" render `disabled` vĩnh viễn, không handler — mở lại khi Kudos domain ra đời.
+- CI xanh gần như không chứng minh gì về `/profile`: đúng 1 test chạy được trong CI.
+
+## 260907-1330 — profile-page-phase-04-foundation
+
+### Tôi cần làm
+
+- [ ] Export 7 asset thật từ MoMorph cho `/profile` (hero keyvisual `I1210:12622;2167:5140`,
+      6 badge artwork `I{362:5066..5071};3053:10046`) rồi đo `sips -g pixelWidth -g pixelHeight`
+      và ghi `evidence/asset-dimensions.md`. Phiên `implementer` này (Track B) không có quyền
+      gọi MoMorph MCP tools trong toolset được cấp (chỉ Bash/Read/Write/Edit/SendMessage/Skill)
+      — không tự chế ảnh giả để lấp chỗ trống. `public/profile/**` và
+      `evidence/asset-dimensions.md` CHƯA tồn tại; cần agent có quyền MCP (`momorph-ui-implementer`
+      ở phase 05, hoặc orchestrator) export trước khi Track A dựng `ProfileHero`/`BadgeCollection`.
+
+### Decisions
+
+- 3 chuỗi copy chưa xác nhận với design (`profile.hero.fallbackName`,
+  `profile.kudos.emptyReceived`, `profile.kudos.emptySent`) đã CHỐT theo đề xuất của
+  `technical-spec.md` § 4.3, có điều chỉnh 2 chuỗi empty để khớp regex DOM contract C10
+  (`tests/e2e/profile.spec.ts:360`, `/chưa có|không có|trống|empty/i`) — dùng "chưa có" thay vì
+  "chưa nhận"/"chưa gửi":
+  - `hero.fallbackName` = `"Sunner"`
+  - `kudos.emptyReceived` = `"Bạn chưa có Kudos nào được nhận."`
+  - `kudos.emptySent` = `"Bạn chưa có Kudos nào được gửi."`
+  **Vì:** khớp pattern đã có trong repo (regex C10 đã khoá cứng, phải quay ngược từ đó) — CLAUDE.md
+  quy tắc quyết định (b). Đã ghi vào `messages/vi.json` + `messages/en.json`; phase 05/07 dùng
+  đúng khoá này, không cần xác nhận lại.
+
+### Nợ lại
+
+- (không có)

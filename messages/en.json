@@ -172,5 +172,31 @@
       "close": "Close",
       "writeKudos": "Write KUDOS"
     }
+  },
+  "profile": {
+    "hero": {
+      "fallbackName": "Sunner"
+    },
+    "badges": {
+      "headingSelf": "My icon collection",
+      "headingOther": "Icon collection"
+    },
+    "stats": {
+      "rows": {
+        "received": "Kudos received:",
+        "sent": "Kudos sent:",
+        "hearts": "Hearts received:",
+        "secretBoxOpened": "Secret Boxes opened:",
+        "secretBoxLeft": "Secret Boxes left:"
+      },
+      "openSecretBox": "Open Secret Box 🎁",
+      "writeKudos": "Write Kudos"
+    },
+    "kudos": {
+      "receivedLabel": "Received",
+      "sentLabel": "Sent",
+      "emptyReceived": "You haven't received any Kudos yet.",
+      "emptySent": "You haven't sent any Kudos yet."
+    }
   }
 }

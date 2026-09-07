@@ -9,6 +9,13 @@ import { createProxyClient } from "@/lib/supabase/proxy-client";
 import { ROUTES } from "@/constants/routes";
 
 /**
+ * Every route that requires a session. Widen this list — never add a
+ * second `if` branch — when a new protected route joins `/todo`; each one
+ * only ever redirects to `/login` via the same check below.
+ */
+const PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE];
+
+/**
  * Optimistic auth guard + locale-cookie normalization (Next 16's `proxy`,
  * formerly `middleware`). This is the FIRST line of defense only — the
  * authoritative check lives in `src/app/(protected)/layout.tsx`, which reads
@@ -17,12 +24,12 @@ import { ROUTES } from "@/constants/routes";
  * "should not be your only line of defense."
  *
  * Redirect matrix (§ E2E contract):
- *   authed   & path = /login          → /
- *   !authed  & path ∈ {/todo, ...}    → /login
- *   path = /                          → pass through, no redirect (public;
- *                                        cookie refresh via getUserOrNull
- *                                        still runs — see `config.matcher`)
- *   else                               → pass through (with refreshed cookies)
+ *   authed   & path = /login              → /
+ *   !authed  & path ∈ PROTECTED_ROUTES    → /login
+ *   path = /                              → pass through, no redirect (public;
+ *                                            cookie refresh via getUserOrNull
+ *                                            still runs — see `config.matcher`)
+ *   else                                   → pass through (with refreshed cookies)
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -33,7 +40,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthPage = pathname === ROUTES.LOGIN;
-  const isProtectedPage = pathname.startsWith(ROUTES.TODO);
+  const isProtectedPage = PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route),
+  );
 
   if (user && isAuthPage) {
     return redirectPreservingCookies(request, response, ROUTES.HOME);
@@ -114,7 +123,12 @@ function redirectPreservingCookies(
  * `/awards` (F004_AwardSystemPage) and `/standards` (F005_StandardsRulesPage)
  * are matched for the same reason `/` is: locale-cookie normalization +
  * session refresh for a public page that takes no guard branch above — they
- * are NOT added to `isProtectedPage`, which only ever tests `ROUTES.TODO`.
+ * are NOT added to `PROTECTED_ROUTES`, which tests `ROUTES.TODO` and
+ * `ROUTES.PROFILE`.
+ *
+ * `/profile` (F006_ProfilePage) IS a protected route (see
+ * `PROTECTED_ROUTES` above) — it needs the matcher entry so this proxy
+ * actually runs for it, same as `/todo/:path*`.
  *
  * Stays a LITERAL array, never `ROUTES.*`: Next statically analyzes
  * `config.matcher` at build time (it cannot evaluate an imported constant),
@@ -122,5 +136,5 @@ function redirectPreservingCookies(
  * route strings.
  */
 export const config = {
-  matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards"],
+  matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards", "/profile"],
 };
