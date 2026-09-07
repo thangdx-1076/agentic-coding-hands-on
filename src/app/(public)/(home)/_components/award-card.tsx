@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import type { AwardItem } from "../_shared/home-copy";
 import { AWARD_NAME_GRAPHIC } from "../../_shared/award-name-graphics";
-import { IconUpRight } from "../../_components/icons/icon-up-right";
+import { IconUpRight } from "../../../_components/icons/icon-up-right";
 
 export type AwardCardProps = {
   item: AwardItem;

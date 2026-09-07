@@ -8,7 +8,7 @@ import type { SVGProps } from "react";
  *   on the yellow primary pill.
  * - Standards page footer "Viết KUDOS" button (mm:I3204:6094;186:1763) on
  *   the same yellow primary style — promoted here from `(home)/_components/`
- *   to `(public)/_components/` per the scope ladder (2 sibling-segment
+ *   to `src/app/_components/` per the scope ladder (cross-route-group
  *   consumers): `public/home/Pen.svg` itself is `fill="white"`, invisible on
  *   the yellow button, so this `currentColor` version is reused instead of
  *   a second white-fill asset.

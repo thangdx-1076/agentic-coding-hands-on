@@ -1,8 +1,8 @@
 "use client";
 
 import type { HomeCopy } from "../_shared/home-copy";
-import { useSelectLocale } from "../../_hooks/use-select-locale";
-import type { SiteViewer } from "../../_shared/site-chrome";
+import { useSelectLocale } from "../../../_hooks/use-select-locale";
+import type { SiteViewer } from "../../../_shared/site-chrome";
 
 import { HomeScreen } from "./home-screen";
 import { CountdownTimer } from "./countdown-timer";

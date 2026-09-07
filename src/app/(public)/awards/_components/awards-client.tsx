@@ -1,8 +1,8 @@
 "use client";
 
 import type { AwardsCopy } from "../_shared/awards-copy";
-import { useSelectLocale } from "../../_hooks/use-select-locale";
-import type { SiteViewer } from "../../_shared/site-chrome";
+import { useSelectLocale } from "../../../_hooks/use-select-locale";
+import type { SiteViewer } from "../../../_shared/site-chrome";
 
 import { AwardsScreen } from "./awards-screen";
 

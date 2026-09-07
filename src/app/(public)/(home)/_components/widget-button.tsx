@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { IconPencil } from "../../_components/icons/icon-pencil";
+import { IconPencil } from "../../../_components/icons/icon-pencil";
 
 import { useMenuKeyboardNav } from "@/hooks/use-menu-keyboard-nav";
 

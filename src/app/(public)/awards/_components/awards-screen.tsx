@@ -1,10 +1,10 @@
 import Image from "next/image";
 
-import { KeyvisualBackground } from "../../_components/keyvisual-background";
-import { SiteHeader } from "../../_components/site-header";
-import { SiteFooter } from "../../_components/site-footer";
-import { KudosSection } from "../../_components/kudos-section";
-import type { SiteViewer } from "../../_shared/site-chrome";
+import { KeyvisualBackground } from "../../../_components/keyvisual-background";
+import { SiteHeader } from "../../../_components/site-header";
+import { SiteFooter } from "../../../_components/site-footer";
+import { KudosSection } from "../../../_components/kudos-section";
+import type { SiteViewer } from "../../../_shared/site-chrome";
 import { defaultAwardsCopy, type AwardsCopy } from "../_shared/awards-copy";
 
 import { AwardCategoryNav } from "./award-category-nav";

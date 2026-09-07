@@ -1,7 +1,7 @@
 import {
   defaultSiteChromeCopy,
   type SiteChromeCopy,
-} from "../../_shared/site-chrome";
+} from "../../../_shared/site-chrome";
 
 /**
  * Presentational copy contract for the Homepage screen
@@ -13,7 +13,7 @@ import {
  * contract) and supplies the localized `en` variant via next-intl.
  *
  * `nav`/`header`/`kudos`/`footer`/`account`/`notifications` live on
- * `SiteChromeCopy` (`(public)/_shared/site-chrome.ts`) — `SiteHeader`,
+ * `SiteChromeCopy` (`src/app/_shared/site-chrome.ts`) — `SiteHeader`,
  * `SiteFooter`, `KudosSection`, `AccountMenu` and `NotificationBell` render
  * on `/awards` too, so their copy contract had to promote out of this
  * Homepage-only file (phase-02). `HomeCopy` composes it back with the

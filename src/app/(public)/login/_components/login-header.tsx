@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { LanguageSelector } from "../../_components/language-selector/language-selector";
+import { LanguageSelector } from "../../../_components/language-selector/language-selector";
 
 export type LoginHeaderProps = {
   logoAlt: string;

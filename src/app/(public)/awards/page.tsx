@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
-import { getViewer } from "../_utils/get-viewer";
+import { getViewer } from "../../_utils/get-viewer";
 
 import { AwardsClient } from "./_components/awards-client";
 import type { AwardsCopy } from "./_shared/awards-copy";

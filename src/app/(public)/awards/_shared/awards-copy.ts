@@ -1,7 +1,7 @@
 import {
   defaultSiteChromeCopy,
   type SiteChromeCopy,
-} from "../../_shared/site-chrome";
+} from "../../../_shared/site-chrome";
 
 import type { Award } from "@/dal/awards";
 

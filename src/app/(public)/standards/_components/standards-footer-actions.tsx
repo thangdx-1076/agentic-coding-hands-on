@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { IconPencil } from "../../_components/icons/icon-pencil";
+import { IconPencil } from "../../../_components/icons/icon-pencil";
 
 export type StandardsFooterActionsProps = {
   copy: { close: string; writeKudos: string };
@@ -19,7 +19,7 @@ export type StandardsFooterActionsProps = {
  * "Đóng" icon: `/standards/close.svg` is `fill="white"` in the source SVG
  * (matches the white label text on the outlined button) — `next/image` is
  * correct here, unlike the pen icon below. "Viết KUDOS" icon: `IconPencil`
- * (`currentColor`) from `(public)/_components/icons/` — NOT
+ * (`currentColor`) from `src/app/_components/icons/` — NOT
  * `/home/Pen.svg`, which is `fill="white"` and would be invisible on this
  * yellow primary button.
  */
