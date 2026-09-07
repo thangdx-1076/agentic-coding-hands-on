@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { IconUpRight } from "./icons/icon-up-right";
+import { IconUpRight } from "../../_components/icons/icon-up-right";
 
 export type CtaButtonsProps = {
   aboutAwardsLabel: string;

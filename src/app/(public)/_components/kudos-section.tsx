@@ -1,11 +1,14 @@
 import Image from "next/image";
 
-import { defaultHomeCopy, type HomeCopy } from "../_shared/home-copy";
+import {
+  defaultSiteChromeCopy,
+  type SiteChromeCopy,
+} from "../_shared/site-chrome";
 
 import { IconUpRight } from "./icons/icon-up-right";
 
 export type KudosSectionProps = {
-  copy?: HomeCopy;
+  copy?: SiteChromeCopy;
 };
 
 /**
@@ -16,7 +19,9 @@ export type KudosSectionProps = {
  * cards use a different "Chi tiết <title>" aria-label, see clarifications.md
  * § Route & điều hướng, so the two never collide).
  */
-export function KudosSection({ copy = defaultHomeCopy }: KudosSectionProps) {
+export function KudosSection({
+  copy = defaultSiteChromeCopy,
+}: KudosSectionProps) {
   const { kudos } = copy;
 
   return (

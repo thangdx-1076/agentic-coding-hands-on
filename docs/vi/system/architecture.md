@@ -7,13 +7,28 @@ lang: vi
 
 # Architecture
 
-**Phạm vi**: toàn bộ source hiện có trong repo — 3 screen (`/`, `/login`, `/todo`; route phụ `/auth/callback`), gồm cả F003_Homepage.
+**Phạm vi**: toàn bộ source hiện có trong repo — 4 screen (`/`, `/awards`, `/login`, `/todo`; route
+phụ `/auth/callback`), gồm cả F003_Homepage và F004_AwardSystemPage.
 
 **Cập nhật 2026-09-06 (đợt 2 — route colocation)**: toàn bộ source đã chuyển vào `src/`
 (`plans/260906-1150-src-route-colocation-refactor/`) — **URL, hành vi runtime, biến môi
 trường, khoá `messages/*.json`, script `package.json` KHÔNG đổi**; chỉ đổi file nào chứa
 logic, ranh giới import giữa các thư mục, và pattern mà config build/test dùng để tìm file.
 Mọi trích dẫn `path:N-M` dưới đây đọc từ vị trí `src/` hiện tại.
+
+**Cập nhật 2026-09-07 (F004_AwardSystemPage)**: thêm 1 route segment PUBLIC ngang hàng
+`(home)`/`login` trong group `(public)`: `src/app/(public)/awards/` (Server Component
+`page.tsx`, không qua guard nào — xem `permissions.md`). Ba component trước đây riêng của
+`(home)` nay climb đúng 1 nấc scope-ladder lên `(public)/_components/` vì có consumer ở cả 2
+segment, và đổi tên phản ánh phạm vi mới: `header.tsx` (`HomeHeader`) → `site-header.tsx`
+(`SiteHeader`); `home-footer.tsx` (`HomeFooter`) → `site-footer.tsx` (`SiteFooter`);
+`kudos-section.tsx` (`KudosSection`, không đổi tên). Cùng lý do, hàm đọc session+role
+`getViewer()` (trước đây cục bộ trong `(home)/page.tsx`) được hoisted lên
+`src/app/(public)/_utils/get-viewer.ts`, dùng chung bởi cả `(home)` và `awards`. `AwardCard`/
+lưới giải trên `/` KHÔNG đổi vị trí — vẫn ở `(home)/_components/award-card.tsx`, chỉ đổi
+import sang map asset dùng chung `(public)/_shared/award-name-graphics.ts` (`AWARD_NAME_GRAPHIC`,
+2 consumer: `award-card.tsx` và `awards/_components/award-section.tsx`). Chi tiết đầy đủ:
+`docs/vi/features/F004_AwardSystemPage/technical-spec.md`.
 
 ## System Architecture
 
@@ -40,6 +55,13 @@ graph TB
         Root["src/app/(public)/(home)/page.tsx — HomePage (F003_Homepage)"]
         HomeClient["src/app/(public)/(home)/_components/home-client.tsx"]
         HomeComponents["src/app/(public)/(home)/_components/**"]
+        AwardsRoute["src/app/(public)/awards/page.tsx — AwardsPage (F004_AwardSystemPage, PUBLIC)"]
+        AwardsClient["src/app/(public)/awards/_components/awards-client.tsx"]
+        AwardsComponents["src/app/(public)/awards/_components/**"]
+        SiteChrome["src/app/(public)/_components/{site-header,site-footer,kudos-section}.tsx (promoted, dùng chung (home)+awards)"]
+        GetViewer["src/app/(public)/_utils/get-viewer.ts (promoted, dùng chung (home)+awards)"]
+        AwardsDal["src/dal/awards.ts (getAwards)"]
+        AwardsDalShim["src/dal/awards-client.ts"]
         RoleHelper["src/dal/users.ts (getUserRole)"]
         RoleShim["src/dal/users-role-client.ts"]
         CountdownLib["src/app/(public)/(home)/_utils/countdown.ts"]
@@ -60,8 +82,8 @@ graph TB
         NextPathGuard["src/utils/url/next-path.ts (safeNextPath)"]
         I18nCfg["src/i18n/request.ts + src/lib/i18n/locale.ts"]
     end
-    subgraph "External (ngoài repo)"
-        Supabase["Supabase Auth + PostgREST — instance local 'saa-app'"]
+    subgraph "External Services"
+        Supabase["Supabase Auth + PostgREST — instance local 'saa-app' (config/migrations committed tai supabase/)"]
         Google["Google OAuth"]
     end
 
@@ -75,6 +97,12 @@ graph TB
     HomeComponents --> CountdownHook --> CountdownLib
     HomeClient --> LocaleHook --> SharedLocaleAction
     HomeComponents --> SharedLogout --> SupaServer
+    Client --> AwardsRoute --> SupaServer
+    AwardsRoute -->|"đọc viewer dùng chung F003"| GetViewer --> RoleShim
+    AwardsRoute --> AwardsDal --> AwardsDalShim --> SupaServer
+    AwardsRoute --> AwardsClient --> AwardsComponents
+    HomeComponents -.->|"dùng chung, promoted"| SiteChrome
+    AwardsComponents -.->|"dùng chung, promoted"| SiteChrome
     Client --> LoginPage -->|"getCurrentUser(), redirect / nếu đã đăng nhập"| AuthDal
     LoginPage --> LoginClient --> LoginActionsHook
     LoginActionsHook -->|"signInWithGoogle()"| AuthApi --> SupaBrowserClient --> Supabase --> Google
@@ -114,7 +142,12 @@ DAL: `src/dal/users.ts` (`getUserRole`, `import "server-only"`) và
 TS2589). `src/dal/auth.ts` (`getCurrentUser`) là bổ sung mới của đợt việc này — điểm đọc
 session DÙNG CHUNG cho `(protected)/layout.tsx`, `login/page.tsx`, và
 `(protected)/todo/page.tsx`; browser-side Supabase call cho OAuth nằm ở `src/api/auth.ts`
-(`signInWithGoogle`), gọi từ `use-login-actions.ts` (Zone B, hook).
+(`signInWithGoogle`), gọi từ `use-login-actions.ts` (Zone B, hook). Bổ sung F004_AwardSystemPage:
+`src/dal/awards.ts` (`getAwards`, `import "server-only"`, fail-open `[]`) và
+`src/dal/awards-client.ts` (shim `toAwardsClient`, cùng pattern thu hẹp kiểu builder tránh
+TS2589 như `users-role-client.ts`) — đọc bảng mới `public.awards` (Supabase `saa-app`, thứ 2
+sau `public.users`), RLS mở cho cả `anon` và `authenticated` vì `/awards` là route public không
+có khái niệm chủ sở hữu dòng.
 
 3 factory `@supabase/ssr` — `src/lib/supabase/{client,server,proxy-client}.ts` — không đổi
 logic, chỉ đổi thư mục cha. `src/utils/url/next-path.ts` (`safeNextPath`, chống open-redirect,
@@ -136,9 +169,9 @@ tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `src/configs
 | i18n | next-intl (no-routing, cookie `NEXT_LOCALE`) | 4.14.2 |
 | Auth SDK | `@supabase/ssr` | 0.12.5 |
 | Auth SDK | `@supabase/supabase-js` | 2.115.0 |
-| Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, ngoài repo | API `http://127.0.0.1:55321` |
+| Auth backend | Supabase Auth (GoTrue) — instance local `saa-app`, config/migrations committed tại `supabase/` | API `http://127.0.0.1:55321` |
 | Backend (in-repo) | Next.js Server Actions + Route Handlers (không có service backend riêng) | — |
-| Database | `public.users` — 1 bảng, cột `role` (`member`\|`admin`), đọc qua PostgREST dưới RLS own-row | — |
+| Database | `public.users` (cột `role`, RLS own-row) + `public.awards` (F004, 6 hàng × locale, RLS mở cho `anon`+`authenticated`) — 2 bảng, cả hai đọc qua PostgREST | — |
 | Package manager | pnpm (`packageManager` field, không dùng corepack) | 10.33.2 |
 | Node.js | `engines.node` | `>=22 <25` (CI chạy Node `24`) |
 | Testing (unit) | Vitest (2 project: `node`, `jsdom`) | ^3.2.7 |

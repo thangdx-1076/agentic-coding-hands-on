@@ -1,0 +1,34 @@
+{
+  "task": "Implement MoMorph screen \"Hệ thống giải\" (zFYDgyj_pD) as the public route /awards, reading its six award categories from the local Supabase instance.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "GET /awards renders for an anonymous visitor with all six award categories sourced from public.awards",
+    "Category nav: click smooth-scrolls to the matching section and exactly one link carries aria-current=true, following scroll position afterwards",
+    "Supabase unreachable: the page still serves header, h1, empty state and footer instead of 500-ing",
+    "MoMorph TC ID-0/3/4/5/6/7/8/9/11/13 asserted by tests/e2e/awards.spec.ts",
+    "Repo gate holds: tsc, lint, format, unit coverage 100%, build, full Playwright suite"
+  ],
+  "touchpoints": [
+    "src/app/(public)/awards/** (page, client boundary, components, hook, util, copy)",
+    "src/dal/awards.ts + src/dal/awards-client.ts",
+    "src/proxy.ts config.matcher, src/constants/routes.ts",
+    "messages/vi.json + messages/en.json (awards.*)",
+    "src/app/(public)/_components/** + _shared/** + _utils/get-viewer.ts (chrome promoted out of (home))",
+    "tests/e2e/awards.spec.ts, .github/workflows/ci.yml",
+    "external: ~/Desktop/Claude-and-mormoph/saa-app/supabase/migrations/0003_awards_table.sql"
+  ],
+  "blastRadius": [
+    "/ homepage — every chrome component it renders was moved to (public)/_components/; refactor must be DOM-neutral",
+    "/ homepage links to /awards and /awards#<slug> which previously 404'd and now resolve",
+    "src/proxy.ts — a matcher mistake could gate a public page or drop session cookies",
+    "CI e2e selection — award-content tests cannot run where Supabase is unreachable",
+    "the shared local Supabase instance, which holds 142 real auth users"
+  ],
+  "contracts": [
+    "getAwards fails open to [] and never throws (server-only, injected narrow client, no client construction inside the DAL)",
+    "/awards is PUBLIC: present in config.matcher, absent from the protected branch",
+    "DOM/a11y contract asserted by the e2e suite: h1 text, nav[aria-label] with 6 ordered hrefs, single aria-current, section#<slug> per award",
+    "exactly one <nav> element renders across all breakpoints",
+    "public.awards is read-only to anon and authenticated; no INSERT/UPDATE/DELETE policy exists"
+  ]
+}

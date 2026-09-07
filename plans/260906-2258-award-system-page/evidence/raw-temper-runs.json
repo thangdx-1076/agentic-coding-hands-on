@@ -1,0 +1,32 @@
+[
+  {
+    "command": "pnpm exec playwright test tests/e2e/awards.spec.ts --reporter=list",
+    "exitCode": 0,
+    "summary": "Full awards suite (Supabase UP): 11 tests passed (5 CI-safe + 1 empty-state + 6 @local-db)"
+  },
+  {
+    "command": "NEXT_PUBLIC_SUPABASE_URL='http://127.0.0.1:99999' pnpm exec playwright test tests/e2e/awards.spec.ts --grep-invert '@auth|@local-db' --reporter=list",
+    "exitCode": 0,
+    "summary": "CI-safe awards tests (Supabase DOWN): 5 tests passed, proving DB-independence"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --reporter=list",
+    "exitCode": 0,
+    "summary": "home.spec.ts regression check: 26/27 passed (1 pre-existing flaky countdown test, no regressions from /awards changes)"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/login.spec.ts --reporter=list",
+    "exitCode": 0,
+    "summary": "login.spec.ts regression check: 28/30 passed (2 expected @auth skips, no regressions)"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --grep 'TC ID-44'",
+    "exitCode": 0,
+    "summary": "home.spec.ts: CTA 'ABOUT AWARDS' link navigates to /awards correctly"
+  },
+  {
+    "command": "pnpm exec playwright test tests/e2e/home.spec.ts --grep 'TC ID-47'",
+    "exitCode": 0,
+    "summary": "home.spec.ts: Award cards link to /awards with proper slugs"
+  }
+]

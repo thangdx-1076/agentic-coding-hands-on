@@ -13,8 +13,8 @@ export type LogoLinkProps = {
 };
 
 /**
- * Shared brand-logo link reused by both `Header` (mm:I2167:9091;178:1033)
- * and `HomeFooter` (mm:I5001:14800;342:1408) — same asset, same href `/`,
+ * Shared brand-logo link reused by both `SiteHeader` (mm:I2167:9091;178:1033)
+ * and `SiteFooter` (mm:I5001:14800;342:1408) — same asset, same href `/`,
  * same behavior. Per clarifications.md § Route & điều hướng: clicking the
  * logo while already on `/` doesn't navigate (Next `Link` to the current
  * route is a no-op), so it scrolls to top instead so the click always does

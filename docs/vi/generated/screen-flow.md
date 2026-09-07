@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: route-view (Next.js 16 App Router) — 3 screens (`/`, `/login`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
+**Analysis Scope**: route-view (Next.js 16 App Router) — 4 screens (`/`, `/awards`, `/login`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
 
 **Code Format**: All SCR codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped transitions
 
@@ -19,10 +19,14 @@ graph TD
     ROUTE001 -->|lỗi OAuth hoặc exchange thất bại| SCR001
     SCR003 -->|Click 'Đăng nhập' - ẩn danh| SCR001
     SCR003 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
+    SCR003 -->|Click CTA 'ABOUT AWARDS' hoặc 1 trong 6 thẻ giải thưởng| SCR004[SCR004_Awards]
+    Start -->|bất kỳ ai, path '/awards'| SCR004
+    SCR004 -->|Click 'Đăng nhập' - ẩn danh| SCR001
+    SCR004 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
     SCR002[SCR002_TodoScreen] -->|Click nút Đăng xuất, logoutAction| SCR001
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa.
+> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại).
 
 ## Feature Entry Points
 
@@ -47,7 +51,14 @@ graph TD
 - **Entry screen**: SCR003_HomeScreen — `/`
 - **Owned screens**:
   - SCR003_HomeScreen — `/` (atomic)
-- **Exit screens**: SCR001_LoginScreen (click "Đăng nhập" khi ẩn danh, hoặc "Đăng xuất" trong menu tài khoản)
+- **Exit screens**: SCR001_LoginScreen (click "Đăng nhập" khi ẩn danh, hoặc "Đăng xuất" trong menu tài khoản); SCR004_Awards (click CTA "ABOUT AWARDS" hoặc 1 trong 6 thẻ giải thưởng, mới từ F004_AwardSystemPage)
+
+### F004_AwardSystemPage
+
+- **Entry screen**: SCR004_Awards — `/awards`
+- **Owned screens**:
+  - SCR004_Awards — `/awards` (atomic)
+- **Exit screens**: SCR001_LoginScreen (click "Đăng nhập" khi ẩn danh, hoặc "Đăng xuất" trong menu tài khoản — dùng chung `SiteHeader` với F003)
 
 ---
 
@@ -56,6 +67,8 @@ graph TD
 | From Screen | To Screen | Action/Trigger | Conditions | Region |
 |-------------|-----------|----------------|------------|--------|
 | Start | SCR003_HomeScreen | Initial load | Truy cập `/` — public, mọi actor (đã hoặc chưa đăng nhập) | |
+| Start | SCR004_Awards | Initial load | Truy cập `/awards` trực tiếp — public, mọi actor (đã hoặc chưa đăng nhập; F004_AwardSystemPage) | |
+| SCR003_HomeScreen | SCR004_Awards | Click CTA "ABOUT AWARDS" hoặc 1 trong 6 thẻ giải thưởng (`href="/awards#<slug>"`) | Không điều kiện — public, mọi actor | |
 | Start | SCR001_LoginScreen | Initial load / proxy redirect | Chưa đăng nhập, truy cập `/todo`; hoặc truy cập `/login` trực tiếp | |
 | Start | SCR003_HomeScreen | proxy redirect | Đã đăng nhập, truy cập `/login` (đích đổi từ `/todo` sang `/`) | |
 | Start | SCR002_TodoScreen | Truy cập URL trực tiếp | Đã đăng nhập, truy cập `/todo` trực tiếp (không còn đường điều hướng tự động nào khác dẫn tới đây) | |
@@ -103,6 +116,23 @@ graph TD
 
 ---
 
+### SCR004_Awards (Hệ thống giải thưởng SAA 2025)
+
+**Entry Points**:
+- Truy cập URL trực tiếp `/awards` — public, không điều kiện (anonymous hoặc authenticated đều render cùng một trang)
+- Click CTA "ABOUT AWARDS" hoặc 1 trong 6 thẻ giải thưởng trên SCR003_HomeScreen (`href="/awards#<slug>"`)
+
+**Exit Points**:
+- Đến SCR001_LoginScreen: click link "Đăng nhập" ở header (chỉ hiện khi ẩn danh, dùng chung `SiteHeader` với SCR003_HomeScreen)
+- Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
+- (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/kudos` (nút "Chi tiết" khối Sun* Kudos) — không phải SCR### nào trong tài liệu này
+
+**Decision Points**:
+- Không có guard chặn truy cập (`src/app/(public)/awards/page.tsx` không redirect ai) — `getViewer()` chỉ đọc để cá nhân hoá header, giống hệt SCR003_HomeScreen
+- `awards.length > 0` → render nav + 6 section; `=== 0` (Supabase lỗi/rỗng) → render `AwardsEmptyState` thay thế trong cùng khung trang
+
+---
+
 ### SCR002_TodoScreen (Todo)
 
 **Entry Points**:
@@ -141,6 +171,7 @@ graph LR
 | SCR001_LoginScreen | Không (nhưng tự redirect sang `/` nếu đã có session — đổi từ `/todo`) | Public |
 | SCR002_TodoScreen | Có | User (bất kỳ user Supabase hợp lệ nào — không phân role) |
 | SCR003_HomeScreen | Không — public cho mọi actor (PERM001_RootRouteGuard superseded); nội dung header cá nhân hoá theo trạng thái đăng nhập + role, không phải một guard | Public (nội dung); cá nhân hoá theo `member`/`admin` khi đã đăng nhập |
+| SCR004_Awards | Không — public cho mọi actor (F004_AwardSystemPage, cùng nhóm với `/`); nội dung 6 hạng mục giải không cá nhân hoá theo vai trò, chỉ header dùng chung đổi theo trạng thái đăng nhập | Public (toàn bộ nội dung, không riêng theo `member`/`admin`) |
 
 ---
 
@@ -155,6 +186,7 @@ graph LR
 | SCR002_TodoScreen | `signOut()` lỗi (session đã hết hạn phía server) | Bỏ qua lỗi (best-effort), vẫn redirect `/login` | screen |
 | SCR003_HomeScreen | `getUser()` throw (Supabase lỗi khi đọc session cho header) | `try/catch` → coi như ẩn danh, vẫn render trang đầy đủ (fail-open, không chặn nội dung công khai) | screen |
 | SCR003_HomeScreen | `getUserRole()` lỗi hoặc không có row trong `public.users` | Fail-open về `"member"` — không hiện lỗi, chỉ ẩn mục "Trang quản trị" | screen |
+| SCR004_Awards | `getAwards()` lỗi hoặc bảng `awards` rỗng cho locale hiện tại | Fail-open trả `[]` → render `AwardsEmptyState` trong khung; header/footer/h1 vẫn nguyên, không 500 | screen |
 
 > Scope values: `screen` (không có REG### trong app này nên không có case `region:REG###`).
 
@@ -162,7 +194,7 @@ graph LR
 
 ## Circular Dependencies Check
 
-- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp)
+- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào
 - [x] All screens have valid entry/exit points
 - [x] All navigation paths terminate
 

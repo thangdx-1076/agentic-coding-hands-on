@@ -106,10 +106,15 @@ function redirectPreservingCookies(
 }
 
 /**
- * Matcher whitelist (not a broad negative-lookahead): only the 3 routes
- * the guard actually governs. `/auth/callback` is deliberately excluded
+ * Matcher whitelist (not a broad negative-lookahead): only the routes this
+ * proxy actually needs to touch. `/auth/callback` is deliberately excluded
  * (it handles its own redirect logic) and no `_next`/asset path is
  * matched, per the phase's risk assessment on proxy overreach.
+ *
+ * `/awards` (F004_AwardSystemPage) is matched for the same reason `/` is:
+ * locale-cookie normalization + session refresh for a public page that
+ * takes no guard branch above — it is NOT added to `isProtectedPage`,
+ * which only ever tests `ROUTES.TODO`.
  *
  * Stays a LITERAL array, never `ROUTES.*`: Next statically analyzes
  * `config.matcher` at build time (it cannot evaluate an imported constant),
@@ -117,5 +122,5 @@ function redirectPreservingCookies(
  * route strings.
  */
 export const config = {
-  matcher: ["/", "/login", "/todo/:path*"],
+  matcher: ["/", "/login", "/todo/:path*", "/awards"],
 };

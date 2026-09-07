@@ -24,7 +24,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 ## Frontend Routes/Pages
 
-Bốn route frontend: ba route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+Năm route frontend: bốn route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
 ### File: app/page.tsx
 
@@ -33,6 +33,14 @@ Bốn route frontend: ba route dựng từ `page.tsx` theo quy ước App Router
 | / | HomePage | home (F003_Homepage) |
 
 Route `/` render SCR003_HomeScreen — trang chủ công khai (hero + đếm ngược, thông tin sự kiện, 6 thẻ giải thưởng, Sun* Kudos, header/footer). **Đổi từ 2026-09-06**: trước đây route này chỉ là fallback redirect thuần (`redirect(user ? "/todo" : "/login")`); nay `app/page.tsx` tự đọc session + role (`getUserRole`, fail-open `member`) và ủy quyền tương tác cho `app/home-client.tsx` (client boundary), KHÔNG redirect ai — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác phần cá nhân hoá header (xem `docs/vi/generated/permissions-matrix.md § PERM001_RootRouteGuard`, nay superseded).
+
+### File: src/app/(public)/awards/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /awards | AwardsPage | awards (F004_AwardSystemPage) |
+
+Route `/awards` render SCR004_Awards — trang chi tiết công khai 6 hạng mục giải thưởng SAA 2025 (nav trái + 6 section ảnh/mô tả/số lượng/giá trị + khối Sun* Kudos + header/footer dùng chung với `/`). PUBLIC by design, không qua guard nào (giống `/`, khác `/todo`) — anonymous và authenticated đều nhận `200` với cùng nội dung, trang không cá nhân hoá theo vai trò (chỉ header dùng chung đổi theo trạng thái đăng nhập, xem `docs/vi/generated/permissions-matrix.md`). Mới từ 2026-09-06 (F004_AwardSystemPage) — trước đó 6 link `/awards#<slug>` trên `/` trỏ tới route chưa tồn tại (404).
 
 ### File: app/login/page.tsx
 
@@ -80,5 +88,5 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | Category | Count |
 |----------|-------|
 | Backend Routes | 1 |
-| Frontend Pages | 4 |
-| Total | 5 |
+| Frontend Pages | 5 |
+| Total | 6 |

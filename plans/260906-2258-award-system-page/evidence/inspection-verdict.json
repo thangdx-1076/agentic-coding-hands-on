@@ -1,0 +1,53 @@
+{
+  "score": 9.2,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "GET /awards renders for an anonymous visitor with all six award categories sourced from public.awards",
+    "Category nav: click smooth-scrolls to the matching section and exactly one link carries aria-current=true, following scroll position afterwards",
+    "Supabase unreachable: the page still serves header, h1, empty state and footer instead of 500-ing",
+    "MoMorph TC ID-0/3/4/5/6/7/8/9/11/13 asserted by tests/e2e/awards.spec.ts",
+    "Repo gate holds: tsc, lint, format, unit coverage 100%, build, full Playwright suite"
+  ],
+  "regressionChecked": [
+    "/ homepage DOM unchanged by the chrome promotion — reviewer diffed every renamed file against its pre-image",
+    "tests/e2e/home.spec.ts 27/27 green on a clean dev server",
+    "tests/e2e/login.spec.ts green; full suite 66 passed / 3 skipped / 0 failed",
+    "auth.users still 142 rows after applying the migration; anon writes to public.awards rejected with 401",
+    "CI-safe e2e group verified green under CI=1 against a genuinely unreachable Supabase"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "high",
+      "category": "correctness",
+      "location": "src/dal/awards.ts:96",
+      "summary": "Non-array prize_values passed through the DAL untouched and threw at prizeValues.map() during Server Component render, 500-ing the page the fail-open contract exists to keep serving. Fixed with an Array.isArray coercion plus a regression test.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "medium",
+      "category": "fragility",
+      "location": "src/app/(public)/awards/_components/award-category-nav.tsx:46-55",
+      "summary": "Sections resolved via document.getElementById across the server/client boundary. Correct under today's single synchronous render; would break silently if award sections ever move behind Suspense/streaming. Deferred, logged as debt.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "medium",
+      "category": "fragility",
+      "location": "src/app/(public)/awards/_hooks/use-award-category-nav.ts:82-103",
+      "summary": "IntersectionObserver.observe() runs once per section, carrying the same Suspense/streaming caveat as the nav lookup. Not a defect today. Deferred, logged as debt.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "low",
+      "category": "maintainability",
+      "location": "src/app/(public)/awards/_components/award-section.tsx:37",
+      "summary": "A missing per-slug name PNG renders nothing with no dev-time signal — a latent trap if a seventh award is added. Deferred, logged as debt.",
+      "disposition": "Defer"
+    }
+  ]
+}

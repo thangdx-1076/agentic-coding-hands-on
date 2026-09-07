@@ -1,8 +1,8 @@
 import Image from "next/image";
 
-import type { HomeCopy } from "../_shared/home-copy";
-import { LanguageSelector } from "../../_components/language-selector/language-selector";
+import type { SiteChromeCopy, SiteViewer } from "../_shared/site-chrome";
 
+import { LanguageSelector } from "./language-selector/language-selector";
 import { LogoLink } from "./logo-link";
 import { NavLink } from "./nav-link";
 import { AccountMenu } from "./account-menu";
@@ -11,15 +11,10 @@ import { IconUser } from "./icons/icon-user";
 
 import { ROUTES } from "@/constants/routes";
 
-export type HeaderViewer = {
-  email: string;
-  isAdmin: boolean;
-};
-
-export type HeaderProps = {
-  copy: HomeCopy;
+export type SiteHeaderProps = {
+  copy: SiteChromeCopy;
   languageLabel: "VN" | "EN";
-  viewer?: HeaderViewer | null;
+  viewer?: SiteViewer | null;
   unreadCount?: number;
   onSelectLocale?: (locale: "vi" | "en") => void;
   logoutAction?: () => void | Promise<void>;
@@ -39,14 +34,14 @@ export type HeaderProps = {
  * right-side controls stay put — the pixel-perfect baseline only; the full
  * responsive pass is a separate polish phase.
  */
-export function Header({
+export function SiteHeader({
   copy,
   languageLabel,
   viewer,
   unreadCount = 0,
   onSelectLocale,
   logoutAction,
-}: HeaderProps) {
+}: SiteHeaderProps) {
   return (
     /* mm:2167:9091 */
     <header className="sticky top-0 z-20 flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-login-background/80 px-6 py-3 sm:px-12 lg:px-36">

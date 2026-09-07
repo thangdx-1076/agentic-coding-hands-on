@@ -230,3 +230,108 @@
 - `skills-lock.json` không ghi commit SHA của upstream, chỉ có `source` + `computedHash` — provenance yếu nếu sau này cần audit chính xác. Giới hạn của CLI, chưa có cách vá tại chỗ.
 - README trong 3 skill vendored mô tả layout của repo tác giả upstream (nhắc `pnpm build`, `src/`, `test-cases.json` không tồn tại trong bản cài). Để nguyên, việc sửa thuộc về upstream.
 - Chưa chạy `pnpm build` và `pnpm test:e2e` trong lượt này — thay đổi không chạm `src/` nên hai gate đó không có input mới; nếu muốn chắc tuyệt đối thì chạy trước khi merge.
+
+## 260907-0045 — award-system-page
+
+### Tôi cần làm
+
+- [ ] **Chốt `/awards` công khai hay phải đăng nhập.** MoMorph TC ID-1 đòi khách chưa đăng nhập bị đẩy về `/login`; tôi đã làm ngược lại (công khai) theo quyết định đã ghi ở `docs/vi/system/permissions.md:54`. Cần chủ spec xác nhận — nếu họ muốn gác thật thì phải sửa `src/proxy.ts` và chuyển route vào nhóm `(protected)`.
+- [ ] **Quyết định có làm `/kudos` không.** Nút "Chi tiết" ở khối Sun* Kudos trỏ `/kudos` (giữ cho khớp trang chủ) nhưng route đó chưa tồn tại → TC ID-12/ID-14 không thoả được.
+- [ ] **Cấp bản dịch tiếng Anh cho nội dung 6 giải.** Nguồn MoMorph chỉ có tiếng Việt; bảng `public.awards` mới seed `locale='vi'`. Tôi không tự dịch nội dung marketing.
+- [ ] **Biết rằng CI không kiểm nội dung giải.** Test nội dung gắn tag `@local-db` và bị loại khỏi CI vì CI không với tới Supabase local. CI chỉ chứng minh `/awards` render được và suy biến êm khi mất DB.
+
+### Decisions
+
+- Route là `/awards`, không phải `/he-thong-giai` như test case ghi — repo đã có 6 link + 5 assertion E2E trỏ `/awards`, và `docs/vi/features/F003_Homepage` ghi rõ đó là trang đích. Đổi sang `/he-thong-giai` phải sửa 8 file và phá 5 assertion đang xanh.
+- `/awards` công khai, TC ID-1 superseded — cùng lý lẽ đã dùng để mở công khai `/`.
+- Nội dung 6 giải đọc từ Supabase local (`public.awards`), chrome tĩnh vẫn ở `messages/*.json`. Seed nằm trong chính migration `0003_awards_table.sql` với `ON CONFLICT DO NOTHING`; không tạo `supabase/seed.sql` vì file đó chỉ được đọc bởi `db reset` — thứ bị cấm (142 auth user thật).
+- Bác bỏ kết luận "4/6 thẻ giải thiếu nội dung trong design". Bốn node đó là component instance, MoMorph trả text mặc định chứ không phải override. Ảnh render từng thẻ cho thấy đủ 6 mô tả riêng. Thứ tự tin cậy cho màn hình này: **ảnh render > specs CSV > text node**. Nội dung thật chốt tại `spec/award-seed-content.md`.
+- Chrome dùng chung (`SiteHeader`/`SiteFooter`/`KudosSection` + dependency bắc cầu) leo từ `(home)/_components/` lên `(public)/_components/` — hai route anh em không được import ngang `_components` của nhau.
+- Test outage dùng lại nghịch đảo `supabaseReachable` sẵn có: chạy trong CI (nơi Supabase chết) và tự skip ở máy dev khi có dữ liệu. Đây là test DUY NHẤT chứng minh `/awards` suy biến thay vì 500.
+
+### Nợ lại
+
+- Reviewer Medium ×2, cố ý không sửa: `award-category-nav.tsx:46-55` tra section bằng `document.getElementById` qua ranh giới server/client, và `use-award-category-nav.ts:82-103` gọi `IntersectionObserver.observe()` một lần. Cả hai đúng ở hiện tại (một lượt render đồng bộ, không Suspense) nhưng sẽ hỏng âm thầm nếu sau này đưa award section vào streaming/Suspense.
+- Reviewer Low ×1: thiếu PNG tên giải theo slug thì `award-section.tsx:37` render rỗng, không cảnh báo gì ở dev — bẫy nếu thêm giải thứ 7.
+- Bảng `public.awards` sống ở project Supabase ngoài repo (`~/Desktop/Claude-and-mormoph/saa-app`). Máy khác clone repo này về sẽ không có bảng đó → `/awards` hiện empty-state. Chưa có đường seed nào cho môi trường khác.
+- Test `home.spec.ts` từng bị báo nhầm là "flaky". Không phải: dev server cũ trên :3000 giữ `EVENT_START_AT` từ `.env.local` (2026-12-26) trong khi `playwright.config.ts` cần 2099-12-31, và `reuseExistingServer` dùng lại server cũ đó. Giết dev server trước mỗi lần chạy regression.
+
+### PR
+
+- https://github.com/thangdx-1076/agentic-coding-hands-on/pull/9 — `feat/award-system-page` → `main`, 10 commit, version 0.3.2 → 0.4.0 (minor: route mới + bảng DB mới).
+
+## 260907-0810 — award-system-page (follow-up)
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **`/awards` công khai — CHỐT.** TC ID-1 superseded, không còn "chờ xác nhận". Lý do: nội dung 6 giải không có PII nên không có gì để gác; gác lại sẽ đá khách chưa đăng nhập từ nav của trang chủ công khai sang `/login`; và `permissions.md:54` đã chốt đúng lý lẽ đó cho `/`, nêu đích danh "giải thưởng". Không đổi code.
+- **Schema + seed chuyển về repo.** `db/migrations/*.sql` + `pnpm db:migrate` (script `scripts/apply-db-migrations.mjs`, devDep `pg`, đọc `SUPABASE_DB_URL`). Máy mới giờ chỉ cần `pnpm install && pnpm db:migrate`. Trước đó SQL chỉ nằm ở project saa-app ngoài repo nên `git clone` không mang theo được.
+- Không dùng `supabase/seed.sql`: file đó chỉ được đọc bởi `supabase db reset` — lệnh bị cấm vì xoá sạch `auth.users`. Seed nằm trong chính migration với `ON CONFLICT DO NOTHING`.
+- Không `supabase init` trong repo này: sẽ dựng một stack Supabase thứ hai ở port khác thay vì dùng lại saa-app. Chỉ mang SQL về, không mang cả CLI project.
+
+### Nợ lại
+
+- `0003_awards_table.sql` tồn tại ở hai nơi: `db/migrations/` (canonical, portable) và `~/Desktop/Claude-and-mormoph/saa-app/supabase/migrations/` (bản đã áp trên máy này). Hiện đã đồng bộ byte-for-byte. Nếu sau này sửa, phải sửa cả hai — hoặc quyết định bỏ hẳn bản saa-app.
+- `pnpm db:migrate` không có ledger: nó chạy lại toàn bộ thư mục mỗi lần. Đúng với quy mô hiện tại (1 file idempotent), nhưng khi có nhiều migration thì nên cân nhắc bảng version.
+- Bảng `public.users` (auth) vẫn do saa-app sở hữu, không nằm trong `db/migrations/`. Máy mới hoàn toàn vẫn cần dựng auth riêng.
+
+## 260907-0825 — supabase project vào repo (đảo lại quyết định trước)
+
+### Tôi cần làm
+
+- [ ] Xoá hoặc lưu trữ `~/Desktop/Claude-and-mormoph/saa-app` — nó là clone cũ của chính repo này, đứng ở một commit đã phân kỳ và chưa từng đẩy lên. Giữ lại chỉ gây nhầm về việc SQL nằm ở đâu.
+
+### Decisions
+
+- **Đưa cả `supabase/` vào repo**, gỡ `db/migrations/`, `scripts/apply-db-migrations.mjs`, dependency `pg` và script `pnpm db:migrate`. Ít code hơn trước khi tôi thêm chúng.
+- Lý do đảo: `pnpm db:migrate` chỉ mang được bảng `awards`. `origin/main` chưa bao giờ có `supabase/config.toml` lẫn migration `0001`/`0002`, nên máy khác clone về vẫn không có bảng `users`, không auth được. Vá 1/3 cái lỗ mà lại thêm một dependency.
+- Vì sao `saa-app` đánh lừa: nó là clone của **chính repo này**, remote giống hệt, nhưng đứng trên một nhánh cục bộ đã phân kỳ và chưa đẩy. Commit `026f909` của nó không tồn tại trong repo này, và không commit nào trong lịch sử repo từng chạm `supabase/`. Nhìn qua tưởng "project ngoài", thật ra là một bản sao lạc.
+- Không mất dữ liệu: config giữ nguyên `project_id` "saa-app" và port 55321/55322, nên `supabase migration up` từ gốc repo báo "up to date" với stack đang chạy. `auth.users` vẫn 166 dòng.
+
+### Nợ lại
+
+- Bản ghi cũ trong memory nói ngược ("repo không có `supabase/` là cố ý, đừng bao giờ `supabase init` ở đây") — đã sửa lại.
+- Vài file trong `docs/vi/**` còn mô tả Supabase là "project ngoài repo" — đang giao doc-writer sửa. `docs/journals/**` cố ý giữ nguyên vì là ghi chép lịch sử.
+- `supabase migration up` chỉ áp file pending, không kiểm nội dung file đã áp. Sửa một migration đã chạy sẽ không tự áp lại — phải viết migration mới.
+
+### Nợ lại (bổ sung 0830)
+
+- `docs/vi/system/overview.md:9` còn câu sai: "Không có database nghiệp vụ riêng của app này" — nay đã có `public.awards`. File này machine-owned, chỉ `rebuild-spec` được ghi đè toàn bộ; sửa tay sẽ bị ghi đè lượt sau. Chạy `/tkm:rebuild-spec --artifact overview` khi tiện. Cùng dòng đó còn trỏ `README.md:35-42`, số dòng đã đổi sau khi thêm mục Database.
+
+## 260907-0855 — /awards trắng khi đổi sang English
+
+### Tôi cần làm
+
+- [ ] Quyết định có dịch nội dung 6 giải sang tiếng Anh không. Hiện `getAwards` fallback về `vi`, nên người xem EN thấy mô tả tiếng Việt. Có bản dịch thì seed thêm 6 dòng `locale='en'`, fallback tự hết tác dụng, không phải sửa code.
+
+### Decisions
+
+- **`getAwards` fallback về `DEFAULT_LOCALE` khi locale yêu cầu không có dòng nào.** Nội dung tiếng Việt chưa dịch vẫn hơn một trang trắng — nhất là khi `/` vẫn liệt kê đủ 6 giải ở EN (nội dung nó nằm trong `messages/en.json`). Fallback tự biến mất ngày seed `en`.
+- Không seed 6 dòng `en` bằng chính chữ tiếng Việt: như vậy là nói dối rằng đã có bản dịch, và nhân đôi dữ liệu.
+
+### Nợ lại
+
+- **E2E không bắt được lỗi này.** Toàn bộ `awards.spec.ts` chạy ở locale mặc định `vi`, nên nhánh EN chưa từng được thử. Nên có một test đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section vẫn render.
+- Ghi chú nợ cũ ("chỉ seed locale='vi'; nguồn MoMorph chỉ có tiếng Việt") nói nhẹ hơn thực tế — hậu quả thật là trang trắng ở EN, không phải chữ chưa dịch. Đã sửa cách diễn đạt ở đây.
+
+## 260907-0905 — bản tiếng Anh cho nội dung giải
+
+### Tôi cần làm
+
+- [ ] **Duyệt bản dịch tiếng Anh của 6 mô tả giải** — `supabase/migrations/0004_awards_en_seed.sql`. Đây là chỗ DUY NHẤT trong feature này mà chữ không lấy nguyên văn từ design; MoMorph không có bản EN nên tôi dịch. Nội dung marketing đối ngoại nên cần người đọc lại.
+
+### Decisions
+
+- Seed 6 dòng `locale='en'` bằng bản dịch tự làm (theo yêu cầu của bạn), migration mới `0004` chứ không sửa `0003` — `0003` đã áp rồi, sửa vào đó sẽ không chạy lại.
+- Giữ nguyên không dịch: tên giải (vốn đã tiếng Anh trong design), "Sun*", "Wasshoi", "Aim High – Be Agile", "Creator".
+- **Đổi định dạng số cho bản EN**: `7.000.000 VNĐ` → `7,000,000 VND`. Dấu chấm ngăn nghìn đọc theo lối Anh là dấu thập phân, tức sai giá trị giải đi một triệu lần.
+- Giữ nguyên fallback về `DEFAULT_LOCALE` trong `getAwards` dù giờ đã có `en`: nó là lưới an toàn cho locale thứ ba trong tương lai, và cho môi trường chỉ mới chạy tới `0003`.
+
+### Nợ lại
+
+- Đã trả nợ E2E: thêm `[REG 2026-09-07]` đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section render kèm chữ tiếng Anh. Đã kiểm ngược — xoá 6 dòng `en` thì test đỏ đúng chỗ, không phải test xanh suông.
+- Test này gắn `@local-db` nên CI không chạy. Nhánh EN chỉ được canh trên máy dev.

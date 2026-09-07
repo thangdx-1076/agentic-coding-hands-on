@@ -2,9 +2,9 @@
 
 import type { HomeCopy } from "../_shared/home-copy";
 import { useSelectLocale } from "../../_hooks/use-select-locale";
+import type { SiteViewer } from "../../_shared/site-chrome";
 
 import { HomeScreen } from "./home-screen";
-import type { HeaderViewer } from "./header";
 import { CountdownTimer } from "./countdown-timer";
 
 import type { AppLocale } from "@/lib/i18n/locale";
@@ -12,7 +12,7 @@ import type { AppLocale } from "@/lib/i18n/locale";
 export type HomeClientProps = {
   copy: HomeCopy;
   locale: AppLocale;
-  viewer: HeaderViewer | null;
+  viewer: SiteViewer | null;
   /** Server-validated ISO-8601 target, or `null` (BR-004) — seeds `CountdownTimer`. */
   targetIso: string | null;
   /** Server's `Date.now()` snapshot — seeds `CountdownTimer`'s first client render. */

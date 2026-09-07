@@ -1,13 +1,15 @@
 # -----------------------------------------------------------------------
 # Known coverage limit — read this before trusting a green run
 # -----------------------------------------------------------------------
-# The `e2e` job below does NOT cover the authenticated path. Tests tagged
-# `@auth` are excluded here via `--grep-invert @auth` because they require
+# The `e2e` job below does NOT cover the authenticated path or pages with
+# database content. Tests tagged `@auth` are excluded because they require
 # a live Supabase instance (`saa-app`, local to a developer machine on
-# 127.0.0.1) that this GitHub Actions runner can never reach. Those tests
-# exist and run on a developer machine with `saa-app` up; they are not
-# gated by this workflow, by design (see clarifications.md, "Known
-# trade-off" — running `supabase start` in CI was rejected).
+# 127.0.0.1) that this GitHub Actions runner can never reach. Tests tagged
+# `@local-db` are excluded for the same reason — they require seeded data
+# from Supabase. Both test groups exist and run on a developer machine with
+# `saa-app` up; they are not gated by this workflow, by design (see
+# clarifications.md, "Known trade-off" — running `supabase start` in CI
+# was rejected).
 #
 # On top of that, the `/auth/callback` valid-PKCE-exchange branch (the
 # success path of a real Google OAuth round-trip) has NO automated test
@@ -200,14 +202,14 @@ jobs:
         id: e2e-counts
         run: |
           TOTAL=$(pnpm exec playwright test --list 2>/dev/null | grep -oE '^Total: [0-9]+' | grep -oE '[0-9]+')
-          RAN=$(pnpm exec playwright test --grep-invert @auth --list 2>/dev/null | grep -oE '^Total: [0-9]+' | grep -oE '[0-9]+')
+          RAN=$(pnpm exec playwright test --grep-invert "@auth|@local-db" --list 2>/dev/null | grep -oE '^Total: [0-9]+' | grep -oE '[0-9]+')
           EXCLUDED=$((TOTAL - RAN))
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
           echo "ran=$RAN" >> "$GITHUB_OUTPUT"
           echo "excluded=$EXCLUDED" >> "$GITHUB_OUTPUT"
 
       - name: Run CI-safe e2e tests
-        run: pnpm exec playwright test --grep-invert @auth
+        run: pnpm exec playwright test --grep-invert "@auth|@local-db"
 
       # This step MUST run even when the test step above fails, so the
       # limitation is visible on both a red run and a green one — a failed
@@ -216,14 +218,18 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Authenticated path is NOT covered by this CI run"
+            echo "## Authenticated path and database-dependent tests are NOT covered by this CI run"
             echo ""
-            echo "This job ran **${{ steps.e2e-counts.outputs.ran }}** of **${{ steps.e2e-counts.outputs.total }}** e2e tests (\`--grep-invert @auth\`)."
-            echo "**${{ steps.e2e-counts.outputs.excluded }}** test(s) tagged \`@auth\` were excluded and did NOT run in this job."
+            # Single quotes around the pattern on purpose: nesting double quotes
+            # inside this double-quoted echo ends the string early and turns the
+            # `|` into a real pipe, which is how this step once exited 127.
+            echo "This job ran **${{ steps.e2e-counts.outputs.ran }}** of **${{ steps.e2e-counts.outputs.total }}** e2e tests (\`--grep-invert '@auth|@local-db'\`)."
+            echo "**${{ steps.e2e-counts.outputs.excluded }}** test(s) tagged \`@auth\` or \`@local-db\` were excluded and did NOT run in this job."
             echo ""
-            echo "- The excluded tests require a live Supabase instance (\`saa-app\`, local to a developer machine) that this runner cannot reach. They run only on a developer machine with \`saa-app\` up, never in CI."
+            echo "- Tests tagged \`@auth\` require a live Supabase instance (\`saa-app\`, local to a developer machine) that this runner cannot reach. They run only on a developer machine with \`saa-app\` up, never in CI."
+            echo "- Tests tagged \`@local-db\` require seeded award data from Supabase for the same reason — the runner cannot reach \`saa-app\`. They run only on a developer machine, never in CI. This means the 6 award categories, their quantities, and prize values are NOT verified by this CI run; they are verified only on developer machines."
             echo "- The \`/auth/callback\` valid-PKCE-exchange branch (a successful Google OAuth round-trip) has NO automated test anywhere, CI or local — a real code/verifier pair only exists after a genuine Google sign-in."
-            echo "- Do not read this job's green status as \"the authenticated flow is tested\": logout and the OAuth callback success path are not exercised here."
+            echo "- Do not read this job's green status as \"the authenticated flow is tested\" or \"award data is verified\": logout, the OAuth callback success path, and the award content integrity are not exercised here."
             echo "- No Google credentials are used or required in this job: every OAuth request in the CI-safe suite is aborted client-side before it leaves the browser."
           } >> "$GITHUB_STEP_SUMMARY"
 

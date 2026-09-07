@@ -16,7 +16,7 @@ export type AccountMenuProps = {
 /**
  * Header account button + menu (mm:I2167:9091;186:1597, authed state only —
  * anonymous visitors get a plain `/login` link instead, rendered by
- * `Header`). Mirrors `components/login/language-selector.tsx`'s use of
+ * `SiteHeader`). Mirrors `components/login/language-selector.tsx`'s use of
  * `useMenuKeyboardNav` for open/close + roving-tabindex keyboard nav
  * (clarifications.md § Header).
  *

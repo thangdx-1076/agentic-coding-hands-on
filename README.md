@@ -26,6 +26,7 @@ account menu, role-aware admin link). UI ships in Vietnamese and English via a c
 | Route            | Description                                                                                                                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`              | Public homepage — hero + countdown (`EVENT_START_AT`), event info, 6 award cards, Sun* Kudos, footer; header is role-aware (anon: login link; member: bell + account menu; admin: adds "Admin" link). No auth guard — anonymous and authenticated visitors both get a 200 |
+| `/awards`        | Public award-system page — hero, sticky category nav (click-scroll + scroll-spy), 6 award sections read from `public.awards`, Sun* Kudos block. No auth guard, and fails open: an unreachable Supabase renders an empty state rather than a 500                           |
 | `/login`         | Google OAuth login screen: header (logo + VN/EN selector), hero, "LOGIN With Google", footer; shows an inline error when the URL carries `?error=`; redirects to `/` if already authenticated                                                                             |
 | `/auth/callback` | Route Handler (GET) — exchanges the OAuth `code` for a session, then redirects to `next` (default `/`) or back to `/login?error=...` on failure                                                                                                                           |
 | `/todo`          | Protected placeholder — greets the signed-in user's email and offers logout. No todo feature is implemented; it exists to prove the auth guard end-to-end                                                                                                                 |
@@ -45,10 +46,11 @@ re-checks with an authoritative `getUser()` call before rendering.
 
 ## Setup
 
-1. Start the local Supabase instance `saa-app` (in its own project directory): `supabase start`.
-2. Read its API URL and publishable key: `supabase status` (run inside the `saa-app` project). Confirm
-   the Google provider is enabled there and `additional_redirect_urls` includes
-   `http://localhost:3000/auth/callback`.
+1. `supabase start` from this repo's root. `supabase/config.toml` is committed, so this brings up the
+   project's own stack (`project_id` `saa-app`, API on 55321) and applies every migration in
+   `supabase/migrations/` — including the seed rows behind `/awards`. See [Database](#database).
+2. Read the API URL and publishable key: `supabase status`. Confirm the Google provider is enabled
+   and `additional_redirect_urls` includes `http://localhost:3000/auth/callback`.
 3. Create `.env.local` at this repo's root (gitignored, never commit it):
    ```
    NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
@@ -62,6 +64,30 @@ re-checks with an authoritative `getUser()` call before rendering.
    the page.
 4. `pnpm install`
 5. `pnpm dev` → http://localhost:3000
+
+## Database
+
+The Supabase project is committed here — `supabase/config.toml` plus `supabase/migrations/`:
+
+| Migration                          | What it creates                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `0001_users_table.sql`             | `public.users` (`role` `member`\|`admin`), RLS own-row                      |
+| `0002_handle_new_user_trigger.sql` | `handle_new_user()` — mirrors `auth.users` → `public.users` on sign-up      |
+| `0003_awards_table.sql`            | `public.awards` + its six seed rows, readable by `anon` and `authenticated` |
+
+`supabase start` applies all of them, so a fresh clone reaches a working database in one command.
+To apply new migrations to a stack that is already up, use `supabase migration up` — it runs only
+what is pending and leaves existing rows alone.
+
+**Never run `supabase db reset` on a stack anyone is using.** It drops and rebuilds the database,
+taking every real sign-in in `auth.users` with it. That is also why seed rows live inside
+`0003_awards_table.sql` rather than in a `supabase/seed.sql`: Supabase only reads `seed.sql` during
+a reset, so a seed file there would be reachable exclusively through the one command you must not
+run.
+
+Prefer idempotent migrations — `CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS` before
+`CREATE POLICY`, `ON CONFLICT DO NOTHING` on seed rows — so a file can be replayed against a
+database that already has part of it.
 
 ## Scripts
 

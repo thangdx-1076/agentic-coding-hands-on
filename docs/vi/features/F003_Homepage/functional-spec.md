@@ -249,7 +249,7 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
 | RISK-01 | risk | 5 trang đích (`/awards`, `/kudos`, `/standards`, `/profile`, `/admin`) chưa được implement khi feature này lên production | Link 404 cho tới khi các screen đó được xây; TC ID-59 (broken links) sẽ fail cho tới lúc đó | confirmed |
-| RISK-02 | risk | Bảng notifications chưa tồn tại trong `saa-app` (Supabase, ngoài repo) | Panel thông báo luôn rỗng vĩnh viễn cho tới khi có schema — không phải bug, nhưng người dùng không bao giờ thấy thông báo thật | confirmed |
+| RISK-02 | risk | Bảng notifications chưa tồn tại trong Supabase `saa-app` — chưa có migration nào tạo bảng này tại `supabase/migrations/` | Panel thông báo luôn rỗng vĩnh viễn cho tới khi có schema — không phải bug, nhưng người dùng không bao giờ thấy thông báo thật | confirmed |
 
 ## 12. Dependencies
 
