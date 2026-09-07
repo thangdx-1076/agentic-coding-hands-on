@@ -20,18 +20,30 @@ export type HeroBadgeTierRowProps = {
  */
 export function HeroBadgeTierRow({ tier, copy }: HeroBadgeTierRowProps) {
   return (
-    // mm:3204:6161
+    // mm:3204:6161 — content frame, 400×72 in the design
     <div className="flex flex-col gap-2">
-      <Image
-        src={tier.asset}
-        alt={copy.alt}
-        width={tier.width}
-        height={tier.height}
-      />
-      {/* mm:3204:6162 */}
-      <p className="font-montserrat text-base leading-6 font-bold tracking-[0.5px] text-white">
-        {copy.condition}
-      </p>
+      {/*
+       * Badge and condition share ONE row. The design's geometry is
+       * unambiguous: the badge (mm:3204:6163) occupies y 260–282 / x 947–1073
+       * and the condition text (mm:3204:6162) y 260–280 / x 1081–1397 — same
+       * vertical band, 8px apart horizontally. Stacking them in a column made
+       * each tier ~102px instead of 72px, which pushed the 6-icon Secret Box
+       * grid below the fold. C4 in `standards.spec.ts` only asserts that the
+       * four condition strings EXIST, so it stayed green while the layout was
+       * wrong — the geometry, not the contract, is what caught this.
+       */}
+      <div className="flex flex-row items-center gap-2">
+        <Image
+          src={tier.asset}
+          alt={copy.alt}
+          width={tier.width}
+          height={tier.height}
+        />
+        {/* mm:3204:6162 */}
+        <p className="font-montserrat text-base leading-6 font-bold tracking-[0.5px] text-white">
+          {copy.condition}
+        </p>
+      </div>
       {/* mm:3204:6168 */}
       <p className="font-montserrat text-sm leading-5 font-bold tracking-[0.1px] text-white">
         {copy.description}
