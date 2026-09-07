@@ -26,6 +26,7 @@ account menu, role-aware admin link). UI ships in Vietnamese and English via a c
 | Route            | Description                                                                                                                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`              | Public homepage — hero + countdown (`EVENT_START_AT`), event info, 6 award cards, Sun* Kudos, footer; header is role-aware (anon: login link; member: bell + account menu; admin: adds "Admin" link). No auth guard — anonymous and authenticated visitors both get a 200 |
+| `/awards`        | Public award-system page — hero, sticky category nav (click-scroll + scroll-spy), 6 award sections read from `public.awards`, Sun* Kudos block. No auth guard, and fails open: an unreachable Supabase renders an empty state rather than a 500                           |
 | `/login`         | Google OAuth login screen: header (logo + VN/EN selector), hero, "LOGIN With Google", footer; shows an inline error when the URL carries `?error=`; redirects to `/` if already authenticated                                                                             |
 | `/auth/callback` | Route Handler (GET) — exchanges the OAuth `code` for a session, then redirects to `next` (default `/`) or back to `/login?error=...` on failure                                                                                                                           |
 | `/todo`          | Protected placeholder — greets the signed-in user's email and offers logout. No todo feature is implemented; it exists to prove the auth guard end-to-end                                                                                                                 |
@@ -53,21 +54,49 @@ re-checks with an authoritative `getUser()` call before rendering.
    ```
    NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<value from supabase status>
+   SUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres
    EVENT_START_AT=2026-12-26T18:30:00+07:00
    ```
+   `SUPABASE_DB_URL` is the direct Postgres connection (`DB_URL` in `supabase status -o env`), used
+   only by `pnpm db:migrate` — never by the app at runtime, which talks to PostgREST through
+   `NEXT_PUBLIC_SUPABASE_URL`.
    `EVENT_START_AT` is server-only (no `NEXT_PUBLIC_` prefix — never inlined into the client bundle),
    read in `src/app/(public)/(home)/page.tsx` and validated by
    `src/app/(public)/(home)/_utils/countdown.ts`. ISO-8601, drives the homepage countdown. Absent or
    malformed → the countdown falls back to `00/00/00` (still shows "Coming soon"); it never crashes
    the page.
 4. `pnpm install`
-5. `pnpm dev` → http://localhost:3000
+5. `pnpm db:migrate` — creates the app's own tables and their seed rows. This is what puts the six
+   award categories behind `/awards`; skip it and the page renders its empty state. See
+   [Database](#database).
+6. `pnpm dev` → http://localhost:3000
+
+## Database
+
+`db/migrations/` holds the SQL this app owns, and `pnpm db:migrate` applies every file in it, in
+filename order, to whatever `SUPABASE_DB_URL` points at.
+
+Why it exists: the Supabase project that provides auth lives outside this repo, so a fresh clone
+has the code that reads `public.awards` but no table to read. Keeping the SQL here is what makes a
+new machine reproducible.
+
+**Every migration in this directory must be idempotent** — `CREATE TABLE IF NOT EXISTS`,
+`DROP POLICY IF EXISTS` before `CREATE POLICY`, `ON CONFLICT DO NOTHING` on seed rows. There is no
+ledger of what has already run: re-running the whole directory is the normal operation, and a
+migration that cannot survive a second run is a bug in the migration. Each file runs inside its own
+transaction, so a failure rolls that file back whole.
+
+Seed rows live inside the migration that creates their table rather than in a separate `seed.sql`,
+because Supabase only reads `seed.sql` during `supabase db reset` — and a reset drops the database,
+including every real sign-in in `auth.users`. Use `pnpm db:migrate`; never `supabase db reset` on a
+shared instance.
 
 ## Scripts
 
 | Command                   | What it does                                                                                                                                                                                                                                            |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm dev`                | Start the dev server (Turbopack)                                                                                                                                                                                                                        |
+| `pnpm db:migrate`         | Apply every `db/migrations/*.sql` to `SUPABASE_DB_URL` — creates `public.awards` and its seed rows. Idempotent, safe to re-run. See [Database](#database)                                                                                               |
 | `pnpm build`              | Production build                                                                                                                                                                                                                                        |
 | `pnpm start`              | Start the production server                                                                                                                                                                                                                             |
 | `pnpm lint`               | ESLint                                                                                                                                                                                                                                                  |

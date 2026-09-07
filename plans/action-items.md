@@ -259,3 +259,22 @@
 ### PR
 
 - https://github.com/thangdx-1076/agentic-coding-hands-on/pull/9 — `feat/award-system-page` → `main`, 10 commit, version 0.3.2 → 0.4.0 (minor: route mới + bảng DB mới).
+
+## 260907-0810 — award-system-page (follow-up)
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **`/awards` công khai — CHỐT.** TC ID-1 superseded, không còn "chờ xác nhận". Lý do: nội dung 6 giải không có PII nên không có gì để gác; gác lại sẽ đá khách chưa đăng nhập từ nav của trang chủ công khai sang `/login`; và `permissions.md:54` đã chốt đúng lý lẽ đó cho `/`, nêu đích danh "giải thưởng". Không đổi code.
+- **Schema + seed chuyển về repo.** `db/migrations/*.sql` + `pnpm db:migrate` (script `scripts/apply-db-migrations.mjs`, devDep `pg`, đọc `SUPABASE_DB_URL`). Máy mới giờ chỉ cần `pnpm install && pnpm db:migrate`. Trước đó SQL chỉ nằm ở project saa-app ngoài repo nên `git clone` không mang theo được.
+- Không dùng `supabase/seed.sql`: file đó chỉ được đọc bởi `supabase db reset` — lệnh bị cấm vì xoá sạch `auth.users`. Seed nằm trong chính migration với `ON CONFLICT DO NOTHING`.
+- Không `supabase init` trong repo này: sẽ dựng một stack Supabase thứ hai ở port khác thay vì dùng lại saa-app. Chỉ mang SQL về, không mang cả CLI project.
+
+### Nợ lại
+
+- `0003_awards_table.sql` tồn tại ở hai nơi: `db/migrations/` (canonical, portable) và `~/Desktop/Claude-and-mormoph/saa-app/supabase/migrations/` (bản đã áp trên máy này). Hiện đã đồng bộ byte-for-byte. Nếu sau này sửa, phải sửa cả hai — hoặc quyết định bỏ hẳn bản saa-app.
+- `pnpm db:migrate` không có ledger: nó chạy lại toàn bộ thư mục mỗi lần. Đúng với quy mô hiện tại (1 file idempotent), nhưng khi có nhiều migration thì nên cân nhắc bảng version.
+- Bảng `public.users` (auth) vẫn do saa-app sở hữu, không nằm trong `db/migrations/`. Máy mới hoàn toàn vẫn cần dựng auth riêng.

@@ -19,7 +19,8 @@
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "db:migrate": "node scripts/apply-db-migrations.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -41,6 +42,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^3.2.7",
@@ -54,6 +56,7 @@
     "jsdom": "^30.0.1",
     "msw": "2.15.0",
     "msw-storybook-addon": "3.0.0",
+    "pg": "^8.23.0",
     "prettier": "^3.9.6",
     "server-only": "^0.0.1",
     "storybook": "10.6.0",

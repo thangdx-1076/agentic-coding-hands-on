@@ -61,12 +61,23 @@ route-guard sẽ đá khách chưa đăng nhập ra khỏi chính nội dung mà
 (header/footer/CTA/thẻ giải) đang mời họ xem. Danh sách route KHÔNG qua route-guard giờ là:
 `/`, `/awards`.
 
-**MoMorph TC ID-1 bị supersede (chờ xác nhận):** test case gốc của F004 kỳ vọng khách chưa đăng
-nhập bị redirect `/login` khi vào `/awards`. Quyết định kiến trúc "SAA event/award marketing
+**MoMorph TC ID-1 bị supersede (ĐÃ CHỐT 2026-09-07):** test case gốc của F004 kỳ vọng khách chưa
+đăng nhập bị redirect `/login` khi vào `/awards`. Quyết định kiến trúc "SAA event/award marketing
 content is public" ở trên ghi đè kỳ vọng này — cùng cách PERM001_RootRouteGuard đã supersede cho
-`/`. Đây là quyết định của phiên làm việc, **chưa có xác nhận chính thức từ spec owner** — ghi
-nợ lại ở `docs/vi/features/F004_AwardSystemPage/functional-spec.md § 11` (RISK-03). TC ID-0 (đã
-đăng nhập xem được `/awards`) vẫn thoả nguyên vẹn.
+`/`. Ba lý do, theo thứ tự sức nặng:
+
+1. **Không có gì để bảo vệ.** Sáu hạng mục giải là nội dung quảng bá nội bộ — tên, mô tả, số
+   lượng, giá trị giải. Không PII, không dữ liệu thuộc về một cá nhân nào. Gác một trang không
+   có gì bí mật là gác cho có.
+2. **Gác nó sẽ phá `/`.** Trang chủ đã công khai và header/footer/CTA của nó có 6 link trỏ
+   `/awards`. Gác lại nghĩa là khách chưa đăng nhập bấm "Award Information" ngay trên một trang
+   công khai thì bị đá sang `/login` — ngược mục đích của trang giới thiệu sự kiện.
+3. **Đã có tiền lệ đúng y hệt.** Quyết định 2026-09-06 mở công khai `/` nêu đích danh "giải
+   thưởng" trong lý lẽ của nó. `/awards` là đúng loại nội dung đó, chỉ chi tiết hơn.
+
+TC ID-1 nhiều khả năng viết theo mặc định "màn hình trong hệ thống thì phải đăng nhập", trước khi
+team chốt `/` công khai — cùng vệt với việc `/` từng redirect sang `/login` rồi bị bỏ. TC ID-0
+(đã đăng nhập xem được `/awards`) vẫn thoả nguyên vẹn.
 
 **Bảng `public.awards` không tạo permission-item mới:** RLS `awards_select_all` mở SELECT cho cả
 `anon` và `authenticated`, không phân nhánh theo `role` — bảng này không chứa PII (chỉ nội dung
