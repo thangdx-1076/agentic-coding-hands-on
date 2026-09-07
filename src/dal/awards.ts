@@ -1,5 +1,7 @@
 import "server-only";
 
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale";
+
 /**
  * Server-side read for `/awards` (F004_AwardSystemPage's public award
  * category content), mirroring `src/dal/users.ts`'s shape 1:1: the Supabase
@@ -77,8 +79,29 @@ export type AwardsClient = {
  * ascending, mapped from the DB's snake_case rows to the camelCase `Award`
  * shape the UI consumes. Fails open to `[]` on any Supabase error, a null
  * result, or a thrown exception — never throws.
+ *
+ * Falls back to `DEFAULT_LOCALE` when the requested locale has no rows. Award
+ * copy comes from MoMorph, which only carries Vietnamese, so `public.awards`
+ * is seeded `vi`-only: without this, switching the site to English emptied the
+ * whole page while `/` still listed all six awards from `messages/en.json`.
+ * Untranslated content beats a blank page, and the fallback disappears on its
+ * own the day `en` rows are seeded.
  */
 export async function getAwards(
+  supabase: AwardsClient,
+  locale: string,
+): Promise<Award[]> {
+  const awards = await selectAwards(supabase, locale);
+
+  if (awards.length > 0 || locale === DEFAULT_LOCALE) {
+    return awards;
+  }
+
+  return selectAwards(supabase, DEFAULT_LOCALE);
+}
+
+/** One locale's rows, mapped and fail-open. Never throws. */
+async function selectAwards(
   supabase: AwardsClient,
   locale: string,
 ): Promise<Award[]> {

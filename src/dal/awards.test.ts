@@ -166,19 +166,79 @@ describe("getAwards", () => {
     expect(() => result[0].prizeValues.map((p) => p.amount)).not.toThrow();
   });
 
+  it("locale không có row → fallback về 'vi' thay vì trả trang rỗng", async () => {
+    // MoMorph chỉ có tiếng Việt nên bảng chỉ seed 'vi'. Không có fallback thì
+    // đổi site sang English là /awards trắng trơn, trong khi / vẫn liệt kê đủ
+    // 6 giải từ messages/en.json.
+    const rows = [
+      {
+        slug: "mvp",
+        title: "MVP",
+        description: "…",
+        quantity_value: "01",
+        quantity_unit: "Cá nhân",
+        prize_values: [{ amount: "15.000.000 VNĐ", note: "" }],
+      },
+    ];
+    const locales: string[] = [];
+    const client: AwardsClient = {
+      from: () => ({
+        select: () => ({
+          eq: (_column: "locale", value: string) => {
+            locales.push(value);
+            return {
+              order: () =>
+                Promise.resolve({
+                  data: value === "vi" ? rows : [],
+                  error: null,
+                }),
+            };
+          },
+        }),
+      }),
+    };
+
+    const result = await getAwards(client, "en");
+
+    expect(locales).toEqual(["en", "vi"]);
+    expect(result.map((a) => a.slug)).toEqual(["mvp"]);
+  });
+
+  it("'vi' rỗng → KHÔNG truy vấn lại lần hai", async () => {
+    const locales: string[] = [];
+    const client: AwardsClient = {
+      from: () => ({
+        select: () => ({
+          eq: (_column: "locale", value: string) => {
+            locales.push(value);
+            return {
+              order: () => Promise.resolve({ data: [], error: null }),
+            };
+          },
+        }),
+      }),
+    };
+
+    await expect(getAwards(client, "vi")).resolves.toEqual([]);
+    expect(locales).toEqual(["vi"]);
+  });
+
   it("truyền đúng bảng/cột/locale/order cho client được inject", async () => {
     const order = vi.fn(() => Promise.resolve({ data: [], error: null }));
     const eq = vi.fn(() => ({ order }));
     const select = vi.fn(() => ({ eq }));
     const from = vi.fn(() => ({ select }));
 
-    await getAwards({ from }, "en");
+    // 'vi' (DEFAULT_LOCALE) on purpose: this asserts the query SHAPE, and an
+    // empty result for any other locale triggers the fallback re-query, which
+    // would make every "exactly once" assertion below count two calls.
+    await getAwards({ from }, "vi");
 
     expect(from).toHaveBeenCalledExactlyOnceWith("awards");
     expect(select).toHaveBeenCalledExactlyOnceWith(
       "slug,title,description,quantity_value,quantity_unit,prize_values",
     );
-    expect(eq).toHaveBeenCalledExactlyOnceWith("locale", "en");
+    expect(eq).toHaveBeenCalledExactlyOnceWith("locale", "vi");
     expect(order).toHaveBeenCalledExactlyOnceWith("sort_order", {
       ascending: true,
     });

@@ -301,3 +301,19 @@
 ### Nợ lại (bổ sung 0830)
 
 - `docs/vi/system/overview.md:9` còn câu sai: "Không có database nghiệp vụ riêng của app này" — nay đã có `public.awards`. File này machine-owned, chỉ `rebuild-spec` được ghi đè toàn bộ; sửa tay sẽ bị ghi đè lượt sau. Chạy `/tkm:rebuild-spec --artifact overview` khi tiện. Cùng dòng đó còn trỏ `README.md:35-42`, số dòng đã đổi sau khi thêm mục Database.
+
+## 260907-0855 — /awards trắng khi đổi sang English
+
+### Tôi cần làm
+
+- [ ] Quyết định có dịch nội dung 6 giải sang tiếng Anh không. Hiện `getAwards` fallback về `vi`, nên người xem EN thấy mô tả tiếng Việt. Có bản dịch thì seed thêm 6 dòng `locale='en'`, fallback tự hết tác dụng, không phải sửa code.
+
+### Decisions
+
+- **`getAwards` fallback về `DEFAULT_LOCALE` khi locale yêu cầu không có dòng nào.** Nội dung tiếng Việt chưa dịch vẫn hơn một trang trắng — nhất là khi `/` vẫn liệt kê đủ 6 giải ở EN (nội dung nó nằm trong `messages/en.json`). Fallback tự biến mất ngày seed `en`.
+- Không seed 6 dòng `en` bằng chính chữ tiếng Việt: như vậy là nói dối rằng đã có bản dịch, và nhân đôi dữ liệu.
+
+### Nợ lại
+
+- **E2E không bắt được lỗi này.** Toàn bộ `awards.spec.ts` chạy ở locale mặc định `vi`, nên nhánh EN chưa từng được thử. Nên có một test đặt cookie `NEXT_LOCALE=en` và khẳng định 6 section vẫn render.
+- Ghi chú nợ cũ ("chỉ seed locale='vi'; nguồn MoMorph chỉ có tiếng Việt") nói nhẹ hơn thực tế — hậu quả thật là trang trắng ở EN, không phải chữ chưa dịch. Đã sửa cách diễn đạt ở đây.
