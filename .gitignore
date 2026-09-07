@@ -73,3 +73,6 @@ next-env.d.ts
 
 # SunLint scratch config
 .sunlint-eslint.config.js
+
+# playwright mcp screenshot captures
+/.playwright-mcp/
