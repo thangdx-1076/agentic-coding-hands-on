@@ -201,12 +201,16 @@
   },
   "kudos": {
     "banner": {
-      "title": "Recognition and Appreciation System",
+      "title": "Hệ thống ghi nhận và cảm ơn",
       "logoAlt": "SAA 2025 KUDOS"
     },
     "compose": {
       "placeholder": "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
       "ariaLabel": "Write Kudos"
+    },
+    "heroSearch": {
+      "placeholder": "Tìm kiếm profile Sunner",
+      "ariaLabel": "Tìm kiếm profile Sunner"
     },
     "highlight": {
       "eyebrow": "Sun* Annual Awards 2025",

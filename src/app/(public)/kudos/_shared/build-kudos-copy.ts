@@ -25,6 +25,8 @@ type Translator = Awaited<ReturnType<typeof getTranslations>>;
 export type KudosPageCopy = SiteChromeCopy & {
   banner: { title: string; logoAlt: string };
   compose: { placeholder: string; ariaLabel: string };
+  /** mm:2940:13450 — sibling of the compose pill on the same KV row. */
+  heroSearch: { placeholder: string; ariaLabel: string };
   highlight: {
     eyebrow: string;
     heading: string;
@@ -107,6 +109,10 @@ export function buildKudosCopy(
     compose: {
       placeholder: tKudos("compose.placeholder"),
       ariaLabel: tKudos("compose.ariaLabel"),
+    },
+    heroSearch: {
+      placeholder: tKudos("heroSearch.placeholder"),
+      ariaLabel: tKudos("heroSearch.ariaLabel"),
     },
     highlight: {
       eyebrow: tKudos("highlight.eyebrow"),

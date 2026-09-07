@@ -6,6 +6,7 @@ import type { FeedPage } from "../_hooks/use-infinite-feed";
 
 import { KudosBanner } from "./kudos-banner";
 import { KudosComposePill } from "./kudos-compose-pill";
+import { KudosHeroSearchPill } from "./kudos-hero-search-pill";
 import { KudosFilterBar } from "./kudos-filter-bar";
 import type { KudosFilterState } from "./kudos-filter-menu";
 import { KudosHighlightCarousel } from "./kudos-highlight-carousel";
@@ -111,13 +112,26 @@ export function KudosScreen({
         logoutAction={logoutAction}
       />
       <main className="flex w-full flex-1 flex-col gap-16 pb-24">
-        <KudosBanner title={copy.banner.title} logoAlt={copy.banner.logoAlt} />
-
-        <div className="flex w-full justify-center px-6 sm:px-12 lg:px-36">
-          <KudosComposePill
-            placeholder={copy.compose.placeholder}
-            ariaLabel={copy.compose.ariaLabel}
+        {/* mm:2940:13448 `Button chuc nang` is a 1440×72 row at y 408–480,
+            i.e. INSIDE the 512-tall keyvisual band (mm:2940:13432), not below
+            it. Overlaying it here rather than leaving it in normal flow is
+            what puts both pills on the artwork the way the frame draws them.
+            DOM order stays banner → pills → highlight, which C10 asserts. */}
+        <div className="relative w-full">
+          <KudosBanner
+            title={copy.banner.title}
+            logoAlt={copy.banner.logoAlt}
           />
+          <div className="absolute inset-x-0 bottom-[6.25%] flex w-full flex-col items-stretch gap-8 px-6 sm:px-12 lg:flex-row lg:items-center lg:px-36">
+            <KudosComposePill
+              placeholder={copy.compose.placeholder}
+              ariaLabel={copy.compose.ariaLabel}
+            />
+            <KudosHeroSearchPill
+              placeholder={copy.heroSearch.placeholder}
+              ariaLabel={copy.heroSearch.ariaLabel}
+            />
+          </div>
         </div>
 
         <div className="flex w-full flex-col gap-6">

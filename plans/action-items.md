@@ -747,3 +747,51 @@
 - Không nới timeout để làm CI xanh: đã tái hiện đúng điều kiện CI ở máy
   (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, `CI=1`,
   `pnpm exec playwright test --grep-invert "@auth|@local-db"`) → **exit 0, 79/79 pass**.
+
+## 260907-2325 — audit fidelity /kudos vs frame MoMorph
+
+Đối chiếu trang đang chạy với `momorph/frame-image.png` + số đo node thật. **4 sai lệch, đã sửa hết.**
+
+### Decisions
+
+- **Tiêu đề banner: `Hệ thống ghi nhận và cảm ơn`, không phải `...lời cảm ơn`.**
+  Node TEXT `2940:13439` có `character = "Hệ thống ghi nhận và cảm ơn"`. Chuỗi cũ lấy từ **văn xuôi
+  mô tả** của item A trong CSV ("tiêu đề 'Hệ thống ghi nhận lời cảm ơn'"), không phải từ `character`.
+  Đây đúng cái luật repo đã rút ra ở F004/F005 — *node `character` là nội dung, `itemName`/mô tả thì
+  không* — và lần này chính ta vi phạm nó. Đã sửa đồng bộ: `messages/{vi,en}.json`, hợp đồng e2e C02
+  (3 chỗ), story, `docs/vi/features/F007_*/functional-spec.md`, `docs/vi/screens/SCR007_*/spec.md`,
+  `docs/vi/generated/screen-list.md`, và bản draft trong plan dir. Đã refresh `screen_spec_shas.SCR007`.
+
+- **Thêm pill thứ hai "Tìm kiếm profile Sunner" (`2940:13450`).** Design có HAI pill trên cùng một
+  hàng `2940:13448 Button chuc nang` (1440×72): ô nhập 738 ở x 144–882, ô tìm 381 ở x 914–1295,
+  cách nhau 32px. Ta chỉ render ô nhập.
+  Lý do nó lọt: CSV **không đánh số item** cho pill này (chỉ có `A.1` cho ô nhập), nên bảng spec
+  không nhắc tới nó — chỉ cây node mới lộ ra. Placeholder lấy từ `character` của
+  `I2940:13450;186:2760`; `itemName` của node đó là `"Awards Information Navigation Links"` — nhãn
+  cũ còn sót từ component gốc, đúng bẫy F005 D003 đã ghi.
+  **Khác** ô tìm trong Spotlight (`2940:14833`) đã làm từ trước: cái đó lọc scatter đang hiển thị và
+  CÓ nối logic; cái này readonly vì đích đến chưa có frame.
+
+- **Hàng pill đè LÊN dải keyvisual, không nằm dưới.** Design đặt nó ở y 408–480, tức bên trong dải
+  512px. Ta để nó trôi dưới nền tối và căn giữa. Đã bọc banner + hàng pill trong một container
+  `relative` và định vị tuyệt đối ở `bottom-[6.25%]` (= 32/512), căn trái theo mốc 144.
+  Comment trong `kudos-banner.tsx` đã tự thú điều này từ đầu ("file ownership splits those into two
+  leaf components, so each only renders its own slice") — phase 08 biết nhưng bị chặn bởi ranh giới
+  sở hữu file. Nay ranh giới đó đã mở.
+
+- **Thêm lớp scrim `Cover` (`I2940:13432;1210:12612`).** Frame có một rectangle phủ
+  `linear-gradient(25deg, #00101A 14.74%, rgba(0,19,32,0) 47.8%)` trên artwork. Thiếu nó thì
+  artwork bị **cắt ngang đột ngột** ở đáy dải thay vì tan vào `bg-login-background`, và chữ `KUDOS`
+  nằm trên nền cam sáng thay vì vùng tối như design vẽ.
+  `KeyvisualBackground` dùng chung ĐÃ có cơ chế này nhưng với gradient riêng của frame homepage
+  (`mm:2167:9029`, `12deg`) — frame kudos có góc và stop khác, nên phải dùng giá trị của chính nó.
+
+### Nợ lại
+
+- Lệch dọc 80px so với frame (design chồng header bán trong suốt lên keyvisual từ y 0; repo xếp
+  `main` xuống dưới header sticky 80px). **Có sẵn toàn repo** — đo `/awards` (F004, branch này không
+  đụng) thấy y hệt: `main` bắt đầu ở y 80. Không sửa trong PR này vì đụng chrome dùng chung của mọi
+  trang.
+- Chiều cao `B_Highlight` 786 (design) vs 621 (chạy) và sidebar 933 vs 316: đều do **dữ liệu ít hơn**
+  (2 leaderboard rỗng, thẻ ngắn hơn), không phải lỗi layout. Bề rộng khớp tuyệt đối (sidebar 422,
+  thẻ 528, nút nav 80×80).

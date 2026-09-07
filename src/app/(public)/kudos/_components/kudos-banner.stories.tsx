@@ -16,7 +16,7 @@ type Story = StoryObj<typeof meta>;
  * C02 e2e assertion checks. */
 export const Default: Story = {
   args: {
-    title: "Hệ thống ghi nhận lời cảm ơn",
+    title: "Hệ thống ghi nhận và cảm ơn",
     logoAlt: "SAA 2025 KUDOS",
   },
 };

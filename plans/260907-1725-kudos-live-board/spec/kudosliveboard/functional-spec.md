@@ -65,7 +65,7 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 
 ### SCR007_KudosLiveBoard (2xx)
 
-- **FR-201** Banner đầu trang hiển thị tiêu đề "Hệ thống ghi nhận lời cảm ơn" và logo sự kiện, chỉ để đọc.
+- **FR-201** Banner đầu trang hiển thị tiêu đề "Hệ thống ghi nhận và cảm ơn" và logo sự kiện, chỉ để đọc.
 - **FR-202** Ô nhập dưới banner hiển thị dạng pill với icon bút và placeholder mời gửi lời cảm ơn; trong phạm vi F007, ô này chỉ render — bấm vào chưa mở dialog gửi Kudo.
 - **FR-203** Carousel Highlight Kudos hiển thị đúng 5 thẻ kudo nhiều tim nhất, thẻ ở giữa nổi bật, hai bên mờ.
 - **FR-204** Người dùng lật carousel bằng 2 cặp nút mũi tên (cạnh thẻ và cạnh số trang) cùng điều khiển một vị trí trượt; số trang hiển thị dạng "x/5".

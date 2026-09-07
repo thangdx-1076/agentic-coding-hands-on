@@ -33,7 +33,7 @@ loadEnv();
  * | # | Tag | Assertion | TC | FR/BR |
  * |---|-----|-----------|----|----|
  * | C01 | *(CI-safe)* | `GET /kudos` → 200, URL vẫn là `/kudos`, **không** redirect `/login` | TC[02] | FR-101, FR-102, BR-015 |
- * | C02 | *(CI-safe)* | `[data-testid=kudos-banner]` chứa `Hệ thống ghi nhận lời cảm ơn`; logo SAA 2025 KUDOS có `alt` | TC[03] | FR-201 |
+ * | C02 | *(CI-safe)* | `[data-testid=kudos-banner]` chứa `Hệ thống ghi nhận và cảm ơn`; logo SAA 2025 KUDOS có `alt` | TC[03] | FR-201 |
  * | C03 | *(CI-safe)* | `[data-testid=kudos-compose-pill]` là `input`, `placeholder` khớp nguyên văn, `readonly`, có icon bút bên trái | TC[04], TC[16] | FR-202 |
  * | C04 | *(CI-safe)* | `[data-testid=kudos-filter-hashtag]` và `[data-testid=kudos-filter-department]` visible, không `disabled` | TC[07], TC[08] | FR-206 |
  * | C05 | *(CI-safe)* | `[data-testid=kudos-sunner-search]` có `placeholder="Tìm kiếm"`, `maxlength="100"`; nút submit `disabled` khi ô rỗng | TC[11], TC[17], TC[19] | FR-209, BR-010 |
@@ -85,12 +85,12 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
   });
 
   test("[C02] Banner section visible with title and logo", async ({ page }) => {
-    // C02: `[data-testid=kudos-banner]` chứa `Hệ thống ghi nhận lời cảm ơn`; logo SAA 2025 KUDOS có `alt`
+    // C02: `[data-testid=kudos-banner]` chứa `Hệ thống ghi nhận và cảm ơn`; logo SAA 2025 KUDOS có `alt`
     await page.goto("/kudos");
 
     const banner = page.locator("[data-testid=kudos-banner]");
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText("Hệ thống ghi nhận lời cảm ơn");
+    await expect(banner).toContainText("Hệ thống ghi nhận và cảm ơn");
 
     // Logo should have alt attribute
     const logo = banner.locator("img");

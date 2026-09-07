@@ -143,12 +143,24 @@
       "heading": "NGƯỜI GỬI KUDOS: SƯU TẬP TRỌN BỘ 6 ICON, NHẬN NGAY PHẦN QUÀ BÍ ẨN",
       "intro": "Mỗi lời Kudos bạn gửi sẽ được đăng tải trên hệ thống và nhận về những lượt ❤️ từ cộng đồng Sunner. Cứ mỗi 5 lượt ❤️, bạn sẽ được mở 1 Secret Box, với cơ hội nhận về một trong 6 icon độc quyền của SAA.",
       "badges": {
-        "revival": { "caption": "REVIVAL" },
-        "touchOfLight": { "caption": "TOUCH OF LIGHT" },
-        "stayGold": { "caption": "STAY GOLD" },
-        "flowToHorizon": { "caption": "FLOW TO HORIZON" },
-        "beyondTheBoundary": { "caption": "BEYOND THE BOUNDARY" },
-        "rootFurther": { "caption": "ROOT FURTHER" }
+        "revival": {
+          "caption": "REVIVAL"
+        },
+        "touchOfLight": {
+          "caption": "TOUCH OF LIGHT"
+        },
+        "stayGold": {
+          "caption": "STAY GOLD"
+        },
+        "flowToHorizon": {
+          "caption": "FLOW TO HORIZON"
+        },
+        "beyondTheBoundary": {
+          "caption": "BEYOND THE BOUNDARY"
+        },
+        "rootFurther": {
+          "caption": "ROOT FURTHER"
+        }
       },
       "closing": "Những Sunner thu thập trọn bộ 6 icon sẽ nhận về một phần quà bí ẩn từ SAA 2025."
     },
@@ -189,12 +201,16 @@
   },
   "kudos": {
     "banner": {
-      "title": "Hệ thống ghi nhận lời cảm ơn",
+      "title": "Hệ thống ghi nhận và cảm ơn",
       "logoAlt": "SAA 2025 KUDOS"
     },
     "compose": {
       "placeholder": "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
       "ariaLabel": "Viết Kudo"
+    },
+    "heroSearch": {
+      "placeholder": "Tìm kiếm profile Sunner",
+      "ariaLabel": "Tìm kiếm profile Sunner"
     },
     "highlight": {
       "eyebrow": "Sun* Annual Awards 2025",

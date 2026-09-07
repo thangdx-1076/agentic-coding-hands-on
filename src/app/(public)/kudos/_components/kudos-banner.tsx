@@ -33,7 +33,24 @@ export function KudosBanner({ title, logoAlt }: KudosBannerProps) {
       className="relative flex aspect-[45/16] w-full items-center bg-cover bg-center"
       style={{ backgroundImage: "url(/kudos/kv-background.png)" }}
     >
-      <div className="flex w-full flex-col gap-2.5 px-6 sm:px-12 lg:px-36">
+      {/* mm:I2940:13432;1210:12612 `Cover` — the readability scrim this frame
+          layers over its own artwork, same role as `mm:2167:9029` in the
+          shared `KeyvisualBackground` but with THIS frame's own angle and
+          stops (25deg vs the homepage's 12deg). Without it the artwork ends
+          in a hard horizontal cut at the band's bottom edge instead of
+          fading into `bg-login-background`, and the `KUDOS` wordmark sits on
+          full-brightness orange rather than the darkened lower-left the frame
+          draws. Figma places it at y445–1402 spanning past the band; only the
+          band-local slice is reproduced here, which is the part that shows. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(25deg, #00101A 14.74%, rgba(0, 19, 32, 0.00) 47.8%)",
+        }}
+      />
+      <div className="relative flex w-full flex-col gap-2.5 px-6 sm:px-12 lg:px-36">
         {/* mm:2940:13439 */}
         <h1 className="font-montserrat text-[36px] leading-[44px] font-bold text-login-button">
           {title}

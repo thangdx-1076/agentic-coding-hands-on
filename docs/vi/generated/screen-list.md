@@ -274,7 +274,7 @@ Chi tiết đầy đủ (layout region, 11 UI element, DOM contract): `docs/vi/s
 **Feature:** F007 — Bảng Kudos trực tiếp (`/kudos`) · F008 — Thả tim cho Kudos (nút tim trên thẻ)
 **Route:** /kudos
 **Description:** Trang Kudos công khai (`(public)`, không route-guard — cùng nhóm `/`, `/awards`,
-`/standards`) hiển thị toàn bộ board trong một lần tải: banner "Hệ thống ghi nhận lời cảm ơn" + ô
+`/standards`) hiển thị toàn bộ board trong một lần tải: banner "Hệ thống ghi nhận và cảm ơn" + ô
 nhập pill (chỉ render, chưa mở dialog Viết Kudo), bộ lọc Hashtag + Phòng ban, carousel HIGHLIGHT 5
 kudo nhiều tim nhất (2 cặp nút điều hướng + pagination "x/5"), Spotlight (tổng "N KUDOS" thật +
 scatter tĩnh tên + ô tìm Sunner `maxLength=100`), feed ALL KUDOS cuộn vô hạn, và sidebar 5 chỉ số

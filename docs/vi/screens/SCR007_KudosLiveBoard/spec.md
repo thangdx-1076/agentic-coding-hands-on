@@ -81,7 +81,7 @@ feed trở xuống chia hai cột: feed bên trái, sidebar bên phải cuộn �
 | ID | Element | Type | Required | Default | Visibility | Action | Source | Format | Empty Behavior | Cross-ref |
 |----|---------|------|----------|---------|------------|--------|--------|--------|-----------------|-----------|
 | E01 | `SiteHeader` | header | — | biến thể theo trạng thái đăng nhập | Always | logo/nav/bell/`VN` switcher/menu tài khoản hoặc link đăng nhập | injected | raw | — | dùng chung `/`, `/awards`, `/profile` |
-| E02 | Banner ghi nhận | display field | — | — | Always | — | static (i18n `kudos`) | raw | — | FR-201; tiêu đề "Hệ thống ghi nhận lời cảm ơn" + logo sự kiện, chỉ đọc |
+| E02 | Banner ghi nhận | display field | — | — | Always | — | static (i18n `kudos`) | raw | — | FR-201; tiêu đề "Hệ thống ghi nhận và cảm ơn" + logo sự kiện, chỉ đọc |
 | E03 | Ô nhập pill (icon bút + placeholder) | display field | — | — | Always | click KHÔNG mở dialog trong phạm vi F007 | static (i18n `kudos`) | raw | — | FR-202; placeholder nguyên văn `Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?` (frame `ihQ26W78P2` chưa tồn tại) |
 | E04 | Dropdown Hashtag | combobox | — | không lọc | Always | chọn 1 giá trị → `router.push` với `?hashtag=` | distinct từ dữ liệu thật | raw | — | FR-206, BR-003 |
 | E05 | Dropdown Phòng ban | combobox | — | không lọc | Always | chọn 1 giá trị → `router.push` với `?department=` | distinct `users.department` (cột mới) | raw | — | FR-002, FR-206, BR-003 |
