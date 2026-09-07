@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: route-view (Next.js 16 App Router) — 5 screens (`/`, `/awards`, `/login`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
+**Analysis Scope**: route-view (Next.js 16 App Router) — 6 screens (`/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
 
 **Code Format**: All SCR codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped transitions
 
@@ -28,9 +28,14 @@ graph TD
     SCR005 -->|Click 'Đóng', có lịch sử điều hướng| Back["router.back - trang trước đó"]
     SCR005 -->|Click 'Đóng', direct-load không có lịch sử| SCR003
     SCR005 -->|Click 'Viết KUDOS'| Kudos["/kudos - chưa implement, 404"]
+    SCR003 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006[SCR006_Profile]
+    SCR004 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006
+    Start -->|đã đăng nhập, path '/profile'| SCR006
+    Start -->|chưa đăng nhập, path '/profile'| SCR001
+    SCR006 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab).
+> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`.
 
 ## Feature Entry Points
 
@@ -71,6 +76,14 @@ graph TD
   - SCR005_Standards — `/standards` (atomic)
 - **Exit screens**: không có SCR### nào khác trong tài liệu này (nút "Đóng" thoát bằng `router.back()`/`push("/")` — không phải một điều hướng có điều kiện tới màn hình cụ thể nào, mà là "trả khách về nơi họ đã ở"; nút "Viết KUDOS" trỏ `/kudos`, chưa có SCR### nào)
 
+### F006_ProfilePage
+
+- **Entry screen**: SCR006_Profile — `/profile`
+- **Owned screens**:
+  - SCR006_Profile — `/profile` (atomic)
+- **Exit screens**: SCR001_LoginScreen (chưa đăng nhập bị redirect ngay, hoặc click "Đăng xuất"
+  trong menu tài khoản dùng chung `SiteHeader`)
+
 ---
 
 ## Screen Access Paths
@@ -93,6 +106,10 @@ graph TD
 | (bất kỳ trang nào có `SiteFooter`) | SCR005_Standards | Click link "Tiêu chuẩn chung" ở footer | Không điều kiện — public, mọi actor | |
 | SCR005_Standards | (trang trước đó, bất kỳ) | Click "Đóng", có lịch sử điều hướng | `window.navigation.canGoBack === true` → `router.back()` | |
 | SCR005_Standards | SCR003_HomeScreen | Click "Đóng", direct-load không có lịch sử | `window.navigation.canGoBack` là `false`/`undefined` → `router.push(ROUTES.HOME)` | |
+| SCR003_HomeScreen, SCR004_Awards | SCR006_Profile | Click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`) | Đã đăng nhập | |
+| Start | SCR006_Profile | Initial load / truy cập URL trực tiếp | Đã đăng nhập, truy cập `/profile` (không tham số → self; `?id={uuid}` hợp lệ khác self → other) | |
+| Start | SCR001_LoginScreen | proxy + `(protected)/layout.tsx` redirect | Chưa đăng nhập, truy cập `/profile` | |
+| SCR006_Profile | SCR001_LoginScreen | Click "Đăng xuất" trong menu tài khoản (`logoutAction`) | Đã đăng nhập; luôn xảy ra kể cả khi `signOut()` lỗi | |
 
 > Region column: để trống — app này không có REG### nào (xem screen-list.md).
 
@@ -165,6 +182,23 @@ graph TD
 
 ---
 
+### SCR006_Profile (Hồ sơ Sunner)
+
+**Entry Points**:
+- Click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`) trên SCR003_HomeScreen hoặc SCR004_Awards
+- Truy cập URL trực tiếp `/profile` (self) hoặc `/profile?id={uuid}` (other) — cần đã đăng nhập
+
+**Exit Points**:
+- Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
+- Đến SCR001_LoginScreen: guard `(protected)/layout.tsx` phát hiện chưa đăng nhập (redirect trước khi trang render)
+- (Ngoài phạm vi phân tích) Không có link nào từ SCR006_Profile tới `/kudos` hay screen khác — trang không có nav-out riêng ngoài chrome dùng chung
+
+**Decision Points**:
+- `(protected)/layout.tsx` (fail-closed, dùng chung với `/todo`): `!user` → redirect `/login` trước khi `page.tsx` chạy
+- `parseProfileId(rawId, viewerId)` (`_utils/parse-profile-id.ts`): rỗng/vắng mặt → self; non-string (lặp key) → `notFound()`; sai định dạng UUID → `notFound()`; trùng chính người xem → `redirect("/profile")` canonical; hợp lệ khác self → query `profile_cards`, không có hàng → `notFound()`, có hàng → render other view
+
+---
+
 ### SCR002_TodoScreen (Todo)
 
 **Entry Points**:
@@ -205,6 +239,7 @@ graph LR
 | SCR003_HomeScreen | Không — public cho mọi actor (PERM001_RootRouteGuard superseded); nội dung header cá nhân hoá theo trạng thái đăng nhập + role, không phải một guard | Public (nội dung); cá nhân hoá theo `member`/`admin` khi đã đăng nhập |
 | SCR004_Awards | Không — public cho mọi actor (F004_AwardSystemPage, cùng nhóm với `/`); nội dung 6 hạng mục giải không cá nhân hoá theo vai trò, chỉ header dùng chung đổi theo trạng thái đăng nhập | Public (toàn bộ nội dung, không riêng theo `member`/`admin`) |
 | SCR005_Standards | Không — public cho mọi actor (F005_StandardsRulesPage, cùng nhóm với `/`, `/awards`); KHÔNG có phần nào cá nhân hoá — trang không đọc session/role, không có header/footer chrome nào (khác SCR003/SCR004) | Public (toàn bộ nội dung, giống hệt cho mọi actor) |
+| SCR006_Profile | Có — gác bởi `(protected)/layout.tsx`, cùng gate với SCR002_TodoScreen (F006_ProfilePage) | User (bất kỳ user Supabase hợp lệ nào — không phân role); `?id=` quyết định self/other, không phải một authorization level khác |
 
 ---
 
@@ -220,6 +255,9 @@ graph LR
 | SCR003_HomeScreen | `getUser()` throw (Supabase lỗi khi đọc session cho header) | `try/catch` → coi như ẩn danh, vẫn render trang đầy đủ (fail-open, không chặn nội dung công khai) | screen |
 | SCR003_HomeScreen | `getUserRole()` lỗi hoặc không có row trong `public.users` | Fail-open về `"member"` — không hiện lỗi, chỉ ẩn mục "Trang quản trị" | screen |
 | SCR004_Awards | `getAwards()` lỗi hoặc bảng `awards` rỗng cho locale hiện tại | Fail-open trả `[]` → render `AwardsEmptyState` trong khung; header/footer/h1 vẫn nguyên, không 500 | screen |
+| SCR006_Profile | `(protected)/layout.tsx` phát hiện chưa đăng nhập | Redirect `/login` (fail closed, cùng cơ chế SCR002_TodoScreen) | screen |
+| SCR006_Profile | `?id=` sai định dạng UUID, lặp key, hoặc không có hàng tương ứng trong `profile_cards` | `notFound()` — trang "Not found" mặc định Next.js, không phải lỗi 500 | screen |
+| SCR006_Profile | `getProfileCard()` lỗi Supabase (thoáng qua) | Fail-open trả `null` → cùng `notFound()` như "không có hàng" (không phân biệt được 2 nguyên nhân từ phía người dùng) | screen |
 
 > Scope values: `screen` (không có REG### trong app này nên không có case `region:REG###`).
 
@@ -227,7 +265,7 @@ graph LR
 
 ## Circular Dependencies Check
 
-- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào; SCR005 không tạo cạnh vào SCR001 nào cả (không có header/menu tài khoản) — "Đóng" chỉ là `router.back()`/`push("/")`, không phải một cạnh điều hướng có điều kiện tới một SCR### cụ thể, nên không góp thêm chu trình nào
+- [x] No circular dependencies detected — SCR001 ⇄ SCR003 là chu trình login/logout hợp lệ (đổi từ SCR001 ⇄ SCR002), mỗi chiều có trigger/điều kiện riêng biệt; SCR002 ⇄ SCR001 (logout) vẫn còn nhưng SCR002 không còn cạnh vào tự động nào (chỉ truy cập URL trực tiếp); SCR004 ⇄ SCR001 (login/logout) cùng hình dạng với SCR003 ⇄ SCR001, không tạo chu trình mới nào; SCR005 không tạo cạnh vào SCR001 nào cả (không có header/menu tài khoản) — "Đóng" chỉ là `router.back()`/`push("/")`, không phải một cạnh điều hướng có điều kiện tới một SCR### cụ thể, nên không góp thêm chu trình nào; SCR006 ⇄ SCR001 (login/logout, guard redirect) cùng hình dạng với SCR002/SCR003/SCR004 ⇄ SCR001, không tạo chu trình mới; SCR003/SCR004 → SCR006 (click "Hồ sơ") là cạnh một chiều, không có cạnh ngược SCR006 → SCR003/SCR004 nào trong tài liệu này (chrome dùng chung chỉ dẫn tới SCR001 khi đăng xuất)
 - [x] All screens have valid entry/exit points
 - [x] All navigation paths terminate
 
@@ -235,17 +273,31 @@ graph LR
 
 ## Guard Logic
 
-### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*` (`/` vẫn khớp matcher, không còn redirect)
+### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*`, `/profile` (`/`, `/awards`, `/standards` vẫn khớp matcher, không còn redirect)
 **trigger:** `proxy` (Next 16, tên cũ `middleware`)
-**source:** `proxy.ts:25-44`
+**source:** `proxy.ts` (`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]`)
 **logic:**
 ```pseudo
 if (user && path === "/login") → redirect / (giữ cookie đã refresh; đổi từ /todo)
-if (!user && path bắt đầu bằng "/todo") → redirect /login (giữ cookie đã refresh)
+if (!user && path bắt đầu bằng bất kỳ route nào trong PROTECTED_ROUTES ["/todo", "/profile"]) → redirect /login (giữ cookie đã refresh)
 path === "/" → pass-through LUÔN (không redirect — vẫn khớp matcher chỉ để refresh cookie)
 else → pass-through
 ```
 **failure path:** lỗi gọi Supabase (`getUserOrNull` catch) → coi như `user = null`, không 500 toàn site
+
+---
+
+### GUARD-005 — Authoritative auth guard trên `/profile` (fail CLOSED, dùng chung `(protected)/layout.tsx` với `/todo`)
+**trigger:** Server Component render, TRƯỚC `profile/page.tsx`
+**source:** `src/app/(protected)/layout.tsx` (không đổi so với GUARD-003 — chỉ thêm 1 route con vào danh sách nó bảo vệ)
+**logic:**
+```pseudo
+user = await getCurrentUser()
+if (!user) → redirect /login
+```
+**failure path:** không có session hợp lệ → redirect `/login`, giống hệt `/todo`. Sau gate này,
+`profile/page.tsx` tự chạy thêm `parseProfileId()` (không phải một guard — một input-validation
+quyết định self/other/404/canonical, xem § Screen Transitions SCR006_Profile).
 
 ---
 

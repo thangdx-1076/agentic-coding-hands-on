@@ -4,7 +4,7 @@ import type { SVGProps } from "react";
  * Target icon (mm:214:1808, component set `178:1020`) — 24px, used before
  * every nav item label (mm:I313:8460;186:1745 and siblings) and before each
  * award section's `<h2>` title (mm:I313:8467;214:2529 and siblings). New
- * icon, not present in `(public)/_components/icons` — downloaded via the
+ * icon, not present in `src/app/_components/icons` — downloaded via the
  * `get_figma_image` fallback (code-rules 2, no `assets.md` row for this
  * componentSetId) and inlined per code-rules 2a: original export hardcodes
  * `fill="white"`, replaced here with `currentColor` so the parent element's

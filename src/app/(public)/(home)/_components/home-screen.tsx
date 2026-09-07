@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 import { defaultHomeCopy, type HomeCopy } from "../_shared/home-copy";
-import { KeyvisualBackground } from "../../_components/keyvisual-background";
-import { SiteHeader } from "../../_components/site-header";
-import { KudosSection } from "../../_components/kudos-section";
-import { SiteFooter } from "../../_components/site-footer";
-import type { SiteViewer } from "../../_shared/site-chrome";
+import { KeyvisualBackground } from "../../../_components/keyvisual-background";
+import { SiteHeader } from "../../../_components/site-header";
+import { KudosSection } from "../../../_components/kudos-section";
+import { SiteFooter } from "../../../_components/site-footer";
+import type { SiteViewer } from "../../../_shared/site-chrome";
 
 import { HeroSection } from "./hero-section";
 import { CountdownTiles } from "./countdown-tiles";

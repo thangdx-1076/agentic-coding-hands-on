@@ -7,6 +7,22 @@ import { defineConfig, devices } from "@playwright/test";
 // require('dotenv').config();
 
 /**
+ * Port the suite drives, overridable with `E2E_PORT`. Defaults to 3000, so CI
+ * and every existing local workflow are unchanged.
+ *
+ * Why this is configurable at all: `reuseExistingServer` below is `true`
+ * off-CI, so Playwright does NOT start a dev server when something already
+ * holds the port — it silently drives whatever is there. If another project's
+ * dev server owns 3000, the whole suite runs against the wrong application and
+ * reports a result that looks real and means nothing (this actually happened —
+ * an entire visual-evidence pass captured a different app's 404 page). When
+ * 3000 is occupied by something you'd rather not kill, run
+ * `E2E_PORT=3100 pnpm test:e2e` instead of fighting for the port.
+ */
+const PORT = process.env.E2E_PORT ?? "3000";
+const BASE_URL = `http://localhost:${PORT}`;
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -24,7 +40,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3000",
+    baseURL: BASE_URL,
   },
 
   /* Configure projects for major browsers */
@@ -37,12 +53,13 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
+    command: `pnpm dev --port ${PORT}`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
       ...process.env,
+      PORT,
       EVENT_START_AT: "2099-12-31T18:30:00+07:00",
     },
   },

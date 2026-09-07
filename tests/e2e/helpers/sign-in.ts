@@ -4,12 +4,14 @@ import { createServerClient } from "@supabase/ssr";
 /**
  * Sign in or sign up a test user via GoTrace REST API.
  * Handles idempotency: if user exists, falls back to password grant.
+ * @param metadata Optional metadata to include in user data (e.g., { full_name: "..." })
  */
 export async function createTestSession(
   supabaseUrl: string,
   publishableKey: string,
   email: string,
   password: string,
+  metadata: Record<string, unknown> = {},
 ): Promise<{ access_token: string; refresh_token: string; user_id: string }> {
   // Try to sign up first
   const signupResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
@@ -21,7 +23,14 @@ export async function createTestSession(
     body: JSON.stringify({
       email,
       password,
-      options: { data: {} },
+      // Top-level `data`, NOT `options.data`. This calls the GoTrue REST
+      // endpoint directly; `options` is a supabase-js concept that the SDK
+      // unwraps into `data` before it ever hits the wire. Sending
+      // `options.data` here is silently discarded, leaving
+      // `raw_user_meta_data` empty — migration 0002's trigger then writes
+      // `full_name` NULL, and its `ON CONFLICT (id) DO NOTHING` means no
+      // later signup can ever repair that row.
+      data: metadata,
     }),
   });
 

@@ -25,6 +25,7 @@
 | SCR003_HomeScreen | Trang chủ (Homepage) | atomic | 14 | MODEL002_SupabaseUser (email, role qua public.users), MODEL001_AppLocale |
 | SCR004_Awards | Hệ thống giải thưởng SAA 2025 | composite | 10 | MODEL002_SupabaseUser (email, dùng chung header F003), `Award` (chưa cấp MODEL### riêng) |
 | SCR005_Standards | Thể lệ SAA 2025 | atomic | 9 | MODEL001_AppLocale (không đọc MODEL002 — trang không cá nhân hoá, không header) |
+| SCR006_Profile | Hồ sơ Sunner | atomic | 11 | `ProfileCard` (chưa cấp MODEL### riêng — view `public.profile_cards`), MODEL002_SupabaseUser (email, dùng chung header F003), MODEL001_AppLocale |
 
 ---
 
@@ -212,9 +213,62 @@ Chi tiết đầy đủ (layout region, 9 UI element, DOM contract): `docs/vi/sc
 
 ---
 
+## SCR006_Profile
+
+**Type**: atomic
+
+**Feature:** F006 — Hồ sơ Sunner (Profile)
+**Route:** /profile
+**Description:** Trang hồ sơ Sunner có gác đăng nhập (nhóm `(protected)`, cùng gate với `/todo`) —
+hero full-bleed keyvisual + avatar tròn + tên (không dept/tier/stars), 6 ô badge khoá, statistics
+card 5 dòng `0` + nút "Mở Secret Box" disabled (self) HOẶC thanh "Viết Kudo" disabled thay thế toàn
+bộ slot đó (other), header "KUDOS" + dropdown chiều Kudos (self 2 chiều, other chỉ Received).
+`src/app/(protected)/profile/page.tsx` phân giải `?id=` qua `parseProfileId()`, đọc hồ sơ (self VÀ
+other) qua DAL mới `getProfileCard()` — nguồn DUY NHẤT là view mới `public.profile_cards`
+(migration `0005`), không đọc `public.users` trực tiếp. Dùng lại nguyên vẹn `SiteHeader`/
+`SiteFooter` (khác SCR005, giống SCR003/SCR004).
+**States:** self view, other view, dropdown mở/đóng, avatar rỗng (placeholder), tên rỗng (fallback
+"Sunner")
+
+Chi tiết đầy đủ (layout region, 11 UI element, DOM contract): `docs/vi/screens/SCR006_Profile/spec.md`.
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| ProfileClient (`_components/profile-client.tsx`) | client-boundary | Nối `copy`/`profile`/`isSelf`/`viewer` xuống `ProfileScreen`, cùng vai trò `AwardsClient` |
+| ProfileScreen | layout (root) | Ghép `SiteHeader` + hero + bộ sưu tập huy hiệu + slot thống kê/Viết Kudo + khối KUDOS + `SiteFooter` |
+| ProfileHero | section | Keyvisual full-bleed + avatar tròn đè mép + tên (không dept/tier/stars, GUI_009) |
+| BadgeCollection | card grid | 6 ô badge cố định, luôn `data-locked="true"`, tiêu đề self/other bên dưới hàng ô |
+| ProfileStatisticsCard | card | Self: 5 dòng `0` + nút "Mở Secret Box" disabled; Other: CHỈ thanh "Viết Kudo" disabled (loại trừ lẫn nhau) |
+| KudosDirectionSelect | interactive (combobox) | Dropdown chiều Kudos (client, `useState`, không network); danh sách theo `isSelf` |
+| SiteHeader / SiteFooter | shared (F003) | Header, footer — dùng chung nguyên trạng với SCR003/SCR004 |
+
+### Data Displayed
+
+- Data Entity 1: `ProfileCard` (`id, full_name, avatar_url` — view `public.profile_cards`, chưa
+  cấp MODEL### riêng, xem `entities.md`)
+- Data Entity 2: MODEL002_SupabaseUser (email — chỉ để cá nhân hoá header dùng chung, không phải
+  nội dung hồ sơ)
+- Data Entity 3: MODEL001_AppLocale (locale hiện tại quyết định bản dịch `profile.*`)
+
+### Routes/URLs
+
+- `/profile`
+- `/profile?id={uuid}`
+
+### Related Screens
+
+- SCR003_HomeScreen, SCR004_Awards: nguồn — click "Hồ sơ" trong menu tài khoản (`AccountMenu`,
+  dùng chung `SiteHeader`); đích khi click "Đăng xuất"
+- SCR001_LoginScreen: đích khi khách chưa đăng nhập cố truy cập `/profile` (redirect từ
+  `(protected)/layout.tsx`, trước khi trang này render)
+
+---
+
 ## Summary
 
-- **Total Screens**: 5
+- **Total Screens**: 6
 
 ---
 
@@ -223,7 +277,7 @@ Chi tiết đầy đủ (layout region, 9 UI element, DOM contract): `docs/vi/sc
 - [x] All SCR### codes are unique
 - [x] All SCR### codes are referenced in ScreenFlow.md
 - [x] All related screen references are valid
-- [x] All route URLs are properly formatted (`/`, `/awards`, `/login`, `/standards`, `/todo` — khớp route-list.md)
-- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005)
+- [x] All route URLs are properly formatted (`/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo` — khớp route-list.md)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006)
 - [x] No orphaned screen references
-- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 5 spec.md) — SCR001-003, SCR005 atomic có justification 2-of-3 gate; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005, không tự ý vá ở đây
+- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 6 spec.md) — SCR001-003, SCR005, SCR006 atomic có justification 2-of-3 gate; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây

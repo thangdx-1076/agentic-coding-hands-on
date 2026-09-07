@@ -24,7 +24,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 ## Frontend Routes/Pages
 
-Sáu route frontend: năm route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+Bảy route frontend: sáu route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
 ### File: app/page.tsx
 
@@ -49,6 +49,22 @@ Route `/awards` render SCR004_Awards — trang chi tiết công khai 6 hạng m�
 | /standards | StandardsPage | standards (F005_StandardsRulesPage) |
 
 Route `/standards` render SCR005_Standards — panel công khai thể lệ SAA 2025 (huy hiệu Hero 4 hạng, Secret Box 6-icon, Kudos Quốc dân, footer 2 nút "Đóng"/"Viết KUDOS"). PUBLIC by design, không qua guard nào (giống `/`, `/awards`; khác `/todo`). **Khác `/awards`**: nội dung 100% tĩnh i18n (`getTranslations("standards")`), không đọc Supabase/DAL nào, và KHÔNG dùng lại `SiteHeader`/`SiteFooter` — trang chỉ render đúng 1 panel, không có chrome nào (xác nhận bởi E2E `tests/e2e/standards.spec.ts` C2: `header`/`footer` count 0). Mới từ 2026-09-07 (F005_StandardsRulesPage) — trước đó link "Tiêu chuẩn chung" ở `site-footer.tsx:74` trỏ tới route chưa tồn tại (404).
+
+### File: src/app/(protected)/profile/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /profile | ProfilePage | profile (F006_ProfilePage) |
+
+Route `/profile` render SCR006_Profile — hồ sơ Sunner có gác đăng nhập (nhóm `(protected)`, cùng
+gate với `/todo` qua `src/app/(protected)/layout.tsx`). Đọc `?id=` qua `parseProfileId()`
+(`_utils/parse-profile-id.ts`): rỗng → self; sai định dạng UUID hoặc lặp key → `notFound()` (404);
+trùng chính người xem → `redirect("/profile")` (canonicalize); hợp lệ, khác self, không có hàng →
+`notFound()`. Đọc hồ sơ (self VÀ other) qua DAL mới `src/dal/profile-cards.ts` (`getProfileCard`),
+nguồn là view mới `public.profile_cards` (migration `0005`) — KHÔNG đọc `public.users` trực tiếp.
+Dùng lại nguyên vẹn `SiteHeader`/`SiteFooter` (khác `/standards`, giống `/`/`/awards`). Mới từ
+2026-09-07 (F006_ProfilePage) — trước đó mục "Hồ sơ" ở menu tài khoản trỏ tới route chưa tồn tại
+(404).
 
 ### File: app/login/page.tsx
 
@@ -77,20 +93,25 @@ Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có 
 `proxy.ts` (root) là lớp `proxy` của Next 16 (tên cũ: `middleware`) — guard optimistic, KHÔNG phải authoritative. Matcher whitelist tường minh:
 
 ```
-matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards"]
+matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards", "/profile"]
 ```
 
 **Cập nhật 2026-09-07 (F005_StandardsRulesPage)**: `/awards` (F004, đã thêm trước đó) và `/standards`
 (F005) khớp matcher vì CÙNG lý do `/` khớp — chỉ để refresh session cookie + chuẩn hoá
-`NEXT_LOCALE` cho một trang public, KHÔNG vì có nhánh guard nào rẽ theo hai path này (hai
-predicate bên dưới chỉ test `ROUTES.LOGIN`/`ROUTES.TODO`, không test `/awards`/`/standards`).
+`NEXT_LOCALE` cho một trang public, KHÔNG vì có nhánh guard nào rẽ theo hai path này.
 
-Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và `/todo/:path*`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
+**Cập nhật 2026-09-07 (đợt 2 — F006_ProfilePage)**: `/profile` thêm vào matcher VÀ vào danh sách
+predicate `isProtectedPage` — khác `/awards`/`/standards` (chỉ refresh cookie), `/profile` LÀ một
+route thực sự bị chặn khi chưa đăng nhập. Predicate đổi từ so khớp 1 route đơn (`startsWith(ROUTES.TODO)`)
+sang so khớp theo mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` — vẫn optimistic
+pre-check, `(protected)/layout.tsx` vẫn là gate authoritative duy nhất.
+
+Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và các path trong `PROTECTED_ROUTES`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
 
 | Điều kiện | Redirect tới |
 |-----------|--------------|
 | đã login & path === /login | / (đổi từ /todo) |
-| chưa login & path bắt đầu bằng /todo | /login |
+| chưa login & path bắt đầu bằng /todo HOẶC /profile | /login |
 | path === / | pass-through LUÔN — không redirect (public, F003_Homepage; trước đây redirect theo trạng thái đăng nhập) |
 | path === /awards | pass-through LUÔN — không redirect (public, F004_AwardSystemPage) |
 | path === /standards | pass-through LUÔN — không redirect (public, F005_StandardsRulesPage) |
@@ -103,5 +124,5 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | Category | Count |
 |----------|-------|
 | Backend Routes | 1 |
-| Frontend Pages | 6 |
-| Total | 7 |
+| Frontend Pages | 7 |
+| Total | 8 |

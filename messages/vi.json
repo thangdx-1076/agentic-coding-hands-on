@@ -160,5 +160,31 @@
       "close": "Đóng",
       "writeKudos": "Viết KUDOS"
     }
+  },
+  "profile": {
+    "hero": {
+      "fallbackName": "Sunner"
+    },
+    "badges": {
+      "headingSelf": "Bộ sưu tập icon của tôi",
+      "headingOther": "Bộ sưu tập icon"
+    },
+    "stats": {
+      "rows": {
+        "received": "Số Kudos bạn nhận được:",
+        "sent": "Số Kudos bạn đã gửi:",
+        "hearts": "Số tim bạn nhận được:",
+        "secretBoxOpened": "Số Secret Box bạn đã mở:",
+        "secretBoxLeft": "Số Secret Box chưa mở:"
+      },
+      "openSecretBox": "Mở Secret Box 🎁",
+      "writeKudos": "Viết Kudo"
+    },
+    "kudos": {
+      "receivedLabel": "Đã nhận",
+      "sentLabel": "Đã gửi",
+      "emptyReceived": "Bạn chưa có Kudos nào được nhận.",
+      "emptySent": "Bạn chưa có Kudos nào được gửi."
+    }
   }
 }

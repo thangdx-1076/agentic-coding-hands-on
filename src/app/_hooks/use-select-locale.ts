@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { setLocale } from "../../_actions/set-locale";
+import { setLocale } from "../_actions/set-locale";
 
 import type { AppLocale } from "@/lib/i18n/locale";
 

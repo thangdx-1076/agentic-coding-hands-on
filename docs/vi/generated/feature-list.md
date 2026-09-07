@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-05
-**Analysis Scope**: toàn bộ source hiện có — 5 screen (`/`, `/awards`, `/login`, `/standards`, `/todo`), 1 backend route, 3 US###, 3 BL###, 4 PERM###, 3 MODEL### (+ `Award`, chưa cấp MODEL### riêng)
+**Analysis Scope**: toàn bộ source hiện có — 6 screen (`/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo`), 1 backend route, 3 US###, 3 BL###, 4 PERM###, 3 MODEL### (+ `Award`, `ProfileCard`, chưa cấp MODEL### riêng)
 
 **F-code stability note**: F001/F002 và slug của chúng được giữ nguyên từ `docs/vi/_canonical-fcodes.json` (đã promote ở lần chạy trước) — wave này chỉ bổ sung các trường Related bằng mã thật (US###/SCR###/ROUTE###/MODEL###/BL###/PERM###) hiện đã tồn tại, không renumber/rename/split/merge.
 
@@ -15,6 +15,7 @@
 | F003_Homepage | Trang chủ SAA 2025 (Homepage) | mixed | TypeScript | agentic-coding-hands-on | P0 |
 | F004_AwardSystemPage | Hệ thống giải thưởng SAA 2025 (Awards) | ui | TypeScript | agentic-coding-hands-on | P1 |
 | F005_StandardsRulesPage | Thể lệ SAA 2025 (Standards) | ui | TypeScript | agentic-coding-hands-on | P2 |
+| F006_ProfilePage | Hồ sơ Sunner (Profile) | mixed | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
@@ -176,32 +177,77 @@
 
 ---
 
+### F006: Hồ sơ Sunner (Profile)
+
+**Type**: mixed
+**Description**: Sunner đã đăng nhập xem hồ sơ của chính mình (`/profile`) hoặc của một Sunner
+khác (`/profile?id={uuid}`) — hero (tên + avatar, không dept/tier/stars), 6 ô badge khoá, statistics
+card 5 dòng `0` (self) hoặc thanh "Viết Kudo" disabled thay thế (other), dropdown chiều Kudos (self
+2 chiều, other chỉ Received). Route nằm trong nhóm `(protected)`, dùng lại đúng gate của `/todo` —
+không gate riêng. Mọi bề mặt phụ thuộc hệ Kudos (chưa tồn tại) render honest rỗng/disabled, cùng
+tiền lệ Secret Box của F005. Lấp link chết "Hồ sơ" trước đó ở menu tài khoản.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components**: `src/app/(protected)/profile/page.tsx` + `profile/_components/**` +
+`profile/_utils/parse-profile-id.ts` + `profile/_shared/{profile-copy,build-profile-copy}.ts` +
+`src/dal/{profile-cards,profile-cards-client}.ts`
+
+**Related Screens**:
+- SCR006_Profile: Hồ sơ Sunner
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F006_ProfilePage/functional-spec.md § 7` (theo đúng tiền lệ
+  F003-F005, không đăng ký vào `user-stories.md`)
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — 1 frontend page có gác đăng nhập, không route BE nào tự viết (cùng lý do
+  F004/F005)
+
+**Related Data Models**:
+- `ProfileCard` (chưa có MODEL### riêng — view `public.profile_cards`, cấp bởi core pass kế tiếp,
+  xem `entities.md`)
+- MODEL002_SupabaseUser (tái dùng — header dùng chung với F003/F004)
+- MODEL001_AppLocale (tái dùng nguyên trạng)
+
+**Related Background Logic**:
+- Không có BL### mới — dùng lại `SupabaseServerClient` (BL002) qua DAL mới, cùng pattern
+  `awards.ts`/`users.ts` (chưa có dòng riêng nào trong `behavior-logic.md` cho client Supabase kiểu
+  này, giống F004)
+
+**Related Permissions**:
+- Không có PERM### mới cấp chính thức — `/profile` gia nhập ĐÚNG cơ chế route-guard hiện có của
+  `(protected)/layout.tsx` (cùng PERM003_TodoRouteGuard), chỉ thêm 1 route con được bảo vệ; mã
+  chính thức "TBD (draft)", cấp bởi `rebuild-spec` Core pass kế tiếp (xem `permissions-matrix.md`)
+
+---
+
 ## Summary
 
-- **Total Features**: 5
-- **Total Screens**: 5 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005; cả năm đều được ít nhất một F### tham chiếu)
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003, F004, F005 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005`)
-- **Total Routes**: 1 — ROUTE001 (F001); F004, F005 không có ROUTE### mới (mỗi cái chỉ 1 frontend page, không route BE)
-- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004) chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003)
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004, F005 không có BL### mới
-- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`)
+- **Total Features**: 6
+- **Total Screens**: 6 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006; cả sáu đều được ít nhất một F### tham chiếu)
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003, F004, F005, F006 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004, F005, F006 không có ROUTE### mới (mỗi cái chỉ 1 frontend page, không route BE)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004) và `ProfileCard` (F006) chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003)
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004, F005, F006 không có BL### mới
+- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp)
 - **Languages Detected**: TypeScript
 
 **Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001, F002, F003, F004, F005 — không trùng, không renumber)
-- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003, F004, F005 chưa có US### (TBD)
-- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards tồn tại trong `screen-flow.md`/`screen-list.md`)
+- [x] All F### codes are unique (F001, F002, F003, F004, F005, F006 — không trùng, không renumber)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003, F004, F005, F006 chưa có US### (TBD)
+- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile tồn tại trong `screen-flow.md`/`screen-list.md`)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
-- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004, F005 không có ROUTE### mới)
-- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004, F005, F006 không có ROUTE### mới)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004) và `ProfileCard` (F006) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào)
 - [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
-- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005 không tạo PERM### mới)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006
 - [x] Every route maps to a feature (F###) — ROUTE001→F001
-- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006
 - [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003)
 - [x] Every permission maps to a feature (F###) — PERM001-004→F001

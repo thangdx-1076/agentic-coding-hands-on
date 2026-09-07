@@ -1,0 +1,52 @@
+{
+  "task": "F006_ProfilePage — implement the auth-gated /profile screen from MoMorph screen 3FoIx6ALVb (Profile bản thân), against the system that actually exists: the Kudos domain is absent, so Kudos-dependent surfaces render honest deferred states rather than invented data.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "Anonymous visitor to /profile is redirected to /login",
+    "Signed-in Sunner with no query string sees their own profile",
+    "?id={other} renders that Sunner's profile via the profile_cards definer view",
+    "?id= that is malformed, unknown, or repeated returns 404 rather than a 500",
+    "?id= equal to the viewer canonicalizes to the self view",
+    "Hero omits department, Hero tier and hoa-thị stars — no source column exists (GUI_009)",
+    "Badge collection renders exactly 6 slots, all greyed, heading first-person on self and neutral on another profile",
+    "Statistics card shows five rows all reading 0 with Mở Secret Box disabled, on the self view only",
+    "Another Sunner's profile replaces the whole statistics card with a disabled write-Kudo bar, never both",
+    "Direction dropdown offers both directions on self and Received only on another profile (SEC_001)",
+    "No email, role or auth identifier reaches the client (SEC_004)",
+    "Every profile string is present in both vi and en bundles",
+    "profile_cards exposes exactly (id, full_name, avatar_url); anon cannot read it and authenticated cannot write through it"
+  ],
+  "touchpoints": [
+    "src/app/(protected)/profile/page.tsx",
+    "src/app/(protected)/profile/_components/",
+    "src/app/(protected)/profile/_shared/",
+    "src/app/(protected)/profile/_utils/parse-profile-id.ts",
+    "src/dal/profile-cards.ts",
+    "src/dal/profile-cards-client.ts",
+    "supabase/migrations/0005_profile_cards_view.sql",
+    "src/proxy.ts",
+    "src/constants/routes.ts",
+    "messages/vi.json",
+    "messages/en.json",
+    "src/app/_components/",
+    "src/app/_shared/site-chrome.ts",
+    "src/app/_utils/get-viewer.ts",
+    "src/app/_hooks/use-select-locale.ts",
+    "tests/e2e/profile.spec.ts",
+    "tests/e2e/helpers/sign-in.ts",
+    "playwright.config.ts",
+    "eslint.config.mjs"
+  ],
+  "blastRadius": [
+    "31 shared-chrome files moved from src/app/(public)/_* to src/app/_*, rewriting imports in 10 consumers across /, /awards, /standards and /login — the four existing e2e specs are the safety net",
+    "src/proxy.ts guard widened from a single ROUTES.TODO prefix test to a PROTECTED_ROUTES list, so /todo behavior must stay unchanged",
+    "new database object public.profile_cards is a SECURITY DEFINER view over public.users, which carries FORCE ROW LEVEL SECURITY — a second read path around own-row RLS",
+    "tests/e2e/helpers/sign-in.ts is shared by every auth-gated spec; its metadata payload was corrected",
+    "messages/{vi,en}.json are covered by messages-parity.test.ts"
+  ],
+  "contracts": [
+    "tests/e2e/profile.spec.ts C1-C18 — the authoritative DOM contract, tester-owned",
+    "plans/260907-1224-profile-page/clarifications.md — 18 of 30 MoMorph test cases in scope, 10 deferred to F007+",
+    "docs/vi/features/F006_ProfilePage/technical-spec.md § Verification"
+  ]
+}
