@@ -30,7 +30,10 @@ import {
 export type { KudosCardsQuery, KudosClient } from "./kudos-cards-query";
 
 export type KudosPerson = {
-  id: string;
+  /** `null` on the sender of an anonymous kudo (AD-2) — the view's only
+   * anonymity signal, never a second `isAnonymous` flag. Never `null` for a
+   * receiver: `kudos_cards` masks the sender side only. */
+  id: string | null;
   fullName: string | null;
   avatarUrl: string | null;
   department: string | null;

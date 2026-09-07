@@ -84,14 +84,26 @@ export function KudosCardPerson({ person, personRole }: KudosCardPersonProps) {
         </div>
       )}
       <div className="flex flex-col items-start gap-0.5">
-        {/* mm:B.3.2/B.3.6_Thông tin — click tên mở profile */}
-        <Link
-          href={`${ROUTES.PROFILE}?id=${person.id}`}
-          data-testid={nameTestId}
-          className="font-montserrat text-base font-bold text-login-button-text"
-        >
-          {person.fullName ?? "Sunner"}
-        </Link>
+        {/* mm:B.3.2/B.3.6_Thông tin — click tên mở profile. `person.id === null`
+         * is AD-2's anonymity signal (an anonymous kudo's sender): render the
+         * name as plain text, never a `/profile` link — C25 asserts no
+         * `a[href*="/profile"]` for that sender. */}
+        {person.id === null ? (
+          <span
+            data-testid={nameTestId}
+            className="font-montserrat text-base font-bold text-login-button-text"
+          >
+            {person.fullName ?? "Sunner"}
+          </span>
+        ) : (
+          <Link
+            href={`${ROUTES.PROFILE}?id=${person.id}`}
+            data-testid={nameTestId}
+            className="font-montserrat text-base font-bold text-login-button-text"
+          >
+            {person.fullName ?? "Sunner"}
+          </Link>
+        )}
         <div className="flex items-center gap-2.5">
           {person.department ? (
             <>
