@@ -24,7 +24,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 ## Frontend Routes/Pages
 
-Bảy route frontend: sáu route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+Tám route frontend: bảy route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
 ### File: app/page.tsx
 
@@ -66,6 +66,14 @@ Dùng lại nguyên vẹn `SiteHeader`/`SiteFooter` (khác `/standards`, giống
 2026-09-07 (F006_ProfilePage) — trước đó mục "Hồ sơ" ở menu tài khoản trỏ tới route chưa tồn tại
 (404).
 
+### File: src/app/(public)/kudos/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /kudos | KudosPage | kudos (F007_KudosLiveBoard / F008_KudosHeartReaction) |
+
+Route `/kudos` render SCR007_KudosLiveBoard — bảng Kudos trực tiếp công khai (banner, ô soạn Kudo, bộ lọc hashtag/phòng ban, carousel Highlight, feed ALL KUDOS phân trang keyset, Spotlight, sidebar thống kê cá nhân), dùng lại `SiteHeader`/`SiteFooter` chung với `/`, `/awards`, `/profile`. PUBLIC by design (clarifications.md § Route & điều hướng, BR-015) — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác `viewerId`/sidebar cá nhân (ẩn hoàn toàn khi ẩn danh) và trạng thái nút tim (xem `permissions-matrix.md`). Đọc `?hashtag=`/`?department=` để lọc Highlight+Feed (Spotlight và danh sách bộ lọc luôn tính trên toàn bộ dữ liệu, không theo filter đang chọn). Hai Server Action riêng, không phải route: `toggleKudoHeart` (F008, fail-closed, có `revalidatePath`) và `loadMoreKudos` (F007, fail-open, CỐ Ý không `revalidatePath` — xem `api-map.md`). Mới từ 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction) — trước đó 5 điểm vào hardcode `href="/kudos"` (`SiteHeader` nav, `SiteFooter`, `KudosSection` nút "Chi tiết", `WidgetButton` trên `/`, nút "Viết KUDOS" trên `/standards`) đều trỏ route chưa tồn tại (404); không cái nào trong 5 điểm này cần sửa code để hết 404.
+
 ### File: app/login/page.tsx
 
 | Path | Component | Route Name |
@@ -106,6 +114,13 @@ route thực sự bị chặn khi chưa đăng nhập. Predicate đổi từ so 
 sang so khớp theo mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` — vẫn optimistic
 pre-check, `(protected)/layout.tsx` vẫn là gate authoritative duy nhất.
 
+**Cập nhật 2026-09-07 (đợt 3 — F007_KudosLiveBoard + F008_KudosHeartReaction)**: `/kudos` KHÔNG có
+trong `matcher` này (`proxy.ts:139` không đổi khi F007/F008 được xây) — khác hẳn `/awards`/`/standards`/
+`/profile`, route mới này nằm HOÀN TOÀN ngoài lớp `proxy`. Hệ quả quan sát được: không có bước refresh
+session cookie hay chuẩn hoá `NEXT_LOCALE` nào chạy khi truy cập `/kudos` trực tiếp — route tự đọc
+session qua `getCurrentUser()`/`getViewer()` ngay trong `page.tsx` (`src/app/(public)/kudos/page.tsx`),
+không phụ thuộc `proxy.ts`.
+
 Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và các path trong `PROTECTED_ROUTES`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
 
 | Điều kiện | Redirect tới |
@@ -124,5 +139,5 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | Category | Count |
 |----------|-------|
 | Backend Routes | 1 |
-| Frontend Pages | 7 |
-| Total | 8 |
+| Frontend Pages | 8 |
+| Total | 9 |

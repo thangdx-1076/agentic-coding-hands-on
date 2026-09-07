@@ -26,6 +26,7 @@
 | SCR004_Awards | Hệ thống giải thưởng SAA 2025 | composite | 10 | MODEL002_SupabaseUser (email, dùng chung header F003), `Award` (chưa cấp MODEL### riêng) |
 | SCR005_Standards | Thể lệ SAA 2025 | atomic | 9 | MODEL001_AppLocale (không đọc MODEL002 — trang không cá nhân hoá, không header) |
 | SCR006_Profile | Hồ sơ Sunner | atomic | 11 | `ProfileCard` (chưa cấp MODEL### riêng — view `public.profile_cards`), MODEL002_SupabaseUser (email, dùng chung header F003), MODEL001_AppLocale |
+| SCR007_KudosLiveBoard | Bảng Kudos trực tiếp | composite | 11 | `Kudo`/`KudoCard` (view `public.kudos_cards`, chưa cấp MODEL### riêng), `KudoHeart` (`public.kudo_hearts`, F008), MODEL002_SupabaseUser (email + cột `department` mới), MODEL001_AppLocale |
 
 ---
 
@@ -266,18 +267,99 @@ Chi tiết đầy đủ (layout region, 11 UI element, DOM contract): `docs/vi/s
 
 ---
 
+## SCR007_KudosLiveBoard
+
+**Type**: composite
+
+**Feature:** F007 — Bảng Kudos trực tiếp (`/kudos`) · F008 — Thả tim cho Kudos (nút tim trên thẻ)
+**Route:** /kudos
+**Description:** Trang Kudos công khai (`(public)`, không route-guard — cùng nhóm `/`, `/awards`,
+`/standards`) hiển thị toàn bộ board trong một lần tải: banner "Hệ thống ghi nhận và cảm ơn" + ô
+nhập pill (chỉ render, chưa mở dialog Viết Kudo), bộ lọc Hashtag + Phòng ban, carousel HIGHLIGHT 5
+kudo nhiều tim nhất (2 cặp nút điều hướng + pagination "x/5"), Spotlight (tổng "N KUDOS" thật +
+scatter tĩnh tên + ô tìm Sunner `maxLength=100`), feed ALL KUDOS cuộn vô hạn, và sidebar 5 chỉ số
+cá nhân + 2 bảng xếp hạng cuộn độc lập. `src/app/(public)/kudos/page.tsx` (Server Component) đọc
+`searchParams.hashtag`/`searchParams.department`, gọi DAL `getKudosBoard()` một lần rồi uỷ quyền
+mọi tương tác cho `KudosClient`. Bộ lọc sống ở URL `searchParams` (không `useState`), feed phân
+trang bằng keyset cursor `created_at`. Dùng lại nguyên vẹn `SiteHeader`/`SiteFooter` (giống
+SCR003/SCR004/SCR006, khác SCR005). "Live board" là nhãn design — không Supabase Realtime, server
+render + revalidate.
+**States:** anonymous (ẩn HẲN 5 chỉ số + nút "Mở quà", giữ 2 leaderboard — D001; nút tim disabled
+kèm gợi ý đăng nhập), authenticated (đủ sidebar, thả tim được qua F008), filtered (hashtag/phòng
+ban, carousel về slide 1), carousel slide 1 / slide 5 (nút lùi/tiến disable tương ứng),
+feed loading-more, feed đã tải hết (ngừng gọi, không thông báo), kudos-empty ("Hiện tại chưa có
+Kudos nào." ở cả carousel lẫn feed), leaderboard-empty ("Chưa có dữ liệu"),
+spotlight-search-highlight, copy-link-toast
+
+Chi tiết đầy đủ (layout region R1-R8, 18 UI element, DOM contract): `docs/vi/screens/SCR007_KudosLiveBoard/spec.md`.
+
+**Composite classification (2-of-3 gate):** H1 (feature refs) PASS — hai F### cùng tham chiếu màn
+này (F007 sở hữu board, F008 sở hữu bảng `kudo_hearts` + đường ghi `toggleKudoHeart`). H2
+(domain-module imports) fail — không import nào khớp `features/*`/`modules/*`/`domains/*`. H3
+(semantic region wrappers) PASS theo cấu trúc dự kiến — 6 vùng nội dung + sidebar `<aside>`, trên
+ngưỡng 3. 2/3 → composite. **Chưa phát sinh `REG###` chính thức ở lượt promote này** (code chưa
+tồn tại): bảng vùng trong `spec.md` dùng nhãn layout `R1`-`R8`, đúng tiền lệ SCR004_Awards và
+SCR006_Profile.
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| KudosClient (`_components/kudos-client.tsx`) | client-boundary | Giữ danh sách feed đang hiển thị (`useInfiniteFeed`), handler lọc (`router.push`), thả tim, copy link + toast |
+| KudosScreen (`_components/kudos-screen.tsx`) | layout (root) | Thuần bố cục: chrome + 6 vùng theo thứ tự tài liệu; feed và sidebar hai cột, sidebar cuộn riêng |
+| KudosBanner / KudosComposePill | section + display field | Banner ghi nhận (chỉ đọc) và ô nhập pill (chỉ render — dialog Viết Kudo `ihQ26W78P2` chưa tồn tại) |
+| KudosFilterBar (+ KudosFilterMenu × 2) | interactive (dropdown) | Bộ lọc Hashtag + Phòng ban, danh sách distinct lấy từ dữ liệu thật; lọc lại đồng thời carousel và feed |
+| KudosHighlightCarousel (+ KudosCarouselNav, KudosSlideCounter) | interactive (carousel) | 5 thẻ nhiều tim nhất, thẻ giữa nổi bật; 2 cặp mũi tên dùng chung 1 state, pagination "x/5" |
+| KudosSpotlight (+ KudosSpotlightScatter, KudosSunnerSearch) | section | Tổng "N KUDOS" (`COUNT(*)` thật) + scatter tĩnh tên Sunner + ô tìm `maxLength=100` (làm nổi bật, không điều hướng) |
+| KudosFeed (+ KudosFeedSentinel, KudosEmptyState) | list | Feed ALL KUDOS cuộn vô hạn qua `IntersectionObserver` trên sentinel → Server Action `loadMoreKudos` |
+| KudosCard (+ KudosCardPerson, KudosHashtagList, KudosImageStrip, KudosCardActions) | card | Thẻ Kudos dùng chung Highlight + feed: người gửi/nhận, nội dung, hashtag, ảnh, Copy Link, "Xem chi tiết" |
+| KudosHeartButton | interactive (button) | Icon tim + số tim; F007 chỉ hiển thị, đường GHI thuộc F008 — ẩn danh thấy `disabled` kèm `title` mời đăng nhập |
+| KudosSidebar (+ KudosStatList, KudosLeaderboard × 2) | aside | 5 chỉ số cá nhân + nút "Mở quà" disabled (ẩn HẲN khi ẩn danh) và 2 bảng xếp hạng |
+| SiteHeader / SiteFooter | shared (F003) | Header, footer — dùng chung nguyên trạng với SCR003/SCR004/SCR006 |
+
+### Data Displayed
+
+- Data Entity 1: `Kudo` / `KudoCard` (người gửi, người nhận, nội dung, hashtag, ảnh, thời điểm,
+  `heart_count` — view `public.kudos_cards`, chưa cấp MODEL### riêng, xem `entities.md`)
+- Data Entity 2: `KudoHeart` (bảng `public.kudo_hearts` — F008, nguồn của số tim và trạng thái
+  "đã thả tim" của người xem; chưa cấp MODEL### riêng)
+- Data Entity 3: MODEL002_SupabaseUser (email cho header dùng chung + cột `department` mới, nguồn
+  của bộ lọc Phòng ban và của phòng ban hiển thị trên thẻ)
+- Data Entity 4: MODEL001_AppLocale (locale hiện tại quyết định bản dịch `kudos.*` — trừ các chuỗi
+  TC assert nguyên văn và toast `Link copied — ready to share!` giữ nguyên ở cả hai bản)
+
+### Routes/URLs
+
+- `/kudos`
+- `/kudos?hashtag={tag}`
+- `/kudos?department={dept}`
+
+### Related Screens
+
+- SCR003_HomeScreen, SCR004_Awards, SCR005_Standards: nguồn — 5 điểm liên kết `/kudos` đang 404
+  trước lượt này (nav header, footer, khối Sun* Kudos, widget hành động nhanh, nút "Viết KUDOS")
+- SCR006_Profile: đích — bấm avatar/tên người gửi/nhận hoặc một mục leaderboard mở `/profile?id=`
+- SCR001_LoginScreen: đích khi người chưa đăng nhập bấm avatar/tên (redirect từ
+  `(protected)/layout.tsx` của `/profile`, không phải gate mới của F007)
+
+---
+
 ## Summary
 
-- **Total Screens**: 6
+- **Total Screens**: 7
 
 ---
 
 ## Cross-Reference Validation
 
 - [x] All SCR### codes are unique
-- [x] All SCR### codes are referenced in ScreenFlow.md
+- [ ] All SCR### codes are referenced in ScreenFlow.md — SCR001-SCR006 có; **SCR007_KudosLiveBoard
+  CHƯA có trong `screen-flow.md`** (Navigation Map còn node `"/kudos - chưa implement, 404"` đã lỗi
+  thời kể từ lượt promote này). `screen-flow.md` do core pass sở hữu (Screen Access Paths, Screen
+  Transitions, Guard Logic đều phái sinh từ code chưa tồn tại) — không tự ý vá ở bước promote;
+  `/tkm:rebuild-spec` kế tiếp sau khi `/kudos` lên code sẽ đồng bộ.
 - [x] All related screen references are valid
-- [x] All route URLs are properly formatted (`/`, `/awards`, `/login`, `/profile`, `/standards`, `/todo` — khớp route-list.md)
-- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006)
+- [x] All route URLs are properly formatted (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` — `/kudos` mới ở lượt này, `route-list.md` do core pass kế tiếp cập nhật)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006; SCR007 → F007+F008)
 - [x] No orphaned screen references
-- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 6 spec.md) — SCR001-003, SCR005, SCR006 atomic có justification 2-of-3 gate; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây
+- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 7 spec.md) — SCR001-003, SCR005, SCR006 atomic có justification 2-of-3 gate; SCR007_KudosLiveBoard khai `Type: composite` KÈM justification H1/H2/H3 đầy đủ và ghi rõ lý do hoãn `REG###` (code chưa tồn tại ở lượt promote), dùng nhãn layout R1-R8; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây

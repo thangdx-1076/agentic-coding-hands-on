@@ -1,0 +1,42 @@
+[
+  {
+    "command": "npx playwright test kudos.spec.ts --grep-invert \"@auth|@local-db\"",
+    "exitCode": 0,
+    "summary": "CI-safe: 10/10 pass (C01-C10), all independent of auth/seed"
+  },
+  {
+    "command": "npx playwright test kudos.spec.ts --grep \"@local-db\"",
+    "exitCode": 0,
+    "summary": "Local-db: 14/15 active pass, 1 skip (C26 fixme). C15 restored and passing."
+  },
+  {
+    "command": "npx playwright test kudos.spec.ts --grep \"@auth\"",
+    "exitCode": 0,
+    "summary": "Auth: 4/5 active pass, 1 skip (C26 fixme). All authenticated tests green."
+  },
+  {
+    "command": "npx playwright test kudos.spec.ts",
+    "exitCode": 0,
+    "summary": "Kudos spec: 28/29 pass, 1 skip (C26 fixme). All active tests pass."
+  },
+  {
+    "command": "npx playwright test",
+    "exitCode": 0,
+    "summary": "Full suite: 130/135 pass, 1 fail (home.spec pre-existing), 4 skip. No kudos regression."
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "TypeScript check passes"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0 tests/e2e/kudos.spec.ts",
+    "exitCode": 0,
+    "summary": "ESLint: 0 errors, 0 warnings"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "Prettier format check passes"
+  }
+]

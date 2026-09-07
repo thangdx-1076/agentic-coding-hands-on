@@ -1,0 +1,34 @@
+{
+  "score": 8,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "GET /kudos returns 200 for an anonymous visitor, asserted by kudos.spec.ts C01; this also retires the five hardcoded href=\"/kudos\" links that pointed at a 404 route",
+    "Banner A renders the title 'Hệ thống ghi nhận lời cảm ơn' and the SAA 2025 KUDOS logo, non-interactive",
+    "Input pill A.1 renders the exact placeholder 'Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?' with the pencil icon on the left",
+    "HIGHLIGHT carousel shows the 5 kudos with the most hearts; prev is disabled on slide 1, next is disabled on slide 5, pagination reads x/5",
+    "Hashtag and Phòng ban filters narrow both the carousel and the ALL KUDOS feed together, and reset carousel pagination to 1",
+    "Clicking a hashtag on any card sets the hashtag filter to that tag",
+    "ALL KUDOS feed loads further pages on scroll without a full navigation",
+    "Empty feed renders the exact string 'Hiện tại chưa có Kudos nào.'",
+    "Empty sidebar leaderboard renders the exact string 'Chưa có dữ liệu'",
+    "Copy Link writes the kudo URL to the clipboard and shows the toast 'Link copied — ready to share!'",
+    "Heart toggle: one heart per user per kudo, the kudo's own sender cannot heart it, un-hearting revokes exactly what was credited",
+    "An anonymous visitor sees the heart button rendered but disabled",
+    "Spotlight renders recipient names plus a live total count sourced from the database, and the Sunner search input caps at 100 characters",
+    "Sidebar renders the 5 statistic rows and both 10-Sunner lists",
+    "Seeded content is transcribed from the Figma frame, with no invented names, messages, hashtags or numbers"
+  ],
+  "regressionChecked": [
+    "/ , /login, /awards, /standards, /profile — only diff is expected comment fix in standards.spec.ts (404->200)",
+    "users.department is nullable/additive; handle_new_user (0002) uses named-column INSERT, unaffected",
+    "no DAL file does SELECT * against users/kudos that could newly leak the department column",
+    "5 hardcoded href=\"/kudos\" links (header/footer/kudos-section/widget/standards) unchanged, now resolve live per AD-6",
+    "messages/vi.json and messages/en.json kudos namespace structurally identical (34 keys each, verified programmatically)",
+    "home.spec.ts ID-24/ID-39 flake noted in green-evidence.md did not reproduce in the fresh full-suite run (0 fail) — pre-existing flake, not a regression from this change"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": []
+}

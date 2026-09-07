@@ -1,0 +1,18 @@
+{
+  "mode": "system",
+  "intents": [
+    {
+      "actor": "Sunner (đã hoặc chưa đăng nhập)",
+      "action_domain": "đọc bảng Kudos",
+      "outcome": "nắm được ai đã cảm ơn ai, kudo nào nổi bật nhất, và thống kê cá nhân của mình",
+      "surfaces": ["A_KV Kudos", "A.1 ô ghi nhận", "B_Highlight carousel", "B.1 filter", "B.7_Spotlight", "C_All kudos feed", "D_sidebar"]
+    },
+    {
+      "actor": "Sunner đã đăng nhập",
+      "action_domain": "thả / bỏ tim một Kudo",
+      "outcome": "số tim của kudo đổi và tài khoản người GỬI kudo được cộng hoặc thu hồi tim tương ứng",
+      "surfaces": ["C.4.1 Hearts", "B.3 heart trong carousel", "D.1.4 Số tim bạn nhận được"]
+    }
+  ],
+  "justification": "Không có cụm từ liên từ nào trong task text nên rơi vào vùng xám → enumerate. Hai outcome khác nhau về bản chất: đọc bảng là read-only và mở cho người chưa đăng nhập; thả tim ghi vào DB, đòi đăng nhập, và mang 3 business rule riêng (1 lượt/người/kudo, người gửi không tự thả tim, bỏ tim thu hồi đúng số đã cộng) cộng một bảng riêng. Tách để khối FR/BR của tim không bị chôn trong spec của board. Count = 2 → SYSTEM."
+}

@@ -76,3 +76,6 @@ next-env.d.ts
 
 # playwright mcp screenshot captures
 /.playwright-mcp/
+
+# personal permission overrides — not shared
+.claude/settings.local.json

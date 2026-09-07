@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit sạch trên toàn repo",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint 0 error 0 warning",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "prettier: All matched files use Prettier code style",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "283/283 unit test pass (39 file), coverage 100% trên allowlist",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "npx playwright test kudos.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "kudos: 28 pass / 1 skip (C26 test.fixme, bất khả thi khi chưa có dialog Viết Kudo) / 0 fail",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "npx playwright test",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "toàn suite 6 file: 131 pass / 4 skip / 0 fail — không hồi quy 5 spec cũ",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "next build thành công, /kudos có trong route list",
+      "ts": "2026-09-07T14:58:38.056Z"
+    },
+    {
+      "command": "supabase migration up",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "migration 0006/0007/0008 apply sạch, chứng minh idempotent bằng lần chạy thứ hai",
+      "ts": "2026-09-07T14:58:38.056Z"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ import { test, expect } from "@playwright/test";
  * | C9 | Viewport 1440×2400: `main.scrollHeight - main.clientHeight <= 1` | FUN_002 |
  * | C10 | Vào `/` → click link `Tiêu chuẩn chung` ở footer → ở `/standards` → click `Đóng` → URL về `/` | FUN_003 (nhánh có history) |
  * | C11 | `page.goto("/standards")` trực tiếp (context mới) → click `Đóng` → URL là `/` | FUN_003 (nhánh fallback) |
- * | C12 | Click `Viết KUDOS` → URL chứa `/kudos` (trang đích 404, **không** assert nội dung đích) | FUN_004 |
+ * | C12 | Click `Viết KUDOS` → URL chứa `/kudos` (trang đích 200, **không** assert nội dung đích) | FUN_004 |
  * | C13 | Cookie `NEXT_LOCALE=en` → `<h1>` là `Rules`, nút là `Close` / `Write KUDOS` — bản EN không rỗng | RISK EN |
  * | C14 | Không `pageerror` nào khi load | SC-003 |
  * ========================================================
@@ -353,7 +353,19 @@ test.describe("Standards rules page (public, no DB)", () => {
     // Guard: wait for navigation to /kudos (Next.js <Link> transition is async).
     // This IS the assertion — it throws on timeout if the URL never becomes
     // /kudos, so a trailing `toContain("/kudos")` would add nothing.
-    await page.waitForURL("/kudos", { timeout: 5000 });
+    //
+    // No explicit `timeout` on purpose. The old 5000ms budget was sized when
+    // `/kudos` did not exist and the click landed on an instant 404. `/kudos`
+    // is now a dynamic Server Component that reads Supabase, and in CI
+    // `NEXT_PUBLIC_SUPABASE_URL` points at an unreachable `127.0.0.1:54321`,
+    // so the render only completes once those reads give up — measured at
+    // ~7.1s locally against a dead port (`/awards`, which this branch never
+    // touches, measures the same 7.1s, so the stall is pre-existing repo-wide
+    // behaviour, not something `/kudos` introduced; see `plans/action-items.md`).
+    // Falling back to the suite's navigation budget matches how every other
+    // DB-backed route is navigated to (`awards.spec.ts` uses a plain `goto`).
+    // The assertion is unchanged: the URL must become `/kudos`.
+    await page.waitForURL("/kudos");
   });
 
   test("[C13] English locale renders correct text: 'Rules', 'Close', 'Write KUDOS'", async ({

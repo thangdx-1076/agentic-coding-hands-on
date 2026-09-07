@@ -15,5 +15,6 @@ export const ROUTES = {
   AUTH_CALLBACK: "/auth/callback",
   AWARDS: "/awards",
   STANDARDS: "/standards",
+  KUDOS: "/kudos",
   PROFILE: "/profile",
 } as const;

@@ -16,6 +16,8 @@
 | F004_AwardSystemPage | Hệ thống giải thưởng SAA 2025 (Awards) | ui | TypeScript | agentic-coding-hands-on | P1 |
 | F005_StandardsRulesPage | Thể lệ SAA 2025 (Standards) | ui | TypeScript | agentic-coding-hands-on | P2 |
 | F006_ProfilePage | Hồ sơ Sunner (Profile) | mixed | TypeScript | agentic-coding-hands-on | P1 |
+| F007_KudosLiveBoard | Bảng Kudos trực tiếp (`/kudos`) | mixed | TypeScript | agentic-coding-hands-on | P0 |
+| F008_KudosHeartReaction | Thả tim cho Kudos | mixed | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
@@ -222,14 +224,130 @@ tiền lệ Secret Box của F005. Lấp link chết "Hồ sơ" trước đó �
 
 ---
 
+### F007: Bảng Kudos trực tiếp (`/kudos`)
+
+**Type**: mixed
+**Description**: Sunner mở `/kudos` và đọc được toàn bộ đời sống lời cảm ơn của sự kiện trong
+một trang: banner ghi nhận, carousel HIGHLIGHT 5 kudo nhiều tim nhất, bảng Spotlight điểm tên
+người nhận kèm tổng số kudo, feed ALL KUDOS cuộn vô hạn, và sidebar thống kê cá nhân cộng hai
+bảng xếp hạng. Bộ lọc Hashtag và Phòng ban thu hẹp đồng thời cả carousel lẫn feed. Trang mở cho
+cả người chưa đăng nhập — lấp 5 điểm liên kết `/kudos` đang 404 (nav header, footer, khối Sun*
+Kudos ở `/` và `/awards`, widget hành động nhanh, nút "Viết KUDOS" ở `/standards`). "Live board"
+là nhãn design, không phải Supabase Realtime — server render + revalidate.
+
+**Vì sao đây là MỘT outcome**: mọi bề mặt trong screen phục vụ đúng một ý định — *nhìn thấy ai
+đã cảm ơn ai trong sự kiện này*. Carousel, Spotlight và feed là ba lát cắt của cùng một tập dữ
+liệu (`kudos`), khác nhau ở thứ tự và mức tổng hợp chứ không ở mục đích; bộ lọc chỉ thu hẹp tập
+đó. Sidebar là cùng dữ liệu soi từ góc "của tôi". Tách bất kỳ mảnh nào thành F### riêng sẽ tạo
+ra một Feature không có ý định độc lập của chính nó.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components** *(planned — promote ở implement-start, code chưa tồn tại)*:
+`src/app/(public)/kudos/page.tsx` + `kudos/_components/**` + `kudos/_hooks/{use-carousel-index,
+use-spotlight-search,use-infinite-feed}.ts` + `kudos/_utils/{format-kudo-time,star-tier}.ts` +
+`kudos/_actions/load-more-kudos.ts` + `kudos/_shared/{kudos-copy,build-kudos-copy}.ts` +
+`src/dal/{kudos,kudos-client}.ts` + migration `0006_kudos.sql`
+
+**Related Screens**:
+- SCR007_KudosLiveBoard: Bảng Kudos trực tiếp (dùng CHUNG với F008 — F007 sở hữu board và render
+  nút tim, F008 sở hữu bảng `kudo_hearts` và đường ghi)
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F007_KudosLiveBoard/functional-spec.md § 7` (US001-US008
+  local, theo đúng tiền lệ F003-F006, không đăng ký vào `user-stories.md`)
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — `/kudos` là 1 frontend page; `loadMoreKudos` là Next.js Server Action,
+  không phải HTTP endpoint có path (cùng lý do `setLocale` ở F002, xem `api-map.md` § Server Actions)
+
+**Related Data Models**:
+- `Kudo` / `KudoCard` (bảng `public.kudos` + view `public.kudos_cards`, migration `0006`; chưa có
+  MODEL### riêng — cấp bởi core pass kế tiếp, xem `entities.md`)
+- MODEL002_SupabaseUser (mở rộng: cột `department` nullable mới — nguồn DUY NHẤT của bộ lọc Phòng
+  ban và của phòng ban hiển thị trên thẻ)
+- MODEL001_AppLocale (tái dùng nguyên trạng)
+
+**Related Background Logic**:
+- Không có BL### mới — dùng lại `SupabaseServerClient` (BL002) qua DAL mới `src/dal/kudos.ts`,
+  cùng pattern `awards.ts`/`profile-cards.ts` (chưa có dòng riêng nào trong `behavior-logic.md`
+  cho client Supabase kiểu này, giống F004/F006)
+
+**Related Permissions**:
+- Không có PERM### mới — `/kudos` PUBLIC, không route-guard, gia nhập đúng nhóm `/`, `/awards`,
+  `/standards` (BR-015); redirect khi người chưa đăng nhập bấm avatar/tên là gate CÓ SẴN của
+  `/profile` (cơ chế PERM003 qua `(protected)/layout.tsx`, F006), không phải gate mới của F007
+
+**Ngoài phạm vi** (cần một frame Figma chưa tồn tại — xem `clarifications.md`): dialog Viết Kudo
+(`ihQ26W78P2`) · dialog Secret Box (`J3-4YFIpMM`) · trang chi tiết kudo (`onDIohs2bS`) · hover
+preview profile (`Bf5XiTE7AO`) · lightbox ảnh · pan/zoom Spotlight (`B.7.2` là FRAME rỗng).
+
+---
+
+### F008: Thả tim cho Kudos
+
+**Type**: mixed
+**Description**: Sunner đã đăng nhập bấm trái tim trên một kudo để bày tỏ đồng tình. Lượt tim
+được ghi vào DB, số tim trên thẻ đổi ngay, và tài khoản **người gửi** kudo được cộng tim tương
+ứng. Bỏ tim thu hồi đúng số đã cộng. Feature không có route hay screen riêng — nút tim là 1
+control nằm trong `/kudos` mà F007 sở hữu và render.
+
+**Vì sao đây là outcome RIÊNG, không gộp vào F007**: đối chiếu đúng phép thử mà F001 đã áp (một
+sub-behavior chỉ enforce trạng thái do feature khác tạo ra thì KHÔNG được tách). Thả tim vượt
+phép thử đó ở ba điểm: nó là **ghi**, có bảng riêng và ba business rule riêng (một lượt/người/kudo
+· người gửi bị chặn tự thả tim · bỏ tim thu hồi đúng số); nó có **actor hẹp hơn** F007 (bắt buộc
+đăng nhập, trong khi F007 mở cho anonymous); và nó thay đổi số dư của **một người thứ ba** (người
+gửi), nuôi tiếp hệ hoa thị / Hero tier chứ không chỉ đổi cái đang hiển thị. Đó là một ý định
+người dùng độc lập, không phải hệ quả của việc đọc bảng.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components** *(planned)*: migration `0007_kudo_hearts.sql` (bảng + RLS + trigger
+`sync_kudo_heart_count`) + `src/dal/{kudo-hearts,kudo-hearts-client}.ts` +
+`src/app/(public)/kudos/_actions/toggle-kudo-heart.ts` +
+`kudos/_components/kudos-heart-button.tsx` *(component do F007 render, F008 cấp đường ghi)*
+
+**Related Screens**:
+- SCR007_KudosLiveBoard: Bảng Kudos trực tiếp (dùng chung với F007 — F008 không tạo screen mới)
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F008_KudosHeartReaction/functional-spec.md § 7` (US001
+  local, cùng tiền lệ F003-F007)
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — `toggleKudoHeart` là Next.js Server Action, không phải HTTP endpoint
+  có path
+
+**Related Data Models**:
+- `KudoHeart` (bảng `public.kudo_hearts`, migration `0007`; chưa có MODEL### riêng — cấp bởi core
+  pass kế tiếp, xem `entities.md`)
+- `Kudo` (F007) — cột `heart_count` denormalized do trigger của F008 duy trì (AD-1, `plan.md`)
+- MODEL002_SupabaseUser (tái dùng — người thả tim và người gửi kudo được cộng tim)
+
+**Related Background Logic**:
+- Không có BL### mới — dùng lại `SupabaseServerClient` (BL002) qua DAL mới
+  `src/dal/kudo-hearts.ts`; trigger `SECURITY DEFINER` là logic trong DB, không phải BL### client
+
+**Related Permissions**:
+- **TBD (draft)** — quyền ghi tim là RLS trên `public.kudo_hearts` (chỉ `authenticated`, chỉ row
+  của chính mình), KHÔNG phải route-guard nên không gia nhập PERM001-004; mã chính thức để
+  `rebuild-spec` Core pass kế tiếp cấp, cùng tiền lệ mà F006 đã dùng. Xem
+  `docs/vi/system/permissions.md` cho bản ghi narrative.
+
+**Ngoài phạm vi**: quy tắc "+2 tim trong ngày đặc biệt do admin cấu hình" — không có màn admin,
+không có bảng config, không dựng được precondition của test case. Cột `special` vẫn được tạo sẵn
+trong migration để lần sau không phải migrate lại.
+
+---
+
 ## Summary
 
-- **Total Features**: 6
-- **Total Screens**: 6 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006; cả sáu đều được ít nhất một F### tham chiếu)
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003, F004, F005, F006 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006`)
-- **Total Routes**: 1 — ROUTE001 (F001); F004, F005, F006 không có ROUTE### mới (mỗi cái chỉ 1 frontend page, không route BE)
+- **Total Features**: 8
+- **Total Screens**: 7 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 — screen DUY NHẤT được hai F### cùng tham chiếu; cả bảy đều được ít nhất một F### tham chiếu)
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F008 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004-F008 không có ROUTE### mới (frontend page + Server Action, không route BE nào tự viết)
 - **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004) và `ProfileCard` (F006) chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003)
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004, F005, F006 không có BL### mới
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004-F008 không có BL### mới
 - **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp)
 - **Languages Detected**: TypeScript
 
@@ -237,7 +355,7 @@ tiền lệ Secret Box của F005. Lấp link chết "Hồ sơ" trước đó �
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001, F002, F003, F004, F005, F006 — không trùng, không renumber)
+- [x] All F### codes are unique (F001-F008 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, id_contiguity PASS)
 - [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003, F004, F005, F006 chưa có US### (TBD)
 - [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile tồn tại trong `screen-flow.md`/`screen-list.md`)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
@@ -246,7 +364,7 @@ tiền lệ Secret Box của F005. Lấp link chết "Hồ sơ" trước đó �
 - [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
 - [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008
 - [x] Every route maps to a feature (F###) — ROUTE001→F001
 - [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006
 - [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003)

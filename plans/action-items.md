@@ -603,3 +603,195 @@
   assert chiều cao hàng, nên copy dài hơn sau này có thể âm thầm phá chiều cao 72px.
 - `/todo` không có frame MoMorph nào (scaffold F001) — ngoài scope mọi audit fidelity.
 - PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/12
+
+## 260907-1838 — promote-system-f007-f008-kudos
+
+### Tôi cần làm
+
+- [ ] Xác nhận với product quy tắc thưởng tim: lượt tim cộng cho **người GỬI** kudo (design tự
+      mâu thuẫn, phân xử bằng test case) — `plans/260907-1725-kudos-live-board/clarifications.md`
+      § Bổ sung 260907-1759; ảnh hưởng migration `0007` và `docs/vi/features/F008_KudosHeartReaction/`.
+- [ ] Sau khi `/kudos` lên code: chạy `/tkm:rebuild-spec` core pass để đồng bộ
+      `docs/vi/generated/screen-flow.md` (SCR007 chưa có; Navigation Map còn node
+      `"/kudos - chưa implement, 404"` đã lỗi thời) và `route-list.md` (thiếu `/kudos`).
+
+### Decisions
+
+- Promote SYSTEM cho 2 spec draft theo `spec-state-registration.md` § Promote — SYSTEM:
+  cấp block liền `[F007..F008]` (max cũ F006), sentinel v2 ghi TRƯỚC mọi copy, Step 8 chạy đúng
+  một lần sau vòng lặp. Provisional trùng mã thật nên remap là ánh xạ đồng nhất — vẫn chạy verify.
+- SCR007_KudosLiveBoard khai `Type: composite` (2-of-3 gate: H1 pass vì F007+F008 cùng tham chiếu,
+  H3 pass theo cấu trúc dự kiến) nhưng **KHÔNG cấp `REG###`** — code chưa tồn tại, dùng nhãn layout
+  `R1`-`R8`, đúng tiền lệ SCR004_Awards/SCR006_Profile. Bịa REG### sẽ là mã không có nguồn.
+- KHÔNG sửa `screen-flow.md` ở bước promote (core pass sở hữu; Screen Access Paths / Screen
+  Transitions / Guard Logic đều phái sinh từ code chưa tồn tại). Thay vào đó hạ checkbox
+  "All SCR### referenced in ScreenFlow.md" xuống `[ ]` kèm lý do, thay vì để một dấu tick sai.
+- Tạo `README.md` cho 2 feature dir mới — F001-F006 đều có, giữ cho `docs/vi/features/` đồng nhất.
+
+### Nợ lại
+
+- `docs/vi/.rebuild-state.json → fcode_index_sha` đã **stale từ lượt promote F004** (`416255e`):
+  F004/F005 cập nhật `_source-to-fcode.json` mà không tính lại sha. Đã xác minh thuật toán trong
+  recipe khớp 100% (dựng lại đúng giá trị lịch sử ở `436b014`) và ghi giá trị đúng
+  `4bc040a4f336…` ở lượt này. Nếu lượt promote sau lại lệch → chỗ quên gọi nằm ở Step 3.
+- `screen_spec_shas.SCR003` cũng stale (body section SCR003 đã sửa sau khi sha được ghi) — KHÔNG
+  đụng tới ở lượt này vì merge rule cấm clobber entry của người khác; core pass sở hữu.
+- `docs/vi/system/{permissions,architecture}.md` giữ nguyên khối `<!-- FORWARD-DRAFT NOTICE -->`
+  theo đúng recipe — phải được đối chiếu lại với as-built ở Delivery.
+
+## 260907-1725 — kudos-live-board
+
+### Tôi cần làm
+
+- [ ] **Chốt quy tắc thưởng tim: cộng cho người GỬI hay người NHẬN kudo?** Design tự mâu thuẫn —
+      item `C.4.1` có 2 câu cộng ghi "tài khoản **gửi** lời cảm ơn... được cộng 1 tim", nhưng câu
+      thu hồi và `databaseNote` ghi "số tim trên tài khoản **nhận** kudos sẽ bị thu hồi". Tôi chọn
+      **người gửi** theo test case (`"the sender's account receives +2 hearts"`), vì thu hồi phải
+      trỏ đúng tài khoản đã cộng. Nếu product chốt ngược lại: đổi trigger ở
+      `supabase/migrations/0007_kudo_hearts.sql` và dòng "Số tim bạn nhận được" ở
+      `src/dal/kudos-stats.ts`.
+- [ ] **Cấp mã màu cho trạng thái tim CHƯA thả.** Design mô tả "màu xám với trạng thái inactive"
+      nhưng **không vẽ nó**: cả 7 instance tim trong frame dùng chung `componentId 256:5162`, fill
+      `#D4271D`. Đang tạm dùng token `#999999` (`--Details-Text-Secondary-2`) ở
+      `src/app/(public)/kudos/_components/kudos-heart-button.tsx`.
+- [ ] **Cấp danh sách phòng ban thật.** Design chỉ có `CEVC10` và ghi rõ đó là "vd". Filter Phòng
+      ban cần >1 lựa chọn nên seed đã **bịa `CEVC20`** (`0008_kudos_demo_seed.sql`, đã khai báo
+      trong `evidence/seed-transcript.md`).
+- [ ] **Xác nhận cách đọc "xoá bộ lọc"** — Figma không vẽ phần tử xoá nào và không có key i18n,
+      nên đang làm bằng "bấm lại lựa chọn đang chọn". Cần QA xác nhận khớp ý.
+- [ ] **Thử lại export artwork nền Spotlight.** 3 rectangle `2940:14178`/`2940:14181`/`2940:14173`
+      không có tiền tố `MM_MEDIA_` nên không nằm trong media map; `get_figma_image` trả **HTTP 500
+      kể cả với node media đã biết chắc tồn tại** → lỗi dịch vụ tạm thời, không phải asset thiếu.
+      Đã KHÔNG vẽ gradient thay thế.
+
+### Decisions
+
+- **Cắt phạm vi F007 theo ranh giới "frame có tồn tại hay không".** 64 spec item kéo theo 5 frame
+  chưa build (Viết Kudo `ihQ26W78P2`, Secret Box `J3-4YFIpMM`, chi tiết kudo `onDIohs2bS`, hover
+  preview `Bf5XiTE7AO`, lightbox ảnh). Làm trọn board + mọi tương tác nằm hoàn toàn trong màn; hoãn
+  phần cần frame khác, render trạng thái thật thà. Đúng tiền lệ F006.
+- **Tách F007/F008 thành 2 feature thay vì 1.** Thả tim vượt phép thử mà `feature-list.md` đã áp
+  cho F001: nó là GHI, có bảng và 3 business rule riêng, actor hẹp hơn (bắt buộc đăng nhập), và
+  đổi số dư của người thứ ba.
+- **`/kudos` là PUBLIC.** TC ghi nguyên văn *"User is unauthenticated but can view Kudos UI"*; auth
+  chỉ chặn ở đích đến (profile/detail). Khớp 5 link công khai đang trỏ tới nó.
+- **"Live board" KHÔNG phải Supabase Realtime** — nhãn design, không TC nào đòi. Server render +
+  revalidate.
+- **AD-1: `heart_count` là cột denormalized do trigger `SECURITY DEFINER` duy trì.** Không phải sở
+  thích mà là ràng buộc vật lý: view `kudos_cards` sinh ở `0006` không thể tham chiếu `kudo_hearts`
+  sinh ở `0007`.
+- **Seed phải insert vào `auth.users`** rồi để trigger `0002` mirror — `public.users.id` là FK tới
+  `auth.users(id)`.
+- **Spotlight: lặp tên THẬT cho kín 106 slot** (đảo quyết định cũ). Design vẽ đúng như vậy. Lặp tên
+  có thật ≠ độn tên giả.
+- **Bỏ thay đổi `next.config.ts`** mà phase 13 thêm để chiều URL `example.com` trong seed; đổi seed
+  sang `/kudos/sample-image.png` — chính ảnh export thật từ MoMorph. Sạch config, đúng design hơn.
+- **C26 → `test.fixme()`** thay vì hạ thành test pass tầm thường. Bất khả thi khi chưa có dialog
+  Viết Kudo; quy tắc đã được chứng minh mạnh hơn ở tầng DB (`evidence/rls-verification.md`).
+
+### Nợ lại
+
+- **Hiệu năng, cả hai do `reviewer` nêu, chấp nhận không chặn merge nhưng nên làm trước tính năng
+  ghi tiếp theo:** (1) `src/dal/kudos.ts:100` đọc `kudos_cards` không giới hạn ở **mỗi lần render
+  và mỗi trang cuộn**, chỉ để tính một con số tổng + hai danh sách dedup; (2) `0006_kudos.sql:89`
+  tính `sender_kudos_received`/`receiver_kudos_received` bằng subquery tương quan mỗi hàng mỗi phía,
+  **không index** trên `kudos.receiver_id`/`sender_id`.
+- Nút tim chưa có guard in-flight: hai click nhanh cùng đọc "chưa thả" rồi đua nhau INSERT. DB vẫn
+  đúng nhờ `UNIQUE`, nhưng ý định người dùng có thể bị nuốt.
+- `docs/vi/generated/screen-list.md` dòng 29 còn ghi `Kudo`/`KudoCard` "chưa cấp MODEL### riêng" —
+  đã lệch sau khi `entities.md` cấp `KUDOS_KudosCard`/`KUDOS_KudoHeart`. Để `rebuild-spec` Core pass
+  dọn.
+- `docs/vi/generated/*` đã đổi 691 file kể từ lần Core rebuild cuối (`9c1fa00`) → advisory
+  re-baseline; nên chạy `/tkm:rebuild-spec` một phiên riêng.
+- **Bài học quy trình:** `pnpm test:e2e -- <file>` KHÔNG lọc file trong repo này, nó chạy đủ 135
+  test. Dùng `npx playwright test <file>`. Và assert ảnh tải xong phải dùng `naturalWidth > 0`,
+  KHÔNG dùng `complete` — ảnh lazy ngoài viewport có `complete: false` dù đã decode đúng.
+
+## 260907-2310 — fix CI (E2E CI-safe đỏ ở PR #13)
+
+### Tôi cần làm
+
+- [ ] **DAL fail-open không fail NHANH: mọi route đọc Supabase treo ~7,1 giây khi DB không với tới
+      được.** Đây là hành vi **có sẵn của repo**, không phải do `/kudos` gây ra — đo trên cùng một
+      dev server trỏ vào port chết:
+
+      | Route | Thời gian | Ghi chú |
+      |---|---|---|
+      | `/kudos` | 7,10s / 7,12s / 7,16s | route mới |
+      | `/awards` | 7,07s / 7,11s | **F004, branch này không đụng tới** |
+      | `/standards` | 0,04s | không đọc DB |
+      | `/` | 0,04s | không đọc DB |
+      | `fetch()` trần tới cùng port | **17ms** | ECONNREFUSED tức thì |
+
+      `fetch` trần chết sau 17ms nhưng route mất 7,1s → độ trễ nằm trong tầng client Supabase
+      (nhiều khả năng là retry), không phải ở TCP. Các lượt đọc DAL **đã** song song bằng
+      `Promise.all` rồi, nên song song hoá thêm không cứu được.
+      Hệ quả thật: Supabase sập thì người dùng thấy trang trắng 7 giây rồi mới ra empty state —
+      trong khi cả thiết kế fail-open sinh ra là để tránh đúng điều đó.
+      Hướng sửa (ngoài phạm vi PR #13, ảnh hưởng mọi route): đặt `AbortSignal.timeout()` hoặc
+      cấu hình retry cho Supabase client, rồi thêm một test khẳng định ngân sách đó.
+
+### Decisions
+
+- **Bỏ `{ timeout: 5000 }` khỏi `waitForURL` trong `standards.spec.ts` C12 thay vì nâng lên một
+  con số to hơn.** Ngân sách 5s được đặt khi `/kudos` chưa tồn tại và cú click rơi vào trang 404
+  tức thì. Nay đích đến là Server Component động có đọc Supabase. Bỏ hẳn tuỳ chọn để nó hưởng
+  ngân sách điều hướng mặc định của suite — **giống hệt cách `awards.spec.ts` điều hướng tới route
+  đọc DB bằng `page.goto()` trần**, nên không phải ngoại lệ mà là về đúng quy ước.
+  Khẳng định không đổi: URL phải trở thành `/kudos`. Chỉ ngân sách chờ được sửa cho khớp đích mới.
+  Mọi `waitForURL(..., {timeout: 5000})` còn lại trong repo đều trỏ route KHÔNG đọc DB
+  (`/login`, `/`) nên giữ nguyên, không đụng.
+
+### Nợ lại
+
+- Không nới timeout để làm CI xanh: đã tái hiện đúng điều kiện CI ở máy
+  (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, `CI=1`,
+  `pnpm exec playwright test --grep-invert "@auth|@local-db"`) → **exit 0, 79/79 pass**.
+
+## 260907-2325 — audit fidelity /kudos vs frame MoMorph
+
+Đối chiếu trang đang chạy với `momorph/frame-image.png` + số đo node thật. **4 sai lệch, đã sửa hết.**
+
+### Decisions
+
+- **Tiêu đề banner: `Hệ thống ghi nhận và cảm ơn`, không phải `...lời cảm ơn`.**
+  Node TEXT `2940:13439` có `character = "Hệ thống ghi nhận và cảm ơn"`. Chuỗi cũ lấy từ **văn xuôi
+  mô tả** của item A trong CSV ("tiêu đề 'Hệ thống ghi nhận lời cảm ơn'"), không phải từ `character`.
+  Đây đúng cái luật repo đã rút ra ở F004/F005 — *node `character` là nội dung, `itemName`/mô tả thì
+  không* — và lần này chính ta vi phạm nó. Đã sửa đồng bộ: `messages/{vi,en}.json`, hợp đồng e2e C02
+  (3 chỗ), story, `docs/vi/features/F007_*/functional-spec.md`, `docs/vi/screens/SCR007_*/spec.md`,
+  `docs/vi/generated/screen-list.md`, và bản draft trong plan dir. Đã refresh `screen_spec_shas.SCR007`.
+
+- **Thêm pill thứ hai "Tìm kiếm profile Sunner" (`2940:13450`).** Design có HAI pill trên cùng một
+  hàng `2940:13448 Button chuc nang` (1440×72): ô nhập 738 ở x 144–882, ô tìm 381 ở x 914–1295,
+  cách nhau 32px. Ta chỉ render ô nhập.
+  Lý do nó lọt: CSV **không đánh số item** cho pill này (chỉ có `A.1` cho ô nhập), nên bảng spec
+  không nhắc tới nó — chỉ cây node mới lộ ra. Placeholder lấy từ `character` của
+  `I2940:13450;186:2760`; `itemName` của node đó là `"Awards Information Navigation Links"` — nhãn
+  cũ còn sót từ component gốc, đúng bẫy F005 D003 đã ghi.
+  **Khác** ô tìm trong Spotlight (`2940:14833`) đã làm từ trước: cái đó lọc scatter đang hiển thị và
+  CÓ nối logic; cái này readonly vì đích đến chưa có frame.
+
+- **Hàng pill đè LÊN dải keyvisual, không nằm dưới.** Design đặt nó ở y 408–480, tức bên trong dải
+  512px. Ta để nó trôi dưới nền tối và căn giữa. Đã bọc banner + hàng pill trong một container
+  `relative` và định vị tuyệt đối ở `bottom-[6.25%]` (= 32/512), căn trái theo mốc 144.
+  Comment trong `kudos-banner.tsx` đã tự thú điều này từ đầu ("file ownership splits those into two
+  leaf components, so each only renders its own slice") — phase 08 biết nhưng bị chặn bởi ranh giới
+  sở hữu file. Nay ranh giới đó đã mở.
+
+- **Thêm lớp scrim `Cover` (`I2940:13432;1210:12612`).** Frame có một rectangle phủ
+  `linear-gradient(25deg, #00101A 14.74%, rgba(0,19,32,0) 47.8%)` trên artwork. Thiếu nó thì
+  artwork bị **cắt ngang đột ngột** ở đáy dải thay vì tan vào `bg-login-background`, và chữ `KUDOS`
+  nằm trên nền cam sáng thay vì vùng tối như design vẽ.
+  `KeyvisualBackground` dùng chung ĐÃ có cơ chế này nhưng với gradient riêng của frame homepage
+  (`mm:2167:9029`, `12deg`) — frame kudos có góc và stop khác, nên phải dùng giá trị của chính nó.
+
+### Nợ lại
+
+- Lệch dọc 80px so với frame (design chồng header bán trong suốt lên keyvisual từ y 0; repo xếp
+  `main` xuống dưới header sticky 80px). **Có sẵn toàn repo** — đo `/awards` (F004, branch này không
+  đụng) thấy y hệt: `main` bắt đầu ở y 80. Không sửa trong PR này vì đụng chrome dùng chung của mọi
+  trang.
+- Chiều cao `B_Highlight` 786 (design) vs 621 (chạy) và sidebar 933 vs 316: đều do **dữ liệu ít hơn**
+  (2 leaderboard rỗng, thẻ ngắn hơn), không phải lỗi layout. Bề rộng khớp tuyệt đối (sidebar 422,
+  thẻ 528, nút nav 80×80).

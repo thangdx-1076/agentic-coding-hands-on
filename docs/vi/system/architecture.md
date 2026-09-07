@@ -4,6 +4,15 @@ authored_by: takumi
 created: 2026-09-06
 lang: vi
 ---
+<!--
+FORWARD-DRAFT NOTICE (F007_KudosLiveBoard + F008_KudosHeartReaction,
+plans/260907-1725-kudos-live-board):
+Nội dung dưới đây là bản SAO NGUYÊN VĂN của `docs/vi/system/architecture.md` (đọc 2026-09-07), cộng
+CHỈ phần delta mà F007/F008 giới thiệu. Mọi dòng gốc giữ nguyên 100% — không sửa, không xoá.
+Phần MỚI nằm trọn trong mục cuối file. File này CHƯA merge vào `docs/vi/system/architecture.md` thật;
+nó được promote ở implement-start và được đối chiếu lại với as-built ở Delivery.
+-->
+
 
 # Architecture
 
@@ -351,3 +360,36 @@ CI giữ nguyên 2 job (`quality`, `e2e`), không đổi trigger (`push`/`pull_r
 repo. **Gap còn mở**: `ci.yml` chưa set `EVENT_START_AT` cho bước `build` của job `quality` —
 thiếu nó không fail build (countdown hiện `00/00/00`). Không job nào triển khai ứng dụng ra
 môi trường chạy thật.
+
+
+## Bổ sung dự kiến — F007_KudosLiveBoard + F008_KudosHeartReaction
+
+> **[F007/F008 draft — chưa merge]** Delta của hai feature trong
+> `plans/260907-1725-kudos-live-board/`. Quyết định gốc: `clarifications.md § Quyết định`.
+
+### Lần đầu ứng dụng có đường GHI
+
+Sáu feature trước đều là đọc: DAL `server-only` → Server Component → HTML. F008 thêm mắt xích
+chưa từng có — một **Server Action** ghi vào Supabase rồi làm mới dữ liệu đang hiển thị. Hình
+dạng mới của luồng:
+
+```text
+đọc   : page.tsx (RSC) → src/dal/kudos.ts (server-only, client injected) → Supabase → HTML
+ghi   : nút tim (client) → Server Action → Supabase (RLS enforce) → revalidate → RSC render lại
+```
+
+Ranh giới giữ nguyên như các feature trước: component không tự tạo Supabase client, DAL không
+bao giờ được import vào client bundle, adapter `*-client.ts` là chỗ duy nhất bắc cầu.
+
+### "Live board" KHÔNG phải Supabase Realtime
+
+Tên frame là nhãn design. Không test case nào đòi dữ liệu tự cập nhật khi không reload, và repo
+chưa có một ví dụ Realtime nào. Chốt: server render + revalidate sau mỗi lượt ghi. Ghi lại ở đây
+để lần sau không ai đọc chữ "Live" rồi tưởng đã có kênh realtime.
+
+### Vì sao Spotlight là layout tĩnh chứ không phải canvas
+
+Cây node của frame cho thấy Spotlight (`2940:14174`) được dựng bằng ~120 TEXT node tĩnh của đúng
+8 cái tên lặp lại, và nút `B.7.2_Pan zoom` là một FRAME rỗng — không có canvas, không có dữ liệu
+node. Chỉ tổng số `388 KUDOS` (`3007:17482`) là query thật theo spec. Nên phần này được dựng như
+một scatter tĩnh trên dữ liệu thật, không kéo thêm thư viện viz nào vào bundle.

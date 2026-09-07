@@ -1,0 +1,51 @@
+{
+  "task": "Implement MoMorph screen MaZUn5xHXZ (\"Sun* Kudos - Live board\", 64 design items, 41 test cases) as the public route /kudos. First screen in this repo backed by real mutable data: migration 0006 introduces the kudos tables, a card view, and a department column on users. Scope is the board itself plus every interaction contained entirely within this frame (highlight carousel, hashtag/department filters, heart toggle, copy link, infinite scroll, spotlight scatter, sidebar stats). Five behaviors whose target frames do not exist yet are deferred with honest rendering: the Viet Kudo dialog, the Secret Box dialog, the kudo detail page, the profile hover preview, and the image lightbox.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "GET /kudos returns 200 for an anonymous visitor, asserted by kudos.spec.ts C01; this also retires the five hardcoded href=\"/kudos\" links that pointed at a 404 route",
+    "Banner A renders the title 'Hệ thống ghi nhận lời cảm ơn' and the SAA 2025 KUDOS logo, non-interactive",
+    "Input pill A.1 renders the exact placeholder 'Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?' with the pencil icon on the left",
+    "HIGHLIGHT carousel shows the 5 kudos with the most hearts; prev is disabled on slide 1, next is disabled on slide 5, pagination reads x/5",
+    "Hashtag and Phòng ban filters narrow both the carousel and the ALL KUDOS feed together, and reset carousel pagination to 1",
+    "Clicking a hashtag on any card sets the hashtag filter to that tag",
+    "ALL KUDOS feed loads further pages on scroll without a full navigation",
+    "Empty feed renders the exact string 'Hiện tại chưa có Kudos nào.'",
+    "Empty sidebar leaderboard renders the exact string 'Chưa có dữ liệu'",
+    "Copy Link writes the kudo URL to the clipboard and shows the toast 'Link copied — ready to share!'",
+    "Heart toggle: one heart per user per kudo, the kudo's own sender cannot heart it, un-hearting revokes exactly what was credited",
+    "An anonymous visitor sees the heart button rendered but disabled",
+    "Spotlight renders recipient names plus a live total count sourced from the database, and the Sunner search input caps at 100 characters",
+    "Sidebar renders the 5 statistic rows and both 10-Sunner lists",
+    "Seeded content is transcribed from the Figma frame, with no invented names, messages, hashtags or numbers"
+  ],
+  "touchpoints": [
+    "supabase/migrations/0006_kudos.sql",
+    "src/dal/kudos.ts",
+    "src/dal/kudos-client.ts",
+    "src/app/(public)/kudos/page.tsx",
+    "src/app/(public)/kudos/_components/",
+    "src/app/(public)/kudos/_shared/kudos-copy.ts",
+    "src/app/(public)/kudos/_actions/",
+    "src/constants/routes.ts",
+    "messages/vi.json",
+    "messages/en.json",
+    "tests/e2e/kudos.spec.ts",
+    "supabase/migrations/0007_kudo_hearts.sql",
+    "supabase/migrations/0008_kudos_demo_seed.sql"
+  ],
+  "blastRadius": [
+    "five entry points hardcoded href=\"/kudos\" while the route 404'd; tests/e2e/standards.spec.ts C12 documented that 404 in its own DOM contract and needed updating once the route existed",
+    "adding a department column to the users table touches a table populated by the auth trigger from migration 0002, so the column must be nullable",
+    "messages/{vi,en}.json are covered by messages-parity.test.ts, which asserts the two bundles stay structurally identical",
+    "a new kudos card view exposes sender and receiver display names, so the REVOKE ALL before GRANT pattern from 0005_profile_cards_view.sql must be repeated or anon gains full table privileges by Supabase default",
+    "the heart action credits the sender's account, which is the same counter the profile page statistics card reads, so F006 surfaces change from 0 to real values"
+  ],
+  "contracts": [
+    "tests/e2e/kudos.spec.ts is the single DOM contract for the UI phases and must be red on a real assertion failure before any UI code is written (test policy e2e-red-first)",
+    "MoMorph design frames are authoritative: a node's character is the content, itemName is only the designer's layer label",
+    "MoMorph rule: use Figma design content as the mock data source, do not invent data",
+    "plans/260907-1725-kudos-live-board/clarifications.md is authoritative for every scope decision and is not re-litigated",
+    "eslint.config.mjs no-restricted-imports forbids importing another route segment's _shared, so shared copy stays in src/app/_shared",
+    "supabase/migrations/0005_profile_cards_view.sql sets the RLS precedent: ENABLE plus FORCE, REVOKE ALL before GRANT"
+  ]
+}
