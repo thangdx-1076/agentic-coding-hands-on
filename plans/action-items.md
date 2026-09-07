@@ -255,3 +255,7 @@
 - Reviewer Low ×1: thiếu PNG tên giải theo slug thì `award-section.tsx:37` render rỗng, không cảnh báo gì ở dev — bẫy nếu thêm giải thứ 7.
 - Bảng `public.awards` sống ở project Supabase ngoài repo (`~/Desktop/Claude-and-mormoph/saa-app`). Máy khác clone repo này về sẽ không có bảng đó → `/awards` hiện empty-state. Chưa có đường seed nào cho môi trường khác.
 - Test `home.spec.ts` từng bị báo nhầm là "flaky". Không phải: dev server cũ trên :3000 giữ `EVENT_START_AT` từ `.env.local` (2026-12-26) trong khi `playwright.config.ts` cần 2099-12-31, và `reuseExistingServer` dùng lại server cũ đó. Giết dev server trước mỗi lần chạy regression.
+
+### PR
+
+- https://github.com/thangdx-1076/agentic-coding-hands-on/pull/9 — `feat/award-system-page` → `main`, 10 commit, version 0.3.2 → 0.4.0 (minor: route mới + bảng DB mới).
