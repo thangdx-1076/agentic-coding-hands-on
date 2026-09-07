@@ -602,3 +602,4 @@
 - Reviewer defer: hàng badge+điều kiện chưa có `whitespace-nowrap`/overflow guard; không test nào
   assert chiều cao hàng, nên copy dài hơn sau này có thể âm thầm phá chiều cao 72px.
 - `/todo` không có frame MoMorph nào (scaffold F001) — ngoài scope mọi audit fidelity.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/12
