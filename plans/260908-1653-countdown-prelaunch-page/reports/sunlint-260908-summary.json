@@ -1,0 +1,97 @@
+{
+  "repository_url": "https://github.com/thangdx-1076/agentic-coding-hands-on",
+  "repository_name": "agentic-coding-hands-on",
+  "project_path": null,
+  "branch": "feat/countdown-prelaunch-page",
+  "commit_hash": "21104a0a59aa07f1575aac2ccebd01fc91e2f93d",
+  "commit_message": "docs(prelaunch): record F011/SCR009 and reconcile the proxy narrative\n\nPromotes the spec draft to docs/vi/features/F011_CountdownPrelaunchPage and\ndocs/vi/screens/SCR009_CountdownPrelaunch with real path:line citations, so\nthe feature validator reports zero criticals against it.\n\nThe system and generated docs describe the code as built rather than as\ndrafted. The forward-drafts assumed the lock only walled off routes the\nwidened matcher newly exposed; as built it preempts the whole legacy\nsix-route whitelist, so while the flag is on every page route redirects to\n/prelaunch. The 303-for-non-GET behaviour is written down too, with the\nreason. Two stale claims elsewhere fell out of the same pass: architecture\nsaid src/domain and src/components had no consumers, and permissions said\nno feature flag gates access.\n\nAlso records the session journal and reconciles the plan and phase files.\nThe phase-04 curl recipe had been reconciled to the pre-fix behaviour by\nmistake; it now carries the measured matrix and an explicit warning about\nwhich behaviour was the bug.",
+  "author_email": "dang.xuan.thang@sun-asterisk.com",
+  "author_name": "thangdx-1076",
+  "pr_number": null,
+  "score": 96.4,
+  "total_violations": 58,
+  "error_count": 0,
+  "warning_count": 58,
+  "info_count": 0,
+  "lines_of_code": 32600,
+  "files_analyzed": 279,
+  "sunlint_version": "1.3.56",
+  "analysis_duration_ms": 7566,
+  "scoring_mode": "project",
+  "violations": [
+    {
+      "rule_code": "C030",
+      "count": 14,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C067",
+      "count": 8,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C029",
+      "count": 7,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S006",
+      "count": 7,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S037",
+      "count": 5,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S055",
+      "count": 5,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C042",
+      "count": 3,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S012",
+      "count": 3,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S049",
+      "count": 3,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "C018",
+      "count": 2,
+      "severity": "warning"
+    },
+    {
+      "rule_code": "S050",
+      "count": 1,
+      "severity": "warning"
+    }
+  ],
+  "metadata": {
+    "generated_at": "2026-09-08T11:33:06.993Z",
+    "tool": "SunLint",
+    "version": "1.3.56",
+    "analysis_duration_ms": 7566,
+    "scoring_mode": "project"
+  },
+  "quality": {
+    "score": 96.4,
+    "grade": "A+",
+    "metrics": {
+      "errors": 0,
+      "warnings": 58,
+      "infos": 0,
+      "rulesChecked": 66,
+      "linesOfCode": 32600,
+      "violationsPerKLOC": 1.8
+    }
+  }
+}

@@ -174,8 +174,8 @@ bị khoá, kể cả khi đếm ngược chưa về 0.
 ## 10. Edge Behaviours to Verify
 
 - **FR-002** → Kiểm tra `EVENT_START_AT` thiếu/hỏng không làm trang lỗi, hiện `00/00/00`.
-- **FR-204** → Kiểm tra số ngoài khoảng/âm luôn clamp về `00`, không hiện số âm hay 3+ chữ số bất
-  thường.
+- **FR-204** → Kiểm tra số ÂM clamp về `00`, không bao giờ hiện dấu trừ. Days ≥ 100 thì hiện đủ
+  (`120`), KHÔNG clamp — `pad2()` chỉ pad lên, không cắt (xem đính chính § 5).
 - **FR-102** → Kiểm tra route ngoài danh sách miễn khoá bị redirect đúng khi cờ bật + chưa tới giờ.
 - **FR-103** → Kiểm tra khoá tự gỡ đúng lúc đếm ngược về 0.
 

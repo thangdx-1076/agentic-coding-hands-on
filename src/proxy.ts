@@ -8,7 +8,11 @@ import {
 import { createProxyClient } from "@/lib/supabase/proxy-client";
 import { ROUTES } from "@/constants/routes";
 import { parseTargetDate, remaining } from "@/utils/countdown";
-import { isPrelaunchLockEnabled, planProxy } from "@/domain/prelaunch-lock";
+import {
+  isPrelaunchLockEnabled,
+  planProxy,
+  redirectStatusFor,
+} from "@/domain/prelaunch-lock";
 
 /**
  * Every route that requires a session. Widen this list — never add a
@@ -58,20 +62,12 @@ export async function proxy(request: NextRequest) {
   const plan = planProxy({ pathname, lockEnabled, reached });
 
   if (plan.kind === "redirect") {
-    // 303 for anything that isn't a GET/HEAD, not the 307 `NextResponse.redirect`
-    // defaults to. 307 preserves the method, so a Server Action POST on a locked
-    // route would be re-POSTed to `/prelaunch` — which has no action of that id
-    // and answers 404 with `x-nextjs-action-not-found` instead of showing the
-    // countdown (measured, not assumed). 303 is exactly the "never mind, go look
-    // at this other resource with a GET" status this case needs. Every page in
-    // the app reaches a Server Action as a POST to its own route, so without
-    // this the lock 404s the language selector on /kudos, /awards and /standards.
-    const isBodylessRead =
-      request.method === "GET" || request.method === "HEAD";
-
+    // Status comes from `redirectStatusFor` (303 for anything with a body to
+    // re-send) — see its docblock for why that decision lives in the domain
+    // module rather than here.
     return NextResponse.redirect(
       new URL(plan.to, request.url),
-      isBodylessRead ? undefined : 303,
+      redirectStatusFor(request.method),
     );
   }
 

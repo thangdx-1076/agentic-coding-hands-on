@@ -19,7 +19,12 @@
     "Homepage still renders the promoted countdown modules: home.spec.ts 27/27 green after the move and after the data-testid additions",
     "Commit 1 confirmed a pure relocation via git -M rename detection: 5 byte-identical renames, 1 import line",
     "Server Action POST under lock measured end to end after switching to 303; previously 404'd with x-nextjs-action-not-found",
-    "pnpm build and pnpm build-storybook both succeed, so the widened matcher passes Next's build-time validation"
+    "pnpm build and pnpm build-storybook both succeed, so the widened matcher passes Next's build-time validation",
+    "Pre-push focused re-review of c57efb7 (the post-review delta): verdict SHIP, 0 critical, 0 high; 303 semantics verified against node_modules/next/dist/server/web/spec-extension/response.js rather than memory",
+    "SunLint over src: grade A+, 0 errors",
+    "licenseal --transitive: 0 violations, 0 policy denies, no dependency change on this branch",
+    "Full suite re-run after the version bump and the redirectStatusFor extraction: 656 unit at 100%, 194 e2e, build compiled",
+    "Lock behaviour re-measured live after the refactor: GET 307, POST 303, POST-follow 200"
   ],
   "contractStatus": "HONORED",
   "refuted": [],
@@ -53,6 +58,20 @@
       "summary": "BR-004 wording claimed days clamp to 00 outside range; pad2 only pads up, so 120 renders as 120. Spec wording corrected, code unchanged.",
       "disposition": "Accept",
       "category": "documentation"
+    },
+    {
+      "severity": "medium",
+      "category": "test-coverage",
+      "location": "src/domain/prelaunch-lock.ts:82-88",
+      "summary": "The 303 fix had no CI regression net — e2e cannot flip the lock flag and src/proxy.ts is outside every coverage glob. Extracted the decision into redirectStatusFor inside src/domain, which the 100% gate owns, and added 7 cases.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "medium",
+      "category": "documentation",
+      "location": "docs/vi/features/F011_CountdownPrelaunchPage/functional-spec.md:177",
+      "summary": "BR-004's correction was applied in one bullet but three other restatements still claimed days clamp to 00 outside range. Reconciled all four across both the promoted docs and the plan-dir drafts.",
+      "disposition": "Accept"
     }
   ]
 }

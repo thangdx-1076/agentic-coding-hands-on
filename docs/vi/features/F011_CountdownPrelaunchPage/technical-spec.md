@@ -41,7 +41,7 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 **Request** · không tham số — đọc `EVENT_START_AT` phía server tại render time.
 **BE** · `resolveTargetIso()` (cùng pattern `(home)/page.tsx`) đọc `process.env.EVENT_START_AT`, validate qua `parseTargetDate` (tái dùng `src/utils/countdown.ts`); thiếu/hỏng → `null`, không throw (`FR-002`).
 **Rule** · Không có nhánh hiển thị khác nhau theo actor — nội dung giống nhau cho mọi visitor; xem A2 cho nhánh quyết định điều hướng.
-**Result** · Read-only, không ghi DB. `remaining()`/`pad2()` tính days/hours/minutes zero-pad, clamp âm/ngoài khoảng về `00` — **BR-004 — Số hiển thị luôn clamp về `00` khi âm hoặc ngoài khoảng hợp lệ.** Hàm thuần, không I/O, đã có unit test 100% coverage.
+**Result** · Read-only, không ghi DB. `remaining()`/`pad2()` tính days/hours/minutes zero-pad — **BR-004 — Giá trị ÂM clamp về `00`; `pad2()` chỉ pad LÊN, không cắt bớt, nên days ≥ 100 hiển thị đủ `120` chứ không clamp.** Hàm thuần, không I/O, đã có unit test 100% coverage.
 **Source:** TBD (draft)
 
 <!-- No diagram: read-only, single render path, below threshold. -->
@@ -137,7 +137,7 @@ PRELAUNCH_LOCK_ENABLED = "false"     # cờ mới; chỉ "true" mới bật kho�
 
 ### 5.1 Technical Verification
 
-- **SC-001** *(A1)* 3 ô hiển thị đúng zero-pad 2 chữ số trong khoảng hợp lệ; ngoài khoảng/âm → `00` (covers FR-204, BR-004)
+- **SC-001** *(A1)* 3 ô hiển thị đúng zero-pad tối thiểu 2 chữ số; âm → `00`; days ≥ 100 giữ nguyên 3 chữ số (covers FR-204, BR-004)
 - **SC-002** *(A1)* Tick mỗi giây không cần reload; về 0 cả 3 ô đọc `00` (covers FR-205, FR-206)
 - **SC-003** *(A2)* Cờ tắt → không route nào bị khoá, kể cả `/prelaunch` (covers FR-102, BR-001)
 - **SC-004** *(A2)* Cờ bật + chưa tới giờ → mọi route trừ ngoại lệ redirect `/prelaunch`; đã tới giờ → `/prelaunch` redirect `/` (covers FR-102, FR-103, DEC-001)

@@ -70,6 +70,32 @@ function isExempt(pathname: string): boolean {
 }
 
 /**
+ * Which redirect status the lock should answer with, by request method.
+ *
+ * 307 (`NextResponse.redirect`'s default) preserves the method. Every page in
+ * this app reaches a Server Action as a POST to its own route, and the widened
+ * `config.matcher` routes those POSTs through the lock — so a 307 re-POSTed the
+ * action to `/prelaunch`, which has no action of that id and answered 404 with
+ * `x-nextjs-action-not-found` instead of the countdown (measured, not assumed).
+ * 303 is exactly the "never mind, go read this other resource with a GET"
+ * status that case wants.
+ *
+ * This lives here rather than inline in `src/proxy.ts` for one reason: the e2e
+ * suite structurally cannot flip `PRELAUNCH_LOCK_ENABLED` (playwright.config.ts
+ * pins the webServer env for the whole run), and `src/proxy.ts` matches no
+ * coverage glob. Inline, the fix had no CI regression net at all — a later
+ * "simplification" back to a bare `redirect(url)` would silently restore the
+ * 404. Here it is inside `src/domain/**`, which the 100% coverage gate owns.
+ *
+ * `undefined` means "leave Next's default alone" — GET and HEAD carry no body
+ * to re-send, so 307 is correct and unchanged for them.
+ */
+export function redirectStatusFor(method: string): 303 | undefined {
+  const isBodylessRead = method === "GET" || method === "HEAD";
+  return isBodylessRead ? undefined : 303;
+}
+
+/**
  * Decision order, and why it is this order:
  *
  *   1. `/prelaunch` itself — its own two-value rule (BR-003): once the

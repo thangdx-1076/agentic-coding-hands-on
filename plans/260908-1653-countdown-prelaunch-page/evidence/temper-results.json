@@ -1,13 +1,95 @@
 {
   "commands": [
-    {"command":"pnpm typecheck","exitCode":0,"status":"pass","summary":"tsc --noEmit clean","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm lint","exitCode":0,"status":"pass","summary":"eslint clean: 0 errors, 0 warnings (CI runs --max-warnings 0)","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm format:check","exitCode":0,"status":"pass","summary":"prettier: all matched files use Prettier code style","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm test:unit","exitCode":0,"status":"pass","summary":"649 tests passed across 69 files, including the 58-case planProxy truth table","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm test:unit:coverage","exitCode":0,"status":"pass","summary":"100% coverage gate green; src/domain/prelaunch-lock.ts at 100/100/100/100","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm exec playwright test","exitCode":0,"status":"pass","summary":"194 passed, 4 skipped, 0 failed — no regression from widening config.matcher","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm build","exitCode":0,"status":"pass","summary":"next build succeeded; matcher validated at build time; /prelaunch emitted","ts":"2026-09-08T11:23:39Z"},
-    {"command":"pnpm build-storybook","exitCode":0,"status":"pass","summary":"storybook build succeeded including prelaunch-screen.stories.tsx","ts":"2026-09-08T11:23:39Z"},
-    {"command":"curl matrix vs dev server, PRELAUNCH_LOCK_ENABLED=true","exitCode":0,"status":"pass","summary":"lock on + pending: / /login /todo /awards /standards /profile /kudos all 307 to /prelaunch, /prelaunch 200, /auth/callback exempt. lock on + reached: pages 200, /prelaunch 307 to /. POST /kudos 303 and follows to /prelaunch 200.","ts":"2026-09-08T11:23:39Z"}
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint clean: 0 errors, 0 warnings (CI runs --max-warnings 0)",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "prettier: all matched files use Prettier code style",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "656 tests passed across 69 files, including the 58-case planProxy truth table and 7 redirectStatusFor cases",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "100% coverage gate green; src/domain/prelaunch-lock.ts at 100/100/100/100",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm exec playwright test",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "194 passed, 4 skipped, 0 failed \u2014 no regression from widening config.matcher",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "next build succeeded; matcher validated at build time; /prelaunch emitted",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "storybook build succeeded including prelaunch-screen.stories.tsx",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "curl matrix vs dev server, PRELAUNCH_LOCK_ENABLED=true",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "lock on + pending: / /login /todo /awards /standards /profile /kudos all 307 to /prelaunch, /prelaunch 200, /auth/callback exempt. lock on + reached: pages 200, /prelaunch 307 to /. POST /kudos 303 and follows to /prelaunch 200.",
+      "ts": "2026-09-08T11:23:39Z"
+    },
+    {
+      "command": "sunlint -a -i src",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Quality score 96.4 grade A+, 279 files, 0 errors, 58 warnings (1 in a touched file: C030 false positive on the word 'throw' inside a docblock)",
+      "ts": "2026-09-08T11:42:50Z"
+    },
+    {
+      "command": "pnpm exec playwright test (post version bump + redirectStatusFor extraction)",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "194 passed, 4 skipped, 0 failed",
+      "ts": "2026-09-08T11:42:50Z"
+    },
+    {
+      "command": "curl re-verify after extracting redirectStatusFor",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "GET /kudos 307, GET / 307, POST /kudos 303, POST followed 200 at /prelaunch, GET /prelaunch 200 \u2014 behaviour unchanged by the refactor",
+      "ts": "2026-09-08T11:42:50Z"
+    },
+    {
+      "command": "grep -qiE 'violation|denied|policy deny|incompatible' plans/260908-1653-countdown-prelaunch-page/reports/licenseal-260908-check.txt  # asserts NO match",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "licenseal check --transitive itself exits 1 because it reports 14 warnings (157 ok) \u2014 that non-zero is warnings, not a violation, so it is recorded here as this assertion over its saved report instead of as a forged green. Zero violations, zero policy denies, zero unknown licenses. All 14 warnings are pre-existing @img/sharp-* LGPL transitives; this branch changes no dependency (package.json and pnpm-lock.yaml are untouched vs origin/main).",
+      "ts": "2026-09-08T11:43:17Z"
+    }
   ]
 }

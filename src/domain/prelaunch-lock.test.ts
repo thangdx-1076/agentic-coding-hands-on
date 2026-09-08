@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { isPrelaunchLockEnabled, planProxy } from "./prelaunch-lock";
+import {
+  isPrelaunchLockEnabled,
+  planProxy,
+  redirectStatusFor,
+} from "./prelaunch-lock";
 
 /**
  * Unit test for prelaunch lock decision function
@@ -552,4 +556,30 @@ describe("planProxy — exhaustive truth table", () => {
       expect(result).toEqual({ kind: "pass" });
     });
   });
+});
+
+// Guards the actual defect c57efb7 fixed. The e2e suite cannot reach it —
+// playwright.config.ts pins the webServer env for the whole run, so no test can
+// turn the lock on — and src/proxy.ts is outside every coverage glob. Without
+// these cases a later "simplification" back to a bare NextResponse.redirect
+// would silently restore the Server Action 404 with nothing red to show for it.
+describe("redirectStatusFor — 303 for anything carrying a body", () => {
+  it("GET keeps Next's default (undefined → 307)", () => {
+    expect(redirectStatusFor("GET")).toBeUndefined();
+  });
+
+  it("HEAD keeps Next's default (undefined → 307)", () => {
+    expect(redirectStatusFor("HEAD")).toBeUndefined();
+  });
+
+  it("POST gets 303 — a Server Action must not be re-POSTed to /prelaunch", () => {
+    expect(redirectStatusFor("POST")).toBe(303);
+  });
+
+  it.each(["PUT", "PATCH", "DELETE", "OPTIONS"])(
+    "%s gets 303 too",
+    (method) => {
+      expect(redirectStatusFor(method)).toBe(303);
+    },
+  );
 });
