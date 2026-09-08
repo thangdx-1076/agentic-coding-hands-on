@@ -7,6 +7,7 @@ import {
 import type { KudosSidebarCopy } from "../_components/kudos-sidebar";
 import type { KudosSpotlightCopy } from "../_components/kudos-spotlight";
 
+import type { KudosComposeCopy } from "./kudos-compose-copy";
 import type { KudosCopy } from "./kudos-copy";
 
 import { LOCALE_LABEL, type AppLocale } from "@/lib/i18n/locale";
@@ -42,6 +43,10 @@ export type KudosPageCopy = SiteChromeCopy & {
    * and the feed, same card component either way. */
   card: KudosCopy;
   sidebar: KudosSidebarCopy;
+  /** "Viết Kudo" compose dialog copy (phase 13's merge point) — threaded
+   * down to `KudosComposeLauncher` unchanged; see `kudos-compose-copy.ts`
+   * for why this leaf composes on its own instead of through `KudosCopy`. */
+  composeModal: KudosComposeCopy;
 };
 
 /**
@@ -158,5 +163,14 @@ export function buildKudosCopy(
       giftBoardTitle: tKudos("sidebar.giftBoard"),
       emptyBoard: tKudos("sidebar.emptyBoard"),
     },
+    // `.raw()`, not per-field `t()` calls: `hashtagRemove`/`imageRemove` are
+    // manual `{tag}`/`{index}` templates the CALLER `.replace()`s later
+    // (`kudos-hashtag-field.tsx`/`kudos-image-field.tsx`), so resolving them
+    // through next-intl's own interpolation would throw the same
+    // `FORMATTING_ERROR` `card.heartLabel` above avoids the same way — and
+    // every other leaf here is a static string with no locale-specific
+    // pluralization, so one raw pass for the whole namespace is both safe
+    // and the DRYest option for a 30-field leaf.
+    composeModal: tKudos.raw("composeModal") as KudosComposeCopy,
   };
 }

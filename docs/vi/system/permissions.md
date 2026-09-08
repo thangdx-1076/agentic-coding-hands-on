@@ -192,3 +192,204 @@ ghi và báo lỗi, tuyệt đối không "cứ cho qua". Một lỗi đọc bi�
 `PERM001`–`PERM004` đã dùng. Bốn bề mặt mới dưới đây chờ mã ở bước promote:
 đọc `/kudos` khi anonymous · thả tim khi đã đăng nhập · chặn tự thả tim trên kudo mình gửi ·
 chặn thả tim lần hai trên cùng một kudo.
+
+## Bổ sung dự kiến — F009_KudosCompose ("Viết Kudo")
+
+> **Đã lên code thật** (nhánh `feat/kudos-write-modal`, 2026-09-08) — nội dung dưới đây đã được
+> đối chiếu lại với as-built và migration đã apply thành công trên instance local (`supabase
+> migration up`, không `db reset`). Quyết định gốc: `clarifications.md § Quyết định`. Bằng chứng:
+> `plans/260907-2338-kudos-write-modal/evidence/migration-transcript.md` (RLS/view verify trực
+> tiếp trên Postgres) và `evidence/green-evidence.md` (27/27 e2e `tests/e2e/kudos-compose.spec.ts`,
+> bao gồm C25 "Submit anonymous → shows anonymous name, sender NOT link"). Nguồn kỹ thuật:
+> `plans/260907-2338-kudos-write-modal/research/researcher-data-layer-report.md`.
+
+### `kudos_insert_own` — policy GHI đầu tiên trên `public.kudos`
+
+`0006_kudos.sql:16-18` tự ghi rõ từ trước: *"No INSERT/UPDATE/DELETE policy
+on `kudos` at all … the 'Viết Kudo' compose dialog … adds its own write
+policy when THEY are built, not here."* F009 là chỗ lời hứa đó được giữ.
+Policy mới mirror ĐÚNG hình dạng `kudo_hearts_insert_own`
+(`0007_kudo_hearts.sql:78-84`, `FOR INSERT TO authenticated WITH CHECK
+(user_id = auth.uid() AND ...)`), thay vì phát minh hình dạng riêng:
+
+```sql
+-- Migration mới (F009), mirror 0007_kudo_hearts.sql:78-84
+DROP POLICY IF EXISTS kudos_insert_own ON public.kudos;
+CREATE POLICY kudos_insert_own ON public.kudos
+    FOR INSERT TO authenticated
+    WITH CHECK (sender_id = auth.uid());
+GRANT INSERT ON public.kudos TO authenticated;
+```
+
+Khác `kudo_hearts_insert_own` ở một điểm: `kudo_hearts` cấm tự-thả-tim
+(`user_id <> sender của kudo`) vì đó là quan hệ hai hàng (heart ↔ kudo).
+`kudos_insert_own` không cần điều kiện tương đương — gửi kudo cho CHÍNH
+MÌNH (`sender_id = receiver_id`) không phải rủi ro bảo mật cần policy chặn
+(nhiều nhất là một hành vi kỳ lạ về UX, không phải một lỗ hổng), và không
+test case nào trong 57 case của màn này yêu cầu chặn nó — không thêm điều
+kiện không ai đòi hỏi.
+
+**Vì sao KHÔNG có `UPDATE`/`DELETE`:** không spec, không test case, không
+node design nào của "Viết Kudo" nhắc tới sửa/xoá một kudo đã gửi. Thêm hai
+policy đó là fabricate quyền không ai yêu cầu — ngược YAGNI. Nếu một
+feature sau này cần "sửa/xoá kudo của chính mình", đó là lúc thêm, không
+phải bây giờ.
+
+### Storage — bucket `kudo-images`, 2 policy trên `storage.objects`
+
+Bucket mới (xem architecture.md § "Lần đầu ứng dụng có Supabase Storage"),
+tạo bằng `INSERT INTO storage.buckets (id, name, public) VALUES
+('kudo-images', 'kudo-images', true)` — `public = true` vì `/kudos` đọc
+công khai, không khác gì asset tĩnh `public/kudos/sample-image.png` hôm
+nay. Hai policy trên `storage.objects`, lọc theo cột `bucket_id` (cách
+lọc chuẩn của Supabase Storage — xem `supabase.com/docs/guides/storage/
+security/access-control`):
+
+```sql
+-- Ghi: chỉ authenticated, chỉ vào đúng bucket này
+CREATE POLICY "kudo_images_insert_authenticated" ON storage.objects
+    FOR INSERT TO authenticated
+    WITH CHECK (bucket_id = 'kudo-images');
+
+-- Đọc: public/anon — belt-and-suspenders, xem ghi chú dưới
+CREATE POLICY "kudo_images_select_public" ON storage.objects
+    FOR SELECT TO public
+    USING (bucket_id = 'kudo-images');
+```
+
+**Ghi chú KHÔNG được bỏ qua khi implement (đã verify qua docs Supabase, 2
+GitHub issue — không đoán):**
+
+1. `public = true` trên bucket TỰ NÓ đã bypass RLS cho đường đọc qua public
+   URL (`<img src>` trên feed) — policy SELECT ở trên vì vậy chủ yếu là
+   phòng thủ thêm cho truy cập trực tiếp qua bảng `storage.objects`
+   (PostgREST/dashboard), không phải cơ chế chính khiến ảnh hiển thị được.
+   Không dựa vào nó làm điều kiện duy nhất khi viết test.
+2. **Không copy pattern `ALTER TABLE ... ENABLE/FORCE ROW LEVEL SECURITY`**
+   mà `0006`/`0007` dùng cho bảng `public.*` sang `storage.objects`. Trên
+   Supabase hosted, `storage.objects` đã bật RLS mặc định và chủ sở hữu
+   bảng không còn là role migration chạy — cố `ALTER TABLE` bảng này trả
+   lỗi `must be owner of table objects` (xác nhận qua
+   `github.com/supabase/supabase` issue #41126 và #36418, tài liệu
+   `supabase.com/docs/guides/storage/security/ownership`). Migration F009
+   chỉ nên chứa `INSERT INTO storage.buckets` + `CREATE POLICY` — bỏ hẳn
+   câu `ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY`.
+3. Instance local (`saa-app`, `supabase start`) chạy Postgres docker riêng,
+   role `postgres` ở đó có thể vẫn là owner — nghĩa là lỗi ở mục 2 có thể
+   KHÔNG lộ ra khi test local, chỉ lộ khi/nếu dự án này từng push lên một
+   project Supabase hosted thật. Ghi ở đây để implementer không debug từ
+   đầu nếu việc đó xảy ra sau này — repo hiện tại chỉ chạy local, chưa có
+   project hosted (đúng phạm vi "verify at implementation", không phải một
+   blocker bây giờ).
+
+### Vì sao `/kudos` KHÔNG vào `src/proxy.ts` dù đã có đường ghi
+
+`/kudos` giữ nguyên là route PUBLIC (đã chốt ở delta F007/F008 phía trên,
+căn cứ đúng nguyên văn test case *"User is unauthenticated but can view
+Kudos UI"*). F009 THÊM một hành động ghi vào trang này nhưng KHÔNG đổi
+kết luận đó — vì gate nằm ở HÀNH ĐỘNG, không nằm ở ROUTE:
+
+- **Đọc trang** `/kudos`: không gate — giữ nguyên `config.matcher` của
+  `src/proxy.ts`, không thêm `/kudos` vào đó.
+- **Mở dialog + điền form**: không gate — dialog vẫn render, chỉ khác quyết
+  định "mở dialog hay điều hướng `/login`" nằm ở `kudos-compose-launcher.tsx`'s
+  `handleActivate()` (KHÔNG phải trong pill trình bày thuần tuý
+  `kudos-compose-pill.tsx`, vốn chỉ báo `onActivate` lên launcher qua
+  `role="button"` + `onClick`/`onKeyDown`), dựa trên prop `isSignedIn` mà
+  `kudos-client.tsx` tính từ `viewerId !== null` (Server Component `page.tsx`
+  đã biết trước trạng thái đăng nhập, truyền xuống qua
+  `kudos-screen.tsx`/`kudos-keyvisual-band.tsx`) — kiểm tra lớp 1, phía
+  render, không phải phòng thủ bảo mật, chỉ là UX tránh mở một form rồi mới
+  báo lỗi.
+- **Gửi (INSERT thật)**: gate DUY NHẤT có giá trị bảo mật là bên trong
+  Server Action `create-kudo.ts` — tự gọi `auth.getUser()` (ĐÚNG pattern
+  `toggleKudoHeart`, `toggle-kudo-heart.ts:44-51`), fail-closed, trả
+  `{ok:false, reason:"unauthenticated"}` nếu không có user, TRƯỚC khi chạm
+  Storage hay bảng `kudos`. Một request REST trực tiếp bỏ qua UI vẫn bị
+  chặn ở đây — không phải "chặn bằng cách ẩn nút" (comment thiết kế cùng
+  triết lý `0007_kudo_hearts.sql:73-76`).
+
+Route-level guard (`src/proxy.ts` + `(protected)/layout.tsx`) chỉ áp cho
+"xem được trang hay không". F009 là feature ĐẦU TIÊN của dự án mà một
+route công khai vẫn cần một gate NGOÀI route-guard — vì hành động ghi và
+hành động xem tách rời nhau trên cùng một trang. Ghi ở đây rõ ràng để lần
+sau không ai "sửa cho khớp" bằng cách thêm `/kudos` vào matcher — điều đó
+sẽ chặn nhầm cả lượt xem của khách chưa đăng nhập, phá đúng quyết định
+PUBLIC đã chốt ở F007/F008.
+
+### Ẩn danh là NGỤY TRANG hiển thị, KHÔNG PHẢI ẩn ở tầng dữ liệu — cảnh báo bảo mật cần verify khi implement
+
+Migration mới thêm `is_anonymous boolean NOT NULL DEFAULT false` +
+`anonymous_name text` trên `public.kudos` (quyết định `clarifications.md`
+— không có cột nào sẵn cho việc này, researcher-data-layer-report.md §1
+xác nhận). Điểm PHẢI hiểu đúng: bật `is_anonymous` **không xoá, không ẩn
+`sender_id` khỏi hàng dữ liệu** — hàng vẫn lưu ĐÚNG người gửi thật, y hệt
+mọi kudo khác. `is_anonymous` chỉ là một cờ nói cho TẦNG HIỂN THỊ biết
+"đừng vẽ tên/avatar người gửi thật, vẽ `anonymous_name` (hoặc nhãn ẩn
+danh) thay vào".
+
+Hệ quả bắt buộc — và đây là chỗ cần verify kỹ khi implement, không phải
+suy đoán bây giờ: **`public.kudos_cards`
+(`0006_kudos.sql:82-101`, SECURITY DEFINER, `GRANT SELECT TO anon,
+authenticated`) hiện SELECT thẳng `su.id, su.full_name, su.avatar_url,
+su.department` của sender KHÔNG điều kiện.** Nếu F009 thêm `is_anonymous`/
+`anonymous_name` vào bảng `kudos` mà KHÔNG sửa view này, `kudos_cards` sẽ
+tiếp tục trả nguyên danh tính sender thật cho MỌI truy vấn qua view — kể
+cả một kudo được đánh dấu ẩn danh — và `anon`/`authenticated` đều đọc được
+view đó. Ẩn danh khi ấy chỉ "ẩn" ở tầng UI nào tình cờ không hiển thị cột
+đó, trong khi bất kỳ ai gọi thẳng REST vào `kudos_cards` vẫn thấy tên thật.
+Đó là một lỗ rò danh tính thật, không phải một khác biệt trình bày.
+
+**Đã sửa, cùng migration `0009_kudos_write_anonymity.sql` như yêu cầu.**
+`CREATE OR REPLACE VIEW public.kudos_cards` bọc `CASE WHEN k.is_anonymous`
+trên ĐÚNG 5 cột phía sender (`sender_id/sender_full_name/sender_avatar_url/
+sender_department/sender_kudos_received` → `NULL`/`anonymous_name`/`NULL`/
+`NULL`/`0`) — không thêm cột mới để báo hiệu ẩn danh, `sender_id → NULL` là
+tín hiệu DUY NHẤT tầng UI cần (AD-2, `plan.md`). Verify TRỰC TIẾP trên
+Postgres, không chỉ đọc code: `migration-transcript.md § 6(a)` — bật
+`is_anonymous = true` trên một hàng seed rồi `SET ROLE anon; SELECT
+sender_id, sender_full_name FROM kudos_cards` trả đúng `NULL` /
+`'Một Sunner'` (giá trị `anonymous_name` vừa set), không phải tên thật.
+Test case bổ sung ngoài 57 case gốc: e2e C25 ("Submit anonymous → shows
+anonymous name, sender NOT link") xanh trong `green-evidence.md`. Hàng gốc
+`public.kudos` vẫn giữ `sender_id`/`is_anonymous`/`anonymous_name` thật —
+chỉ view này che khi đọc, đúng như cảnh báo ở trên yêu cầu.
+
+### Ma trận quyền GHI của F009 (bổ sung ma trận F008 đã có ở delta trên)
+
+| Chủ thể | Mở dialog | Gửi kudo | Gửi ẩn danh |
+|---|---|---|---|
+| Anonymous | được (chỉ xem/điền) | **không** — action fail-closed `unauthenticated` | n/a |
+| Đã đăng nhập | được | được, `sender_id = auth.uid()` (RLS) | được — `sender_id` vẫn lưu thật, chỉ ẩn ở hiển thị (xem cảnh báo trên) |
+
+Cùng triết lý F008 đã lập: quyền ghi không suy ra được từ "đã đăng nhập
+hay chưa" một mình — cần thêm điều kiện gắn với danh tính hàng dữ liệu
+(`WITH CHECK sender_id = auth.uid()`), và ẨN DANH không phải một ngoại lệ
+của RLS mà là một concern hoàn toàn khác (view/hiển thị).
+
+### Fail-open cho ĐỌC, fail-closed cho GHI — không đổi triết lý
+
+DAL đọc mới (`searchSunners`, `src/dal/sunner-search.ts`) theo đúng triết
+lý `getAwards`/`getProfileCard`: lỗi Supabase → trả mảng rỗng, ô chọn
+người nhận hiện "không tìm thấy", KHÔNG throw, KHÔNG chặn dialog. Server
+Action `create-kudo.ts` (ghi) fail-closed tuyệt đối — bất kỳ lỗi nào
+(Storage upload lỗi, insert lỗi, RLS từ chối) đều trả `{ok:false, ...}` và
+KHÔNG ghi phần nào của hàng `kudos` (không insert kudos thiếu ảnh nếu
+upload ảnh lỗi giữa chừng — thứ tự: upload xong hết rồi mới insert, không
+insert trước rồi vá ảnh sau).
+
+### Bề mặt cần cấp PERM### thật khi promote
+
+`PERM001`–`PERM004` đã dùng (F001–F006). Bốn bề mặt của F008 vẫn
+`TBD (draft)`. F009 thêm các bề mặt mới dưới đây, cũng chờ mã ở bước
+promote — KHÔNG đoán số:
+
+- gửi kudo khi đã đăng nhập (INSERT `kudos`, policy `kudos_insert_own`)
+- chặn gửi kudo khi chưa đăng nhập (Server Action fail-closed)
+- upload ảnh vào bucket `kudo-images` khi đã đăng nhập
+- đọc công khai ảnh trong bucket `kudo-images` (anon)
+- ẩn sender thật trên `kudos_cards` khi `is_anonymous = true` — điều kiện
+  tiên quyết ("view đã sửa xong và có test xác nhận không rò `sender_id`/
+  `sender_full_name` thật") NAY ĐÃ THOẢ, xem xác nhận ở mục trên
+  (`migration-transcript.md § 6(a)` + e2e C25) — mã `PERM###` chính thức
+  vẫn chờ `rebuild-spec` Core pass kế tiếp cấp, KHÔNG tự đặt số ở đây.

@@ -21,7 +21,11 @@ export type CardRow = {
   image_urls: string[] | null;
   heart_count: number;
   created_at: string;
-  sender_id: string;
+  /** `NULL` when the kudo was sent anonymously (migration `0009`'s
+   * `CASE WHEN is_anonymous` on the view) — the only signal the UI needs
+   * (plan.md AD-2); `sender_full_name` reads `anonymous_name` instead in
+   * that case, never the real Sunner's name. */
+  sender_id: string | null;
   sender_full_name: string | null;
   sender_avatar_url: string | null;
   sender_department: string | null;

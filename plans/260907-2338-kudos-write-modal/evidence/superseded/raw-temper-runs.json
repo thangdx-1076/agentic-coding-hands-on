@@ -1,0 +1,86 @@
+[
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts",
+    "exitCode": 1,
+    "stdout": "24 passed, 3 failed (C24 images not loaded; C25 anon name not rendered; C26 markdown not to strong)",
+    "ts": "2026-09-08T00:28:28Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --grep \"@local-db\"",
+    "exitCode": 1,
+    "stdout": "4 passed, 3 failed (@local-db tier: C24, C25, C26 failures match main run)",
+    "ts": "2026-09-08T00:30:33Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/home.spec.ts",
+    "exitCode": 0,
+    "stdout": "27 passed (home.spec.ts regression ✓)",
+    "ts": "2026-09-08T00:31:20Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/login.spec.ts",
+    "exitCode": 1,
+    "stdout": "27 passed, 1 failed (500 error on signup test), 2 skipped (pre-existing failure)",
+    "ts": "2026-09-08T00:31:32Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/awards.spec.ts",
+    "exitCode": 0,
+    "stdout": "12 passed, 1 skipped (awards.spec.ts regression ✓)",
+    "ts": "2026-09-08T00:31:42Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/standards.spec.ts",
+    "exitCode": 0,
+    "stdout": "14 passed (standards.spec.ts regression ✓)",
+    "ts": "2026-09-08T00:31:48Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/profile.spec.ts",
+    "exitCode": 0,
+    "stdout": "22 passed (profile.spec.ts regression ✓)",
+    "ts": "2026-09-08T00:32:03Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts",
+    "exitCode": 1,
+    "stdout": "27 passed, 1 failed (C19 sentinel timeout), 1 skipped (pre-existing failure)",
+    "ts": "2026-09-08T00:32:23Z"
+  },
+  {
+    "command": "docker exec -i $(docker ps --format '{{.ID}} {{.Names}}' | grep supabase_db | head -1 | awk '{print $1}') psql -U postgres -d postgres -c 'SELECT column_name, data_type FROM information_schema.columns WHERE table_name = \"kudos\" AND column_name IN (\"anonymous\", \"anonymous_name\");'",
+    "exitCode": 0,
+    "stdout": "anonymous_name exists (text) — Q1 security check ✓",
+    "ts": "2026-09-08T00:34:12Z"
+  },
+  {
+    "command": "docker exec -i $(docker ps --format '{{.ID}} {{.Names}}' | grep supabase_db | head -1 | awk '{print $1}') psql -U postgres -d postgres -c 'SELECT COUNT(*) as kudos_count FROM kudos;'",
+    "exitCode": 0,
+    "stdout": "43 rows in kudos table — Q2 security check ✓",
+    "ts": "2026-09-08T00:34:12Z"
+  },
+  {
+    "command": "docker exec -i $(docker ps --format '{{.ID}} {{.Names}}' | grep supabase_db | head -1 | awk '{print $1}') psql -U postgres -d postgres -c 'SELECT COUNT(*) as cards_count FROM kudos_cards;'",
+    "exitCode": 0,
+    "stdout": "43 rows in kudos_cards table — Q3 security check ✓",
+    "ts": "2026-09-08T00:34:12Z"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "stdout": "tsc --noEmit: 0 errors",
+    "ts": "2026-09-08T00:46:40Z"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "stdout": "eslint --max-warnings 0: 0 errors, 0 warnings",
+    "ts": "2026-09-08T00:46:53Z"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "stdout": "prettier --check: All matched files use Prettier code style",
+    "ts": "2026-09-08T00:46:55Z"
+  }
+]

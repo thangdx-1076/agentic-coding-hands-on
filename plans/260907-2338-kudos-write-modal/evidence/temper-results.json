@@ -1,0 +1,67 @@
+{
+  "commands": [
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Compiled successfully in 2.3s",
+      "ts": "2026-09-08T01:30:44Z"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0 TS errors",
+      "ts": "2026-09-08T01:30:46Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint clean",
+      "ts": "2026-09-08T01:30:58Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "All matched files use Prettier code style!",
+      "ts": "2026-09-08T01:31:00Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Tests 496 passed (496) | All files | 100 | 100 | 100 | 100 |",
+      "ts": "2026-09-08T01:31:09Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --grep-invert \"@auth|@local-db\"",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "2 passed (6.4s) (CI-safe tier)",
+      "ts": "2026-09-08T01:32:01Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "1 skipped 28 passed (12.0s) (F007 regression)",
+      "ts": "2026-09-08T01:32:13Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/login.spec.ts --workers=1",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "28 passed, 2 skipped (deterministic run) (tester)",
+      "ts": "2026-09-08T10:45:00Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "27 passed (16.5s) (final, after env-key alignment)",
+      "ts": "2026-09-08T01:44:09.936Z"
+    }
+  ]
+}

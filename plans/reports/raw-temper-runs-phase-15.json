@@ -1,0 +1,7 @@
+[
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --reporter=list",
+    "exitCode": 1,
+    "summary": "27 tests total: 23 PASS (C01-C22, C27), 4 FAIL (C23-C26 backend integration scope). Form-layer contract 100% verified, backend integration deferred."
+  }
+]

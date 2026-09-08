@@ -22,7 +22,7 @@ type Row = {
   image_urls: string[] | null;
   heart_count: number;
   created_at: string;
-  sender_id: string;
+  sender_id: string | null;
   sender_full_name: string | null;
   sender_avatar_url: string | null;
   sender_department: string | null;
@@ -198,6 +198,30 @@ describe("getKudosBoard", () => {
 
     expect(board.spotlightNames).toEqual([]);
     expect(board.filters.departments).toEqual([]);
+  });
+
+  it("sender_id null (kudo ẩn danh) → sender.id null, tên/avatar/phòng ban/đếm theo view (anonymous_name/NULL/0), không throw", async () => {
+    const anonymousRow: Row = {
+      ...HIGHLIGHT_ROW,
+      sender_id: null,
+      sender_full_name: "Một Sunner",
+      sender_avatar_url: null,
+      sender_department: null,
+      sender_kudos_received: 0,
+    };
+    const { client } = stubClient([OK([]), OK([anonymousRow]), OK([])]);
+
+    const board = await getKudosBoard(client, {});
+
+    expect(board.highlight[0].sender).toEqual({
+      id: null,
+      fullName: "Một Sunner",
+      avatarUrl: null,
+      department: null,
+      kudosReceived: 0,
+    });
+    // Receiver stays a real identity — the view only masks the sender side.
+    expect(board.highlight[0].receiver.id).toBe("user-b");
   });
 
   it("hashtags/image_urls không phải mảng → coerce về [], không throw", async () => {

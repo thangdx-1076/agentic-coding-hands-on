@@ -3,6 +3,7 @@ import type { SVGProps } from "react";
 import { formatKudoTime } from "../_utils/format-kudo-time";
 import { defaultKudosCopy, type KudosCopy } from "../_shared/kudos-copy";
 
+import { KudoMarkdownText } from "./kudo-markdown-text";
 import { KudosCardActions } from "./kudos-card-actions";
 import { KudosCardPerson } from "./kudos-card-person";
 import { KudosFeaturedHashtag, KudosHashtagList } from "./kudos-hashtag-list";
@@ -58,6 +59,9 @@ export function KudosCard({
     <div
       data-testid="kudos-card"
       data-variant={variant}
+      // `card.sender.id` is `null` for an anonymous kudo (AD-2); React omits
+      // a `null` attribute entirely rather than rendering the literal string
+      // "null", so this expression needs no extra branch for that case.
       data-sender-id={isOwnKudo ? "self" : card.sender.id}
       className={`flex w-full flex-col gap-4 rounded-2xl bg-[#FFF8E1] ${
         variant === "highlight"
@@ -95,12 +99,16 @@ export function KudosCard({
           />
         ) : null}
 
-        {/* mm:B.4.2_Nội dung / C.3.5_Content — 3 (highlight) or 5 (feed) lines */}
+        {/* mm:B.4.2_Nội dung / C.3.5_Content — 3 (highlight) or 5 (feed) lines.
+         * Renders the markdown-subset a toolbar marker (`**`/`*`/`~~`/`1. `/
+         * `> `/`[text](url)`) may produce (BR-005, clarifications.md §
+         * toolbar) — plain content with no marker renders identically to the
+         * old `{card.content}` text node. */}
         <div
           data-testid="kudos-card-content"
           className={`w-full rounded-xl border border-login-button/60 bg-login-button/40 px-6 py-4 font-montserrat text-xl leading-8 font-bold text-justify text-login-button-text ${LINE_CLAMP[variant]}`}
         >
-          {card.content}
+          <KudoMarkdownText text={card.content} />
         </div>
 
         {variant === "feed" ? (

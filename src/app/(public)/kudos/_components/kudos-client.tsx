@@ -170,8 +170,15 @@ export function KudosClient({
           : null
       }
       // Remounts `KudosFeed` on filter change — `useInfiniteFeed` seeds
-      // `items` from `initialPage` only on mount (C14/C15).
-      feedKey={`${hashtag ?? ""}::${department ?? ""}`}
+      // `items` from `initialPage` only on mount (C14/C15). Also remounts
+      // when the server's newest feed item changes: `createKudo`'s
+      // `revalidatePath` refreshes `board`/this component's props, but
+      // `useInfiniteFeed`'s own `items` state (F007, not remounted by a prop
+      // change alone) would otherwise keep showing the pre-submit top card
+      // (C24-C26). Any client-appended page gets dropped in that same
+      // instant — an acceptable trade-off right after the viewer's own
+      // submit, matching the filter-change remount's identical trade-off.
+      feedKey={`${hashtag ?? ""}::${department ?? ""}::${latestFeedCard?.id ?? "empty"}`}
       feedInitialPage={board.feed}
       feedLoadMore={feedLoadMore}
       getFeedCardState={getCardState}
@@ -182,6 +189,10 @@ export function KudosClient({
       rankUps={[]}
       giftRecipients={[]}
       toastMessage={toastMessage}
+      compose={{
+        isSignedIn: viewerId !== null,
+        hashtagVocabulary: board.filters.hashtags,
+      }}
     />
   );
 }

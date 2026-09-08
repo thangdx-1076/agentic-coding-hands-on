@@ -27,6 +27,7 @@
 | SCR005_Standards | Thể lệ SAA 2025 | atomic | 9 | MODEL001_AppLocale (không đọc MODEL002 — trang không cá nhân hoá, không header) |
 | SCR006_Profile | Hồ sơ Sunner | atomic | 11 | `ProfileCard` (chưa cấp MODEL### riêng — view `public.profile_cards`), MODEL002_SupabaseUser (email, dùng chung header F003), MODEL001_AppLocale |
 | SCR007_KudosLiveBoard | Bảng Kudos trực tiếp | composite | 11 | `Kudo`/`KudoCard` (view `public.kudos_cards`, chưa cấp MODEL### riêng), `KudoHeart` (`public.kudo_hearts`, F008), MODEL002_SupabaseUser (email + cột `department` mới), MODEL001_AppLocale |
+| SCR008_KudosCompose | Viết Kudo (dialog soạn Kudos trên /kudos) | composite | 12 | `Kudo` mở rộng (2 cột ẩn danh, F009), `ProfileCard` (view `profile_cards`, nguồn autocomplete người nhận), `KudoImage` (`storage.objects`, chưa cấp MODEL### riêng) |
 
 ---
 
@@ -346,7 +347,7 @@ SCR006_Profile.
 
 ## Summary
 
-- **Total Screens**: 7
+- **Total Screens**: 8 (cập nhật 2026-09-08 — thêm SCR008_KudosCompose, F009_KudosCompose)
 
 ---
 
@@ -360,6 +361,32 @@ SCR006_Profile.
   `/tkm:rebuild-spec` kế tiếp sau khi `/kudos` lên code sẽ đồng bộ.
 - [x] All related screen references are valid
 - [x] All route URLs are properly formatted (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` — `/kudos` mới ở lượt này, `route-list.md` do core pass kế tiếp cập nhật)
-- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006; SCR007 → F007+F008)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006; SCR007 → F007+F008; SCR008 → F009)
 - [x] No orphaned screen references
 - [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 7 spec.md) — SCR001-003, SCR005, SCR006 atomic có justification 2-of-3 gate; SCR007_KudosLiveBoard khai `Type: composite` KÈM justification H1/H2/H3 đầy đủ và ghi rõ lý do hoãn `REG###` (code chưa tồn tại ở lượt promote), dùng nhãn layout R1-R8; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây
+
+## SCR008_KudosCompose
+
+**Type**: composite
+
+**Feature:** F009 — Viết Kudo (dialog soạn Kudos trên /kudos)
+**Route:** /kudos (trạng thái dialog mở — không có route riêng)
+**Description:** Dialog `<dialog>` native (`showModal()`) phủ lên `/kudos`, mở từ pill "Viết Kudo"
+(`kudos-compose-pill`) khi đã đăng nhập; khách chưa đăng nhập bấm pill thì bị đưa về `/login`.
+Form có **4 trường bắt buộc**: Người nhận (autocomplete từ view `profile_cards`), Danh hiệu
+(hint 2 dòng; lưu thành `hashtags[0]` và hiện làm tiêu đề thẻ), Nội dung (textarea + toolbar 6
+nút chèn marker markdown-subset + link `Tiêu chuẩn cộng đồng` → `/standards`, gợi ý `@ + tên`),
+Hashtag (≥1, tối đa 5 chip, picker theo frame `p9zO-c4a4x`); tuỳ chọn: Image (tối đa 5 ảnh
+jpg/png, upload qua Server Action lên bucket `kudo-images`) và checkbox "Gửi lời cám ơn và ghi
+nhận ẩn danh" (bật → hiện ô tên ẩn danh, bắt buộc khi bật). Nút `Gửi` dùng `aria-disabled` khi
+thiếu trường; bấm khi thiếu → lỗi hiện tại từng trường. Gửi thành công → INSERT `public.kudos`
+(policy `kudos_insert_own`), `revalidatePath('/kudos')`, dialog đóng, thẻ mới xuất hiện trên
+board. `Hủy`/`Escape` đóng và bỏ nháp. Nguồn design: frame `520:11602` (modal `520:11647`).
+**States:** closed, open-empty (placeholder đúng nguyên văn, Gửi `aria-disabled`), recipient-suggesting
+(listbox Sunner), hashtag-picker-open, hashtags-full (5 chip, chặn thứ 6 + "Tối đa 5 hashtag"),
+images-partial, images-full (ẩn `+ Image`), image-type-error, anonymous-checked (ô tên hiện),
+validation-error (lỗi ở từng trường bắt buộc, dialog không đóng), submitting, closed-after-success,
+unauthenticated-redirect (`/login`, dialog không mở)
+
+Chi tiết đầy đủ (layout, UI states, validation feedback, DOM contract): `docs/vi/screens/SCR008_KudosCompose/spec.md`.
+Hợp đồng e2e: `tests/e2e/kudos-compose.spec.ts` (C01–C27).

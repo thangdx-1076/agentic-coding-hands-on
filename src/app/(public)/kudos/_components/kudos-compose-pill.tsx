@@ -1,25 +1,54 @@
-import type { SVGProps } from "react";
+import type { KeyboardEvent, SVGProps } from "react";
 
 export type KudosComposePillProps = {
   placeholder: string;
   ariaLabel: string;
+  /**
+   * Fired on click, or on `Enter`/`Space` while the readonly input is
+   * focused — the launcher (`kudos-compose-launcher.tsx`, phase 13) decides
+   * what "activated" means (open the dialog when signed in, redirect to
+   * `/login` otherwise, C01/C03). This component stays presentational: it
+   * only reports the activation, never the destination.
+   */
+  onActivate: () => void;
+  /** Mirrors `useKudosComposeDialog`'s `isOpen` — drives `aria-expanded`
+   * only; this component renders no dialog of its own. */
+  dialogOpen: boolean;
 };
 
 /**
  * Compose-kudos pill (mm:2940:13449 `mms_A.1_Button ghi nhận`,
  * https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/MaZUn5xHXZ).
  *
- * Renders as a readonly `<input>`, NOT a button with an `onClick` — the
- * dialog it should open (Figma frame `ihQ26W78P2` "Viết Kudo") does not
- * exist in this repo yet (clarifications.md § Phạm vi F007), so wiring a
- * click handler here would either no-op silently or navigate to a route
- * that isn't real. C03 asserts exactly this shape: one `<input>`,
- * `readonly`, placeholder matching byte-for-byte, a visible icon.
+ * Renders as a readonly `<input>`, NOT a `<button>` — `kudos.spec.ts` C03
+ * asserts exactly this shape: one `<input>`, `readonly`, placeholder
+ * matching byte-for-byte, a visible icon; and an `<input>` nested inside a
+ * `<button>`/`<a>` would be invalid HTML (interactive-in-interactive). The
+ * "Viết Kudo" dialog now exists (phase 13) and is wired straight onto this
+ * same readonly input instead: `onClick`/`onKeyDown` (Enter/Space, same
+ * activation keys `notification-bell.tsx`'s toggle button honors natively)
+ * call `onActivate`, and `aria-haspopup="dialog"` + `aria-expanded`
+ * advertise it to assistive tech — a readonly input is still focusable and
+ * keyboard-reachable, so no `tabIndex` override is needed. `role="button"`
+ * overrides the `<input>`'s implicit `textbox` role, which WAI-ARIA does not
+ * allow to carry `aria-expanded` (`jsx-a11y/role-supports-aria-props`); a
+ * `button` role legitimately does (the same disclosure-button pattern
+ * `notification-bell.tsx`'s real `<button>` uses), and matches this
+ * control's actual behavior — it never accepts typed input.
  */
 export function KudosComposePill({
   placeholder,
   ariaLabel,
+  onActivate,
+  dialogOpen,
 }: KudosComposePillProps) {
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onActivate();
+    }
+  }
+
   return (
     // mm:2940:13449
     <div
@@ -38,9 +67,14 @@ export function KudosComposePill({
         <input
           type="text"
           readOnly
+          role="button"
           aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={dialogOpen}
           placeholder={placeholder}
-          className="w-full bg-transparent font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-white placeholder:text-white focus:outline-none"
+          onClick={onActivate}
+          onKeyDown={handleKeyDown}
+          className="w-full cursor-pointer bg-transparent font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-white placeholder:text-white focus:outline-none"
         />
       </div>
     </div>

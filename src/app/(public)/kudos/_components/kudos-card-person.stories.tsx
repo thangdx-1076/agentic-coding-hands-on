@@ -68,3 +68,22 @@ export const NoAvatarNoDepartment: Story = {
     personRole: "sender",
   },
 };
+
+/** AD-2 / C25 — anonymous sender: `id === null` is `kudos_cards`' only
+ * anonymity signal, and it's the one field this story flips. Avatar,
+ * department, and `kudosReceived` are also `null`/`0` here because that is
+ * what the view itself returns for an anonymous row — not something this
+ * component infers from `id`. Renders the name as plain text, never a
+ * `/profile` link. */
+export const Anonymous: Story = {
+  args: {
+    person: {
+      id: null,
+      fullName: "Một Sunner",
+      avatarUrl: null,
+      department: null,
+      kudosReceived: 0,
+    },
+    personRole: "sender",
+  },
+};

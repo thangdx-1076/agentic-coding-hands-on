@@ -18,6 +18,7 @@
 | F006_ProfilePage | Hồ sơ Sunner (Profile) | mixed | TypeScript | agentic-coding-hands-on | P1 |
 | F007_KudosLiveBoard | Bảng Kudos trực tiếp (`/kudos`) | mixed | TypeScript | agentic-coding-hands-on | P0 |
 | F008_KudosHeartReaction | Thả tim cho Kudos | mixed | TypeScript | agentic-coding-hands-on | P1 |
+| F009_KudosCompose | Viết Kudo (dialog soạn Kudos trên /kudos) | mixed | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
@@ -342,30 +343,77 @@ trong migration để lần sau không phải migrate lại.
 
 ## Summary
 
-- **Total Features**: 8
-- **Total Screens**: 7 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 — screen DUY NHẤT được hai F### cùng tham chiếu; cả bảy đều được ít nhất một F### tham chiếu)
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F008 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008`)
-- **Total Routes**: 1 — ROUTE001 (F001); F004-F008 không có ROUTE### mới (frontend page + Server Action, không route BE nào tự viết)
-- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004) và `ProfileCard` (F006) chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003)
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003 dùng lại BL002); F004-F008 không có BL### mới
-- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp)
+- **Total Features**: 9 (cập nhật 2026-09-08 — thêm F009)
+- **Total Screens**: 8 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 — screen DUY NHẤT được hai F### cùng tham chiếu), SCR008_KudosCompose (F009, mới — dialog không route riêng); cả tám đều được ít nhất một F### tham chiếu
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F009 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008,F009`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004-F009 không có ROUTE### mới (frontend page + Server Action, không route BE nào tự viết — F009 thêm 2 Server Action mới, `createKudo`/`searchSunners`, không phải ROUTE###)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `KudoImage` trên `storage.objects` (F009) đều chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003); F009 mở rộng `Kudo` sẵn có (2 cột ẩn danh) thay vì tạo model mới
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003/F007/F009 dùng lại BL002); F004-F009 không có BL### mới
+- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp); F007/F008 (thả tim) và F009 (gửi Kudo + upload ảnh + ẩn danh) đều mở trục phân quyền GHI mới nhưng CHƯA cấp mã PERM### riêng — chờ `rebuild-spec` Core pass, xem `permissions-matrix.md § /kudos` và `permissions.md § Bổ sung dự kiến`
 - **Languages Detected**: TypeScript
 
 **Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001-F008 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, id_contiguity PASS)
-- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003, F004, F005, F006 chưa có US### (TBD)
-- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile tồn tại trong `screen-flow.md`/`screen-list.md`)
+- [x] All F### codes are unique (F001-F009 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, F009 kế tiếp liền, id_contiguity PASS)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003-F009 chưa có US### chính thức (TBD)
+- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose tồn tại trong `screen-flow.md`/`screen-list.md`)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
-- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004, F005, F006 không có ROUTE### mới)
-- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004) và `ProfileCard` (F006) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004-F009 không có ROUTE### mới)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào; F009 mở rộng `Kudo` sẵn có, không tạo model mới)
 - [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
-- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới; F007/F008/F009 chờ mã core pass, xem Summary)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008; SCR008→F009
 - [x] Every route maps to a feature (F###) — ROUTE001→F001
-- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006
-- [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003)
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006; `Kudo`/`KudoHeart`→F007/F008 (F009 mở rộng `Kudo`)
+- [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003/F007/F009)
 - [x] Every permission maps to a feature (F###) — PERM001-004→F001
+
+### F009: Viết Kudo (dialog soạn Kudos trên /kudos)
+
+**Type**: mixed
+**Description**: Sunner đã đăng nhập mở dialog "Viết Kudo" từ pill trên `/kudos`, chọn người
+nhận, đặt một Danh hiệu, viết lời cảm ơn (toolbar định dạng + `@ + tên`), gắn 1–5 hashtag, đính
+tối đa 5 ảnh, tuỳ chọn gửi ẩn danh, rồi Gửi. Đây là **đường INSERT đầu tiên vào `public.kudos`**
+(policy `kudos_insert_own`, migration `0009`), lần đầu dự án dùng **Supabase Storage** (bucket
+`kudo-images`, migration `0010`), và vá view `kudos_cards` để ẩn danh không rò danh tính người gửi.
+
+**Vì sao đây là outcome RIÊNG, không gộp vào F007**: F007 là bảng đọc công khai; F009 là hành vi
+GHI với actor hẹp hơn (bắt buộc đăng nhập), có màn riêng (dialog SCR008_KudosCompose — frame Figma
+`ihQ26W78P2` mà F007 đã ghi là "chưa build"), schema delta riêng (2 cột ẩn danh + policy ghi +
+bucket), và tạo ra dữ liệu mới thay vì hiển thị dữ liệu có sẵn.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components**: migration `0009_kudos_write_anonymity.sql` + `0010_kudo_images_bucket.sql`
++ `src/dal/{sunner-search,sunner-search-client}.ts` +
+`src/app/(public)/kudos/_actions/{create-kudo,upload-kudo-images,search-sunners}.ts` +
+`kudos/_components/kudos-compose-{dialog,field,footer,form,body,launcher}.tsx`,
+`kudos-{recipient,title,content,hashtag,image,anonymous}-field.tsx`, `kudos-format-toolbar.tsx`,
+`kudos-hashtag-picker.tsx`, `kudos-sunner-options.tsx`, `kudos-keyvisual-band.tsx`,
+`kudo-markdown-text.tsx` (component `kudos-compose-pill.tsx` sửa lại, không mới) +
+`kudos/_hooks/use-kudos-compose-{dialog,form,attachments,content}.ts`, `kudos-compose-draft.ts`,
+`kudos-compose-form-rules.ts`, `use-sunner-suggest.ts` +
+`kudos/_utils/validate-kudo-{draft,images}.ts`, `insert-markdown-marker.ts`, `parse-kudo-markdown.ts`
+
+**Related Screens**:
+- SCR008_KudosCompose: Viết Kudo (dialog soạn Kudos trên /kudos) (mới — dialog phủ trên SCR007_KudosLiveBoard, không route riêng)
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F009_KudosCompose/functional-spec.md § 6` (US001-US004 local, cùng tiền lệ F003-F008)
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — `createKudo`, `searchSunners` là Next.js Server Action, không phải HTTP endpoint có path
+
+**Related Data Models**:
+- `Kudo` (F007) — mở rộng 2 cột `is_anonymous`, `anonymous_name` (migration `0009`); view `kudos_cards` bọc `CASE WHEN is_anonymous` trên cột sender
+- `KudoImage` (`storage.objects`, bucket `kudo-images`, migration `0010`; chưa có MODEL### riêng — cấp bởi core pass kế tiếp)
+- `ProfileCard` (F006, view `profile_cards`) — tái dùng làm nguồn tìm người nhận, đúng 3 cột, không nới SELECT list
+
+**Related Background Logic**:
+- Không có BL### mới — dùng lại `SupabaseServerClient` (BL002) qua DAL mới `src/dal/sunner-search.ts` và Server Action `create-kudo.ts`
+
+**Related Permissions**:
+- TBD (draft) — `kudos_insert_own` (WITH CHECK `sender_id = auth.uid()`), 2 policy `storage.objects` cho bucket `kudo-images` (authenticated INSERT, public SELECT); xem `docs/vi/system/permissions.md § Bổ sung dự kiến — F009_KudosCompose`

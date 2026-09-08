@@ -3,7 +3,7 @@
 **Project**: SAA 2025 — Login
 **Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`, `0006_kudos.sql`, `0007_kudo_hearts.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`, cộng (từ F007_KudosLiveBoard + F008_KudosHeartReaction, 2026-09-07) bảng thứ 4 `public.kudos` + view thứ 5 `public.kudos_cards` (schema ở `0006_kudos.sql`, đọc qua `src/dal/kudos.ts`/`kudos-cards-query.ts`) và bảng thứ 6 `public.kudo_hearts` (schema ở `0007_kudo_hearts.sql`, đọc/ghi qua `src/dal/kudo-hearts.ts` + Server Action `toggleKudoHeart`) — cộng một cột mới `department` (nullable) trên `public.users`, chỉ lộ ra qua view `kudos_cards`, KHÔNG đọc trực tiếp `public.users.department` ở bất kỳ đâu khác trong app. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 7 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 4 do repo định nghĩa qua SQL migration và đọc/ghi qua DAL — `kudos`/`kudo_hearts` là 2 bảng ĐẦU TIÊN trong ERD này có FK thật, xem ghi chú dưới sơ đồ) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`, `0006_kudos.sql`, `0007_kudo_hearts.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`, cộng (từ F007_KudosLiveBoard + F008_KudosHeartReaction, 2026-09-07) bảng thứ 4 `public.kudos` + view thứ 5 `public.kudos_cards` (schema ở `0006_kudos.sql`, đọc qua `src/dal/kudos.ts`/`kudos-cards-query.ts`) và bảng thứ 6 `public.kudo_hearts` (schema ở `0007_kudo_hearts.sql`, đọc/ghi qua `src/dal/kudo-hearts.ts` + Server Action `toggleKudoHeart`) — cộng một cột mới `department` (nullable) trên `public.users`, chỉ lộ ra qua view `kudos_cards`, KHÔNG đọc trực tiếp `public.users.department` ở bất kỳ đâu khác trong app. Từ F009_KudosCompose (2026-09-08): migration `0009_kudos_write_anonymity.sql` thêm 2 cột ghi-only trên `public.kudos` (`is_anonymous boolean NOT NULL DEFAULT false`, `anonymous_name text`, đọc/ghi qua Server Action `createKudo`, `src/app/(public)/kudos/_actions/create-kudo.ts`) và patch `CREATE OR REPLACE VIEW public.kudos_cards` để `CASE WHEN is_anonymous` che 5 cột phía sender; migration `0010_kudo_images_bucket.sql` thêm bucket Supabase Storage đầu tiên của repo (`kudo-images`, đọc/ghi qua `src/app/(public)/kudos/_actions/upload-kudo-images.ts`) — bucket này không có DAL SELECT nào đọc lại nên không lên ERD như một entity riêng, chỉ ghi chú trong mục `KUDOS_KudosCard` bên dưới. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 7 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 4 do repo định nghĩa qua SQL migration và đọc/ghi qua DAL — `kudos`/`kudo_hearts` là 2 bảng ĐẦU TIÊN trong ERD này có FK thật, xem ghi chú dưới sơ đồ) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -192,10 +192,24 @@ trực tiếp, mà là view `public.kudos_cards` (migration `0006_kudos.sql`) jo
 RLS) nên `anon` VÀ `authenticated` đều đọc được — khác `profile_cards` (chỉ `authenticated`), vì
 `/kudos` là trang PUBLIC (BR-015). Danh sách cột tường minh, KHÔNG `SELECT *`: `public.users` còn có
 `email`/`role`/`locale`/`created_at`/`updated_at`, không cột nào trong số đó lọt qua view này. Nguồn:
-`supabase/migrations/0006_kudos.sql` (định nghĩa view), `src/dal/kudos-cards-query.ts` (`CardRow`,
+`supabase/migrations/0006_kudos.sql` (định nghĩa view gốc), `supabase/migrations/0009_kudos_write_anonymity.sql`
+(`CREATE OR REPLACE VIEW` — patch ẩn danh, xem dưới), `src/dal/kudos-cards-query.ts` (`CardRow`,
 `selectCards`), `src/dal/kudos.ts` (`KudosCard`, `KudosPerson`, `toCard` — ráp lại 10 cột phẳng
 `sender_*`/`receiver_*` của view thành 2 object lồng nhau `sender`/`receiver`, thuần app-layer, view
 không có cấu trúc lồng nào ở DB).
+
+**Cập nhật 2026-09-08 (F009_KudosCompose — ẩn danh)**: `public.kudos` có thêm 2 cột ghi-only
+(`is_anonymous boolean NOT NULL DEFAULT false`, `anonymous_name text`) — KHÔNG lộ ra qua
+`KudosCard`/`KudosPerson` như field riêng, mà làm đổi GIÁ TRỊ của 5 cột sender đã có sẵn: khi
+`is_anonymous = true`, view trả `sender_id/sender_avatar_url/sender_department = NULL`,
+`sender_full_name = anonymous_name`, `sender_kudos_received = 0` thay vì dữ liệu thật của
+`public.users` (`CASE WHEN k.is_anonymous`, `0009_kudos_write_anonymity.sql:46-61`). `sender_id
+=== null` là tín hiệu ẩn danh DUY NHẤT ứng dụng cần — không có cột `isAnonymous` boolean riêng nào
+trên `KudosCard`. Hàng gốc trong `public.kudos` vẫn giữ `sender_id` thật (cần cho RLS
+`kudos_insert_own` và audit) — chỉ view này che, đã verify trực tiếp trên Postgres
+(`plans/260907-2338-kudos-write-modal/evidence/migration-transcript.md` § 6(a):
+`SET ROLE anon` đọc lại một hàng vừa bật `is_anonymous` ra đúng `sender_id: NULL`,
+`sender_full_name: anonymous_name`).
 
 | Attribute | Type (as consumed) | Constraints | Description |
 |-----------|------|-------------|-------------|
@@ -205,7 +219,7 @@ không có cấu trúc lồng nào ở DB).
 | imageUrls | `string[]` | NOT NULL, tối đa 5 phần tử (BR-007, ràng buộc UI — KHÔNG phải CHECK constraint ở DB) | Ảnh đính kèm |
 | heartCount | `number` | NOT NULL, `integer` ở DB, default `0` | Denormalized — CHỈ được ghi bởi trigger `sync_kudo_heart_count` (`0007_kudo_hearts.sql`); `authenticated` không có quyền UPDATE trực tiếp trên `kudos` (`REVOKE ALL`, chỉ `GRANT SELECT`) |
 | createdAt | `string` (ISO timestamp) | NOT NULL | Cũng là giá trị cursor keyset của Feed (AD-5 — không dùng `OFFSET`) |
-| sender.id, sender.fullName, sender.avatarUrl, sender.department, sender.kudosReceived | `string` / `string\|null` ×3 / `number` | `id` NOT NULL, còn lại nullable | Người gửi, join qua `kudos.sender_id`; `kudosReceived` là subquery đếm số kudo người NÀY từng NHẬN — không phải cột thật, tính lại mỗi lần đọc view; `department` đọc cột MỚI `public.users.department` (nullable, thêm ở `0006_kudos.sql`) |
+| sender.id, sender.fullName, sender.avatarUrl, sender.department, sender.kudosReceived | `string\|null` / `string\|null` ×3 / `number` | tất cả nullable (từ F009: `id` → `null` khi kudo gửi ẩn danh, AD-2 — trước đó luôn NOT NULL) | Người gửi, join qua `kudos.sender_id`; `kudosReceived` là subquery đếm số kudo người NÀY từng NHẬN (`0` khi ẩn danh) — không phải cột thật, tính lại mỗi lần đọc view; `department` đọc cột MỚI `public.users.department` (nullable, thêm ở `0006_kudos.sql`) |
 | receiver.id, receiver.fullName, receiver.avatarUrl, receiver.department, receiver.kudosReceived | (giống hệt 5 field trên) | (giống hệt trên) | Người nhận, join qua `kudos.receiver_id` — cùng 5 field, cùng nguồn `department` mới |
 
 **Relationships**:
@@ -292,8 +306,10 @@ hiển thị riêng.
 
 | Rule | Field | Constraint | Error Message |
 |------|-------|------------|----------------|
-| Không có UPDATE ngoài trigger | heartCount | `authenticated` không có `GRANT UPDATE` trên `public.kudos` (`REVOKE ALL` rồi chỉ `GRANT SELECT`, `0006_kudos.sql`) — chỉ trigger `SECURITY DEFINER` mới ghi được | N/A — ràng buộc DB, không có message vì app không bao giờ tự ghi cột này |
-| Fail-open | (toàn bộ board) | `getKudosBoard` fail-open trả board rỗng khi Supabase lỗi/không có dòng — không throw | N/A — không có message, trang render empty-state |
+| Không có UPDATE/DELETE trên `kudos` | heartCount, mọi field khác | `authenticated` chỉ có `GRANT SELECT` (từ `0006_kudos.sql`) cộng `GRANT INSERT` own-row (từ `0009_kudos_write_anonymity.sql`, policy `kudos_insert_own`, `WITH CHECK sender_id = auth.uid()`, F009_KudosCompose) — KHÔNG có UPDATE/DELETE nào, kể cả trên hàng của chính mình; `heartCount` chỉ đổi được qua trigger `SECURITY DEFINER` | N/A — ràng buộc DB, không có message vì app không bao giờ tự ghi cột này |
+| Fail-open (đọc) | (toàn bộ board) | `getKudosBoard` fail-open trả board rỗng khi Supabase lỗi/không có dòng — không throw | N/A — không có message, trang render empty-state |
+| Fail-closed (ghi, F009) | (toàn bộ hàng `kudos` mới) | `createKudo` (`src/app/(public)/kudos/_actions/create-kudo.ts`) fail-closed: `!user` → `{ok:false, reason:"unauthenticated"}`; thiếu trường bắt buộc → `{ok:false, reason:"validation"}`; upload ảnh lỗi → `{ok:false, reason:"upload"}`, KHÔNG insert; insert lỗi (kể cả bị RLS `kudos_insert_own` từ chối) → best-effort xoá ảnh đã upload rồi trả `{ok:false, reason:"error"}` — không bao giờ để lại một hàng `kudos` thiếu ảnh | Copy lỗi theo từng trường, xem `docs/vi/features/F009_KudosCompose/functional-spec.md` § 9 |
+| Ẩn danh là view-layer, không phải cột riêng trên `KudosCard` | sender.id, sender.fullName, sender.avatarUrl, sender.department, sender.kudosReceived | `kudos_cards`'s `CASE WHEN is_anonymous` (`0009_kudos_write_anonymity.sql:46-61`) — hàng gốc `public.kudos` vẫn giữ `is_anonymous`/`anonymous_name`/`sender_id` thật, chỉ VIEW che khi đọc | N/A — không phải lỗi, là hành vi hiển thị chủ đích (xem `docs/vi/system/permissions.md`) |
 
 ### KudoHeart
 
@@ -311,3 +327,9 @@ hiển thị riêng.
 
 - **Total Entities**: 7 (4 shape đọc/ghi từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`, view `public.kudos_cards`, bảng `public.kudo_hearts`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
 - **Total Relationships**: 2 FK thật (`kudos.sender_id`/`kudos.receiver_id` → `public.users.id`, biểu diễn qua `KUDOS_KudosCard`; `kudo_hearts.kudo_id` → `kudos.id` VÀ `kudo_hearts.user_id` → `public.users.id`, biểu diễn qua `KUDOS_KudoHeart`) — 2 bảng ĐẦU TIÊN trong ERD này có FK ở tầng DB, chỉ 1 cạnh (`KUDOS_KudosCard ||--o{ KUDOS_KudoHeart`) được vẽ trong sơ đồ vì `public.users` không có node riêng trong ERD (xem ghi chú dưới sơ đồ); 5 shape còn lại vẫn 0 FK như trước
+- **F009_KudosCompose (2026-09-08)**: không thêm entity mới vào ERD — mở rộng `public.kudos` (2 cột
+  ghi-only `is_anonymous`/`anonymous_name`, đọc/ghi qua `createKudo`) và thêm bucket Supabase Storage
+  `kudo-images` (`0010_kudo_images_bucket.sql`) — bucket này không có DAL SELECT nào đọc lại
+  (`upload`/`getPublicUrl`/`remove` only qua `upload-kudo-images.ts`), nên không đủ điều kiện thành
+  một ERD node riêng theo tiêu chí "data shape thật sự tồn tại trong source" đã áp dụng ở đầu tài
+  liệu; ghi chú đầy đủ ở mục `KUDOS_KudosCard` phía trên.
