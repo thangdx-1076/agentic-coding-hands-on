@@ -1041,3 +1041,11 @@
 - **Shipped**: PR https://github.com/thangdx-1076/agentic-coding-hands-on/pull/21, issue #20,
   version 0.8.2 → 0.8.3, 11 commit, evidence gate SEALED (hard), reviewer SEALED 9/10 · 0 critical.
   Bump patch theo tiền lệ PR #19 (cũng là feature), không phải minor.
+- **CI đỏ sau khi ship, đã sửa (commit `3d56180`)**: CI chạy `pnpm lint --max-warnings 0` nên 3
+  warning `playwright/no-useless-not` trong `tests/e2e/secret-box.spec.ts` làm đỏ job Quality, dù
+  `pnpm lint` local exit 0. Tôi đã thấy 3 warning đó suốt session và mỗi lần đều gạt đi là "style,
+  có sẵn, file read-only" — sai cả hai: file do session này viết, và CI thì zero-warning. Sửa
+  `not.toBeVisible()` → `toBeHidden()`. Sửa xong mới lộ tiếp `pnpm format:check` cũng đỏ ở 3 file —
+  step này **chưa từng chạy local** vì job CI chết ở Lint trước khi tới nó, và `build-storybook`
+  cũng chưa từng chạy. Giờ CI xanh cả 2 job. Đã lưu memory
+  `ci-quality-job-is-stricter-than-local-pnpm-lint` với đủ 6 lệnh của job Quality.
