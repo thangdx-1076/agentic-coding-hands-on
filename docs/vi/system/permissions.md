@@ -5,12 +5,9 @@ created: 2026-09-06
 lang: vi
 ---
 <!--
-FORWARD-DRAFT NOTICE (F007_KudosLiveBoard + F008_KudosHeartReaction,
-plans/260907-1725-kudos-live-board):
-Nội dung dưới đây là bản SAO NGUYÊN VĂN của `docs/vi/system/permissions.md` (đọc 2026-09-07), cộng
-CHỈ phần delta mà F007/F008 giới thiệu. Mọi dòng gốc giữ nguyên 100% — không sửa, không xoá.
-Phần MỚI nằm trọn trong mục cuối file. File này CHƯA merge vào `docs/vi/system/permissions.md` thật;
-nó được promote ở implement-start và được đối chiếu lại với as-built ở Delivery.
+RECONCILED (F010_SecretBoxModal, plans/260908-1337-secret-box-modal): mục cuối file bên dưới
+("Bổ sung dự kiến — SecretBoxModal") đã được đối chiếu lại với as-built sau khi feature merge —
+không còn là forward-draft. Mọi dòng gốc phía trên giữ nguyên 100%.
 -->
 
 
@@ -393,3 +390,73 @@ promote — KHÔNG đoán số:
   `sender_full_name` thật") NAY ĐÃ THOẢ, xem xác nhận ở mục trên
   (`migration-transcript.md § 6(a)` + e2e C25) — mã `PERM###` chính thức
   vẫn chờ `rebuild-spec` Core pass kế tiếp cấp, KHÔNG tự đặt số ở đây.
+
+## Bổ sung dự kiến — SecretBoxModal
+
+> **[F010_SecretBoxModal — đã merge]** Delta của feature đã build xong trong
+> `plans/260908-1337-secret-box-modal/`. Quyết định gốc: `clarifications.md § Session 260908`.
+> Mã feature `F010` đã cấp ở `feature-list.md`; PERM### riêng cho các bề mặt bên dưới vẫn chờ
+> Core `rebuild-spec` pass — KHÔNG tự đoán số ở đây.
+
+### Bảng mới `public.secret_box_openings` — log mở hộp, đọc own-row only
+
+Migration `0011` thêm `public.secret_box_openings(user_id, badge_key, opened_at)`, RLS bật.
+Trục đọc mirror đúng pattern RLS own-row đã có từ `public.users` (`0001`): một viewer chỉ SELECT
+được đúng hàng của chính mình (`user_id = auth.uid()`), không có cách nào đọc lượt mở hộp của
+người khác qua bảng này — không cần view SECURITY DEFINER nào cho đường đọc, khác `profile_cards`/
+`kudos_cards` (2 view đó tồn tại vì cần phơi dữ liệu CỦA NGƯỜI KHÁC; log mở hộp thì không, mỗi
+người chỉ cần thấy đúng lượt mở của chính mình).
+
+### Ghi CHỈ qua RPC `open_secret_box()` — SECURITY DEFINER được GỌI, khác trigger `0007`
+
+Client KHÔNG BAO GIỜ insert trực tiếp vào `secret_box_openings`. Ghi duy nhất đi qua một hàm
+Postgres `open_secret_box()`, `SECURITY DEFINER` cộng `SET search_path` (cùng guard chống
+privilege-escalation mà `0002_handle_new_user_trigger.sql` đã dùng). Đây là hàm `SECURITY
+DEFINER` ĐẦU TIÊN của dự án được GỌI TRỰC TIẾP bởi client — `0007`'s `sync_kudo_heart_count`
+cũng `SECURITY DEFINER` nhưng là TRIGGER (chạy khi có INSERT/DELETE trên `kudo_hearts`, không ai
+gọi nó bằng tên); `open_secret_box()` là một lệnh gọi có chủ đích, khác cơ chế kích hoạt hoàn toàn.
+
+### Entitlement luôn tính lại phía server — không tin số hay ảnh badge từ client
+
+Số hộp có thể mở (`floor(sum(kudos.heart_count WHERE sender_id = viewer)/5) − count(own
+openings)`) được tính lại BÊN TRONG cùng transaction với lượt INSERT, không nhận bất kỳ tham số
+đếm nào từ client. Đây là yêu cầu trực tiếp từ 2 test case của MoMorph: `5cc072ad` (client sửa số
+hộp không được chấp nhận) và `2e7bec78` (client sửa URL ảnh badge không được chấp nhận) — cả hai
+buộc chỗ tính toán phải nằm ngoài tầm với của client, đúng lý do `open_secret_box()` là một hàm
+Postgres chứ không phải một Server Action tính rồi mới ghi.
+
+### Chống double-click — `pg_advisory_xact_lock` theo user
+
+Hai lượt gọi gần như đồng thời của cùng một viewer (double-click) được serialize bằng
+`pg_advisory_xact_lock` khoá theo `user_id`, trong cùng transaction đọc-lại-entitlement-rồi-ghi ở
+trên — không có khoảng hở giữa "đọc số hộp còn lại" và "ghi lượt mở" mà một request thứ hai có thể
+chen vào.
+
+### `/kudos` vẫn PUBLIC — Secret Box ẩn hoàn toàn với khách chưa đăng nhập, không cần guard riêng
+
+Không có route-guard mới, không có permission-item route-level mới. `KudosStatList`
+(`kudos-stat-list.tsx:65-68`) đã trả `null` cho toàn bộ khối thống kê (kể cả nút "Mở Secret Box")
+khi `stats === null` — tức là khách chưa đăng nhập không thấy nút này tồn tại trên DOM, không phải
+một nút disabled. Test case `e6a59553` và `1c266552` thoả mãn nhờ đúng hành vi có sẵn này, không
+cần thêm một điều kiện client nào. Người đã đăng nhập mà `secretBoxUnopened === 0` thấy nút
+**visible nhưng disabled** (giữ nguyên pattern `title` giải thích sẵn có) — modal không mở được ở
+0, thoả test case `84a5ba82` case 4.
+
+### Phạm vi: `/profile` KHÔNG được cấp bề mặt nào trong feature này
+
+Nút "Mở Secret Box" trên `/profile` (`profile-statistics-card.tsx`, mm:362:5082) giữ nguyên
+`disabled` — feature này CHỈ chạm `/kudos`. Lý do là dữ liệu, không phải sở thích: `/profile`
+chưa có đường ống stats thật cho viewer (`ProfileStatisticsCard` không nhận prop stats nào, render
+`0` hardcode), nên bật nút ở đó là một feature khác, kéo theo viết lại 2 test case đã ship
+(`profile.spec.ts:40-41`, C6/C7 — giá trị `0` cố định + nút disabled trong MỌI trường hợp). Hai
+contract đó KHÔNG bị chạm bởi feature này. Ghi nợ tại `clarifications.md § Unresolved`.
+
+### Bề mặt cần cấp PERM### thật khi promote
+
+`PERM001`–`PERM004` đã dùng (F001–F006); F008/F009 vẫn `TBD (draft)`. SecretBoxModal thêm các bề
+mặt mới dưới đây, cũng chờ mã ở bước promote — KHÔNG đoán số:
+
+- đọc lượt mở hộp của chính mình trên `secret_box_openings` (RLS own-row)
+- gọi `open_secret_box()` khi đã đăng nhập và còn hộp chưa mở
+- chặn gọi `open_secret_box()` khi chưa đăng nhập
+- chặn mở vượt entitlement (kể cả khi client gửi số/URL badge giả)

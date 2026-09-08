@@ -19,6 +19,7 @@
 | F007_KudosLiveBoard | Bảng Kudos trực tiếp (`/kudos`) | mixed | TypeScript | agentic-coding-hands-on | P0 |
 | F008_KudosHeartReaction | Thả tim cho Kudos | mixed | TypeScript | agentic-coding-hands-on | P1 |
 | F009_KudosCompose | Viết Kudo (dialog soạn Kudos trên /kudos) | mixed | TypeScript | agentic-coding-hands-on | P1 |
+| F010_SecretBoxModal | Mở Secret Box trên /kudos | mixed | TypeScript | agentic-coding-hands-on | P2 |
 
 ## Feature Details
 
@@ -343,31 +344,31 @@ trong migration để lần sau không phải migrate lại.
 
 ## Summary
 
-- **Total Features**: 9 (cập nhật 2026-09-08 — thêm F009)
-- **Total Screens**: 8 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 — screen DUY NHẤT được hai F### cùng tham chiếu), SCR008_KudosCompose (F009, mới — dialog không route riêng); cả tám đều được ít nhất một F### tham chiếu
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F009 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008,F009`)
-- **Total Routes**: 1 — ROUTE001 (F001); F004-F009 không có ROUTE### mới (frontend page + Server Action, không route BE nào tự viết — F009 thêm 2 Server Action mới, `createKudo`/`searchSunners`, không phải ROUTE###)
-- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `KudoImage` trên `storage.objects` (F009) đều chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003); F009 mở rộng `Kudo` sẵn có (2 cột ẩn danh) thay vì tạo model mới
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003/F007/F009 dùng lại BL002); F004-F009 không có BL### mới
-- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp); F007/F008 (thả tim) và F009 (gửi Kudo + upload ảnh + ẩn danh) đều mở trục phân quyền GHI mới nhưng CHƯA cấp mã PERM### riêng — chờ `rebuild-spec` Core pass, xem `permissions-matrix.md § /kudos` và `permissions.md § Bổ sung dự kiến`
+- **Total Features**: 10 (cập nhật 2026-09-08 — thêm F010)
+- **Total Screens**: 8 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 + F010 — screen được BA F### cùng tham chiếu, F010 chỉ mở modal phủ trên, không có SCR### riêng), SCR008_KudosCompose (F009 — dialog không route riêng); cả tám đều được ít nhất một F### tham chiếu
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F010 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008,F009,F010`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004-F010 không có ROUTE### mới (frontend page + Server Action/RPC, không route BE nào tự viết — F009 thêm 2 Server Action mới, `createKudo`/`searchSunners`; F010 thêm 1 Server Action `openSecretBoxAction` gọi `.rpc("open_secret_box")`, không phải ROUTE###)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `KudoImage` trên `storage.objects` (F009), `SecretBoxOpening` (F010, bảng `public.secret_box_openings`) đều chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003); F009 mở rộng `Kudo` sẵn có (2 cột ẩn danh) thay vì tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không ghi thêm cột nào lên đó
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003/F007/F009 dùng lại BL002); F004-F010 không có BL### mới (RPC `open_secret_box()` của F010 là hàm Postgres `SECURITY DEFINER`, logic trong DB, không phải BL### client)
+- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp); F007/F008 (thả tim), F009 (gửi Kudo + upload ảnh + ẩn danh) và F010 (RPC `open_secret_box`, chỉ `authenticated` được `GRANT EXECUTE`) đều mở trục phân quyền GHI mới nhưng CHƯA cấp mã PERM### riêng — chờ `rebuild-spec` Core pass, xem `permissions-matrix.md § /kudos` và `permissions.md § Bổ sung dự kiến`
 - **Languages Detected**: TypeScript
 
 **Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001-F009 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, F009 kế tiếp liền, id_contiguity PASS)
-- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003-F009 chưa có US### chính thức (TBD)
+- [x] All F### codes are unique (F001-F010 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, F009 kế tiếp liền, F010 kế tiếp liền, id_contiguity PASS)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003-F010 chưa có US### chính thức (TBD)
 - [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose tồn tại trong `screen-flow.md`/`screen-list.md`)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
-- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004-F009 không có ROUTE### mới)
-- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào; F009 mở rộng `Kudo` sẵn có, không tạo model mới)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004-F010 không có ROUTE### mới)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `SecretBoxOpening` (F010) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào; F009 mở rộng `Kudo` sẵn có, không tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không tạo model mới)
 - [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
-- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới; F007/F008/F009 chờ mã core pass, xem Summary)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới; F007/F008/F009/F010 chờ mã core pass, xem Summary)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008; SCR008→F009
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008+F010; SCR008→F009
 - [x] Every route maps to a feature (F###) — ROUTE001→F001
-- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006; `Kudo`/`KudoHeart`→F007/F008 (F009 mở rộng `Kudo`)
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006; `Kudo`/`KudoHeart`→F007/F008 (F009 mở rộng `Kudo`, F010 chỉ đọc); `SecretBoxOpening`→F010
 - [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003/F007/F009)
 - [x] Every permission maps to a feature (F###) — PERM001-004→F001
 
@@ -417,3 +418,62 @@ bucket), và tạo ra dữ liệu mới thay vì hiển thị dữ liệu có s�
 
 **Related Permissions**:
 - TBD (draft) — `kudos_insert_own` (WITH CHECK `sender_id = auth.uid()`), 2 policy `storage.objects` cho bucket `kudo-images` (authenticated INSERT, public SELECT); xem `docs/vi/system/permissions.md § Bổ sung dự kiến — F009_KudosCompose`
+
+---
+
+### F010: Mở Secret Box trên /kudos
+
+**Type**: mixed
+**Description**: Người dùng Kudos đã đăng nhập mở modal Secret Box trên `/kudos`, bấm vào box để
+máy chủ rút ngẫu nhiên 1 trong 6 huy hiệu và ghi lại lượt mở. Entitlement tính theo lượt tim chính
+người dùng đã GỬI (không phải nhận) — cứ 5 lượt tim thì được thêm 1 hộp. Toàn bộ tính entitlement,
+rút ngẫu nhiên có trọng số, và chống double-click/đa tab chạy trong một hàm Postgres `SECURITY
+DEFINER` mới (`open_secret_box()`, migration `0011`) — `.rpc()` đầu tiên của repo.
+
+**Vì sao đây là outcome RIÊNG, không gộp vào F007/F008**: F007 là bảng đọc công khai; F008 là ghi
+tim phục vụ người NHẬN kudo. F010 phục vụ chính người GỬI kudo, đổi lượt tim tích luỹ thành phần
+thưởng cụ thể (huy hiệu) qua một bảng ghi riêng (`secret_box_openings`) và một hàm RPC `SECURITY
+DEFINER` riêng — không phải hệ quả đọc lại dữ liệu của F007/F008 mà là một ý định người dùng độc
+lập (mở hộp để nhận thưởng).
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components** *(implemented — đã merge, xác nhận theo code thật)*: migration
+`0011_secret_box.sql` + `src/dal/secret-box.ts` + `src/dal/secret-box-client.ts` +
+`src/dal/kudos-stats.ts` (mở rộng) +
+`src/app/(public)/kudos/_components/{secret-box-launcher,secret-box-dialog}.tsx` +
+`src/app/(public)/kudos/_hooks/use-secret-box-dialog.ts` +
+`src/app/(public)/kudos/_actions/open-secret-box.ts` +
+`src/app/(public)/kudos/_utils/secret-box-badge-asset.ts` (khai báo lại 6 badge cục bộ, KHÔNG dời
+`standards/_shared/standards-copy.ts` như bản draft từng giả định) +
+`src/app/(public)/kudos/_shared/build-kudos-copy.ts` (mở rộng)
+
+**Related Screens**:
+- SCR007_KudosLiveBoard: Bảng Kudos trực tiếp (modal phủ trên board có sẵn, không có SCR### riêng
+  — dùng chung với F007/F008)
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F010_SecretBoxModal/functional-spec.md § 7` (US001-US003
+  local, cùng tiền lệ F007-F009)
+
+**Related APIs/Routes**:
+- Không có ROUTE### mới — `openSecretBoxAction` là Next.js Server Action gọi
+  `.rpc("open_secret_box")`, không phải HTTP endpoint có path
+
+**Related Data Models**:
+- `SecretBoxOpening` (bảng `public.secret_box_openings`, migration `0011`; chưa có MODEL### riêng
+  — cấp bởi core pass kế tiếp, xem `entities.md`)
+- `Kudo` (F007) — chỉ đọc `sender_id`, `heart_count` để tính entitlement, không ghi thêm cột nào
+
+**Related Background Logic**:
+- Không có BL### mới — RPC `open_secret_box()` là hàm Postgres `SECURITY DEFINER`, logic nằm
+  trong DB, không phải BL### client (cùng lý do trigger `sync_kudo_heart_count` của F008)
+
+**Related Permissions**:
+- TBD (draft) — RPC `REVOKE ALL ... FROM anon, PUBLIC` rồi `GRANT EXECUTE ... TO authenticated`;
+  không phải route-guard nên không gia nhập PERM001-004; mã chính thức để `rebuild-spec` Core pass
+  kế tiếp cấp, cùng tiền lệ F007/F008/F009. Xem `docs/vi/system/permissions.md`.
+
+**Ngoài phạm vi**: nút "Mở Secret Box" trên `/profile` (giữ `disabled` — chưa có đường ống stats
+thật, xem `functional-spec.md § 3` D002); phản chiếu huy hiệu vừa nhận vào `BadgeCollection` của
+`/profile` (D003) — bảng `secret_box_openings` đã đủ dữ liệu để làm sau, ngoài scope PR này.

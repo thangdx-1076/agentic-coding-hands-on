@@ -2,7 +2,7 @@
 feature: F000
 phase: 05
 title: "Tích hợp — launcher, số thật ở page.tsx, copy i18n, lật contract kudos.spec"
-status: pending
+status: completed
 priority: P1
 effort: 2h
 test_policy: e2e-red-first

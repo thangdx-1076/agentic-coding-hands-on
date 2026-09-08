@@ -2,7 +2,7 @@
 feature: F000
 phase: 06
 title: "Cổng kiểm chứng full-suite + đồng bộ docs"
-status: pending
+status: completed
 priority: P2
 effort: 1h
 test_policy: e2e-red-first

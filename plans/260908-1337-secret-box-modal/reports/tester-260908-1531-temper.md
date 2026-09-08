@@ -86,6 +86,26 @@ The secret box feature is **fully implemented, tested, and passing**:
 
 ---
 
+## Re-run after C19 Fix (Commit 6c8ee57)
+
+**Date:** 2026-09-08 15:47 (after C19 paging sentinel fix)
+
+The pre-existing kudos.spec.ts C19 test was fixed via bounded scroll loop + `toHaveCount(0)` assertion. Re-ran full suite:
+
+| Command | Exit | Status | Summary |
+|---------|------|--------|---------|
+| `pnpm lint` | 0 | ✓ PASS | 0 errors, 3 warnings (no new errors from C19 fix) |
+| `pnpm run test:e2e` | 0 | ✓ PASS | 188 passed, 4 skipped, 0 failed — C19 now passing |
+
+**Evidence Gate Result:**
+```
+evidence-gate: SEALED (hard) — evidence verified
+```
+
+**Final Verdict: ✓ ALL GREEN — READY TO SHIP**
+
+---
+
 **Artifacts:**
-- temper-results.json: Full command run records with real exit codes
+- temper-results.json: Full command run records with real exit codes (all 6 commands passing)
 - Evidence links: All 14 secret-box spec tests recorded in runner output

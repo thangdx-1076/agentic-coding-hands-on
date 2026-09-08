@@ -2,7 +2,7 @@
 feature: F000
 phase: 02
 title: "Migration 0011 — bảng secret_box_openings + RLS + open_secret_box RPC"
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 track: B

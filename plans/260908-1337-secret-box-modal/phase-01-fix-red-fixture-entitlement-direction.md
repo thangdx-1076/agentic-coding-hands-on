@@ -2,7 +2,7 @@
 feature: F000
 phase: 01
 title: "Sửa hướng seed của RED fixture (BLOCKING GATE)"
-status: pending
+status: completed
 priority: P1
 effort: 30m
 test_policy: e2e-red-first

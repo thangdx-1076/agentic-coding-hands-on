@@ -153,6 +153,23 @@
         "bl": [],
         "perms": []
       }
+    },
+    {
+      "fcode": "F010",
+      "name": "Mở Secret Box trên /kudos",
+      "slug": "F010_SecretBoxModal",
+      "priority": "P2",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR007_KudosLiveBoard"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
     }
   ]
 }

@@ -1,14 +1,14 @@
 ---
 title: "Secret Box modal trên /kudos — mở hộp, nhận huy hiệu"
 description: "Bật nút Mở Secret Box trên /kudos: modal 2 state, rút 1/6 huy hiệu bằng Postgres SECURITY DEFINER RPC, entitlement theo lượt tim đã GỬI."
-status: pending
+status: completed
 priority: P2
 effort: 10h
 branch: feat/secret-box-modal
 tags: [secret-box, kudos, momorph, e2e-red-first, supabase-rpc, migration]
 created: 2026-09-08
 work_type: feature
-spec_draft: plans/260908-1337-secret-box-modal/spec/secret-box-modal/
+spec: docs/vi/features/F010_SecretBoxModal/
 system_docs:
   - plans/260908-1337-secret-box-modal/spec/system/permissions.md
   - plans/260908-1337-secret-box-modal/spec/system/architecture.md
@@ -16,7 +16,7 @@ system_docs:
 
 # Secret Box modal trên /kudos
 
-Feature mới, chưa có F### (cấp ở promote; placeholder `F000_SecretBoxModal`). Người dùng đã đăng
+Feature mới, đã cấp **F010** ở promote (`docs/vi/features/F010_SecretBoxModal/`). Người dùng đã đăng
 nhập trên `/kudos` mở modal, bấm box để **máy chủ** rút 1 trong 6 huy hiệu và ghi lượt mở. Toàn bộ
 entitlement + rút thăm + chống double-click nằm trong `open_secret_box()` (`SECURITY DEFINER`) —
 `.rpc()` đầu tiên của repo.
@@ -31,12 +31,12 @@ entitlement + rút thăm + chống double-click nằm trong `open_secret_box()` 
 
 | # | Phase | Status | Effort | Depends on |
 |---|---|---|---|---|
-| 01 | [Sửa hướng seed của RED fixture](./phase-01-fix-red-fixture-entitlement-direction.md) | pending | 30m | — |
-| 02 | [Migration 0011 — bảng + RLS + RPC](./phase-02-migration-0011-secret-box-openings-and-rpc.md) | pending | 1.5h | — |
-| 03 | [Track A — dialog trình bày + hook + asset](./phase-03-secret-box-dialog-presentational.md) | pending | 3h | — |
-| 04 | [Track B — DAL + server action](./phase-04-secret-box-dal-and-server-action.md) | pending | 2h | 02 |
-| 05 | [Tích hợp — launcher, số thật, copy](./phase-05-integrate-launcher-counts-and-copy.md) | pending | 2h | 01, 03, 04 |
-| 06 | [Cổng kiểm chứng + đồng bộ docs](./phase-06-verification-and-docs-sync.md) | pending | 1h | 05 |
+| 01 | [Sửa hướng seed của RED fixture](./phase-01-fix-red-fixture-entitlement-direction.md) | completed | 30m | — |
+| 02 | [Migration 0011 — bảng + RLS + RPC](./phase-02-migration-0011-secret-box-openings-and-rpc.md) | completed | 1.5h | — |
+| 03 | [Track A — dialog trình bày + hook + asset](./phase-03-secret-box-dialog-presentational.md) | completed | 3h | — |
+| 04 | [Track B — DAL + server action](./phase-04-secret-box-dal-and-server-action.md) | completed | 2h | 02 |
+| 05 | [Tích hợp — launcher, số thật, copy](./phase-05-integrate-launcher-counts-and-copy.md) | completed | 2h | 01, 03, 04 |
+| 06 | [Cổng kiểm chứng + đồng bộ docs](./phase-06-verification-and-docs-sync.md) | completed | 1h | 05 |
 
 **Wave 1 (song song):** 01 ∥ 02 ∥ 03 · **Wave 2:** 04 (sau 02, vẫn ∥ 03) · **Wave 3:** 05 · **Wave 4:** 06
 

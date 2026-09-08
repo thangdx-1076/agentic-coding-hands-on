@@ -2,7 +2,7 @@
 feature: F000
 phase: 04
 title: "Track B — DAL secret-box, mở rộng kudos-stats, server action"
-status: pending
+status: completed
 priority: P1
 effort: 2h
 track: B

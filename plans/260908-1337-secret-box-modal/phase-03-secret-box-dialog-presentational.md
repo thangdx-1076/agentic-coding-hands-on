@@ -2,7 +2,7 @@
 feature: F000
 phase: 03
 title: "Track A — SecretBoxDialog trình bày + hook + 2 asset MoMorph"
-status: pending
+status: completed
 priority: P1
 effort: 3h
 track: A
