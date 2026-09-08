@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { LoginScreen } from "./login-screen";
 
 /**
- * Story route cho `/login` (FR-005, US004) — `LoginScreen` đã là component
+ * Story route cho `/login` (FR-001/FR-101, US002_LoginWithGoogle) — `LoginScreen` đã là component
  * trình bày thuần với mọi prop có default là copy `vi` của Figma
  * (`defaultLoginCopy`), nên `Default` chỉ cần override hai callback để
  * click không ném lỗi trong Storybook. Đăng nhập được mock qua prop

@@ -5,7 +5,7 @@ export type TodoScreenProps = {
 };
 
 /**
- * Phần trình bày thuần của `/todo` (US004), tách khỏi `app/todo/page.tsx` để
+ * Phần trình bày thuần của `/todo` (FR-301/FR-302, US002_LoginWithGoogle), tách khỏi `app/todo/page.tsx` để
  * Storybook dựng được — component gốc phải đợi dữ liệu xong mới render nên
  * Storybook không render trực tiếp được. Component này render ngay, không
  * đổi ranh giới client/server, không biết gì về tầng xác thực hay tầng đa

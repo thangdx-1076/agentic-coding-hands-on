@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * `/awards` public route entry point (mm:313:8436, FR-004/BR-001). Mirrors
+ * `/awards` public route entry point (mm:313:8436, FR-001/BR-001). Mirrors
  * `(home)/page.tsx`'s shape: a Server Component reads session, role, and
  * localized copy, then hands every interactive concern to `AwardsClient` —
  * `AwardsScreen`'s function props can't cross a Server Component render.

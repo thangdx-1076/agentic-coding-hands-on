@@ -7,7 +7,7 @@ import { TodoScreen } from "./_components/todo-screen";
 import { getCurrentUser } from "@/dal/auth";
 
 /**
- * Protected `/todo` placeholder (FR-301/FR-302/FR-603/US004). No todo
+ * Protected `/todo` placeholder (FR-301/FR-302/FR-603, US002_LoginWithGoogle). No todo
  * feature is implemented here per clarifications — this page exists
  * solely to prove the auth guard end-to-end: greet the signed-in user's
  * email and offer logout.
