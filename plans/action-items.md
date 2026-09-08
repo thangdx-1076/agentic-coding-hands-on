@@ -1166,6 +1166,11 @@
 - Redirect non-GET/HEAD dùng 303, không phải 307. 307 giữ method nên Server Action POST bị POST lại
   sang `/prelaunch` và trả 404 `x-nextjs-action-not-found`.
 - 3 module countdown nâng từ `(home)/_*` lên shared layer vì đã có route thứ hai dùng.
+- Version 0.8.3 → 0.9.0 (minor). Tiền lệ: mỗi màn mới đều minor — 0.4.0 awards, 0.5.0 standards,
+  0.6.0 profile, 0.7.0 kudos. Không hỏi lại vì không mất dữ liệu/tiền/secret.
+- Quyết định `redirectStatusFor` sống trong `src/domain/` chứ không inline trong `proxy.ts`: đó là
+  glob duy nhất mà gate coverage 100% với tới được, nên bug 303 mới có lưới CI thật.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/22
 
 ### Nợ lại
 
