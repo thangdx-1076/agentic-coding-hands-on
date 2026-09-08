@@ -1225,3 +1225,48 @@ người; dưới đây là những gì thực sự còn đúng và đã xử l�
   nào cited trong `src/` mà thiếu trong `docs/vi/`.
 - `docs/vi/system/overview.md` stale: viết lại, mọi citation `path:line` đã mở kiểm.
 - Nút tim thiếu guard in-flight: đã vá, 3 test, đã kiểm test bắt được bug thật.
+
+## 260909-0105 — review logic & design
+
+Reviewer soi 6 commit vá nợ (trước đó chưa qua review lần nào): 0 critical, 2 high, 2 medium.
+Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi reviewer trả lời.
+
+### Tôi cần làm
+
+- [ ] `kudos-compose` C23 và `profile` C2a flake ở full suite (2 lần đỏ / ~8 lượt chạy hôm nay; 3 lượt
+      cuối liên tiếp đều 194 pass). Nguyên nhân có tên: cả hai assert "dòng tôi vừa tạo xuất hiện trong
+      feed dùng chung", trong khi worker khác đang xoá/ghi cùng feed. Block `@local-db` của
+      `kudos-compose` **đã** `mode: "serial"` (dòng 777) — nhưng `mode: "serial"` chỉ serialize trong
+      một describe, không chặn `kudos-compose` chạy song song `kudos.spec`. Muốn diệt hẳn thì phải cho
+      cả tier `@local-db` về một worker (project riêng `workers: 1`), là đổi config có ảnh hưởng rộng.
+      **CI không dính** — `.github/workflows/ci.yml` loại hẳn `@auth|@local-db` bằng `--grep-invert`.
+      Nên tôi để nguyên và báo, chứ không tự đổi config vì một flake chỉ có ở máy local.
+      Lưu ý trung thực: cleanup mới có thể làm lộ flake này rõ hơn — trước đây row test tích tụ nên
+      feed ổn định giả tạo, giờ xoá ngay nên feed biến động thật.
+
+### Decisions
+
+- `redirectStatusFor` chuyển từ `src/domain/prelaunch-lock.ts` sang `src/utils/http/redirect-status.ts`.
+  Hàm này không biết gì về prelaunch — docblock của chính nó thừa nhận đặt ở domain chỉ vì đó là nơi
+  coverage với tới. `src/utils/**` cũng trong allowlist nên được cả hai: đúng cohesion, vẫn có lưới CI.
+  (Reviewer chấm "no action needed"; tôi không đồng ý và vẫn chuyển — trade-off đó không cần thiết.)
+- Bỏ 4 lệnh DELETE thủ công trong `deleteTestUser`, dựa vào cascade. Đã kiểm `pg_constraint`:
+  `public.users.id -> auth.users` và `kudos`/`kudo_hearts`/`secret_box_openings -> public.users` đều
+  `ON DELETE CASCADE`. Comment cũ của tôi giải thích **ngược** — nói xoá user trước sẽ bỏ sót row.
+- `getServiceRoleKey` không memo hoá thất bại nữa. Cache `null` là tái tạo đúng con bug im lặng mà
+  helper này sinh ra để diệt: một lần `supabase status` trượt vì Docker chưa lên là cả worker tắt
+  cleanup tới hết lượt.
+- `use-countdown` + `countdown-tiles` hạ một rung từ Zone A xuống `(public)/_hooks|_components`.
+  Luật thang bậc nói lấy segment chung sâu nhất — cả 2 consumer đều dưới `(public)` — và checklist
+  reviewer của chính skill ghi phải **fail review** khi có business noun dưới `src/components|hooks|utils`.
+  `src/components/` biến mất, nó vốn chỉ được tạo ra để chứa widget này. `src/utils/countdown.ts` ở
+  lại Zone A vì `src/proxy.ts` cần, mà Zone A không được import `src/app`.
+
+### Nợ đã đóng
+
+- **Rò storage bucket** — tôi tự bắt: commit trước đo `users`/`kudos` thấy đứng yên rồi tuyên bố hết
+  rò, nhưng `storage.objects` không có FK về `auth.users` nên 100 object mồ côi vẫn nằm đó, +2 mỗi
+  lượt. Đã dọn và vá. Giờ đo đủ 5 bảng: users 21, kudos 12, hearts 31, objects 0, openings 0 — đứng
+  yên qua 2 lượt full suite.
+- Citation trong 5 file docs trỏ sai sau khi di chuyển file; đã quét lại, mọi `path:line` trong F011
+  specs + system docs đều resolve.
