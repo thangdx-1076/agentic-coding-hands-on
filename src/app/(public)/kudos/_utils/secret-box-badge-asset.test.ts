@@ -57,9 +57,7 @@ describe("isBadgeKey", () => {
 describe("secretBoxBadgeAssetLabel", () => {
   it("Title Case hoá kebab key thành tên hiển thị", () => {
     expect(secretBoxBadgeAssetLabel("stay-gold")).toBe("Stay Gold");
-    expect(secretBoxBadgeAssetLabel("flow-to-horizon")).toBe(
-      "Flow To Horizon",
-    );
+    expect(secretBoxBadgeAssetLabel("flow-to-horizon")).toBe("Flow To Horizon");
     expect(secretBoxBadgeAssetLabel("beyond-the-boundary")).toBe(
       "Beyond The Boundary",
     );

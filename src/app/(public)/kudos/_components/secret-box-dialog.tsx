@@ -114,7 +114,10 @@ export function SecretBoxDialog({
       </div>
 
       {/* mm:1466:7680 */}
-      <div aria-hidden="true" className="h-px w-full shrink-0 bg-login-divider" />
+      <div
+        aria-hidden="true"
+        className="h-px w-full shrink-0 bg-login-divider"
+      />
 
       {/* mm:1466:7681 (B) — hidden entirely when nothing is left to open. */}
       {canOpen && (
@@ -171,7 +174,10 @@ export function SecretBoxDialog({
       </button>
 
       {/* mm:1466:7688 */}
-      <div aria-hidden="true" className="h-px w-full shrink-0 bg-login-divider" />
+      <div
+        aria-hidden="true"
+        className="h-px w-full shrink-0 bg-login-divider"
+      />
 
       {/* mm:1466:7689 (D) */}
       <div className="flex shrink-0 items-center gap-1.5">

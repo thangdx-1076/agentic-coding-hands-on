@@ -154,7 +154,9 @@ async function createSenderUser(
   }
 
   if (!authData.user?.id || !authData.access_token) {
-    throw new Error(`No user_id/token in auth response: ${JSON.stringify(authData)}`);
+    throw new Error(
+      `No user_id/token in auth response: ${JSON.stringify(authData)}`,
+    );
   }
 
   return {
@@ -171,11 +173,18 @@ test.describe(
     let supabaseUrl: string;
     let publishableKey: string;
     let serviceRoleKey: string;
-    let viewerSession: { access_token: string; refresh_token: string; user_id: string };
+    let viewerSession: {
+      access_token: string;
+      refresh_token: string;
+      user_id: string;
+    };
     let counterpartId: string;
 
     test.beforeEach(async ({ context }) => {
-      supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "http://127.0.0.1:55321";
+      supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL ||
+        "http://127.0.0.1:55321";
       publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
       serviceRoleKey = process.env.SERVICE_ROLE_KEY || "";
 
@@ -207,7 +216,13 @@ test.describe(
 
       // Seed: viewer sends 5 hearts to counterpart
       // unopened = floor(5/5) − 0 = 1 (hearts credit the sender per BR-002, src/dal/kudos-stats.ts:19-25)
-      await seedHeartCount(supabaseUrl, serviceRoleKey, viewerSession.user_id, counterpartId, 5);
+      await seedHeartCount(
+        supabaseUrl,
+        serviceRoleKey,
+        viewerSession.user_id,
+        counterpartId,
+        5,
+      );
 
       // Inject viewer session into browser
       const cookies = await generateSupabaseCookies(
@@ -412,8 +427,7 @@ test.describe(
 
       // After 1 reveal, count should be 0
       const instruction = page.locator("[data-testid=secret-box-instruction]");
-      // FAILS: instruction never hides (no state update)
-      await expect(instruction).not.toBeVisible();
+      await expect(instruction).toBeHidden();
 
       // Box should be disabled
       const isClickable = await box.evaluate((el) => {
@@ -436,7 +450,7 @@ test.describe(
       await closeBtn.click();
 
       const modal = page.locator("[data-testid=secret-box-dialog]");
-      await expect(modal).not.toBeVisible();
+      await expect(modal).toBeHidden();
     });
 
     test("[S12] Close via Escape: modal closes", async ({ page }) => {
@@ -452,8 +466,7 @@ test.describe(
 
       await page.keyboard.press("Escape");
 
-      // FAILS: modal never closes
-      await expect(modal).not.toBeVisible();
+      await expect(modal).toBeHidden();
     });
   },
 );
@@ -464,10 +477,17 @@ test.describe(
   () => {
     let supabaseUrl: string;
     let publishableKey: string;
-    let viewerSession: { access_token: string; refresh_token: string; user_id: string };
+    let viewerSession: {
+      access_token: string;
+      refresh_token: string;
+      user_id: string;
+    };
 
     test.beforeEach(async ({ context }) => {
-      supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "http://127.0.0.1:55321";
+      supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL ||
+        "http://127.0.0.1:55321";
       publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
 
       if (!supabaseUrl || !publishableKey) {
