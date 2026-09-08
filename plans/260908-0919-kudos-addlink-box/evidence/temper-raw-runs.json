@@ -75,5 +75,25 @@
     "skipped": 1,
     "timestamp": "2026-09-08T03:26:54Z",
     "summary": "F007 regression green after local-DB test-row cleanup"
+  },
+  {
+    "stage": "post-review-fix",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts --reporter=list",
+    "exitCode": 0,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "timestamp": "2026-09-08T03:52:10Z",
+    "summary": "after 4 spec-fidelity fixes (label centring, focus ring, blur=format-only, trimmed length)"
+  },
+  {
+    "stage": "post-review-fix",
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "passed": 536,
+    "failed": 0,
+    "skipped": 0,
+    "timestamp": "2026-09-08T03:52:10Z",
+    "summary": "after 4 spec-fidelity fixes (label centring, focus ring, blur=format-only, trimmed length)"
   }
 ]

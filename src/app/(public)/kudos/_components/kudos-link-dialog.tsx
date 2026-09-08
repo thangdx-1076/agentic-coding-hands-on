@@ -27,11 +27,14 @@ export type KudosLinkDialogProps = {
   onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
 };
 
+// `pt-[14px]` = (56 − 28) / 2: label centred on the input like Figma's
+// `items-center` row while the row stays `items-start` for the error line.
 const LABEL_CLASS =
-  "shrink-0 whitespace-nowrap font-montserrat text-[22px] leading-7 font-bold text-login-button-text";
+  "shrink-0 pt-[14px] whitespace-nowrap font-montserrat text-[22px] leading-7 font-bold text-login-button-text";
 
+// Spec B.2 "Focus: hiện viền nổi" — brand ring, not the UA blue outline.
 const INPUT_BASE_CLASS =
-  "h-14 rounded-lg border bg-white px-6 py-4 font-montserrat text-base font-bold text-login-button-text";
+  "h-14 rounded-lg border bg-white px-6 py-4 font-montserrat text-base font-bold text-login-button-text focus:outline-none focus:ring-2 focus:ring-login-button-text focus:ring-offset-2 focus:ring-offset-[#FFF8E1]";
 
 const ERROR_CLASS =
   "font-montserrat text-sm leading-5 font-bold text-[#FF8A80]";
@@ -50,18 +53,12 @@ const ERROR_CLASS =
  * React-commit-order reasoning this component reuses verbatim (`m-auto`,
  * `open:flex`, no `position`/`inset` override).
  *
- * Purely presentational: every field value/error is a controlled prop.
- * Phase 02 (parallel, owns `use-kudos-link-dialog.ts` +
- * `kudos-compose-copy.ts`) constructs the real props at runtime; this file
- * declares its own `KudosLinkDialogCopy`/`KudosLinkDialogProps` shape rather
- * than importing either, so it type-checks standalone (dispatch contract).
+ * Purely presentational: every field value/error is a controlled prop;
+ * `kudos-compose-link-dialog.tsx` builds them from `use-kudos-link-dialog`.
  *
- * Row layout for B (Nội dung) / C (URL) uses `items-start` (not the node's
- * own measured `items-center`) plus a growing `flex-col` wrapper around the
- * input + error paragraph — the same deliberate deviation
- * `kudos-compose-field.tsx` documents: a fixed `items-center` row would
- * center the label against the bare 56px input but then clip or misplace
- * the error text once it appears (no design frame covers the error state).
+ * Rows B (Nội dung) / C (URL) are `items-start` + a `flex-col` wrapper so the
+ * error paragraph flows under the input (no design frame covers errors);
+ * the label's `pt-[14px]` keeps it on the input's centre like the node.
  *
  * D.1/D.2 button classes are copied 1:1 from `kudos-compose-footer.tsx`'s
  * Cancel/Submit (clarifications.md § "D.1/D.2 trùng 1:1"); `IconClose`/

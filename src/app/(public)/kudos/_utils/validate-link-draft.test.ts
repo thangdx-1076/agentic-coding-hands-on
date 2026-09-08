@@ -30,6 +30,11 @@ describe("validateLinkDraft", () => {
     expect(validateLinkDraft({ text: text100, url: VALID_URL })).toEqual({});
   });
 
+  it("text 100 ký tự + khoảng trắng đầu/cuối → không lỗi (đo trên trim)", () => {
+    const padded = "  " + "a".repeat(100) + " ";
+    expect(validateLinkDraft({ text: padded, url: VALID_URL })).toEqual({});
+  });
+
   it("text 101 ký tự → errorTextTooLong (L06)", () => {
     const text101 = "a".repeat(101);
     expect(validateLinkDraft({ text: text101, url: VALID_URL })).toEqual({

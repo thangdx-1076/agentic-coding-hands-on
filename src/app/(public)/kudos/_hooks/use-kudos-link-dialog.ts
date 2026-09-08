@@ -118,8 +118,11 @@ export function useKudosLinkDialog(): KudosLinkDialogControls {
     setErrors((prev) => (prev.url === undefined ? prev : { text: prev.text }));
   }, []);
 
+  // Spec C: blur only checks the FORMAT of what was typed — an untouched empty
+  // field is not an error yet (that is save()'s job), otherwise tabbing through
+  // or clicking Hủy would flash "Không được để trống" first.
   const onUrlBlur = useCallback(() => {
-    const urlError = validateLinkUrl(url);
+    const urlError = url.trim() === "" ? undefined : validateLinkUrl(url);
     setErrors((prev) => ({ text: prev.text, url: urlError }));
   }, [url]);
 

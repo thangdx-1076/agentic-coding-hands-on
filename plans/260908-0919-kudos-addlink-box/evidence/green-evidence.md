@@ -295,3 +295,12 @@ Remediation: deleted the 8 rows whose sender email matches the e2e test patterns
 E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1 --reporter=list
 → 28 passed, 1 skipped, exit 0
 ```
+
+## Post-review spec-fidelity fixes (2026-09-08T03:52:10Z)
+
+Orchestrator review against spec rows + Figma nodes after PR #17 opened found 4 minor gaps; fixed in one follow-up commit:
+1. Label vertical centre — Figma row is `items-center`; ours is `items-start` (room for the error line) → label gets `pt-[14px]` = (56−28)/2 (`kudos-link-dialog.tsx`).
+2. Focus ring — spec B.2 "viền nổi khi focus": brand `focus:ring-2 ring-login-button-text` instead of the UA blue outline.
+3. URL blur — spec C says blur checks FORMAT; an empty field no longer raises `errorRequired` on blur (`use-kudos-link-dialog.ts`), save() still does.
+4. Nội dung length measured on the trimmed value, matching what save() stores (`validate-link-draft.ts`).
+Re-run: `kudos-link-dialog.spec.ts` 11/11 exit 0 · `kudos-compose.spec.ts` 27/27 · `pnpm test:unit:coverage` 536/536 100% · typecheck/lint/format clean · file caps respected (198 lines).

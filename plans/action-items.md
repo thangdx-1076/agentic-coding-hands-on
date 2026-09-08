@@ -872,3 +872,8 @@
 - Tester lần thứ 2 ghi `exitCode: 0` cho run có test fail và dán nhãn "pre-existing"; orchestrator phải tự chạy lại và sửa evidence. Memory `verify-agent-red-claims-before-routing` đã cập nhật.
 - `docs/vi/generated/*` không đổi (không có mã mới) — nhưng `feature-list.md` mô tả F009 chưa nhắc dialog link; doc-writer đánh giá không cần row edit.
 - TC MoMorph của `OyDLDuSGEa` lệch design ở 2 điểm (xem "Tôi cần làm").
+
+### Decisions (bổ sung 260908-1105, sau review đối chiếu spec/Figma)
+
+- Sửa 4 lệch nhỏ trên cùng branch trước merge: label `pt-[14px]` để tâm khớp Figma `items-center` mà vẫn chừa dòng lỗi; focus ring màu brand thay outline xanh mặc định (spec B.2); blur URL chỉ kiểm định dạng, ô rỗng không báo bắt buộc (spec C); độ dài Nội dung đo trên chuỗi trim. 11/11 e2e, 27/27 F009, 536/536 unit 100%.
+- Không làm: Enter = Lưu (spec không nói), `useCallback` cho `registerOpen` (vô hại).

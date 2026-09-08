@@ -4,8 +4,8 @@
       "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts --reporter=list",
       "exitCode": 0,
       "status": "pass",
-      "summary": "11 passed",
-      "ts": "2026-09-08T03:35:42Z"
+      "summary": "11 passed (re-run after post-review spec-fidelity fixes, still 11/11)",
+      "ts": "2026-09-08T03:52:10Z"
     },
     {
       "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --reporter=list",
@@ -18,8 +18,8 @@
       "command": "pnpm test:unit:coverage",
       "exitCode": 0,
       "status": "pass",
-      "summary": "534 passed",
-      "ts": "2026-09-08T03:35:42Z"
+      "summary": "536 passed, 100% statements/branches/functions/lines (2 tests added post-review)",
+      "ts": "2026-09-08T03:52:10Z"
     },
     {
       "command": "pnpm typecheck",

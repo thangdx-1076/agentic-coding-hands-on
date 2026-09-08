@@ -44,10 +44,13 @@ const ALLOWED_URL_PROTOCOLS = new Set(["http:", "https:"]);
  * surrounding whitespace to strip) — only the "is it empty" check trims.
  */
 function validateLinkText(text: string): LinkDraftErrorKey | undefined {
-  if (text.trim() === "") {
+  const trimmed = text.trim();
+  if (trimmed === "") {
     return "errorRequired";
   }
-  if (text.length > MAX_TEXT_LENGTH) {
+  // Measured on the trimmed value — that is what save() stores, so "a"×100
+  // plus a trailing space must not be rejected as 101.
+  if (trimmed.length > MAX_TEXT_LENGTH) {
     return "errorTextTooLong";
   }
   return undefined;

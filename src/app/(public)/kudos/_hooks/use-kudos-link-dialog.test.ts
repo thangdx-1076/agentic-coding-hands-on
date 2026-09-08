@@ -190,6 +190,14 @@ describe("useKudosLinkDialog", () => {
     unmount();
   });
 
+  it("onUrlBlur với url rỗng → KHÔNG set errorRequired (blur chỉ kiểm định dạng, spec C)", () => {
+    const { result } = renderHook(() => useKudosLinkDialog());
+    act(() => {
+      result.current.onUrlBlur();
+    });
+    expect(result.current.errors).toEqual({});
+  });
+
   it("save() với draft không hợp lệ → set lỗi, trả về null, dialog vẫn mở (L04, L05, L06, L07)", () => {
     const { dialog, close } = createStubDialog();
     const { result, unmount } = renderHook(() => useKudosLinkDialog());
