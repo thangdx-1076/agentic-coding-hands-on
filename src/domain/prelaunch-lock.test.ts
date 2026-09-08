@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  isPrelaunchLockEnabled,
-  planProxy,
-  type ProxyPlan,
-} from "./prelaunch-lock";
+import { isPrelaunchLockEnabled, planProxy } from "./prelaunch-lock";
 
 /**
  * Unit test for prelaunch lock decision function
@@ -189,68 +185,74 @@ describe("planProxy — exhaustive truth table", () => {
 
   // ===== LOCK ON, COUNTDOWN NOT REACHED =====
   describe("lockEnabled = true, reached = false (lock ON, countdown pending)", () => {
-    describe("legacy whitelist routes → auth (can access, but need auth check)", () => {
-      it("/ → auth", () => {
+    // The lock outranks the legacy whitelist. FR-102 says "toàn bộ điều hướng đến
+    // các trang khác bị khoá" — a lock that let the homepage, /awards and
+    // /standards through would wall off nothing that matters, since those ARE
+    // the public site. BR-005 is a separate axis: it governs whether a request
+    // that is NOT being redirected has to pay for Supabase, never whether the
+    // redirect happens.
+    describe("legacy whitelist routes → redirect (the lock outranks the whitelist)", () => {
+      it("/ → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/login → auth", () => {
+      it("/login → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/login",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/todo → auth", () => {
+      it("/todo → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/todo",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/todo/abc → auth", () => {
+      it("/todo/abc → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/todo/abc",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/awards → auth", () => {
+      it("/awards → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/awards",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/standards → auth", () => {
+      it("/standards → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/standards",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
 
-      it("/profile → auth", () => {
+      it("/profile → redirect /prelaunch", () => {
         const result = planProxy({
           pathname: "/profile",
           lockEnabled: true,
           reached: false,
         });
-        expect(result).toEqual({ kind: "auth" });
+        expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
       });
     });
 
@@ -496,10 +498,19 @@ describe("planProxy — exhaustive truth table", () => {
       expect(result).toEqual({ kind: "pass" });
     });
 
-    it("very deep /todo path → auth", () => {
+    it("very deep /todo path → redirect while locked", () => {
       const result = planProxy({
         pathname: "/todo/2024/week1/list",
         lockEnabled: true,
+        reached: false,
+      });
+      expect(result).toEqual({ kind: "redirect", to: "/prelaunch" });
+    });
+
+    it("very deep /todo path → auth once the lock is off", () => {
+      const result = planProxy({
+        pathname: "/todo/2024/week1/list",
+        lockEnabled: false,
         reached: false,
       });
       expect(result).toEqual({ kind: "auth" });

@@ -27,14 +27,15 @@ export function isPrelaunchLockEnabled(raw: string | undefined): boolean {
 }
 
 /**
- * The 6 routes `src/proxy.ts` guarded before this feature existed. Their
- * behavior must stay bit-for-bit unchanged (plan.md § Requirements) — which
- * means they resolve to `auth` unconditionally, even while the lock is on.
- * Only routes OUTSIDE this set (e.g. `/kudos`, newly reachable now that
- * `config.matcher` widened) are candidates for the lock redirect. This is
- * deliberate, not an oversight: it is what keeps sign-in and the already-
- * shipped protected pages usable for ops/QA while the rest of the site is
- * walled off behind `/prelaunch`.
+ * The 6 routes `src/proxy.ts` guarded before this feature existed. Reaching
+ * this test means the request is NOT being redirected, and the only question
+ * left is who pays for the session lookup: these 6 keep their original
+ * locale-normalization + `getUserOrNull` behavior (`auth`), everything the
+ * widened `config.matcher` newly exposes returns a bare `pass` so it never
+ * touches Supabase (BR-005).
+ *
+ * This is a separate axis from the lock. It decides how a request is served,
+ * never whether it is allowed through — `planProxy` settles that first.
  */
 function isLegacyProxyRoute(pathname: string): boolean {
   if (
@@ -69,18 +70,26 @@ function isExempt(pathname: string): boolean {
 }
 
 /**
- * Decision order matters and is NOT the naive "lock beats everything but
- * the exempt list" reading of FR-102:
+ * Decision order, and why it is this order:
  *
  *   1. `/prelaunch` itself — its own two-value rule (BR-003): once the
  *      countdown has reached and the lock is still on, bounce it home;
  *      otherwise let it render (this is the only path that keeps the CI
  *      suite, which never flips the lock, able to reach the screen at all).
- *   2. The legacy whitelist — always `auth`, lock or no lock (see
- *      `isLegacyProxyRoute`). Checked BEFORE the lock branch on purpose.
- *   3. BR-002 exemptions — always `pass`.
- *   4. Everything else: locked and not yet reached → redirect to
- *      `/prelaunch`; otherwise `pass`.
+ *   2. BR-002 exemptions — `/auth/*`, `/api/*`, `/_next/*`, static files.
+ *      Exempt from the lock by definition, so they are settled before it.
+ *      `/auth/*` above all: locking the OAuth callback strands anyone
+ *      mid-sign-in.
+ *   3. The lock — `lockEnabled && !reached` → redirect to `/prelaunch`.
+ *      This runs BEFORE the legacy-whitelist test on purpose. FR-102 locks
+ *      "toàn bộ điều hướng đến các trang khác", and `/`, `/awards` and
+ *      `/standards` ARE the public site; a lock that waved them through
+ *      would wall off nothing worth walling off. Note what this means for
+ *      `/login`: it is not on BR-002's exemption list, so it locks too —
+ *      before the event there is nothing to sign in for.
+ *   4. Not redirected, so the only question left is who pays for the
+ *      session lookup: the legacy 6 keep their original `auth` behavior,
+ *      everything else `pass`es without touching Supabase (BR-005).
  */
 export function planProxy(input: {
   pathname: string;
@@ -95,16 +104,16 @@ export function planProxy(input: {
       : { kind: "pass" };
   }
 
-  if (isLegacyProxyRoute(pathname)) {
-    return { kind: "auth" };
-  }
-
   if (isExempt(pathname)) {
     return { kind: "pass" };
   }
 
   if (lockEnabled && !reached) {
     return { kind: "redirect", to: ROUTES.PRELAUNCH };
+  }
+
+  if (isLegacyProxyRoute(pathname)) {
+    return { kind: "auth" };
   }
 
   return { kind: "pass" };

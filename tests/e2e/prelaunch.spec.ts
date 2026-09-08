@@ -58,13 +58,11 @@ test.describe("Countdown Prelaunch Page (/prelaunch)", () => {
     // - A digits element with textContent matching /^\d{2,}$/
     // - A label element
     const tiles = timer.locator("[data-testid='tile']");
-    const tileCount = await tiles.count();
-    expect(tileCount).toBe(3);
+    await expect(tiles).toHaveCount(3);
 
     // Check labels in DOM order: DAYS, HOURS, MINUTES
     const labels = timer.locator("[data-testid='tile-label']");
-    const labelCount = await labels.count();
-    expect(labelCount).toBe(3);
+    await expect(labels).toHaveCount(3);
 
     const daysLabel = await labels.nth(0).textContent();
     const hoursLabel = await labels.nth(1).textContent();
@@ -75,7 +73,7 @@ test.describe("Countdown Prelaunch Page (/prelaunch)", () => {
     expect(minutesLabel?.trim()).toBe("MINUTES");
 
     // Check each tile has a digits element matching /^\d{2,}$/
-    for (let i = 0; i < tileCount; i++) {
+    for (let i = 0; i < 3; i++) {
       const digitsElement = tiles.nth(i).locator("[data-testid='tile-digits']");
       const digitsText = await digitsElement.textContent();
       expect(digitsText).toMatch(/^\d{2,}$/);
@@ -98,28 +96,33 @@ test.describe("Countdown Prelaunch Page (/prelaunch)", () => {
     await expect(bgImage).toHaveCount(1);
   });
 
-  test("[C5] After load: no extra network requests (network idle, FR-401)", async ({
+  test("[C5] The screen fetches no data — it is static plus a client tick (FR-401)", async ({
     page,
   }) => {
-    // RED: Feature unimplemented
-    // ASSERTION: no polling or extra requests after timer rendered
-    // NOTE: This is optional ("nice to have"); skip if flaky on CI
-    const requests: string[] = [];
+    // FR-401: the countdown runs entirely client-side off a server-seeded
+    // timestamp, so the page must never poll. Asserted by URL shape rather
+    // than by waiting out a quiet window: a fixed sleep proves nothing on a
+    // fast machine and flakes on a slow one, whereas "no request that could
+    // carry data was ever made" is exact and deterministic.
+    const dataRequests: string[] = [];
 
     page.on("request", (req) => {
-      requests.push(req.url());
+      const url = req.url();
+      const isData =
+        url.includes("/api/") ||
+        url.includes("/auth/v1/") ||
+        url.includes("/rest/v1/") ||
+        /\.json(\?|$)/.test(url);
+
+      if (isData) {
+        dataRequests.push(url);
+      }
     });
 
     await page.goto("/prelaunch");
-    await page.waitForLoadState("networkidle");
+    await expect(page.locator("[role='timer']")).toBeVisible();
 
-    // After networkidle, count requests in next 2s (should be ~0 extra)
-    const beforeCount = requests.length;
-    await page.waitForTimeout(2000);
-    const afterCount = requests.length;
-
-    // Expect no new requests during idle window
-    expect(afterCount - beforeCount).toBeLessThanOrEqual(1); // 1-2 is reasonable tolerance
+    expect(dataRequests).toEqual([]);
   });
 
   test("[C6] Lock OFF (default): routes /, /awards, /standards, /login, /kudos do NOT redirect", async ({
