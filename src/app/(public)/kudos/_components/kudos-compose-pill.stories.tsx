@@ -18,5 +18,7 @@ export const Default: Story = {
   args: {
     placeholder: "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
     ariaLabel: "Viết Kudo",
+    onActivate: () => {},
+    dialogOpen: false,
   },
 };

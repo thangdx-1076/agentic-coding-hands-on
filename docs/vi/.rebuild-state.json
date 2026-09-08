@@ -13,7 +13,7 @@
   },
   "fcode_index_sha": "4bc040a4f336caafbabe31667efe090c4eae73cf056cc7f329cdd4b92e8638a5",
   "last_api_contracts_run_sha": "",
-  "last_feature_spec_run_sha": "9badc44939d38a136457228cf25dbfaaadb46e47",
+  "last_feature_spec_run_sha": "73055e85220dab50d3f38d9270d0385035b7352b",
   "last_flows_run_sha": "94a720badac57ab772f626e595c1645989d77cae",
   "last_glossary_run_sha": "",
   "last_rebuild_sha": "9c1fa0038d21c5e00a64a5377632ff0064cba319",
@@ -26,7 +26,8 @@
     "SCR001": "11b8160b101b99c88d66bc0cd1c6a5912e589125f31b6dff6d4ad8dd9e3a8629",
     "SCR002": "6deb54801f7587a682ed84069f574464c7498c5234aac77ac2d4cb1d61d1a748",
     "SCR003": "75d332981d2ef0c7dfc09e3d9bf5fa2af3eda81cb8ee3b1495a4b0960d1c1194",
-    "SCR007": "4c1138b7aa65bee2f84728e50afaec6d4b14ce23a833b16c75c8984e381ba823"
+    "SCR007": "4c1138b7aa65bee2f84728e50afaec6d4b14ce23a833b16c75c8984e381ba823",
+    "SCR008": "4bd458057a14b3fe51e349aa44ba9a46b9ad26f6dc8147c4d69f64c227e70e97"
   },
   "translations": {}
 }

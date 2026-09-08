@@ -1,0 +1,7 @@
+{
+  "mode": "single",
+  "intents": [
+    "Sunner đã đăng nhập soạn và gửi một lời cảm ơn Kudos (người nhận + danh hiệu + nội dung + hashtag + ảnh + tuỳ chọn ẩn danh) từ dialog trên /kudos, kudo mới xuất hiện trên bảng"
+  ],
+  "justification": ""
+}

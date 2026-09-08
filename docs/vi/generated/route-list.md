@@ -70,9 +70,9 @@ Dùng lại nguyên vẹn `SiteHeader`/`SiteFooter` (khác `/standards`, giống
 
 | Path | Component | Route Name |
 |------|-----------|------------|
-| /kudos | KudosPage | kudos (F007_KudosLiveBoard / F008_KudosHeartReaction) |
+| /kudos | KudosPage | kudos (F007_KudosLiveBoard / F008_KudosHeartReaction / F009_KudosCompose) |
 
-Route `/kudos` render SCR007_KudosLiveBoard — bảng Kudos trực tiếp công khai (banner, ô soạn Kudo, bộ lọc hashtag/phòng ban, carousel Highlight, feed ALL KUDOS phân trang keyset, Spotlight, sidebar thống kê cá nhân), dùng lại `SiteHeader`/`SiteFooter` chung với `/`, `/awards`, `/profile`. PUBLIC by design (clarifications.md § Route & điều hướng, BR-015) — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác `viewerId`/sidebar cá nhân (ẩn hoàn toàn khi ẩn danh) và trạng thái nút tim (xem `permissions-matrix.md`). Đọc `?hashtag=`/`?department=` để lọc Highlight+Feed (Spotlight và danh sách bộ lọc luôn tính trên toàn bộ dữ liệu, không theo filter đang chọn). Hai Server Action riêng, không phải route: `toggleKudoHeart` (F008, fail-closed, có `revalidatePath`) và `loadMoreKudos` (F007, fail-open, CỐ Ý không `revalidatePath` — xem `api-map.md`). Mới từ 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction) — trước đó 5 điểm vào hardcode `href="/kudos"` (`SiteHeader` nav, `SiteFooter`, `KudosSection` nút "Chi tiết", `WidgetButton` trên `/`, nút "Viết KUDOS" trên `/standards`) đều trỏ route chưa tồn tại (404); không cái nào trong 5 điểm này cần sửa code để hết 404.
+Route `/kudos` render SCR007_KudosLiveBoard — bảng Kudos trực tiếp công khai (banner, ô soạn Kudo, bộ lọc hashtag/phòng ban, carousel Highlight, feed ALL KUDOS phân trang keyset, Spotlight, sidebar thống kê cá nhân), dùng lại `SiteHeader`/`SiteFooter` chung với `/`, `/awards`, `/profile`. PUBLIC by design (clarifications.md § Route & điều hướng, BR-015) — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác `viewerId`/sidebar cá nhân (ẩn hoàn toàn khi ẩn danh) và trạng thái nút tim (xem `permissions-matrix.md`). Đọc `?hashtag=`/`?department=` để lọc Highlight+Feed (Spotlight và danh sách bộ lọc luôn tính trên toàn bộ dữ liệu, không theo filter đang chọn). Bốn Server Action riêng, không phải route: `toggleKudoHeart` (F008, fail-closed, có `revalidatePath`), `loadMoreKudos` (F007, fail-open, CỐ Ý không `revalidatePath`), `createKudo` (F009, fail-closed, có `revalidatePath` khi ghi thành công), `searchSunners` (F009, đọc, fail-open `[]`) — xem `api-map.md`. Mới từ 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction) — trước đó 5 điểm vào hardcode `href="/kudos"` (`SiteHeader` nav, `SiteFooter`, `KudosSection` nút "Chi tiết", `WidgetButton` trên `/`, nút "Viết KUDOS" trên `/standards`) đều trỏ route chưa tồn tại (404); không cái nào trong 5 điểm này cần sửa code để hết 404. Từ 2026-09-08 (F009_KudosCompose): trang có thêm dialog SCR008_KudosCompose, mở từ pill "Viết Kudo" (đã có sẵn UI từ F007 nhưng cố tình vô hiệu tới lượt này) — vẫn CÙNG route `/kudos`, không route/URL mới; đây là đường INSERT đầu tiên vào `public.kudos` và lần đầu repo dùng Supabase Storage (bucket `kudo-images`, migration `0010_kudo_images_bucket.sql`).
 
 ### File: app/login/page.tsx
 
@@ -120,6 +120,13 @@ trong `matcher` này (`proxy.ts:139` không đổi khi F007/F008 được xây) 
 session cookie hay chuẩn hoá `NEXT_LOCALE` nào chạy khi truy cập `/kudos` trực tiếp — route tự đọc
 session qua `getCurrentUser()`/`getViewer()` ngay trong `page.tsx` (`src/app/(public)/kudos/page.tsx`),
 không phụ thuộc `proxy.ts`.
+
+**Cập nhật 2026-09-08 (F009_KudosCompose)**: `/kudos` VẪN KHÔNG thêm vào `matcher` dù đã có đường
+ghi thật (INSERT `public.kudos` + upload Storage) — quyết định có chủ đích, không phải bỏ sót
+(`docs/vi/system/permissions.md § Vì sao /kudos KHÔNG vào src/proxy.ts`). Gate duy nhất có giá trị
+bảo mật cho hành động ghi nằm BÊN TRONG Server Action `createKudo` (tự `auth.getUser()`, fail
+closed) — route-level guard chỉ trả lời "xem được trang hay không", còn F009 tách hành động ghi
+khỏi hành động xem trên CÙNG một route công khai.
 
 Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và các path trong `PROTECTED_ROUTES`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
 

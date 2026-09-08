@@ -12,5 +12,13 @@
 - [260905-2200-hook-extraction-compiler-freeze-specs-gate.md](260905-2200-hook-extraction-compiler-freeze-specs-gate.md) — 260905 2200 hook extraction compiler freeze specs gate
 - [260906-0033-testing-storybook-standards-skill-and-100-percent-coverage.md](260906-0033-testing-storybook-standards-skill-and-100-percent-coverage.md) — 260906 0033 testing storybook standards skill and 100 percent coverage
 - [260906-0042-homepage-saa-public-route-momorph-supabase.md](260906-0042-homepage-saa-public-route-momorph-supabase.md) — 260906 0042 homepage saa public route momorph supabase
+- [260906-1150-src-route-colocation-refactor.md](260906-1150-src-route-colocation-refactor.md) — 260906 1150 src route colocation refactor
+- [260906-2250-vercel-agent-skills-vendoring.md](260906-2250-vercel-agent-skills-vendoring.md) — 260906 2250 vercel agent skills vendoring
+- [260907-0800-award-system-page-sticky-nav-chrome-refactor.md](260907-0800-award-system-page-sticky-nav-chrome-refactor.md) — 260907 0800 award system page sticky nav chrome refactor
+- [260907-1209-standards-rules-page-three-green-gates-hiding-defects.md](260907-1209-standards-rules-page-three-green-gates-hiding-defects.md) — 260907 1209 standards rules page three green gates hiding defects
+- [260907-1224-profile-page-momorph-e2e-red-first.md](260907-1224-profile-page-momorph-e2e-red-first.md) — 260907 1224 profile page momorph e2e red first
+- [260907-1624-momorph-ui-fidelity-audit-five-screens-layout-consistency-naming.md](260907-1624-momorph-ui-fidelity-audit-five-screens-layout-consistency-naming.md) — 260907 1624 momorph ui fidelity audit five screens layout consistency naming
+- [260907-2236-kudos-live-board-design-conflict-agent-report-traps.md](260907-2236-kudos-live-board-design-conflict-agent-report-traps.md) — 260907 2236 kudos live board design conflict agent report traps
+- [260908-0845-kudos-compose-dialog-e2e-red-first-agent-verification-traps.md](260908-0845-kudos-compose-dialog-e2e-red-first-agent-verification-traps.md) — 260908 0845 kudos compose dialog e2e red first agent verification traps
 
 <!-- end-generated -->

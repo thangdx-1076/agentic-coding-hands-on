@@ -1,0 +1,71 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "tests/e2e/kudos-compose.spec.ts C01-C27 passes 27/27 with E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts (exit 0) -- proven: evidence/temper-results.json records this exact command at exitCode 0, 27 passed; evidence/green-evidence.md's final section explains the one prior flaky run (26/27, a fullyParallel race) and the fix (serial mode) rather than hiding it",
+    "F007 contract tests/e2e/kudos.spec.ts is unmodified and green (C03 pill stays <input readonly>, C10 DOM order banner->pill->highlight) -- proven: git diff shows the file unmodified; evidence/green-evidence.md final run 28 passed/1 skipped via --workers=1, matching the pre-compose baseline, re-run after the debugger's additive testid change (closing the gap noted in the first inspection pass)",
+    "Danh hiệu is persisted as hashtags[0] and hashtag chips as hashtags[1..5]; title renders as the card heading -- proven: create-kudo.ts builds [title.trim(), ...normalizeHashtagChips(hashtagChips)]; unmodified KudosFeaturedHashtag already reads hashtags[0]",
+    "Anonymous kudo masks the sender at the kudos_cards view (sender_id NULL, sender_full_name = anonymous_name), not only in the UI -- proven: migration 0009 CASE WHEN on all 5 sender columns; independently re-verified via the orchestrator's own psql query (SET ROLE anon; SELECT sender_id, sender_full_name FROM kudos_cards WHERE sender_full_name='Secret Admirer') returning NULL | 'Secret Admirer'",
+    "Images upload to Storage bucket kudo-images via the Server Action and render on the feed through next/image with env-derived images.remotePatterns -- proven: upload-kudo-images.ts + next.config.ts resolveSupabaseImagesConfig() (SSRF gating re-verified line by line this pass); orchestrator's psql query confirms real stored image_urls under /storage/v1/object/public/kudo-images/",
+    "Unauthenticated pill click redirects to /login and createKudo re-derives the user server-side and fails closed -- proven: two-layer gate in code; RLS proven live in migration-transcript.md (mismatched sender_id INSERT rejected by Postgres directly)",
+    "pnpm test:unit:coverage stays 100% on the .ts allowlist; pnpm build, pnpm typecheck, pnpm lint --max-warnings 0 and pnpm format:check are clean -- proven: I re-ran typecheck/lint/format/coverage myself on the current tree just now (0 errors, 0 warnings, clean, 496/496 tests 100% stmts/branch/funcs/lines, matching temper-results.json exactly); pnpm build exit 0 reported by the orchestrator and recorded in temper-results.json (not re-run by me per task constraint)"
+  ],
+  "regressionChecked": [
+    "/kudos page render for anonymous and signed-in visitors (F007 board, carousel, feed, sidebar) -- unchanged rendering path; kudos.spec.ts 28 passed/1 skipped confirms no regression",
+    "kudos_cards view consumers (getKudosBoard, selectCards, kudos-card-person link) now receive sender_id NULL for anonymous rows -- KudosPerson.id widened to string|null, kudos-card-person.tsx branches to a <span> instead of <Link> when null, unit test present, 100% coverage",
+    "next/image for every image on the site (images.remotePatterns + dangerouslyAllowLocalIP gated to loopback Supabase host) -- re-verified SSRF gating logic line by line this pass: build-time-only env input, single-host-scoped remotePatterns, fails closed on unparseable input",
+    "Server Actions body limit raised to 28mb for the whole app -- unchanged since first pass; still a real, documented, non-blocking widening of the DoS surface for unrelated Server Actions (see High finding)",
+    "profile_cards view read path shared with /profile (F006) -- no SELECT widening -- sunner-search.ts selects id,full_name,avatar_url only, src/dal/profile-cards.ts untouched",
+    "RLS: first INSERT policy on public.kudos; two storage.objects policies for bucket kudo-images -- re-confirmed independently via the orchestrator's own psql pg_policies query this pass: kudos = kudos_insert_own (INSERT) + kudos_select_all (SELECT) only; storage.objects = kudo_images_insert_authenticated (INSERT) + kudo_images_select_public (SELECT)",
+    "i18n kudos namespace (messages parity vi/en) -- composeModal namespace present with matching keys in both messages/vi.json and messages/en.json, unchanged this pass",
+    "F007 kudos.spec.ts DOM/readonly-pill contract -- now confirmed green (28 passed/1 skipped) with the additive kudos-image-strip.tsx testid change already in the tree, closing the prior pass's residual gap",
+    "Visual fidelity vs the MoMorph frame -- dialog centering, single-line labels, and hashtag-picker close-on-reset all verified this pass by opening evidence/visual/01-dialog-empty.png and 05-validation-errors.png directly"
+  ],
+  "contractStatus": "OK",
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": true,
+    "humanSignedOff": true
+  },
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "High",
+      "category": "Security",
+      "location": "next.config.ts:1-16",
+      "summary": "experimental.serverActions.bodySizeLimit raised to 28mb app-wide (no per-action override exists in this Next version per bundled docs), widening the resource-consumption/DoS surface for every unrelated Server Action (toggleKudoHeart, loadMoreKudos, logout, etc.); re-verified this pass, unchanged, still a reasoned and documented trade-off (AD-4)",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Medium",
+      "category": "Reliability",
+      "location": "tests/e2e/kudos-compose.spec.ts:134",
+      "summary": "reads process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, a variable name used nowhere else in this repo (every other spec and app source file uses NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY), with a fallback string that decodes to only a JWT header (no payload/signature) and cannot function as a real credential -- not a secret-leak (publishable keys are public by design) but a portability bug that would fail the @auth @local-db tier on any environment that only sets the repo's documented env var name",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Medium",
+      "category": "Performance",
+      "location": "supabase/migrations/0009_kudos_write_anonymity.sql:55",
+      "summary": "kudos_cards view carries forward a pre-existing (0006) correlated subquery per row for sender/receiver kudos_received counts; not introduced by this change but will not scale indefinitely",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Low",
+      "category": "InputValidation",
+      "location": "src/app/(public)/kudos/_utils/validate-kudo-draft.ts:66-91",
+      "summary": "no server-side max length on content/title/anonymous_name beyond the 28MB body limit; deliberate no-invented-limit call per clarifications, noted for completeness",
+      "disposition": "Reject"
+    },
+    {
+      "severity": "Low",
+      "category": "UX",
+      "location": "src/app/(public)/kudos/_actions/create-kudo.ts:125-128",
+      "summary": "only the first rejected image's reason is surfaced when multiple images fail validation at once",
+      "disposition": "Reject"
+    }
+  ]
+}

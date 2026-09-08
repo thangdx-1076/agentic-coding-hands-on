@@ -21,7 +21,10 @@ export function KudosImageStrip({ imageUrls }: KudosImageStripProps) {
   }
 
   return (
-    <div className="flex w-full flex-row items-center gap-4">
+    <div
+      data-testid="kudos-image-strip"
+      className="flex w-full flex-row items-center gap-4"
+    >
       {visible.map((url, index) => (
         <div
           key={`${url}-${index}`}

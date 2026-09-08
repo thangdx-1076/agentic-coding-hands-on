@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: route-view (Next.js 16 App Router) — 7 screens (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo`) + 1 backend route (`/auth/callback`) + proxy guard layer
+**Analysis Scope**: route-view (Next.js 16 App Router) — 7 routes (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo`) + 8 screens (thêm SCR008_KudosCompose — dialog trên `/kudos`, không route riêng, F009_KudosCompose) + 1 backend route (`/auth/callback`) + proxy guard layer
 
 **Code Format**: All SCR codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped transitions
 
@@ -40,9 +40,11 @@ graph TD
     SCR007 -->|Click 'Đăng nhập' - ẩn danh| SCR001
     SCR007 -->|Click 'Đăng xuất' trong menu tài khoản, logoutAction| SCR001
     SCR007 -->|Click 'Hồ sơ' trong menu tài khoản| SCR006
+    SCR007 -->|Click pill 'Viết Kudo', đã đăng nhập| SCR008[SCR008_KudosCompose]
+    SCR007 -->|Click pill 'Viết Kudo', chưa đăng nhập| SCR001
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`. Từ 2026-09-07 đợt 3 (F007_KudosLiveBoard + F008_KudosHeartReaction): `/kudos` (SCR007_KudosLiveBoard) cũng PUBLIC, không guard, dùng chung `SiteHeader`/`SiteFooter` với SCR003/SCR004/SCR006 — tới được bằng URL trực tiếp, bằng link "Sun Kudos" trên `SiteHeader` (hiện diện trên mọi trang dùng `SiteHeader`: SCR003, SCR004, SCR006), nút "Chi tiết" của khối `KudosSection` (SCR003, SCR004 — SCR006 KHÔNG có khối này), `WidgetButton` (chỉ trên SCR003), hoặc nút "Viết KUDOS" trên SCR005 (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng). Khác mọi screen PUBLIC trước đó: đây là route đầu tiên có đường GHI vào DB (thả tim, `toggleKudoHeart`) — chi tiết ở § Guard Logic và `permissions-matrix.md`.
+> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`. Từ 2026-09-07 đợt 3 (F007_KudosLiveBoard + F008_KudosHeartReaction): `/kudos` (SCR007_KudosLiveBoard) cũng PUBLIC, không guard, dùng chung `SiteHeader`/`SiteFooter` với SCR003/SCR004/SCR006 — tới được bằng URL trực tiếp, bằng link "Sun Kudos" trên `SiteHeader` (hiện diện trên mọi trang dùng `SiteHeader`: SCR003, SCR004, SCR006), nút "Chi tiết" của khối `KudosSection` (SCR003, SCR004 — SCR006 KHÔNG có khối này), `WidgetButton` (chỉ trên SCR003), hoặc nút "Viết KUDOS" trên SCR005 (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng). Khác mọi screen PUBLIC trước đó: đây là route đầu tiên có đường GHI vào DB (thả tim, `toggleKudoHeart`) — chi tiết ở § Guard Logic và `permissions-matrix.md`. Từ 2026-09-08 (F009_KudosCompose): `/kudos` có thêm SCR008_KudosCompose — dialog `<dialog>` phủ lên trang, mở từ pill "Viết Kudo" khi đã đăng nhập (chưa đăng nhập thì điều hướng `/login` thay vì mở dialog); đây là đường INSERT đầu tiên vào `public.kudos` (trước đó chỉ có `kudo_hearts` được ghi) — chi tiết ở § Screen Access Paths và `permissions-matrix.md`.
 
 ## Feature Entry Points
 
@@ -141,6 +143,8 @@ graph TD
 | SCR005_Standards | SCR007_KudosLiveBoard | Click nút "Viết KUDOS" | Không điều kiện — public, mọi actor | |
 | SCR007_KudosLiveBoard | SCR001_LoginScreen | Click link "Đăng nhập" (chỉ ẩn danh) | Chưa đăng nhập | |
 | SCR007_KudosLiveBoard | SCR001_LoginScreen | Click "Đăng xuất" trong menu tài khoản (`logoutAction`) | Đã đăng nhập; luôn xảy ra kể cả khi `signOut()` lỗi | |
+| SCR007_KudosLiveBoard | SCR008_KudosCompose | Click pill "Viết Kudo" (`kudos-compose-pill`, mở qua `<dialog>.showModal()`) | Đã đăng nhập — dialog phủ lên `/kudos`, không đổi URL (F009_KudosCompose, `kudos-compose-launcher.tsx`) | |
+| SCR007_KudosLiveBoard | SCR001_LoginScreen | Click pill "Viết Kudo" | Chưa đăng nhập — điều hướng `/login` thay vì mở SCR008_KudosCompose (F009_KudosCompose, `handleActivate()` trong `kudos-compose-launcher.tsx`) | |
 
 > Region column: để trống — app này không có REG### nào (xem screen-list.md).
 
@@ -245,7 +249,13 @@ graph TD
 - Đến SCR001_LoginScreen: click link "Đăng nhập" ở header (chỉ hiện khi ẩn danh, dùng chung `SiteHeader`)
 - Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction`, dùng chung `src/app/_actions/logout.ts`)
 - Đến SCR006_Profile: click "Hồ sơ" trong menu tài khoản (`AccountMenu`, dùng chung `SiteHeader`)
+- Đến SCR008_KudosCompose: click pill "Viết Kudo" khi đã đăng nhập — dialog phủ lên trang, KHÔNG
+  đổi URL/route (F009_KudosCompose, mới từ 2026-09-08)
+- Đến SCR001_LoginScreen: click pill "Viết Kudo" khi CHƯA đăng nhập — điều hướng thẳng, không mở
+  dialog (F009_KudosCompose)
 - (không điều hướng) Thả/bỏ tim (`toggleKudoHeart`) — chỉ `revalidatePath(ROUTES.KUDOS)`, ở lại đúng trang; không phải một cạnh điều hướng
+- (không điều hướng) Gửi Kudo thành công (`createKudo`, F009_KudosCompose) — dialog SCR008_KudosCompose
+  đóng, `revalidatePath(ROUTES.KUDOS)`, ở lại `/kudos`; không phải một cạnh điều hướng sang route khác
 
 **Decision Points**:
 - Không có guard chặn truy cập (`src/app/(public)/kudos/page.tsx` không redirect ai) — `getViewer()`/`getCurrentUser()` chỉ đọc để cá nhân hoá header + sidebar thống kê, giống triết lý SCR003/SCR004; route này KHÔNG nằm trong `matcher` của `proxy.ts` (khác SCR003/SCR004/SCR006 — xem § Guard Logic)

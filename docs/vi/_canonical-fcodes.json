@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-07T07:50:14Z",
-  "plan": "260907-1224-profile-page",
+  "generated_at": "2026-09-07T17:50:09Z",
+  "plan": "260907-2338-kudos-write-modal",
   "features": [
     {
       "fcode": "F001",
@@ -129,6 +129,23 @@
       "related": {
         "screens": [
           "SCR007_KudosLiveBoard"
+        ],
+        "user_stories": [],
+        "routes": [],
+        "models": [],
+        "bl": [],
+        "perms": []
+      }
+    },
+    {
+      "fcode": "F009",
+      "name": "Viết Kudo (dialog soạn Kudos trên /kudos)",
+      "slug": "F009_KudosCompose",
+      "priority": "P1",
+      "type": "mixed",
+      "related": {
+        "screens": [
+          "SCR008_KudosCompose"
         ],
         "user_stories": [],
         "routes": [],

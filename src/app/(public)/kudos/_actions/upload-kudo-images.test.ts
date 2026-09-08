@@ -34,7 +34,9 @@ function stubClient(uploadResults: UploadCallResult[] = []) {
   const getPublicUrl = vi.fn((path: string) => ({
     data: { publicUrl: `https://storage.example/kudo-images/${path}` },
   }));
-  const remove = vi.fn(() => Promise.resolve({ data: [], error: null }));
+  const remove = vi.fn<
+    (paths: string[]) => Promise<{ data: never[]; error: null }>
+  >(() => Promise.resolve({ data: [], error: null }));
   const from = vi.fn(() => ({ upload, getPublicUrl, remove }));
   const client = { storage: { from } } as unknown as KudoStorageClient;
   return { client, upload, getPublicUrl, remove, from };

@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 3 route xác nhận PUBLIC không route-guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard — xem mục cuối) + 1 trục phân quyền GHI mới ở tầng RLS Postgres (F008_KudosHeartReaction, KHÔNG phải route-guard — xem mục `/kudos`) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 3 route xác nhận PUBLIC không route-guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -263,7 +263,7 @@ phải một permission item cần theo dõi — cùng lý do `/awards` không c
 
 ---
 
-## `/kudos` — PUBLIC (đọc) + trục phân quyền GHI đầu tiên của dự án (F007_KudosLiveBoard + F008_KudosHeartReaction, chưa cấp mã PERM### riêng)
+## `/kudos` — PUBLIC (đọc) + 2 trục phân quyền GHI (F007_KudosLiveBoard + F008_KudosHeartReaction: thả tim; F009_KudosCompose, 2026-09-08: gửi Kudo + upload ảnh + ẩn danh — chưa cấp mã PERM### riêng)
 
 Route `/kudos` gia nhập ĐÚNG nhóm PUBLIC với `/`, `/awards`, `/standards` cho phần ĐỌC — không
 route-guard nào ở `proxy.ts` lẫn `src/app/(public)/kudos/page.tsx`; Anonymous và Authenticated đều
@@ -306,33 +306,82 @@ empty-state là chấp nhận được, một lỗi ghi biến thành lượt ti
 
 Không cấp `PERM###` mới ở đây (cùng tiền lệ `/awards`/`/standards`/`/profile` — mã chính thức cho cả
 2 trục, ĐỌC lẫn GHI, để `rebuild-spec` Core pass kế tiếp quyết định, xem `docs/vi/system/permissions.md
-§ Bề mặt cần cấp PERM### thật khi promote`). Bốn bề mặt đang chờ mã: đọc `/kudos` khi anonymous ·
+§ Bề mặt cần cấp PERM### thật khi promote`). Bốn bề mặt đang chờ mã (F007/F008): đọc `/kudos` khi anonymous ·
 thả tim khi đã đăng nhập · chặn tự thả tim trên kudo mình gửi · chặn thả tim lần hai trên cùng một kudo.
 
+### F009_KudosCompose — trục phân quyền GHI thứ ba (2026-09-08, chưa cấp mã PERM### riêng)
+
+Gửi Kudo mới (`createKudo`) là đường INSERT ĐẦU TIÊN vào `public.kudos` — trước đó bảng này chỉ có
+policy SELECT (F007) và `kudo_hearts` mới là bảng ghi được (F008). Cùng route `/kudos`, cùng
+KHÔNG route-guard cho phần đọc; gate ghi nằm hoàn toàn trong Server Action, không ở `proxy.ts`:
+
+| Chủ thể | Đọc `/kudos` | Mở dialog Viết Kudo | Gửi Kudo (INSERT `kudos`) | Upload ảnh (`kudo-images`) |
+|---|---|---|---|---|
+| Anonymous | ✓ | ✗ — pill điều hướng `/login` thay vì mở dialog | ✗ — `createKudo` tự `auth.getUser()`, trả `{ok:false, reason:"unauthenticated"}` nếu bị gọi trực tiếp | ✗ — policy `kudo_images_insert_authenticated` chỉ cho `authenticated` |
+| Authenticated | ✓ | ✓ | ✓ — RLS `kudos_insert_own` (`WITH CHECK sender_id = auth.uid()`) chỉ cho ghi hàng của CHÍNH MÌNH; giả mạo `sender_id` người khác bị Postgres bác (xác nhận trực tiếp trên DB, `migration-transcript.md § 6(b2)`) | ✓ — vào đúng bucket `kudo-images`, policy `kudo_images_insert_authenticated` |
+
+Ba điều enforce Ở TẦNG DỮ LIỆU, không phải UI:
+- **Sender phải khớp người gọi**: RLS `kudos_insert_own` trên `public.kudos`
+  (`0009_kudos_write_anonymity.sql`), `FOR INSERT TO authenticated WITH CHECK (sender_id = auth.uid())`
+  — không có điều kiện chặn tự-gửi-cho-chính-mình (khác `kudo_hearts_insert_own`), vì không spec/test
+  case nào của màn "Viết Kudo" yêu cầu.
+- **Chỉ INSERT, không UPDATE/DELETE**: `authenticated` có đúng `GRANT SELECT` (0006) + `GRANT INSERT`
+  (0009) trên `kudos` — không có cách nào sửa/xoá một kudo đã gửi qua REST, kể cả của chính mình.
+- **Upload ảnh giới hạn đúng 1 bucket**: 2 policy trên `storage.objects` (`0010_kudo_images_bucket.sql`)
+  — `kudo_images_insert_authenticated` (INSERT, `authenticated`, `bucket_id = 'kudo-images'`) và
+  `kudo_images_select_public` (SELECT, `public`, cùng điều kiện) — không `ALTER TABLE storage.objects
+  ENABLE ROW LEVEL SECURITY` (bẫy hosted-only, xem `permissions.md`).
+
+**Ẩn danh (`is_anonymous`) là một trục quan sát-được khác, không phải quyền GHI mới**: bất kỳ
+`authenticated` nào cũng gửi được kudo ẩn danh — `sender_id` thật vẫn ghi vào `public.kudos` (cần cho
+RLS + audit), chỉ VIEW `kudos_cards` che khi đọc lại (`CASE WHEN is_anonymous`, xác nhận trực tiếp
+trên DB tại `migration-transcript.md § 6(a)`). Không có permission-item riêng cho việc "được phép gửi
+ẩn danh" — mọi Sunner đã đăng nhập đều có quyền này như nhau.
+
+**Fail-open cho ĐỌC (tìm người nhận), fail-closed cho GHI** — cùng triết lý F008: `searchSunners`
+(đọc `profile_cards`) trả `[]` trên bất kỳ lỗi nào, kể cả khi chưa đăng nhập (không throw); `createKudo`
+fail-closed tuyệt đối — lỗi validate/upload/insert đều trả `{ok:false, ...}` và KHÔNG bao giờ để lại
+một hàng `kudos` thiếu ảnh (upload xong hết mới insert, AD-5).
+
+Bốn bề mặt của F009 đang chờ mã (cùng "Bốn bề mặt" của F007/F008 ở trên, cấp bởi `rebuild-spec` Core
+pass kế tiếp — không tự đặt số ở đây): gửi kudo khi đã đăng nhập · chặn gửi kudo khi chưa đăng nhập ·
+upload ảnh vào `kudo-images` khi đã đăng nhập · đọc công khai ảnh trong `kudo-images`. Xem
+`docs/vi/system/permissions.md § Bổ sung dự kiến — F009_KudosCompose` cho chi tiết đầy đủ.
+
 ### Related Routes
-- (GET) /kudos — SCR007_KudosLiveBoard, không redirect
+- (GET) /kudos — SCR007_KudosLiveBoard / SCR008_KudosCompose, không redirect
 - Server Action `toggleKudoHeart(kudoId)` — không phải route HTTP có path, xem `api-map.md`
 - Server Action `loadMoreKudos(input)` — đọc lại, không phải một permission surface mới (cùng
   `getKudosBoard`, cùng fail-open)
+- Server Action `createKudo(formData)` (F009) — write surface mới, xem ma trận trên
+- Server Action `searchSunners(query)` (F009) — đọc `profile_cards`, fail-open `[]`, chặn anonymous
+  ở tầng action dù `profile_cards` vốn đã `GRANT SELECT` chỉ cho `authenticated`
 
 ### Related Screens
 - SCR007_KudosLiveBoard — Bảng Kudos trực tiếp (F007_KudosLiveBoard + F008_KudosHeartReaction)
+- SCR008_KudosCompose — Viết Kudo, dialog phủ trên SCR007 (F009_KudosCompose)
 
 ### Permission Rules
 
 | Role | Allow | Conditions |
 |------|-------|------------|
-| Anonymous | ✓ (đọc) / ✗ (ghi) | Đọc toàn bộ nội dung công khai; nút tim `disabled`, action trả `unauthenticated` nếu gọi trực tiếp |
-| Authenticated, không phải người gửi | ✓ (đọc) / ✓ (ghi, tối đa 1 lượt) | Thả/bỏ tim bình thường qua `toggleKudoHeart` |
-| Authenticated, là người gửi kudo đó | ✓ (đọc) / ✗ (ghi) | Nút `disabled` trên kudo của chính mình; RLS `kudo_hearts_insert_own` bác INSERT nếu action bị gọi trực tiếp |
+| Anonymous | ✓ (đọc) / ✗ (ghi) | Đọc toàn bộ nội dung công khai; nút tim `disabled`; pill "Viết Kudo" điều hướng `/login`; mọi action ghi (`toggleKudoHeart`, `createKudo`) trả `unauthenticated` nếu gọi trực tiếp |
+| Authenticated, không phải người gửi | ✓ (đọc) / ✓ (ghi, tối đa 1 lượt tim/kudo) | Thả/bỏ tim bình thường qua `toggleKudoHeart`; gửi Kudo mới qua `createKudo` (RLS ràng `sender_id = auth.uid()`) |
+| Authenticated, là người gửi kudo đó | ✓ (đọc) / ✗ (thả tim trên kudo mình gửi) | Nút `disabled` trên kudo của chính mình; RLS `kudo_hearts_insert_own` bác INSERT nếu action bị gọi trực tiếp; KHÔNG liên quan tới quyền gửi kudo MỚI (vẫn được, không giới hạn) |
 
 ### Related Modules
 
 - src/app/(public)/kudos/page.tsx
 - src/app/(public)/kudos/_actions/toggle-kudo-heart.ts (`toggleKudoHeart`)
 - src/app/(public)/kudos/_actions/load-more-kudos.ts (`loadMoreKudos`)
-- src/dal/kudos.ts, src/dal/kudo-hearts.ts, src/dal/kudos-stats.ts
+- src/app/(public)/kudos/_actions/create-kudo.ts (`createKudo`, F009)
+- src/app/(public)/kudos/_actions/upload-kudo-images.ts (`uploadKudoImages`, F009)
+- src/app/(public)/kudos/_actions/search-sunners.ts (`searchSunners`, F009)
+- src/app/(public)/kudos/_components/kudos-compose-launcher.tsx (`handleActivate` — layer 1 UX gate, F009)
+- src/dal/kudos.ts, src/dal/kudo-hearts.ts, src/dal/kudos-stats.ts, src/dal/sunner-search.ts (F009)
 - supabase/migrations/0006_kudos.sql, supabase/migrations/0007_kudo_hearts.sql (RLS policies + trigger)
+- supabase/migrations/0009_kudos_write_anonymity.sql (F009 — `kudos_insert_own`, cột ẩn danh, view patch)
+- supabase/migrations/0010_kudo_images_bucket.sql (F009 — bucket `kudo-images` + 2 policy `storage.objects`)
 
 ---
 
@@ -358,9 +407,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008 không tạo PERM### mới)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008, F009 không tạo PERM### mới — F007/F008/F009 mở trục phân quyền GHI mới nhưng chờ core pass cấp mã)
 - [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

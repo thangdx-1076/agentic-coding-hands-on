@@ -4,12 +4,10 @@ import type { SiteViewer } from "../../../_shared/site-chrome";
 import type { KudosPageCopy } from "../_shared/build-kudos-copy";
 import type { FeedPage } from "../_hooks/use-infinite-feed";
 
-import { KudosBanner } from "./kudos-banner";
-import { KudosComposePill } from "./kudos-compose-pill";
-import { KudosHeroSearchPill } from "./kudos-hero-search-pill";
 import { KudosFilterBar } from "./kudos-filter-bar";
 import type { KudosFilterState } from "./kudos-filter-menu";
 import { KudosHighlightCarousel } from "./kudos-highlight-carousel";
+import { KudosKeyvisualBand } from "./kudos-keyvisual-band";
 import type { KudosHighlightCarouselItem } from "./kudos-highlight-carousel";
 import {
   KudosSpotlight,
@@ -58,6 +56,14 @@ export type KudosScreenProps = {
   giftRecipients: KudosLeaderboardItemData[];
 
   toastMessage: string | null;
+
+  /** Everything `KudosKeyvisualBand`'s compose launcher needs beyond
+   * `copy` (already threaded through above) — ONE prop object per AD-7,
+   * not 6 loose ones. */
+  compose: {
+    isSignedIn: boolean;
+    hashtagVocabulary: string[];
+  };
 };
 
 /**
@@ -96,6 +102,7 @@ export function KudosScreen({
   rankUps,
   giftRecipients,
   toastMessage,
+  compose,
 }: KudosScreenProps) {
   const languageLabel = LOCALE_LABEL[locale] as "VN" | "EN";
 
@@ -112,27 +119,11 @@ export function KudosScreen({
         logoutAction={logoutAction}
       />
       <main className="flex w-full flex-1 flex-col gap-16 pb-24">
-        {/* mm:2940:13448 `Button chuc nang` is a 1440×72 row at y 408–480,
-            i.e. INSIDE the 512-tall keyvisual band (mm:2940:13432), not below
-            it. Overlaying it here rather than leaving it in normal flow is
-            what puts both pills on the artwork the way the frame draws them.
-            DOM order stays banner → pills → highlight, which C10 asserts. */}
-        <div className="relative w-full">
-          <KudosBanner
-            title={copy.banner.title}
-            logoAlt={copy.banner.logoAlt}
-          />
-          <div className="absolute inset-x-0 bottom-[6.25%] flex w-full flex-col items-stretch gap-8 px-6 sm:px-12 lg:flex-row lg:items-center lg:px-36">
-            <KudosComposePill
-              placeholder={copy.compose.placeholder}
-              ariaLabel={copy.compose.ariaLabel}
-            />
-            <KudosHeroSearchPill
-              placeholder={copy.heroSearch.placeholder}
-              ariaLabel={copy.heroSearch.ariaLabel}
-            />
-          </div>
-        </div>
+        <KudosKeyvisualBand
+          copy={copy}
+          isSignedIn={compose.isSignedIn}
+          hashtagVocabulary={compose.hashtagVocabulary}
+        />
 
         <div className="flex w-full flex-col gap-6">
           <KudosFilterBar

@@ -795,3 +795,45 @@
 - Chiều cao `B_Highlight` 786 (design) vs 621 (chạy) và sidebar 933 vs 316: đều do **dữ liệu ít hơn**
   (2 leaderboard rỗng, thẻ ngắn hơn), không phải lỗi layout. Bề rộng khớp tuyệt đối (sidebar 422,
   thẻ 528, nút nav 80×80).
+
+## 260908-0810 — kudos-write-modal
+
+### Tôi cần làm
+
+- [x] **Ký riskGate** (đã ký 260908-0842 qua AskUserQuestion — chọn "Ký — ship luôn") — reviewer đặt `signoffRequired: true` vì đụng Auth (policy INSERT đầu tiên trên `public.kudos`, fail-closed trong Server Action) + DB migration (`0009`, `0010` bucket + 2 policy storage). Đọc `plans/260907-2338-kudos-write-modal/reports/reviewer-260908-inspection-f009.md` (score 7, 0 critical còn lại sau khi 27/27 xanh) rồi nói "ký" → tôi set `humanSignedOff: true` trong `evidence/inspection-verdict.json`, chạy evidence gate và `/tkm:ship`.
+- [ ] **Quyết `experimental.serverActions.bodySizeLimit: "28mb"`** (`next.config.ts`) — reviewer xếp High: Next 16 không có giới hạn theo từng action, nên 28mb áp cho cả `toggleKudoHeart`, `loadMoreKudos`, logout… Chấp nhận (mỗi file đã cap 5 MiB hai đầu) hay tách upload sang route riêng để trả limit về 1MB.
+- [ ] **Hosted Supabase**: migration `0010` tạo bucket `kudo-images` + policy, `next.config.ts` suy `images.remotePatterns` từ `NEXT_PUBLIC_SUPABASE_URL`. Khi deploy phải chắc env đó là host public (không phải `127.0.0.1`), nếu không ảnh trên feed sẽ 400.
+- [ ] **Cập nhật test case trên MoMorph** cho `ihQ26W78P2`: 57 TC tải về chỉ biết 3 trường bắt buộc, không có `Danh hiệu` và link `Tiêu chuẩn cộng đồng`; hợp đồng e2e C06/C10/C20/C22 đã đi xa hơn CSV. Có tool `upload_test_cases` — cần người quyết có ghi ngược lên MoMorph không.
+- [ ] **licenseal**: 14 warning LGPL-3.0-or-later đều là `@img/sharp-libvips-*` (transitive của `sharp` do Next kéo vào; F009 không thêm dependency). 0 violation / 0 gap. Cần một lượt `/tkm:audit-licenses --review` để ghi quyết định vào `licenseal.review.toml` cho cả repo — không phải việc của riêng F009.
+- [ ] Review PR (URL ghi ở Decisions sau khi ship).
+
+### Decisions
+
+- F009 = một feature SINGLE (không tách ảnh/ẩn danh thành feature riêng): cùng actor, cùng action-domain "gửi kudo", cùng outcome.
+- `Danh hiệu` (node `*` thật trong design, không có spec row/TC) là trường bắt buộc thứ 4, lưu `hashtags[0]`; chip là `hashtags[1..5]` — đúng cách F007 đã mượn `hashtags[0]` làm tiêu đề thẻ, seed `0008` đã xếp vậy; thêm cột `title` là mở lại F007.
+- Ẩn danh: cột `is_anonymous` + `anonymous_name`, **và vá view `kudos_cards` bằng `CASE WHEN`** trên 5 cột sender (không chỉ UI) — không vá thì `anon` gọi view vẫn đọc tên thật. `sender_id` thật vẫn giữ trong bảng cho RLS/audit. Tên ẩn danh bắt buộc khi tick (D001).
+- Upload ảnh thật lên Storage bucket `kudo-images` qua Server Action (upload hết → INSERT một lần, lỗi giữa chừng thì `remove()` best-effort); bucket tạo bằng migration, không bằng `config.toml`; **không** `ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY`.
+- Giữ `next/image` optimization cho ảnh Storage (thumbnail 160px từ file tới 5 MiB) → `images.remotePatterns` suy từ env + `dangerouslyAllowLocalIP` **chỉ** khi host là loopback/private; C24 decode `url` param của `/_next/image` thay vì assert URL thô.
+- Toolbar định dạng chèn marker markdown-subset vào `<textarea>`; renderer `kudo-markdown-text.tsx` dựng React element (không `dangerouslySetInnerHTML`, link chỉ `http(s)`) — đụng đúng 1 file F007 (`kudos-card.tsx`). Lệch có ý thức so với ID-27..32 (textarea không render inline style).
+- Nút `Gửi` dùng `aria-disabled`, không `disabled` (FR-208 vs ID-56 loại trừ nhau); e2e dùng `click({ force: true })` **chỉ** khi cố ý bấm lúc thiếu trường.
+- Modal = `<dialog>` native + `showModal()` do hook gọi; component **không** render attribute `open` (bind `open` làm hook bỏ qua `showModal()` → non-modal, mất backdrop/focus trap).
+- Pill giữ `<input readOnly>` (C03 của F007) + `onActivate` + `aria-haspopup="dialog"`; quyết định mở dialog hay `/login` nằm ở launcher.
+- Feed remount khi kudo đầu feed đổi: `feedKey` = filter + `latestFeedCard.id` — `useInfiniteFeed` seed state một lần nên `revalidatePath` một mình không làm thẻ mới hiện.
+- Validate tay theo `toggle-kudo-heart.ts`, không zod; insert nằm trong action, read người nhận ở DAL mới `sunner-search` đọc view `profile_cards` (3 cột, không nới SELECT).
+- Copy dưới namespace `kudos.composeModal`, luồn props qua `build-kudos-copy.ts`; `errorImageInvalid` = "Sai định dạng file — …" (viết thường "định dạng" vì regex C17 không có cờ `i`).
+- Không bộ đếm ký tự (D.1 `maxLength` rỗng), không lightbox, không mention entity (lưu plain `@Tên`), không UPDATE/DELETE policy, không thêm `/kudos` vào `src/proxy.ts`.
+- E2E: `E2E_PORT=3100` mọi lệnh — port 3000 là dev server của project khác (`aimo-parking-lessor-client`), **không kill**; memory `stale-dev-server-fakes-e2e-flakiness` đã sửa theo.
+- Debt log kiểu thẻ: hashtag thứ 5 bị `...` che trên thẻ vì mảng dài 6 (danh hiệu + 5 chip) mà `KudosHashtagList` cắt ở 5 (BR-006) — hành vi truncation có sẵn, không phải hồi quy.
+
+### Nợ lại
+
+- 3 frame phụ trợ không có node data (dropdown gợi ý người nhận `QIMJNgFb8K`/`zJzaC9GgXt`, state lỗi `5c7PkAibyD`, state đã tick ẩn danh `p9vFVBE_tc`) → dựng theo pattern repo (`kudos-filter-menu`, `login-error-alert`, box của ô Danh hiệu). Khi design xong phải audit lại.
+- Định dạng văn bản chỉ hiện trên thẻ sau khi gửi, không WYSIWYG trong ô soạn thảo.
+- Hai agent tự commit giữa forge (`4833efa`, `abaa679`) dù được dặn không — scope đúng, message sạch, giữ; nhưng là lệch quy trình.
+- E2E `@local-db` insert kudo thật vào Supabase local (43+ hàng "Test User"/"Secret Admirer" tích tụ) — chưa có cleanup; cân nhắc `afterAll` xoá theo email test hoặc chấp nhận vì là instance local.
+- ~~`login.spec`/`kudos.spec` mỗi cái 1 fail "pre-existing"~~ → **đã xử lý**: `login.spec` xanh khi chạy serial; `kudos.spec` C19 đỏ vì DB local có 88 hàng kudos (seed 12) do e2e compose bơm vào — cuộn một lần không tới cuối. Đã xoá 76 hàng do user test (`@kudos-test.dev`, `@example.com`, `@kudos-e2e.saa`, `@test.com`) gửi, DB về 12, C19 xanh. Tester đang thêm `afterAll` cleanup vào `kudos-compose.spec.ts`. Vẫn còn ~1.100 user test tích tụ trong `auth.users` (F007 + F009) — chưa dọn.
+- Spec/test-case trên MoMorph chưa phản ánh `Danh hiệu` + link `Tiêu chuẩn cộng đồng` (xem "Tôi cần làm").
+- SunLint (ship gate, 0 error / 5 warning, A+ 95.3): `upload-kudo-images.ts:113` catch rỗng là cleanup best-effort có chủ đích (AD-5) — nên thêm comment trong catch; `upload-kudo-images.ts:134` + `kudos-cards-query.ts:127` dùng `new Error` generic (C030); `kudo-markdown-text.tsx:92` "hardcoded URL" là false positive (whitelist scheme http/https).
+- doc-writer advisory (ngoài diff F009): `README.md` gốc thiếu route/migration F004–F008 từ trước; `docs/vi/system/overview.md` chưa phản ánh F007–F009; `permissions.md`/`architecture.md` còn banner `[F007/F008 draft — chưa merge]` cũ. Nên chạy `/tkm:rebuild-spec` một lượt.
+- E2E `@local-db` của compose spec đổi sang `mode: "serial"` vì `fullyParallel: true` làm 7 test đua nhau "thẻ mới nhất" trên cùng DB (C26 vớ thẻ của C25). Nếu sau này cần song song, phải đổi assertion sang nội dung unique theo test.
+- Picker hashtag không tự đóng sau khi thêm chip (Enter) và không đóng khi click ra ngoài → mở lâu sẽ đè lên hàng Image (ảnh `04`). Không vi phạm hợp đồng; cân nhắc đóng sau Enter hoặc click-outside.

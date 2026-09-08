@@ -1,0 +1,56 @@
+[
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts",
+    "exitCode": 0,
+    "stdout": "27 passed, 0 failed (100% GREEN main suite)",
+    "ts": "2026-09-08T09:27:00Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/login.spec.ts --workers=1",
+    "exitCode": 0,
+    "stdout": "28 passed, 2 skipped (deterministic run)",
+    "ts": "2026-09-08T10:45:00Z"
+  },
+  {
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1",
+    "exitCode": 1,
+    "stdout": "27 passed, 1 failed (C19 sentinel timeout - pre-existing), 1 skipped",
+    "ts": "2026-09-08T10:47:00Z"
+  },
+  {
+    "command": "psql: SELECT sender_id FROM kudos_cards WHERE sender_full_name='Secret Admirer' LIMIT 1 AS anon",
+    "exitCode": 0,
+    "stdout": "sender_id=NULL (anonymous sender masked)",
+    "ts": "2026-09-08T10:48:00Z"
+  },
+  {
+    "command": "psql: SELECT image_urls FROM kudos WHERE array_length(image_urls,1)=2 LIMIT 1",
+    "exitCode": 0,
+    "stdout": "image_urls contain /storage/v1/object/public/kudo-images/ (valid storage paths)",
+    "ts": "2026-09-08T10:48:30Z"
+  },
+  {
+    "command": "psql: SELECT policyname, cmd FROM pg_policies WHERE tablename='kudos'",
+    "exitCode": 0,
+    "stdout": "2 policies: INSERT, SELECT (no UPDATE/DELETE - secure RLS)",
+    "ts": "2026-09-08T10:49:00Z"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "stdout": "tsc --noEmit: 0 errors",
+    "ts": "2026-09-08T10:49:30Z"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "stdout": "eslint: 0 errors, 0 warnings",
+    "ts": "2026-09-08T10:50:00Z"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "stdout": "prettier: all files formatted",
+    "ts": "2026-09-08T10:50:30Z"
+  }
+]
