@@ -198,8 +198,26 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       );
       await standardsLink.click();
 
-      // Assert navigation to /standards
-      await expect(page).toHaveURL(/\/standards/);
+      // Assert navigation to /standards.
+      //
+      // Timeout raised well above the 5s default on purpose. Next's soft
+      // navigation does not change `location` until the RSC payload for the
+      // destination arrives, so this assertion is really waiting on the
+      // destination route's server render. In CI, Supabase points at an
+      // unreachable `http://127.0.0.1:54321`, and data-backed routes cost
+      // ~7.4s there (measured across all 10 `kudos.spec.ts` tests in run
+      // 34190836567) versus ~0.4s for `/`. `/standards` is cheaper, but a
+      // cold route compile can still cross 5s, so both navigation cases get
+      // the same realistic budget rather than one being a latent flake.
+      //
+      // Do NOT "simplify" this back to a bare `toHaveAttribute("href", ...)`
+      // the way TC ID-44/45/53 in `home.spec.ts` do: TC ID-36 already asserts
+      // both hrefs, so an href-only check here would be a pure duplicate.
+      // What this test uniquely proves is that the click actually navigates —
+      // both menuitems carry `onClick={() => close(false)}`, and a handler
+      // that swallowed the default action would leave the href correct while
+      // breaking the link.
+      await expect(page).toHaveURL(/\/standards/, { timeout: 15_000 });
     });
 
     test("[TC ID-39] Clicking 'Viết KUDOS' link navigates to /kudos and closes panel", async ({
@@ -218,8 +236,13 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       const writeKudosLink = page.locator('a[role="menuitem"][href="/kudos"]');
       await writeKudosLink.click();
 
-      // Assert navigation to /kudos
-      await expect(page).toHaveURL(/\/kudos/);
+      // Assert navigation to /kudos — see TC ID-38 for why the timeout is
+      // raised. This is the case that actually failed CI run 34190836567:
+      // the URL was still `http://localhost:3000/` when the 5s default
+      // expired, and the `[WebServer] destination stream closed early` lines
+      // in that log are the server reacting to Playwright abandoning the
+      // in-flight RSC request — a consequence of the timeout, not its cause.
+      await expect(page).toHaveURL(/\/kudos/, { timeout: 15_000 });
     });
 
     test("[TC ID-40] Expanded panel remains consistent across open/close cycles", async ({
