@@ -25,6 +25,14 @@ const sampleCopy: KudosSidebarCopy = {
   rankBoardTitle: "10 SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT",
   giftBoardTitle: "10 SUNNER NHẬN QUÀ MỚI NHẤT",
   emptyBoard: "Chưa có dữ liệu",
+  secretBox: {
+    titleUnopened: "KHÁM PHÁ SECRET BOX CỦA BẠN",
+    titleRevealed: "MỞ SECRET BOX THÀNH CÔNG",
+    instruction: "Click vào box để tiếp tục mở",
+    label: "Secretbox chưa mở",
+    close: "Đóng",
+    error: "Có lỗi khi mở Secret Box, vui lòng thử lại",
+  },
 };
 
 const sampleStats: KudosStats = {

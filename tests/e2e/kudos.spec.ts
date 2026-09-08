@@ -58,7 +58,7 @@ loadEnv();
  * | C24 | `@local-db` | `[data-testid=kudos-card-detail]` render nhưng **không** phải `<a href>` và click không đổi URL *(đích hoãn)* | TC[34] | § Out of scope |
  * | C25 | `@auth` | Đã đăng nhập: bấm tim trên kudo người khác → icon đổi sang trạng thái `data-hearted="true"`, số tim +1; bấm lại → về `false`, -1 | TC[32], TC[24] | F008 FR-401, BR-001 |
  * | C26 | `@auth` | Kudo do chính mình gửi → nút tim `disabled` | TC[23] | F008 FR-202, BR-002 |
- * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` (disabled) | TC[15] | FR-211 |
+ * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` visible, trạng thái enable/disable lấy từ `secretBoxUnopened` thật (DEC-001) — viewer test mới (0 tim đã gửi) nên vẫn `disabled` | TC[15] | FR-211 |
  * | C28 | `@auth` | Bấm tên/avatar trên thẻ → URL tới `/profile?id=<uuid>` | TC[00], TC[35], TC[36] | FR-402, US008 |
  * | C29 | `@auth` | Ẩn danh bấm tên/avatar → URL về `/login` *(gate `(protected)/layout.tsx` có sẵn, không code mới)* | TC[02] | FR-601, BR-013 |
  * ========================================================
@@ -744,7 +744,10 @@ test.describe(
 
       const openGift = sidebar.locator("[data-testid=kudos-open-gift]");
       await expect(openGift).toBeVisible();
-      await expect(openGift).toBeDisabled();
+      // Data-driven contract (DEC-001), not the old hardcoded placeholder:
+      // this test's viewer is freshly created with 0 hearts sent, so real
+      // `secretBoxUnopened` is 0 and the button legitimately stays disabled.
+      await expect(openGift).toHaveJSProperty("disabled", true);
     });
 
     test("[C28] Click sender/receiver name navigates to /profile?id=<uuid>", async ({

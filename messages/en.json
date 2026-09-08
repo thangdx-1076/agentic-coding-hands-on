@@ -302,6 +302,14 @@
       "rankBoard": "10 SUNNERS WITH THE NEWEST RANK-UP",
       "giftBoard": "10 SUNNERS WHO JUST RECEIVED GIFTS",
       "emptyBoard": "Chưa có dữ liệu"
+    },
+    "secretBox": {
+      "titleUnopened": "DISCOVER YOUR SECRET BOX",
+      "titleRevealed": "SECRET BOX OPENED SUCCESSFULLY",
+      "instruction": "Click the box to keep opening",
+      "label": "Unopened Secret Box",
+      "close": "Close",
+      "error": "Something went wrong opening the Secret Box, please try again"
     }
   }
 }
