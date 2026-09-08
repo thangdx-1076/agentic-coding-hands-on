@@ -1,0 +1,7 @@
+{
+  "mode": "single",
+  "intents": [
+    "(logged-in Kudos viewer, open a Secret Box, receives one random badge and sees the unopened-box count drop by one)"
+  ],
+  "justification": ""
+}

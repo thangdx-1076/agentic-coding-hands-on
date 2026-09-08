@@ -1,0 +1,48 @@
+{
+  "task": "Secret Box modal (MoMorph J3-4YFIpMM): logged-in /kudos viewer opens a modal from the existing 'Mở Secret Box' button, clicks the gift box, receives one weighted-random badge of 6, unopened counter decrements. Server-authoritative via Postgres SECURITY DEFINER RPC + migration 0011. Scope is /kudos only; /profile button stays disabled.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "Anonymous viewer on /kudos sees no stat rows and no kudos-open-gift button (kudos.spec.ts:43 C09 preserved).",
+    "Logged-in viewer with secretBoxUnopened === 0 sees kudos-open-gift visible but disabled; modal cannot open.",
+    "Logged-in viewer with secretBoxUnopened > 0 sees kudos-open-gift enabled; clicking it opens the Secret Box dialog.",
+    "Unopened state renders title 'KHÁM PHÁ SECRET BOX CỦA BẠN', instruction 'Click vào box để tiếp tục mở', the closed-box artwork, label 'Secretbox chưa mở' and the unopened count.",
+    "Clicking the box calls the server, reveals exactly one badge of the 6, and the unopened count decreases by exactly 1.",
+    "Reveal state renders title 'MỞ SECRET BOX THÀNH CÔNG' with the awarded badge image at intrinsic 64x64, not upscaled.",
+    "When unopened count reaches 0 inside the open modal, the instruction line is hidden and the box is no longer clickable.",
+    "The dialog closes via its X button and via Escape, following the repo's native <dialog> pattern.",
+    "Badge draw and unopened count are computed server-side; client-side tampering with the count or badge id cannot change what is persisted.",
+    "Two concurrent/double-clicked open requests never consume more boxes than the viewer is entitled to.",
+    "Entitlement equals floor(sum(kudos.heart_count where sender_id = viewer)/5) minus count of that viewer's openings.",
+    "kudos/page.tsx no longer hardcodes secretBoxOpened/secretBoxUnopened to 0; both come from the database.",
+    "pnpm typecheck, pnpm lint, and the full pnpm test:e2e suite all pass; kudos.spec.ts:745-747's disabled assertion is updated to the new enabled contract."
+  ],
+  "touchpoints": [
+    "supabase/migrations/0011_secret_box.sql (new: secret_box_openings table + RLS + open_secret_box RPC)",
+    "src/dal/secret-box.ts (new: read openings/entitlement + call the RPC)",
+    "src/dal/kudos-stats.ts (extend summary with real secretBoxOpened/secretBoxUnopened)",
+    "src/app/(public)/kudos/page.tsx:146-147 (replace hardcoded zeros)",
+    "src/app/(public)/kudos/_components/kudos-stat-list.tsx:105-120 (button stops being unconditionally disabled)",
+    "src/app/(public)/kudos/_components/ (new secret-box dialog component + hook + story + unit test)",
+    "src/app/(public)/kudos/_actions/ (server action wrapping the RPC, mirroring toggle-kudo-heart.ts)",
+    "messages/vi.json + messages/en.json (new modal copy keys)",
+    "public/standards/ (two new MoMorph assets: closed box 558x558, sparkle effect 546x546)",
+    "tests/e2e/secret-box.spec.ts (new durable screen test) + tests/e2e/kudos.spec.ts:745-747 (contract update)"
+  ],
+  "blastRadius": [
+    "kudos.spec.ts:745-747 asserts kudos-open-gift is disabled — this shipped contract flips and must be rewritten, not deleted.",
+    "kudos.spec.ts:43 C09 (anonymous sees no stat rows/button) must keep passing untouched.",
+    "profile.spec.ts:40-41 C6/C7 freeze profile's zeros and its disabled button — /profile must not be touched or these break.",
+    "src/dal/kudos-stats.ts is shared by the /kudos board; widening KudosStatsSummary affects every caller and its own unit test.",
+    "migration 0007's sync_kudo_heart_count trigger owns heart_count; the new table must not add a competing counter.",
+    "First .rpc() call in the repo — no generated Supabase types exist, so the RPC return shape needs runtime checking at the boundary (toggle-kudo-heart.ts:134-138 precedent).",
+    "Supabase local instance is in-repo; migrations run via supabase start, never db reset."
+  ],
+  "contracts": [
+    "MoMorph J3-4YFIpMM spec rows A/B/C/D (spec_progress: completed) — copy and behavior are verbatim design data, never invented.",
+    "19 MoMorph test cases on J3-4YFIpMM are the acceptance source; badge probabilities Stay Gold 30 / Flow to Horizon 25 / Touch of Light 20 / Beyond the Boundary 10 / Revival 10 / Root Further 5 sum to 100.",
+    "Hearts credit the kudo SENDER, not the receiver (src/dal/kudos-stats.ts:19-25, resolved by a prior clarifications.md).",
+    "Native <dialog> is the only modal pattern in this repo; open/close lives in a paired hook via ref callback with scroll lock and onCancel (kudos-compose-dialog.tsx precedent).",
+    "Cross-route-group shared UI belongs in src/app/_components; this feature stays inside (public)/kudos so that rule is not triggered.",
+    "testPolicy: e2e-red-first — a tester-authored assertion RED is required before implementation."
+  ]
+}
