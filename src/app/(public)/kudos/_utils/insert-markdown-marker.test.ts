@@ -148,4 +148,38 @@ describe("insertMarkdownMarker", () => {
       selectionEnd: 10,
     });
   });
+
+  it("link với linkText (có bôi đen) → thay [start,end) bằng [linkText](url), caret collapsed sau ')' (dialog Thêm đường dẫn)", () => {
+    const result = insertMarkdownMarker(
+      "Thanks abc",
+      7,
+      10,
+      "link",
+      "https://example.com",
+      "Sample Link",
+    );
+
+    expect(result).toEqual({
+      value: "Thanks [Sample Link](https://example.com)",
+      selectionStart: 41,
+      selectionEnd: 41,
+    });
+  });
+
+  it("link với linkText (selection 'hello' đầu chuỗi, TC L09) → thay [0,5) bằng [hello](url), con trỏ sau ')', giữ nguyên phần đuôi ' world'", () => {
+    const result = insertMarkdownMarker(
+      "hello world",
+      0,
+      5,
+      "link",
+      "https://a.com/x",
+      "hello",
+    );
+
+    expect(result).toEqual({
+      value: "[hello](https://a.com/x) world",
+      selectionStart: 24,
+      selectionEnd: 24,
+    });
+  });
 });

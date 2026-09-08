@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T18:35:15Z",
+  "generated_at": "2026-09-08T02:56:01Z",
   "index": {
     "app/auth/callback/route.ts": [
       "F001"
@@ -107,6 +107,30 @@
     "src/app/(public)/_components/icons/icon-pencil.tsx": [
       "F003",
       "F005"
+    ],
+    "src/app/(public)/kudos/_components/kudos-link-dialog.tsx": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_components/kudos-compose-icons.tsx": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_utils/validate-link-draft.ts": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_utils/insert-markdown-marker.ts": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_hooks/use-kudos-compose-content.ts": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_components/kudos-compose-form.tsx": [
+      "F009"
+    ],
+    "src/app/(public)/kudos/_shared/kudos-compose-copy.ts": [
+      "F009"
     ]
   }
 }

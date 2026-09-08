@@ -1,8 +1,8 @@
 ---
-status: implemented
+status: draft
 authored_by: takumi
 fcode: F009
-created: 2026-09-07
+created: 2026-09-08
 lang: vi
 ---
 
@@ -203,7 +203,7 @@ native thứ hai — "Thêm đường dẫn" — mở LỒNG bên trên (top-lay
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| ARIA roles/labels | [EXPECTED] | `<dialog>` native cho `role="dialog"` ngầm định + `aria-modal`; cần `aria-label`/`aria-labelledby` cho tiêu đề modal. R4 lồng dùng CÙNG pattern: `aria-labelledby="kudos-link-title"` trỏ vào E17 (`kudos-link-dialog.tsx:91,98`) |
+| ARIA roles/labels | [EXPECTED] | `<dialog>` native cho `role="dialog"` ngầm định + `aria-modal`; cần `aria-label`/`aria-labelledby` cho tiêu đề modal. R4 lồng dùng CÙNG pattern: `aria-labelledby="kudos-link-title"` trỏ vào E17 (planned — chưa viết) |
 | Keyboard navigation | [EXPECTED] | `<dialog>`/`showModal()` cho focus trap và Tab-cycle sẵn có theo trình duyệt; R4 lồng có top-layer riêng nên Tab không thoát được ra dialog cha trong khi R4 mở |
 | Focus management | [EXPECTED] | Focus tự động vào modal khi mở, trả lại nút trigger khi đóng. R4: focus tự động vào E18 khi mở; khi R4 đóng (Hủy/Escape/Lưu), focus TRẢ VỀ đúng nút Link đã bấm mở nó (E05's `data-format="link"` button) — không phải trả về `<body>` hay dialog cha nói chung |
 | Screen reader compatibility | [EXPECTED] | Chưa kiểm chứng — cần gắn nhãn rõ cho từng trường khi implement, kể cả E18/E19 |

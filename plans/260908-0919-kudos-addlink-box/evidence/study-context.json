@@ -1,0 +1,49 @@
+{
+  "task": "Addlink Box (MoMorph OyDLDuSGEa) — replace the window.prompt behind the Viết Kudo toolbar's Link button with a nested native <dialog> 'Thêm đường dẫn' (Nội dung 1-100 chars + URL http/https 5-2048 chars, Hủy/Lưu); on valid save insert [text](url) into the content textarea. Extension of F009_KudosCompose, no new F###.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "tests/e2e/kudos-link-dialog.spec.ts (new, @auth) is RED before implementation for a real assertion reason, then passes 100% with E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts (exit 0)",
+    "Clicking [data-testid=kudos-format-button][data-format=link] opens [data-testid=kudos-link-dialog] as a modal on top of the compose dialog; no window.prompt is called anywhere in src/",
+    "Escape or Hủy closes only the link dialog; the compose dialog stays open and the textarea value is unchanged",
+    "Lưu with empty/whitespace Nội dung, Nội dung > 100 chars, empty URL, URL < 5 or > 2048 chars, or a non-http(s)/unparseable URL shows the field error(s), blocks save, and keeps the link dialog open",
+    "Lưu with valid values closes the link dialog and the textarea contains [<Nội dung>](<URL>) at the selection captured when the dialog opened; a prior text selection prefills Nội dung",
+    "F009 contract tests/e2e/kudos-compose.spec.ts is unmodified and still green (C09 toolbar count 6, C10 standards link)",
+    "Unit tests cover insert-markdown-marker link-text extension, the link validation util and the link dialog hook; pnpm test:unit:coverage stays 100% on the .ts allowlist",
+    "Storybook story exists for kudos-link-dialog.tsx; pnpm build, pnpm typecheck, pnpm lint --max-warnings 0 and pnpm format:check are clean",
+    "messages/vi.json and messages/en.json carry the kudos.composeModal.linkDialog.* keys with parity"
+  ],
+  "touchpoints": [
+    "messages/vi.json",
+    "messages/en.json",
+    "src/app/(public)/kudos/_shared/kudos-compose-copy.ts",
+    "src/app/(public)/kudos/_utils/insert-markdown-marker.ts",
+    "src/app/(public)/kudos/_utils/validate-link-draft.ts",
+    "src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts",
+    "src/app/(public)/kudos/_components/kudos-link-dialog.tsx",
+    "src/app/(public)/kudos/_components/kudos-compose-icons.tsx",
+    "src/app/(public)/kudos/_components/kudos-compose-footer.tsx",
+    "src/app/(public)/kudos/_components/kudos-format-toolbar.tsx",
+    "src/app/(public)/kudos/_components/kudos-compose-form.tsx",
+    "tests/e2e/kudos-link-dialog.spec.ts",
+    "docs/vi/features/F009_KudosCompose/functional-spec.md",
+    "docs/vi/features/F009_KudosCompose/technical-spec.md",
+    "docs/vi/screens/SCR008_KudosCompose/spec.md"
+  ],
+  "blastRadius": [
+    "Viết Kudo compose dialog (F009) — the Link toolbar action changes from window.prompt to a nested dialog; other 5 toolbar buttons unchanged",
+    "insertMarkdownMarker signature gains an optional linkText argument — all existing callers keep behavior",
+    "IconClose/IconLink move from local consts to a shared kudos-compose-icons.tsx — footer and toolbar import them",
+    "i18n composeModal namespace grows a linkDialog leaf (vi/en parity)",
+    "No DB, no Server Action, no RLS, no route, no system doc change"
+  ],
+  "contracts": [
+    "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts",
+    "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts (F009, must stay green and unmodified)",
+    "DOM testids: kudos-link-dialog, kudos-link-title, kudos-link-text-input, kudos-link-url-input, kudos-link-text-error, kudos-link-url-error, kudos-link-cancel, kudos-link-save; trigger [data-testid=kudos-format-button][data-format=link]",
+    "insertMarkdownMarker(value, start, end, 'link', url, linkText?) -> {value, selectionStart, selectionEnd}; linkText given => selection replaced by [linkText](url), caret after ')'",
+    "kudos-compose-pill stays <input readonly> (F007 C03); compose dialog testids unchanged",
+    "momorph: https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/OyDLDuSGEa",
+    "testPolicy: e2e-red-first",
+    "clarifications: plans/260908-0919-kudos-addlink-box/clarifications.md"
+  ]
+}

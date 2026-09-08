@@ -1,0 +1,79 @@
+[
+  {
+    "stage": "red",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts --reporter=list",
+    "exitCode": 1,
+    "passed": 0,
+    "failed": 11,
+    "timestamp": "2026-09-08T09:29:00Z",
+    "summary": "VALID RED: All 11 test failures are assertion-based (missing [data-testid=kudos-link-dialog] element); infrastructure clean (typecheck ✓, lint ✓)"
+  },
+  {
+    "stage": "green",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts --reporter=list",
+    "exitCode": 0,
+    "passed": 11,
+    "failed": 0,
+    "timestamp": "2026-09-08T10:22:00Z",
+    "summary": "GREEN 11/11: Link dialog tests all pass (was RED 0/11)"
+  },
+  {
+    "stage": "green",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --reporter=list",
+    "exitCode": 0,
+    "passed": 27,
+    "failed": 0,
+    "timestamp": "2026-09-08T10:23:30Z",
+    "summary": "GREEN 27/27: F009 regression check pass, no test file modifications"
+  },
+  {
+    "stage": "green",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1 --reporter=list",
+    "exitCode": 1,
+    "passed": 27,
+    "failed": 1,
+    "skipped": 1,
+    "timestamp": "2026-09-08T10:24:45Z",
+    "summary": "F007 board regression: 1 pre-existing C19 failure (not regression), 27 pass"
+  },
+  {
+    "stage": "green",
+    "command": "pnpm test:unit:coverage",
+    "exitCode": 0,
+    "passed": 534,
+    "coverage": "100%",
+    "timestamp": "2026-09-08T10:25:00Z",
+    "summary": "GREEN: 534 unit tests, 100% coverage all metrics"
+  },
+  {
+    "stage": "green",
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "timestamp": "2026-09-08T10:26:00Z",
+    "summary": "GREEN: TypeScript clean"
+  },
+  {
+    "stage": "green",
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "timestamp": "2026-09-08T10:26:30Z",
+    "summary": "GREEN: ESLint clean"
+  },
+  {
+    "stage": "green",
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "timestamp": "2026-09-08T10:27:00Z",
+    "summary": "GREEN: Prettier format check passed"
+  },
+  {
+    "stage": "green-rerun",
+    "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1 --reporter=list",
+    "exitCode": 0,
+    "passed": 28,
+    "failed": 0,
+    "skipped": 1,
+    "timestamp": "2026-09-08T03:26:54Z",
+    "summary": "F007 regression green after local-DB test-row cleanup"
+  }
+]

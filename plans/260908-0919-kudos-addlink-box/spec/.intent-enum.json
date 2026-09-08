@@ -1,0 +1,7 @@
+{
+  "mode": "single",
+  "intents": [
+    "Sunner đang soạn Kudo bấm nút Link trên toolbar, điền văn bản hiển thị + URL http/https trong dialog 'Thêm đường dẫn', bấm Lưu để chèn liên kết markdown vào nội dung Kudo (mở rộng F009, thay window.prompt)"
+  ],
+  "justification": "Cùng actor và outcome 'gửi kudo' với F009_KudosCompose; chỉ thay cách nhập URL của một nút toolbar. Không có outcome độc lập → không cấp F### mới."
+}
