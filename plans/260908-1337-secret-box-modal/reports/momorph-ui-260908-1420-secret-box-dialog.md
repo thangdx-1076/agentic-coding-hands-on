@@ -98,3 +98,33 @@ box without hiding the instruction or unmounting anything. Phase 05 must:
 **Concern:** the `mode: screen` vs. effective `section`-shaped execution
 discrepancy noted above — no functional impact, flagged for the orchestrator's
 awareness only.
+
+## Bounded fix (2026-09-08, post-handoff)
+
+Coordinator flagged a real bug: `secret-box-dialog.tsx:92`'s `<dialog>`
+`className` carried a bare `flex` token alongside `open:flex`. The bare
+author-layer utility beats the UA sheet's `dialog:not([open]) { display:
+none }` regardless of specificity, so the closed dialog stayed laid out and
+painted, covering the page and intercepting the click on
+`kudos-open-gift` before `showModal()` ever ran — the same trap this file's
+own header comment (lines 62-64) describes, that I nonetheless introduced.
+Verified against the two working precedents already in this repo
+(`kudos-compose-dialog.tsx:93`, `kudos-link-dialog.tsx:91`) — neither carries
+a bare `flex`, both keep only `flex-col` + `open:flex`.
+
+**Fix applied:** dropped the bare `flex` token from that one class string.
+Kept `m-auto`, `flex-col`, `open:flex`, everything else untouched. No other
+file touched; `git diff --name-only` still shows only my 6 owned source
+files + 2 PNGs.
+
+**Verification (all run by me):**
+- `pnpm typecheck` → exit 0.
+- `pnpm lint` → exit 0 (same 3 pre-existing warnings in the read-only
+  `tests/e2e/secret-box.spec.ts`, 0 errors).
+- `pnpm exec vitest run` on my hook + util test files → 28/28 still passing.
+- `pnpm run test:e2e tests/e2e/secret-box.spec.ts` → **14 passed (14.0s),
+  exit 0** — S01-S13, S15 all green, no rows adjusted, spec untouched.
+- Did not attempt `pnpm run build` (hook blocks it for subagents in this
+  repo per prior sessions) — orchestrator should run it.
+
+**Status:** DONE

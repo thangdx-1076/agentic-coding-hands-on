@@ -89,7 +89,7 @@ export function SecretBoxDialog({
       data-testid="secret-box-dialog"
       aria-labelledby="secret-box-title"
       onCancel={onCancel}
-      className="m-auto flex w-163 flex-col items-center gap-5.5 rounded-[13px] bg-login-background px-3.25 py-6 open:flex backdrop:bg-login-background/80"
+      className="m-auto w-163 flex-col items-center gap-5.5 rounded-[13px] bg-login-background px-3.25 py-6 open:flex backdrop:bg-login-background/80"
     >
       {/* mm:1466:7677 */}
       <div className="relative flex w-full shrink-0 items-center">
