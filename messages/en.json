@@ -99,8 +99,9 @@
     },
     "widget": {
       "label": "Quick actions",
-      "kudosItem": "Sun* Kudos",
-      "awardsItem": "Award Information"
+      "standardsItem": "Rules",
+      "writeKudosItem": "Write KUDOS",
+      "cancelLabel": "Cancel"
     }
   },
   "awards": {

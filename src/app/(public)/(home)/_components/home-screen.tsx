@@ -103,9 +103,10 @@ export function HomeScreen({
       </main>
       <SiteFooter copy={copy} />
       <WidgetButton
-        kudosLabel={copy.widget.kudosItem}
-        awardsLabel={copy.widget.awardsItem}
+        standardsLabel={copy.widget.standardsItem}
+        writeKudosLabel={copy.widget.writeKudosItem}
         buttonLabel={copy.widget.label}
+        cancelLabel={copy.widget.cancelLabel}
       />
     </div>
   );

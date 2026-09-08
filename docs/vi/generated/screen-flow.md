@@ -207,6 +207,7 @@ graph TD
 **Entry Points**:
 - Truy cập URL trực tiếp `/standards` — public, không điều kiện (anonymous hoặc authenticated đều render cùng một trang, không props nào khác nhau giữa hai actor)
 - Click link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào (`site-footer.tsx:74`)
+- Click mục "Thể lệ" trong `WidgetButton` trên SCR003_HomeScreen (đổi từ 2026-09-08 — widget trước đó không có đường vào `/standards`, xem `screen-list.md`)
 
 **Exit Points**:
 - (không tới SCR### nào cụ thể) click "Đóng" khi có lịch sử điều hướng → `router.back()`, trả về đúng trang khách vừa rời (có thể là SCR003, SCR004, hoặc bất kỳ trang nào khác trong site)

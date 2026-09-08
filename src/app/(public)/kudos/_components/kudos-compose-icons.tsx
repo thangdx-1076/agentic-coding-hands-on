@@ -27,32 +27,13 @@ export function icon(path: string) {
 }
 
 /**
- * `MM_MEDIA_Close` inlined with `currentColor` (code-rules §2a) — ships
- * baked `fill="white"` in Figma's export, invisible on the cream/light
- * backgrounds it's used on. Same icon component (`214:3851`/`186:2761`
- * variants) reused by:
- * - mm:I520:11647;520:9906;186:2761 (Viết Kudo footer H.1 "Hủy",
- *   `kudos-compose-footer.tsx`, its original home)
- * - mm:I1002:12682;1002:12544;186:2761 (Addlink Box D.1 "Hủy",
- *   `kudos-link-dialog.tsx`)
+ * `MM_MEDIA_Close` — promoted to `src/app/_components/icons/icon-close.tsx`
+ * (scope ladder: a 3rd consumer, the Homepage Widget Button FAB, lives in a
+ * different route group). Re-exported here so this route group's 2 existing
+ * call sites (`kudos-link-dialog.tsx`, `kudos-compose-footer.tsx`) don't
+ * have to change their import.
  */
-export function IconClose(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        d="M13.4759 12.0972L19.0159 17.6372V19.0972H17.5559L12.0159 13.5572L6.47587 19.0972H5.01587V17.6372L10.5559 12.0972L5.01587 6.55717V5.09717H6.47587L12.0159 10.6372L17.5559 5.09717H19.0159V6.55717L13.4759 12.0972Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+export { IconClose } from "../../../_components/icons/icon-close";
 
 /**
  * `MM_MEDIA_Link`, built on the shared `icon()` shell — same icon component

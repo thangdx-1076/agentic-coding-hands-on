@@ -1,0 +1,52 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Trigger giu aria-label \"Hanh dong nhanh\" co dinh o ca 2 trang thai; aria-expanded mang trang thai -- proven: widget-button.tsx:113 dat aria-label={buttonLabel} ngoai nhanh open/closed, aria-expanded={open}; reviewer truy nguoc thuat toan accessible-name xac nhan aria-label thang title; TC ID-54 + TC eaecd588 + home.spec.ts TC ID-35 xanh (click trigger lan 2 luc dang mo van dong duoc)",
+    "Dong: pill 106x64. Mo: 56x56 tron, bg #D4271D, chua IconClose trang 24x24 -- proven: TC eaecd588 do boundingBox +/-2px o ca 4 diem (106x64 -> 56x56 -> 106x64) sau page.mouse.move(0,0); TRIGGER_CANCEL_CLASS widget-button.tsx:25 h-14 w-14 rounded-full bg-[#D4271D] text-white",
+    "Mo thi noi dung pill ke ca text \"/\" khong render -- proven: widget-button.tsx:120 render co dieu kien open ? <IconClose/> : <>pill</>, khong dung sr-only/hidden; TC ID-54 va TC eaecd588 assert not.toContainText(\"/\") doc textContent",
+    "role=menu chua dung 2 a[role=menuitem]: href=/standards chu \"The le\", href=/kudos chu \"Viet KUDOS\" -- proven: TC ID-54 assert ca href va toContainText cho tung link; TC c4b65775 va TC 3b6565d3 dieu huong that; widget-button.tsx:82,95 dung ROUTES.STANDARDS va ROUTES.KUDOS",
+    "Moi option cao 64px -- proven: TC ID-54 do boundingBox height 64 +/-2px cho ca 2 option sau page.mouse.move(0,0); OPTION_CLASS widget-button.tsx:28 h-16",
+    "Khong con a[href=/awards] va chu \"Award Information\" trong menu -- proven: TC ID-54 va TC e0451b6d assert not.toBeAttached cho a[href=/awards] va cho text /Award Information/i; grep kudosItem|awardsItem tren src messages tests tra ve rong",
+    "Trong role=menu khong co button nao; trong cum widget chi co 1 button -- proven: TC eaecd588 assert toHaveCount(1) tren getByTestId(\"home-widget-fab\").locator(\"button\") va toHaveCount(0) tren menu.locator(\"button\")",
+    "Click trigger lan 2 / click ngoai / Escape / chon option deu dong; Escape tra focus ve trigger -- proven: home.spec.ts TC ID-35 (27/27 xanh, file khong doi so voi origin/main) phu 4 duong ra; TC eaecd588 phu click trigger lan 2 + focus tra ve; TC e0451b6d phu Escape roi mo lai; reviewer truy nguoc reconciliation theo chi so cua React xac nhan trigger khong remount voi {open && menu} roi {trigger}",
+    "Panel neo phai duoi cung diem voi pill, mep phai lon hon 0.8 x chieu rong viewport -- proven: TC ID-54 assert menuBox.x + menuBox.width > viewport.width * 0.8 (da sua tu menuBox.right khong ton tai tren boundingBox); anh evidence/fab-open.png xac nhan bang mat panel moc len tu vi tri pill, can phai",
+    "widget-button.tsx duoi 200 dong va useMenuKeyboardNav dung nguyen trang itemCount 2 -- proven: wc -l = 151; git diff origin/main -- src/hooks/use-menu-keyboard-nav.ts rong; ITEM_COUNT = 2 tai widget-button.tsx:19; 536/536 unit test cua hook xanh khong sua"
+  ],
+  "regressionChecked": [
+    "tests/e2e/home.spec.ts 27/27 pass, exit 0 — TC ID-30..35 cua widget button giu xanh; git diff origin/main -- tests/e2e/home.spec.ts rong nen khong co chuyen noi long assertion de lay xanh",
+    "src/app/(public)/kudos — kudos-link-dialog.tsx va kudos-compose-footer.tsx van resolve IconClose qua re-export shim; pnpm typecheck exit 0 va pnpm build exit 0 chung minh import khong vo",
+    "grep path data logo Sun* tren src chi con 1 file — icon-sun-logo.tsx, khong con trung trong widget-button.tsx",
+    "messages vi/en doi dong thoi, src/lib/i18n/messages-parity.test.ts xanh trong 536/536; khong con khoa mo kudosItem/awardsItem o bat ky dau trong src messages tests",
+    "pnpm build exit 0 sinh du 9 route — khong hoi quy render phia server cua trang /",
+    "Click-outside boundary: registerRoot van bao ca menu va trigger sau khi doi cau truc DOM sang flex column (reviewer kiem truc tiep)"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "stale-decision-record",
+      "location": "plans/action-items.md:886",
+      "summary": "Muc 260908-1125 ghi \"home-screen.tsx tra fragment ... bat buoc\" va \"montserrat.variable chuyen len wrapper\" — nguoc voi thuc te da ship; file append-only nen khong sua tai cho duoc.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "low",
+      "category": "a11y-contrast",
+      "location": "src/app/(public)/(home)/_components/widget-button.tsx:25",
+      "summary": "focus-visible:ring-login-button (vang) tren nen do #D4271D cua nut Huy cho focus ring tuong phan thap. Pattern co san trong repo, khong phai moi trong diff nay.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "low",
+      "category": "test-coverage",
+      "location": "tests/e2e/home-widget-fab.spec.ts:35",
+      "summary": "Chua co kiem tra viewport thap/hep cho panel cao 224px (64+20+64+20+56) — co the cham fold hoac de len noi dung o viewport duoi ~500px cao. Khong phai hoi quy: pill thu gon da ton tai san o do.",
+      "disposition": "Defer"
+    }
+  ]
+}

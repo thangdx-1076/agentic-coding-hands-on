@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit sach. Truoc do exit 1 vi tests/e2e/home-widget-fab.spec.ts:109 dung menuBox!.right (boundingBox tra {x,y,width,height}); da sua thanh menuBox!.x + menuBox!.width, giu nguyen y dinh assertion.",
+      "ts": "2026-09-08T05:02:00.000Z"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint 0 error 0 warning tren toan repo, sau khi tester sua 4 canh bao playwright best-practice trong file test moi cua chinh no.",
+      "ts": "2026-09-08T05:02:30.000Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "vitest 63 file / 536 test pass — bang dung baseline truoc khi sua, khong hoi quy.",
+      "ts": "2026-09-08T05:03:00.000Z"
+    },
+    {
+      "command": "E2E_PORT=3100 npx playwright test tests/e2e/home-widget-fab.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "5/5 pass (TC ID-54, eaecd588, c4b65775, 3b6565d3, e0451b6d). Cung lenh nay truoc khi implement la exit 1 voi 4 fail / 1 pass — chuyen tiep RED->GREEN tren dung mot command.",
+      "ts": "2026-09-08T05:04:00.000Z"
+    },
+    {
+      "command": "E2E_PORT=3100 npx playwright test tests/e2e/home.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "27/27 pass, gom TC ID-30..35 cua widget button. File nay khong doi mot dong nao so voi origin/main (git diff origin/main -- tests/e2e/home.spec.ts rong).",
+      "ts": "2026-09-08T05:04:40.000Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "next build thanh cong, 9 route sinh du. Chay boi orchestrator vi hook chan subagent chay build.",
+      "ts": "2026-09-08T05:00:00.000Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "prettier --check sach.",
+      "ts": "2026-09-08T05:01:00.000Z"
+    },
+    {
+      "command": "git diff origin/main --stat -- tests/e2e/home.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Rong — hop dong test co san khong bi sua de lay xanh.",
+      "ts": "2026-09-08T05:05:00.000Z"
+    }
+  ]
+}

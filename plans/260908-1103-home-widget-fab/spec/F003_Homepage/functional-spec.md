@@ -1,22 +1,29 @@
 ---
-status: implemented
+status: draft
 authored_by: takumi
-created: 2026-09-05
+fcode: F003
+created: 2026-09-08
 lang: vi
 ---
 
-# Functional Spec — F003_Homepage
+# Functional Spec — F003_Homepage (revision: Widget Button trạng thái mở rộng)
 
 **Priority**: P0
 **Type**: ui
-**Generated**: 2026-09-06
+**Generated**: 2026-09-08
+
+**Revision note:** Đây là bản sửa của `docs/vi/features/F003_Homepage/functional-spec.md`
+(`status: implemented`). Phạm vi sửa: CHỈ trạng thái mở rộng (FAB) của widget hành động nhanh —
+mọi phần khác của trang chủ giữ nguyên như bản đã ship. Xem
+`plans/260908-1103-home-widget-fab/clarifications.md` cho toàn bộ quyết định.
 
 **See also:** [`technical-spec.md`](./technical-spec.md) — endpoint, Source citation, pseudocode,
 key entity, DB write cho độc giả Dev/QA/SA.
 
-**Traceability:** F003_Homepage → SCR003_Home (draft) → US001-US004 (draft, local)
+**Traceability:** F003_Homepage → SCR003_Home → US001-US004 (US004 sửa ở revision này)
 → — (không có BL### mới) → — (route `/`, Server Component, chưa có ROUTE### riêng) →
-`momorph/test-cases.csv` ID-0…ID-62 (62 TC)
+`momorph/test-cases.csv` ID-0…ID-62 (62 TC gốc; 2 frame FAB không có test case MoMorph riêng —
+xem § Unresolved trong `technical-spec.md`)
 
 ## 1. Overview
 
@@ -27,10 +34,14 @@ kiện, danh sách giải thưởng, quảng bá Sun* Kudos, và một header/fo
 nhập (đã đăng nhập thấy thêm chuông thông báo + menu tài khoản; admin thấy thêm Trang quản trị).
 **Scope:** Hiển thị công khai toàn bộ nội dung marketing SAA 2025; điều hướng tới các trang chi
 tiết (Award Information, Sun* Kudos, Tiêu chuẩn chung, Hồ sơ, Trang quản trị); header/footer nhận
-biết trạng thái đăng nhập và vai trò.
-**Non-Scope:** Không tự implement 5 trang đích (`/awards`, `/kudos`, `/standards`, `/profile`,
-`/admin`) — chỉ link tới; không có bảng notifications thật (panel luôn rỗng); không đổi hành vi
-chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
+biết trạng thái đăng nhập và vai trò. **Revision này bổ sung:** trạng thái mở rộng (panel) của
+widget hành động nhanh, với nội dung thật từ design thay cho suy diễn trước đó — vẫn chỉ homepage,
+không lan sang trang khác (đã xác nhận `query_component` không có instance Widget Button nào khác
+ngoài homepage).
+**Non-Scope:** Không tự implement `/awards`, `/profile`, `/admin` (chỉ link tới — 2 đích còn lại
+của widget, `/standards` và `/kudos`, đã implement, xem § 11 Risks); không có bảng notifications
+thật; không đổi hành vi chuyển ngôn ngữ (F002); widget KHÔNG mở dialog compose Kudos trực tiếp —
+chỉ `<Link>` sang `/kudos`, dialog sống trong `KudosComposeLauncher` bên trong trang đó.
 
 **Actors**
 
@@ -44,14 +55,26 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Xem & tương tác với trang chủ SAA 2025 | Xem toàn bộ nội dung công khai (hero, đếm ngược, thông tin sự kiện, CTA, Root Further, 6 thẻ giải thưởng, Sun* Kudos, footer), điều hướng tới các trang liên quan, và — khi đã đăng nhập — mở menu tài khoản, xem thông báo, dùng widget hành động nhanh | US001, US002, US003, US004 | FR-001, FR-002, FR-003, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-401, FR-402, FR-403, FR-601 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, DEC-001, SM-001 | SCR003_Home |
+| CAP-01 | Xem & tương tác với trang chủ SAA 2025 | Xem toàn bộ nội dung công khai (hero, đếm ngược, thông tin sự kiện, CTA, Root Further, 6 thẻ giải thưởng, Sun* Kudos, footer), điều hướng tới các trang liên quan, và — khi đã đăng nhập — mở menu tài khoản, xem thông báo, dùng widget hành động nhanh (panel "Thể lệ" / "Viết KUDOS") | US001, US002, US003, US004 | FR-001, FR-002, FR-003, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-401, FR-402, FR-403, FR-601 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, DEC-001, SM-001 | SCR003_Home |
 
 ## 3. Open Decisions
 
 | D### | Decision | Default proposal | Rationale | Blocks work |
 |------|----------|-------------------|-----------|--------------|
-| D001 | Nội dung thật của menu widget hành động nhanh (spec không liệt kê option) | **RESOLVED 2026-09-08** — MoMorph cấp thiết kế thật cho component set `214:3916` (2 variant: đóng/mở). Nội dung `[INFERRED]` cũ (bút chì → "Sun* Kudos" `/kudos`, icon SAA → "Award Information" `/awards`) bị thay hoàn toàn bởi panel đã thiết kế: "Thể lệ" (`ROUTES.STANDARDS`) và "Viết KUDOS" (`ROUTES.KUDOS`) — `/awards` không còn là lựa chọn trong widget (header nav vẫn giữ link `/awards` riêng). Trigger cũng đổi: pill 106×64 morph thành nút tròn 56×56 đỏ `#D4271D` "×" khi mở, cùng 1 `<button>` DOM node. Chi tiết: `technical-spec.md` § 3.1 A6, § 4.3 SM-001. | Thiết kế thật đã có, không còn suy diễn | no |
 | D002 | Nội dung thật của khối thông tin sự kiện — design ghi "26/12/2025 · Âu Cơ Art Center · Livestream", spec/TC ghi "18h30 · Nhà hát nghệ thuật quân đội · Group Facebook Sun* Family" | Dùng theo spec/TC (TC ID-14 là acceptance criteria, design chỉ là authority cho phần nhìn) | TC là nguồn xác nhận nội dung được chấp nhận, ưu tiên hơn văn bản trong file design | no |
+
+**D001 — RESOLVED 2026-09-08 (design thật thay thế suy diễn):** Nội dung menu widget hành động
+nhanh trước đây là `[INFERRED]` từ 2 icon (bút chì → "Sun* Kudos" `/kudos`, icon SAA → "Award
+Information" `/awards`; nhãn sửa chính tả "Awards Information" → "Award Information" ngày
+2026-09-07 — xem lịch sử ở `technical-spec.md` § 5.3). MoMorph nay cấp đủ 2 frame variant thật của
+cùng một component set Figma (`214:3916`): thu gọn `_hphd32jN2` (đã dựng, KHÔNG đổi ở revision
+này) và mở rộng `Sv7DFwBw1h` — đây chính là cái "user override" mà plan homepage đã dự trù từ đầu
+("menu 2 item suy ra từ 2 icon (INFERRED, user override được)",
+`plans/260906-0042-homepage-saa-page/clarifications.md:51`; docstring
+`widget-button.tsx:21` "user override pending"). Nội dung thật thay thế: "Thể lệ" → `/standards`
+(`ROUTES.STANDARDS`), "Viết KUDOS" → `/kudos` (cùng đích `/kudos` như trước, đổi nhãn + không còn
+là "Sun* Kudos"). "Award Information" bị bỏ hẳn khỏi widget — nav header đã có link Awards nên
+không mất đường đi (`plans/260908-1103-home-widget-fab/clarifications.md` § Phạm vi).
 
 ## 4. Requirements
 
@@ -90,14 +113,19 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 - **FR-208** Header hiển thị logo, 3 link điều hướng chính, bộ chọn ngôn ngữ, và — tuỳ trạng thái
   đăng nhập — hoặc một link đăng nhập, hoặc chuông thông báo cùng nút tài khoản.
 - **FR-209** Footer hiển thị logo, 4 link điều hướng và dòng bản quyền.
-- **FR-210** Một nút hành động nhanh nổi, cố định ở góc dưới bên phải màn hình, mở menu 2 lối tắt
-  tới các tính năng thường dùng.
+- **FR-210** *(sửa ở revision này)* Một nút hành động nhanh nổi, cố định ở góc dưới bên phải màn
+  hình: pill trạng thái đóng (106×64, "/" + Sun* logo) biến hình (morph, cùng một `<button>` DOM
+  node) thành nút đóng (×) đỏ 56×56 khi mở, hiển thị panel 2 lối tắt thật — "Thể lệ" (`/standards`)
+  và "Viết KUDOS" (`/kudos`) — tới các tính năng thường dùng.
 
 ### Interaction (4xx)
 
-- **FR-401** Mọi menu bật/tắt trên trang (menu tài khoản, menu widget) đều tuân theo cùng một
-  chuẩn thao tác bàn phím và chuột (mở bằng click/Enter/Space, đóng bằng Esc/click ra ngoài, di
-  chuyển vòng bằng mũi tên).
+- **FR-401** *(mở rộng ở revision này)* Mọi menu bật/tắt trên trang (menu tài khoản, menu widget)
+  đều tuân theo cùng một chuẩn thao tác bàn phím và chuột (mở bằng click/Enter/Space, đóng bằng
+  Esc/click ra ngoài, di chuyển vòng bằng mũi tên); riêng widget hành động nhanh, khi panel mở thì
+  chính trigger đổi hình thành nút × đỏ và đóng được panel bằng một click thêm — đây là cùng lối
+  đóng "click lại trigger" của chuẩn chung, chỉ khác hình thức thị giác, KHÔNG phải một control
+  thứ hai và không phải mục điều hướng.
 - **FR-402** Chuông thông báo mở một panel; khi chưa có thông báo nào, panel hiển thị trạng thái
   rỗng rõ ràng; huy hiệu đỏ chỉ hiện khi thực sự có thông báo chưa đọc.
 - **FR-403** Menu tài khoản luôn có "Hồ sơ" và "Đăng xuất"; chỉ tài khoản quản trị viên mới thấy
@@ -121,6 +149,10 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 - Huy hiệu đỏ trên chuông thông báo chỉ hiện khi có thông báo chưa đọc; hiện tại luôn là 0 vì chưa
   có nguồn dữ liệu thật (BR-005)
 - Mọi menu bật/tắt trên trang dùng chung một cơ chế bàn phím/chuột duy nhất (BR-006)
+- **(Mới)** Trigger widget hành động nhanh là một `<button>` DOM node duy nhất, morph nội
+  dung/style giữa pill (đóng) và nút × đỏ (mở); `aria-label="Hành động nhanh"` giữ cố định ở cả 2
+  trạng thái, chỉ `aria-expanded` đổi theo `open`; nút × không phải `menuitem`, đứng ngoài
+  `[role="menu"]` (BR-007)
 - Click logo/link đang active chỉ cuộn lên đầu trang thay vì điều hướng lại (DEC-001)
 - Trạng thái đóng/mở của menu tài khoản và menu widget được theo dõi để focus bàn phím luôn đúng
   (SM-001)
@@ -129,7 +161,7 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 
 | Screen Name | SCR### | What User Sees | What User Can Do |
 |-------------|--------|-----------------|-------------------|
-| Trang chủ SAA 2025 | SCR003_Home (draft — số thật cấp lúc promote) | Header, hero + đếm ngược, thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ giải thưởng, quảng bá Sun* Kudos, footer, widget nổi | Điều hướng tới mọi trang liên quan; (nếu đã đăng nhập) mở menu tài khoản/thông báo; đổi ngôn ngữ; mở widget hành động nhanh |
+| Trang chủ SAA 2025 | SCR003_Home | Header, hero + đếm ngược, thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ giải thưởng, quảng bá Sun* Kudos, footer, widget nổi (pill/panel) | Điều hướng tới mọi trang liên quan; (nếu đã đăng nhập) mở menu tài khoản/thông báo; đổi ngôn ngữ; mở panel hành động nhanh (Thể lệ/Viết KUDOS) |
 
 ### User Journey
 
@@ -138,6 +170,8 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 3. Khách click 1 thẻ giải thưởng hoặc nút CTA — được đưa tới đúng trang/mục liên quan.
 4. (Nếu đã đăng nhập) khách mở menu tài khoản hoặc chuông thông báo từ header; admin thấy thêm
    lối vào Trang quản trị.
+5. **(Mới)** Bất kỳ lúc nào, khách click widget góc dưới phải — pill morph thành ×, panel mở với
+   "Thể lệ"/"Viết KUDOS"; chọn 1 mục điều hướng đúng trang, hoặc đóng qua ×/Esc/click ngoài.
 
 ## 7. User Stories
 
@@ -179,17 +213,20 @@ không để người dùng chờ một tính năng chưa tồn tại mà không
 - [ ] Panel hiển thị đúng trạng thái rỗng khi chưa có thông báo.
 - [ ] Huy hiệu đỏ không hiện khi không có thông báo chưa đọc.
 
-### US004_UseQuickActionWidget — Use Quick Action Widget
+### US004_UseQuickActionWidget — Use Quick Action Widget *(sửa ở revision này)*
 
 **Actor:** Khách truy cập (Anonymous hoặc Authenticated)
-**Goal:** Mở menu hành động nhanh nổi để đi thẳng tới Thể lệ hoặc Viết KUDOS.
+**Goal:** Mở panel hành động nhanh nổi để đi thẳng tới "Thể lệ" hoặc "Viết KUDOS".
 **Business value:** Rút ngắn thao tác tới 2 tính năng thường dùng mà không cần cuộn/tìm trong
 header, đặc biệt hữu ích khi đang ở cuối trang.
 
 **Acceptance Criteria:**
 - [ ] Widget luôn hiện, cố định góc dưới phải, không phân biệt trạng thái đăng nhập.
-- [ ] Mở đúng menu 2 mục.
-- [ ] Chọn 1 mục điều hướng đúng route.
+- [ ] Click/Enter/Space trên trigger mở đúng panel 2 mục thật ("Thể lệ", "Viết KUDOS"); trigger
+  morph pill→× (`aria-expanded` đổi thành `true`, `aria-label="Hành động nhanh"` không đổi).
+- [ ] Chọn "Thể lệ" điều hướng `/standards`; chọn "Viết KUDOS" điều hướng `/kudos`.
+- [ ] Đóng panel bằng 1 trong 4 cách — click trigger lần nữa, click ra ngoài, Escape, click nút ×
+  — đều trả focus về trigger và morph × → pill.
 
 ## 8. Scenarios
 
@@ -218,10 +255,15 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 **Given** đã đăng nhập và chưa có thông báo nào, **When** click chuông, **Then** panel mở, hiện
 "Bạn chưa có thông báo", không có huy hiệu đỏ.
 
-### US004_UseQuickActionWidget — Happy Path
+### US004_UseQuickActionWidget — Happy Path *(sửa ở revision này)*
 
 **Given** đang ở `/`, **When** click widget rồi chọn "Viết KUDOS", **Then** trang điều hướng tới
 `/kudos`.
+
+### US004_UseQuickActionWidget — Close via nút × *(mới)*
+
+**Given** panel widget đang mở, **When** click nút × đỏ, **Then** panel đóng, trigger morph về
+pill, focus trả về trigger — cùng kết quả như Escape.
 
 ## 9. Edge Cases
 
@@ -231,7 +273,8 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 | Đã tới hoặc qua mốc sự kiện | 3 ô giữ nguyên 00/00/00, ẩn "Coming soon", không hiển thị số âm | "None — silent handling" |
 | Đọc vai trò người dùng bị lỗi (Supabase gián đoạn) | Coi như thành viên thường (fail-open); không hiện "Trang quản trị" dù người dùng có thể là quản trị viên thật | "None — silent handling" |
 | Thẻ giải thưởng thiếu slug hashtag hợp lệ | Điều hướng tới trang thông tin giải thưởng nhưng không tự cuộn tới mục nào | "None — silent handling" |
-| Trang đích (Trang quản trị, Hồ sơ, Thông tin giải thưởng, Sun* Kudos, Tiêu chuẩn chung) chưa được xây dựng | Link vẫn hiển thị và điều hướng đúng địa chỉ, nhưng trang đích hiện chưa tồn tại | "Not found" (trang lỗi mặc định của Next.js cho tới khi các trang đó được implement) |
+| Widget: click nút × khi panel đang mở | Đóng panel + trả focus về trigger — không điều hướng, không phải `menuitem` | "None — silent handling" |
+| Trang đích Trang quản trị / Hồ sơ / Thông tin giải thưởng chưa được xây dựng *(sửa: `/standards`, `/kudos` — đích của widget — đã implement, không còn thuộc edge case này)* | Link vẫn hiển thị và điều hướng đúng địa chỉ, nhưng 3 trang còn thiếu hiện chưa tồn tại | "Not found" (trang lỗi mặc định của Next.js, chỉ còn áp dụng cho `/awards`, `/profile`, `/admin`) |
 
 ## 10. Edge Behaviours to Verify
 
@@ -240,6 +283,10 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 - **FR-202** → Tester xác nhận đếm ngược giảm đúng mỗi phút và dừng đúng ở 00/00/00 khi tới/qua
   mốc.
 - **FR-206** → Tester xác nhận cả 6 thẻ giải thưởng đều dẫn đúng hashtag hạng mục tương ứng.
+- **FR-210** → Tester xác nhận trigger morph đúng pill↔× (aria-label cố định, aria-expanded đổi)
+  và panel mở đúng 2 mục thật ("Thể lệ" → `/standards`, "Viết KUDOS" → `/kudos`).
+- **FR-401** → Tester xác nhận cả 4 lối đóng panel widget (trigger lần 2, click ngoài, Escape,
+  click ×) đều trả focus về trigger.
 - **FR-403** → Tester xác nhận menu tài khoản chỉ hiện "Trang quản trị" cho đúng tài khoản quản
   trị viên.
 - **FR-402** → Tester xác nhận huy hiệu đỏ không hiện khi không có thông báo chưa đọc.
@@ -248,7 +295,7 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
-| RISK-01 | risk | 5 trang đích (`/awards`, `/kudos`, `/standards`, `/profile`, `/admin`) chưa được implement khi feature này lên production | Link 404 cho tới khi các screen đó được xây; TC ID-59 (broken links) sẽ fail cho tới lúc đó | confirmed |
+| RISK-01 | risk | *(sửa ở revision này)* 3 trang đích còn thiếu (`/awards`, `/profile`, `/admin`) chưa được implement khi feature này lên production; `/standards` và `/kudos` — 2 đích của widget ở revision này — đã implement (xác nhận qua `find src/app/(public)` tại `plans/260908-1103-home-widget-fab`, 2026-09-08) | Link 404 chỉ còn cho 3 route còn thiếu; TC ID-59 (broken links) chỉ còn áp dụng cho các route đó | confirmed |
 | RISK-02 | risk | Bảng notifications chưa tồn tại trong Supabase `saa-app` — chưa có migration nào tạo bảng này tại `supabase/migrations/` | Panel thông báo luôn rỗng vĩnh viễn cho tới khi có schema — không phải bug, nhưng người dùng không bao giờ thấy thông báo thật | confirmed |
 
 ## 12. Dependencies
@@ -257,9 +304,11 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 |------------|------|-----------------------------|----------|
 | F001_GoogleOAuthLogin | feature | Dùng chung session/guard; PERM001 (Root Route Guard) trở nên lỗi thời do `/` không còn redirect — cập nhật thật ở permissions-matrix.md thuộc phạm vi F001, không phải feature này | FR-001 |
 | F002_LanguageSwitch | feature | Tái dùng nguyên trạng `LanguageSelector` trong header, không re-spec | FR-208 |
+| `/standards` route (`ROUTES.STANDARDS`) | route | Đích điều hướng "Thể lệ" trong panel widget — route đã implement (`src/app/(public)/standards/`) | FR-210 |
+| `/kudos` route | route | Đích điều hướng "Viết KUDOS" — route đã implement; theo đúng tiền lệ `standards-footer-actions.tsx` (nút "Viết KUDOS" vàng ở `/standards` cũng chỉ `<Link>` sang `/kudos`), widget KHÔNG mở dialog compose trực tiếp | FR-210 |
 | Supabase `saa-app` (`public.users.role`) | external-service | Nguồn dữ liệu vai trò member/admin, đọc phía server | FR-003, FR-601 |
 | `EVENT_START_AT` (biến môi trường) | config | Mốc thời gian sự kiện quyết định trạng thái đếm ngược | FR-202 |
-| 5 trang đích chưa implement (`/awards`, `/kudos`, `/standards`, `/profile`, `/admin`) | feature | Mọi link điều hướng của trang chủ trỏ tới các trang này — sẽ 404 cho tới khi được xây ở feature riêng | RISK-01 |
+| 3 trang đích chưa implement (`/awards`, `/profile`, `/admin`) | feature | Link điều hướng của trang chủ (ngoài widget) trỏ tới các trang này — sẽ 404 cho tới khi được xây ở feature riêng | RISK-01 |
 
 ## 13. Configuration
 

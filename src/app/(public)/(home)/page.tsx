@@ -122,8 +122,9 @@ export default async function HomePage() {
     },
     widget: {
       label: t("widget.label"),
-      kudosItem: t("widget.kudosItem"),
-      awardsItem: t("widget.awardsItem"),
+      standardsItem: t("widget.standardsItem"),
+      writeKudosItem: t("widget.writeKudosItem"),
+      cancelLabel: t("widget.cancelLabel"),
     },
   };
 
