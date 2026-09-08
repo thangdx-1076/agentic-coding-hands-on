@@ -8,11 +8,8 @@ import {
 import { createProxyClient } from "@/lib/supabase/proxy-client";
 import { ROUTES } from "@/constants/routes";
 import { parseTargetDate, remaining } from "@/utils/countdown";
-import {
-  isPrelaunchLockEnabled,
-  planProxy,
-  redirectStatusFor,
-} from "@/domain/prelaunch-lock";
+import { isPrelaunchLockEnabled, planProxy } from "@/domain/prelaunch-lock";
+import { redirectStatusFor } from "@/utils/http/redirect-status";
 
 /**
  * Every route that requires a session. Widen this list — never add a
@@ -62,9 +59,7 @@ export async function proxy(request: NextRequest) {
   const plan = planProxy({ pathname, lockEnabled, reached });
 
   if (plan.kind === "redirect") {
-    // Status comes from `redirectStatusFor` (303 for anything with a body to
-    // re-send) — see its docblock for why that decision lives in the domain
-    // module rather than here.
+    // 303 for anything with a body to re-send — see `redirectStatusFor`.
     return NextResponse.redirect(
       new URL(plan.to, request.url),
       redirectStatusFor(request.method),
