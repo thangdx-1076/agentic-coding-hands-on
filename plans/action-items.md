@@ -944,3 +944,7 @@
 - Focus ring nút × đỏ dùng `ring-login-button` (vàng) trên nền `#D4271D` — pattern có sẵn, không
   phải mới, reviewer xếp Low.
 - Chưa có test panel 224px cao ở viewport thấp/hẹp (reviewer Low, ngoài scope homepage-only).
+- **Shipped**: PR https://github.com/thangdx-1076/agentic-coding-hands-on/pull/19, commit `1f6c99e`, issue #18, version 0.8.1 → 0.8.2, evidence gate SEALED (lần đầu, không phải 2 vòng như session trước — vì đọc `evidence-validator.cjs` lấy schema thật thay vì đoán). Reviewer 9/10 · 0 critical · 0 high.
+- Spec draft **không** promote nguyên khối, có chủ ý: doc-writer đã row-edit thẳng vào `docs/vi/` trước đó và đó là hình thức đúng theo luật surgical-edit; ghi nguyên khối 3 file (316+402+203 dòng) lên sẽ xoá công đó và kéo drift ở phần "copy verbatim". Draft ở lại `plans/.../spec/` làm hồ sơ stage Spec.
+- `licenseal check` exit 1 nhưng **không chặn**: 14 warning / 157 ok, 0 violation / 0 deny / 0 gap; cả 14 là binary nền tảng `sharp` (LGPL weak copyleft) và `package.json`/`pnpm-lock.yaml` không đổi → tình trạng có sẵn trên `origin/main`.
+- Changelog bước bỏ qua: repo không có file changelog nào.
