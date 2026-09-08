@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { HeartOverride } from "../_utils/kudos-card-state";
 
@@ -28,6 +28,22 @@ export type KudosHearts = {
  * anonymous / own-kudo guard below is belt-and-braces: both cases already
  * render the button `disabled`, and migration `0007`'s Postgres policies
  * are the real enforcement point.
+ *
+ * One toggle per kudo may be in flight at a time. Postgres already keeps
+ * itself consistent under a double-click — `kudo_hearts`'s
+ * `UNIQUE(kudo_id, user_id)` (0007) settles the race — but consistency is
+ * not the same as obeying the user: two clicks that both read "not
+ * hearted" race, one loses, and the second click is silently swallowed
+ * instead of un-hearting. Since the toggle is deliberately not optimistic,
+ * the button also shows nothing in the meantime, so a user who clicks
+ * twice on a slow connection ends up in a state they did not ask for.
+ * Dropping the second click is the honest behaviour: it reflects what the
+ * UI is actually showing.
+ *
+ * A `useRef` rather than state on purpose — this must be readable and
+ * writable synchronously within one click handler. A `useState` set would
+ * not have applied yet when a second click lands in the same tick, which
+ * is precisely the case being guarded.
  */
 export function useKudosHearts(
   viewerId: string | null,
@@ -36,9 +52,13 @@ export function useKudosHearts(
   const [heartOverrides, setHeartOverrides] = useState<
     Record<string, HeartOverride>
   >({});
+  const inFlight = useRef<Set<string>>(new Set());
 
   function toggleHeart(card: KudosCardModel): void {
     if (viewerId === null || card.sender.id === viewerId) return;
+    if (inFlight.current.has(card.id)) return;
+
+    inFlight.current.add(card.id);
     void (async () => {
       try {
         const result = await toggleKudoHeartAction(card.id);
@@ -53,6 +73,10 @@ export function useKudosHearts(
         }
       } catch {
         // Transport failure only — action fails closed server-side.
+      } finally {
+        // `finally`, so a rejected toggle does not wedge the button for the
+        // rest of the session.
+        inFlight.current.delete(card.id);
       }
     })();
   }

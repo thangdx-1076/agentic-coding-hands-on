@@ -117,4 +117,95 @@ describe("useKudosHearts", () => {
 
     unmount();
   });
+
+  it("hai click nhanh cùng lúc → chỉ gọi Server Action MỘT lần (guard in-flight)", async () => {
+    let release: (value: ToggleHeartResult) => void = () => {};
+    const pending = new Promise<ToggleHeartResult>((resolve) => {
+      release = resolve;
+    });
+    const action = vi.fn().mockReturnValue(pending);
+    const card = makeCard("someone-else");
+
+    const { result } = renderHook(() => useKudosHearts(VIEWER_ID, action));
+
+    // Cả hai click nằm trong CÙNG một tick — đúng kịch bản double-click mà
+    // `UNIQUE(kudo_id, user_id)` từng phải đứng ra dọn.
+    act(() => {
+      result.current.toggleHeart(card);
+      result.current.toggleHeart(card);
+    });
+
+    expect(action).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      release({ ok: true, hearted: true, heartCount: 8 });
+      await pending;
+    });
+
+    await waitFor(() => {
+      expect(result.current.heartOverrides["kudo-1"]).toEqual({
+        hearted: true,
+        heartCount: 8,
+      });
+    });
+  });
+
+  it("click lại SAU khi request xong → gọi được tiếp, guard không kẹt vĩnh viễn", async () => {
+    const action = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, hearted: true, heartCount: 8 })
+      .mockResolvedValueOnce({ ok: true, hearted: false, heartCount: 7 });
+    const card = makeCard("someone-else");
+
+    const { result } = renderHook(() => useKudosHearts(VIEWER_ID, action));
+
+    await act(async () => {
+      result.current.toggleHeart(card);
+      // Nhả microtask để promise của action settle trong act, tránh
+      // "update not wrapped in act" ở lần setState kế tiếp.
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(result.current.heartOverrides["kudo-1"]?.hearted).toBe(true);
+    });
+
+    await act(async () => {
+      result.current.toggleHeart(card);
+      // Nhả microtask để promise của action settle trong act, tránh
+      // "update not wrapped in act" ở lần setState kế tiếp.
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(result.current.heartOverrides["kudo-1"]?.hearted).toBe(false);
+    });
+
+    expect(action).toHaveBeenCalledTimes(2);
+  });
+
+  it("request lỗi → guard được nhả, click sau vẫn gọi được", async () => {
+    const action = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({ ok: true, hearted: true, heartCount: 8 });
+    const card = makeCard("someone-else");
+
+    const { result } = renderHook(() => useKudosHearts(VIEWER_ID, action));
+
+    await act(async () => {
+      result.current.toggleHeart(card);
+      // Nhả microtask để promise của action settle trong act, tránh
+      // "update not wrapped in act" ở lần setState kế tiếp.
+      await Promise.resolve();
+    });
+    await act(async () => {
+      result.current.toggleHeart(card);
+      // Nhả microtask để promise của action settle trong act, tránh
+      // "update not wrapped in act" ở lần setState kế tiếp.
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(action).toHaveBeenCalledTimes(2);
+    });
+  });
 });
