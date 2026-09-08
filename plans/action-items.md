@@ -1184,3 +1184,44 @@
   100%) cộng ma trận curl đo tay ghi ở `reports/manual-lock-verification-260908.md`.
 - `Prelaunch_BG.png` 3.0M chưa tối ưu. Cùng cỡ với `Keyvisual_BG.png` 4.3M đang có, nên không phải
   hồi quy — nhưng cả hai đều nên nén lại một lượt.
+
+## 260909-0010 — trả nợ tồn đọng
+
+Rà 86 mục "Tôi cần làm" + 139 mục "Nợ lại" trên 30 phiên. Phần lớn đã tự hết hạn hoặc là việc của
+người; dưới đây là những gì thực sự còn đúng và đã xử lý.
+
+### Tôi cần làm
+
+- [ ] Font "Digital Numbers" — **chặn ở asset, không code được**. Không có trong repo, không có trên
+      Google Fonts, là font bên thứ ba. Cần bạn quyết: mua/xin file license được, hay chọn một font
+      LED thay thế. Trong lúc chờ, `CountdownTiles` fallback `monospace` (nợ từ phase homepage).
+- [ ] Ảnh nền còn nặng: `login/keyvisual.png` 9.0M, `home/Keyvisual_BG.png` 4.3M,
+      `prelaunch/Prelaunch_BG.png` 3.0M, `standards/secret-box-closed.png` 1.2M. Cả bốn đi qua
+      `next/image` nên **người dùng không gánh** — chỉ nặng repo và thời gian build. Chuyển sang WebP
+      được, nhưng đổi asset gốc là quyết định của design, nên tôi không tự làm.
+- [ ] `profile.spec.ts` C2a rớt một lần khi chạy full suite, chạy riêng thì xanh. Nhiễu giữa các
+      worker song song, không phải hồi quy — nhưng đáng theo dõi, chạy lại 2 lượt sau đó đều xanh.
+
+### Decisions
+
+- Ảnh banner `/kudos`: chuyển PNG → WebP q90 (1.54M → 138K). Đây là background CSS nên không có
+  `next/image` tối ưu hộ — bytes đó ship thẳng cho người dùng. Giữ CSS background vì C02 yêu cầu
+  đúng một `<img>` trong banner.
+- Empty catch block ở `auth/callback/route.ts:40` và `lib/supabase/server.ts:32`: **không sửa**. Cả
+  hai đã có comment nói rõ vì sao nuốt lỗi là cố ý (fall-through sang redirect chung; Server
+  Component không có response để ghi cookie). SunLint C029 báo nhầm vì comment không tính là
+  statement. Không bẻ code đang đúng để chiều heuristic.
+- Guard tim dùng `useRef` chứ không `useState`: hai click trong cùng một tick thì state chưa apply
+  kịp — đúng cái case cần chặn.
+
+### Nợ đã đóng
+
+- Rác `@local-db`: 2 499 user + 412 kudos + 88 secret_box_opening đã dọn; 5 spec vá cleanup; chạy
+  full suite 2 lượt liên tiếp → users 21→21→21, kudos 12→12→12. Gốc là gọi endpoint admin bằng
+  publishable key + access token của chính user (endpoint đòi service role), rồi `.catch(() => {})`
+  nuốt luôn lỗi.
+- `kudos.spec` C19 đỏ: hệ quả trực tiếp của rác trên, hết sau khi dọn.
+- Mã traceability ma (`US004`, `FR-005`) trong 6 comment: sửa hết; quét toàn repo giờ không còn mã
+  nào cited trong `src/` mà thiếu trong `docs/vi/`.
+- `docs/vi/system/overview.md` stale: viết lại, mọi citation `path:line` đã mở kiểm.
+- Nút tim thiếu guard in-flight: đã vá, 3 test, đã kiểm test bắt được bug thật.
