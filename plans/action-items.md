@@ -809,6 +809,7 @@
 
 ### Decisions
 
+- **Shipped**: PR https://github.com/thangdx-1076/agentic-coding-hands-on/pull/15 (`feat/kudos-write-modal` → `main`, commit `bf0fc97` + 2 commit mid-forge), issue #14, version 0.7.0 → 0.8.0 (minor, theo tiền lệ F007), riskGate đã ký, evidence gate SEALED.
 - F009 = một feature SINGLE (không tách ảnh/ẩn danh thành feature riêng): cùng actor, cùng action-domain "gửi kudo", cùng outcome.
 - `Danh hiệu` (node `*` thật trong design, không có spec row/TC) là trường bắt buộc thứ 4, lưu `hashtags[0]`; chip là `hashtags[1..5]` — đúng cách F007 đã mượn `hashtags[0]` làm tiêu đề thẻ, seed `0008` đã xếp vậy; thêm cột `title` là mở lại F007.
 - Ẩn danh: cột `is_anonymous` + `anonymous_name`, **và vá view `kudos_cards` bằng `CASE WHEN`** trên 5 cột sender (không chỉ UI) — không vá thì `anon` gọi view vẫn đọc tên thật. `sender_id` thật vẫn giữ trong bảng cho RLS/audit. Tên ẩn danh bắt buộc khi tick (D001).
