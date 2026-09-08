@@ -37,7 +37,7 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 `FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-204` `FR-205` `FR-206` `FR-401` · `US001` · `SCR009_CountdownPrelaunch`
 
 **Who** · Bất kỳ ai, đã đăng nhập hay chưa — không gate nào *(gate A0 — § 4.4, `FR-601`)*.
-**FE** · `PrelaunchPage` render nền full-bleed + lớp phủ tối tĩnh, tiêu đề i18n `prelaunch.title`, và `CountdownTiles` (tái dùng `src/components/countdown-tiles.tsx`) qua `useCountdown` (tái dùng `src/hooks/use-countdown.ts`) — tick 1s phía client, seed từ `initialNowMs` server (cùng pattern trang chủ, hydration khớp SSR).
+**FE** · `PrelaunchPage` render nền full-bleed + lớp phủ tối tĩnh, tiêu đề i18n `prelaunch.title`, và `CountdownTiles` (tái dùng `src/app/(public)/_components/countdown-tiles.tsx`) qua `useCountdown` (tái dùng `src/app/(public)/_hooks/use-countdown.ts`) — tick 1s phía client, seed từ `initialNowMs` server (cùng pattern trang chủ, hydration khớp SSR).
 **Request** · không tham số — đọc `EVENT_START_AT` phía server tại render time.
 **BE** · `resolveTargetIso()` (cùng pattern `(home)/page.tsx`) đọc `process.env.EVENT_START_AT`, validate qua `parseTargetDate` (tái dùng `src/utils/countdown.ts`); thiếu/hỏng → `null`, không throw (`FR-002`).
 **Rule** · Không có nhánh hiển thị khác nhau theo actor — nội dung giống nhau cho mọi visitor; xem A2 cho nhánh quyết định điều hướng.
@@ -92,9 +92,9 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 | Component | Responsibility | Used in | File |
 |---|---|---|---|
 | `PrelaunchPage` | Server Component render màn Countdown Prelaunch | A1 | `src/app/(public)/prelaunch/page.tsx` *(mới)* |
-| `CountdownTiles` | 3 ô LED digit + label, tái dùng từ trang chủ | A1 | `src/components/countdown-tiles.tsx` *(nâng cấp từ `(home)/_components/`)* |
-| `useCountdown` | Hook tick 1s, seed từ server, tái dùng | A1 | `src/hooks/use-countdown.ts` *(nâng cấp từ `(home)/_hooks/`)* |
-| `countdown` (utils) | `parseTargetDate`/`remaining`/`pad2`, thuần, không I/O | A1, A2 | `src/utils/countdown.ts` *(nâng cấp từ `(home)/_utils/`)* |
+| `CountdownTiles` | 3 ô LED digit + label, tái dùng từ trang chủ | A1 | `src/app/(public)/_components/countdown-tiles.tsx` *(nâng 1 rung từ `(home)/_components/`)* |
+| `useCountdown` | Hook tick 1s, seed từ server, tái dùng | A1 | `src/app/(public)/_hooks/use-countdown.ts` *(nâng 1 rung từ `(home)/_hooks/`)* |
+| `countdown` (utils) | `parseTargetDate`/`remaining`/`pad2`, thuần, không I/O | A1, A2 | `src/utils/countdown.ts` *(lên Zone A — `src/proxy.ts` cần, mà Zone A không được import `src/app`)* |
 | `proxy` | Edge guard — auth optimistic (có sẵn) + khoá điều hướng prelaunch (mở rộng) | A2 | `src/proxy.ts` |
 
 ### 4.2 Data Model
@@ -182,13 +182,13 @@ Code đã viết và merge (`status: implemented`). File thật, đã đọc và
 | Hàm quyết định thuần (`planProxy`, `isPrelaunchLockEnabled`, `ProxyPlan`) | `src/domain/prelaunch-lock.ts:14-120` |
 | Bảng chân trị 58 case | `src/domain/prelaunch-lock.test.ts:1-560` |
 | Nhánh khoá trong edge guard, redirect 303 cho non-GET/HEAD | `src/proxy.ts:45-80` |
-| `config.matcher` negative lookahead | `src/proxy.ts:196-199` |
+| `config.matcher` negative lookahead | `src/proxy.ts:187-189` |
 | Route `/prelaunch`, đọc + validate `EVENT_START_AT` | `src/app/(public)/prelaunch/page.tsx:24-77` |
 | Layout nền + overlay + tiêu đề | `src/app/(public)/prelaunch/_components/prelaunch-screen.tsx:1-83` |
 | Wrapper tick client | `src/app/(public)/prelaunch/_components/prelaunch-countdown.tsx:1-50` |
 | Toán đếm ngược thuần (dùng chung với trang chủ) | `src/utils/countdown.ts:15-52` |
-| Hook tick, seed từ server | `src/hooks/use-countdown.ts:36-72` |
-| 3 ô số LED (dùng chung với trang chủ) | `src/components/countdown-tiles.tsx:84-113` |
+| Hook tick, seed từ server | `src/app/(public)/_hooks/use-countdown.ts:36-72` |
+| 3 ô số LED (dùng chung với trang chủ) | `src/app/(public)/_components/countdown-tiles.tsx:84-113` |
 | E2E màn hình | `tests/e2e/prelaunch.spec.ts:1-150` |
 
 Đo tay trạng thái KHOÁ (e2e không lật được cờ, xem § 5.3):

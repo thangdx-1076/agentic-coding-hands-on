@@ -486,7 +486,7 @@ thật, xem `functional-spec.md § 3` D002); phản chiếu huy hiệu vừa nh�
 **Type**: mixed
 **Description**: Route mới `/prelaunch` hiển thị đếm ngược toàn màn hình tới `EVENT_START_AT`,
 tái dùng 100% logic đếm ngược đã có ở `/` (nay nâng cấp thành shared: `src/utils/countdown.ts`,
-`src/hooks/use-countdown.ts`, `src/components/countdown-tiles.tsx`). Phần THẬT SỰ mới: mở rộng
+`src/app/(public)/_hooks/use-countdown.ts`, `src/app/(public)/_components/countdown-tiles.tsx`). Phần THẬT SỰ mới: mở rộng
 edge guard `src/proxy.ts` — cờ `PRELAUNCH_LOCK_ENABLED` (mặc định TẮT) kết hợp countdown chưa về 0
 sẽ redirect TOÀN BỘ route trang (kể cả `/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile`)
 về `/prelaunch`, trừ 4 ngoại lệ kỹ thuật (`/prelaunch` chính nó, `/auth/*`, `/api/*`, `/_next/*`/file
@@ -502,7 +502,7 @@ NHẬP; F011 gác theo THỜI ĐIỂM + CỜ CẤU HÌNH, áp dụng đồng nh�
 `src/app/(public)/prelaunch/{page.tsx,_components/{prelaunch-screen,prelaunch-countdown}.tsx}` +
 `src/domain/prelaunch-lock.ts` (`planProxy`, `isPrelaunchLockEnabled`, thuần, zero I/O) +
 `src/proxy.ts` (mở rộng, không phải guard mới) + 3 module climb lên Zone A:
-`src/utils/countdown.ts`, `src/hooks/use-countdown.ts`, `src/components/countdown-tiles.tsx` +
+`src/utils/countdown.ts`, `src/app/(public)/_hooks/use-countdown.ts`, `src/app/(public)/_components/countdown-tiles.tsx` +
 `src/constants/routes.ts` (thêm `ROUTES.PRELAUNCH`) + khoá i18n `prelaunch.title`
 (`messages/{vi,en}.json`)
 

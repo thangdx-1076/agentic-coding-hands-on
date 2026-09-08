@@ -404,7 +404,7 @@ Hợp đồng e2e: `tests/e2e/kudos-compose.spec.ts` (C01–C27).
 **Description:** Màn toàn màn hình, không cuộn, PUBLIC, không route-guard cho chính nó: ảnh nền
 full-bleed (`/prelaunch/Prelaunch_BG.png`) + lớp phủ gradient tối, nội dung căn giữa gồm tiêu đề
 (`prelaunch.title`, i18n) và 3 ô đếm ngược (DAYS/HOURS/MINUTES) tái dùng nguyên `CountdownTiles`
-(`src/components/countdown-tiles.tsx`, đã climb lên Zone A cho feature này) qua hook
+(`src/app/(public)/_components/countdown-tiles.tsx`, nâng một rung lên segment `(public)` — cả hai consumer đều nằm dưới đó) qua hook
 `useCountdown` dùng chung với `/`. Không header/footer, không modal. `page.tsx` (Server Component)
 đọc `EVENT_START_AT` một lần (hàm `resolveTargetIso`, cố ý KHÔNG chia sẻ code với `(home)/page.tsx`
 — xem `architecture.md`), seed tick đầu cho client qua `PrelaunchCountdown`. Nhận traffic theo 2
@@ -418,7 +418,7 @@ mở — vẫn ở lại màn, không tự chuyển; một lượt truy cập M�
 | Component | Type | Purpose |
 |-----------|------|---------|
 | PrelaunchScreen (`_components/prelaunch-screen.tsx`) | layout (root) | Ảnh nền full-bleed + gradient scrim + cột nội dung căn giữa (tiêu đề + slot đếm ngược); không header/footer |
-| PrelaunchCountdown (`_components/prelaunch-countdown.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`src/hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống, `showComingSoon` cố ý KHÔNG dùng (màn này không có copy "Coming soon") |
+| PrelaunchCountdown (`_components/prelaunch-countdown.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`src/app/(public)/_hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống, `showComingSoon` cố ý KHÔNG dùng (màn này không có copy "Coming soon") |
 
 ### Data Displayed
 

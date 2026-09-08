@@ -232,7 +232,7 @@ business-agnostic) tách khỏi `lib/supabase/` vì không phải vendor glue ch
 `contexts/` CHƯA tồn tại — chưa tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `domain/`
 và `components/` (shared, ngoài `language-selector`) TỪNG chưa tồn tại nhưng nay đã có consumer
 đầu tiên từ CountdownPrelaunchPage: `src/domain/prelaunch-lock.ts` (`planProxy`,
-`isPrelaunchLockEnabled`) và `src/components/countdown-tiles.tsx` — xem § "Bổ sung dự kiến —
+`isPrelaunchLockEnabled`) và `src/app/(public)/_components/countdown-tiles.tsx` — xem § "Bổ sung dự kiến —
 CountdownPrelaunchPage" cuối file. `src/configs/env.ts` vẫn chưa tồn tại: `EVENT_START_AT` nay đọc
 trực tiếp ở BA nơi độc lập — `src/app/(public)/(home)/page.tsx` (`resolveTargetIso()`),
 `src/app/(public)/prelaunch/page.tsx` (hàm cùng tên, cố ý KHÔNG chia sẻ — 8 dòng đọc env không
@@ -689,8 +689,8 @@ climb đã áp dụng cho `SiteHeader`/`SiteFooter`/`get-viewer.ts` ở các đ�
 lên hẳn `src/<layer>/` (không phải một `_*` private folder của route-group) vì cả 2 consumer
 (`(home)` và `prelaunch`) là component/hook/util thuần:
 - `src/utils/countdown.ts` (từ `(home)/_utils/countdown.ts`)
-- `src/hooks/use-countdown.ts` (từ `(home)/_hooks/use-countdown.ts`)
-- `src/components/countdown-tiles.tsx` (từ `(home)/_components/countdown-tiles.tsx`) — consumer
+- `src/app/(public)/_hooks/use-countdown.ts` (từ `(home)/_hooks/use-countdown.ts`)
+- `src/app/(public)/_components/countdown-tiles.tsx` (từ `(home)/_components/countdown-tiles.tsx`) — consumer
   ĐẦU TIÊN của `src/components/`, thư mục mới chưa từng tồn tại tính tới F010.
 
 Domain logic thuần mới: `src/domain/prelaunch-lock.ts` (`planProxy`, `isPrelaunchLockEnabled`) —

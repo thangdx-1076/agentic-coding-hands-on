@@ -98,7 +98,7 @@ Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có 
 
 Route `/prelaunch` render SCR009_CountdownPrelaunch — màn đếm ngược toàn màn hình tới
 `EVENT_START_AT`, tái dùng nguyên logic đếm ngược của `/` (nay shared: `src/utils/countdown.ts`,
-`src/hooks/use-countdown.ts`, `src/components/countdown-tiles.tsx`). PUBLIC by design, bản thân
+`src/app/(public)/_hooks/use-countdown.ts`, `src/app/(public)/_components/countdown-tiles.tsx`). PUBLIC by design, bản thân
 route không qua guard nào (giống `/`, `/awards`, `/standards`). Không đọc Supabase — toàn bộ trạng
 thái từ 2 biến môi trường (`EVENT_START_AT`, `PRELAUNCH_LOCK_ENABLED`). Mới từ 2026-09-08
 (F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page`, chưa merge `main`). Xem mục
