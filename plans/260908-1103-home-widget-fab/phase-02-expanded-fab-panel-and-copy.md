@@ -51,9 +51,9 @@ Viết `open ? <>{menu}{trigger}</> : trigger` là **sai**: React unmount/remoun
 đã chết → Escape không trả focus → `home.spec.ts` **TC ID-35 đỏ** (test đang xanh).
 Slot cố định (hoặc `key` trên trigger) là điều kiện đủ.
 
-### Bẫy 2 · `buttonCount === 1` của TC ID-37
+### Bẫy 2 · `buttonCount === 1` của TC eaecd588
 
-**Bẫy này đã được chữa TRONG TEST, không phải trong trang.** Bản đầu của TC37 viết:
+**Bẫy này đã được chữa TRONG TEST, không phải trong trang.** Bản đầu của TC eaecd588 viết:
 
 ```ts
 const widgetContainer = page.locator("div").filter({ has: widgetTrigger });
@@ -69,7 +69,7 @@ Orchestrator **bác** phương án restructure `home-screen.tsx` thành fragment
 → phải import `next/font` vào client component → ba thay đổi cấu trúc trên trang đã ship & review,
 tất cả chỉ để lách một locator sai. Locator sai thì sửa locator.
 
-TC37 nay dùng:
+TC eaecd588 nay dùng:
 
 ```ts
 const widgetContainer = page.getByTestId("home-widget-fab");
@@ -93,7 +93,7 @@ kế thừa biến CSS như hiện tại — concern "client component import `n
 
 `boundingBox()` tính cả transform. Đo thật: pill `106×64` với `hover:scale-105` settled cho
 `111.3×67.2`. Sau `widgetTrigger.click()` con chuột **vẫn nằm trên trigger**, nên assertion cuối
-của TC37 (`|w-106| <= 2` sau khi đóng) đọc `111.3` → đỏ. Cùng lý do, trạng thái × 56×56 khi hover
+của TC eaecd588 (`|w-106| <= 2` sau khi đóng) đọc `111.3` → đỏ. Cùng lý do, trạng thái × 56×56 khi hover
 đo ra `58.8` → sát/vượt biên ±2, flaky.
 
 Chữa: bỏ `hover:scale-105` và `transition-transform` khỏi trigger, thay hover bằng
@@ -112,15 +112,15 @@ Functional (mỗi dòng map thẳng tới một assertion):
 
 | # | Yêu cầu | Test |
 |---|---|---|
-| R1 | Trigger giữ `aria-label="Hành động nhanh"` (`home.widget.label`) **cố định** ở cả 2 trạng thái; `aria-expanded` mang trạng thái | TC36, TC37, home TC35 |
-| R2 | Đóng: pill 106×64. Mở: 56×56 tròn, `bg-[#D4271D]`, chứa `IconClose` trắng 24×24 | TC37 (±2px) |
-| R3 | Mở thì nội dung pill (kể cả text `/`) **không render** — không phải ẩn bằng class | TC36, TC37 (`not.toContainText("/")` đọc `textContent`, text `sr-only`/`hidden` vẫn tính) |
-| R4 | `[role="menu"]` chứa đúng 2 `a[role="menuitem"]`: `href="/standards"` chữ "Thể lệ" (trên), `href="/kudos"` chữ "Viết KUDOS" (dưới) | TC36, TC38, TC39, TC40 |
-| R5 | Mỗi option cao 64px | TC36 (±2px) |
-| R6 | Không còn `a[href="/awards"]` và chữ "Award Information" trong menu | TC36, TC40 |
-| R7 | Trong `[role="menu"]` không có `<button>` nào; trong cụm widget chỉ có **1** `<button>` | TC37 |
-| R8 | Click trigger lần 2 / click ngoài / Escape / chọn option đều đóng; Escape trả focus về trigger | home TC30-35, TC37, TC40 |
-| R9 | Panel neo phải/dưới cùng điểm với pill, `right > 0.8 × viewport width` | TC36 |
+| R1 | Trigger giữ `aria-label="Hành động nhanh"` (`home.widget.label`) **cố định** ở cả 2 trạng thái; `aria-expanded` mang trạng thái | TC ID-54, TC eaecd588, home TC35 |
+| R2 | Đóng: pill 106×64. Mở: 56×56 tròn, `bg-[#D4271D]`, chứa `IconClose` trắng 24×24 | TC eaecd588 (±2px) |
+| R3 | Mở thì nội dung pill (kể cả text `/`) **không render** — không phải ẩn bằng class | TC ID-54, TC eaecd588 (`not.toContainText("/")` đọc `textContent`, text `sr-only`/`hidden` vẫn tính) |
+| R4 | `[role="menu"]` chứa đúng 2 `a[role="menuitem"]`: `href="/standards"` chữ "Thể lệ" (trên), `href="/kudos"` chữ "Viết KUDOS" (dưới) | TC ID-54, TC c4b65775, TC 3b6565d3, TC e0451b6d |
+| R5 | Mỗi option cao 64px | TC ID-54 (±2px) |
+| R6 | Không còn `a[href="/awards"]` và chữ "Award Information" trong menu | TC ID-54, TC e0451b6d |
+| R7 | Trong `[role="menu"]` không có `<button>` nào; trong cụm widget chỉ có **1** `<button>` | TC eaecd588 |
+| R8 | Click trigger lần 2 / click ngoài / Escape / chọn option đều đóng; Escape trả focus về trigger | home TC30-35, TC eaecd588, TC e0451b6d |
+| R9 | Panel neo phải/dưới cùng điểm với pill, `right > 0.8 × viewport width` | TC ID-54 |
 
 Non-functional:
 - `widget-button.tsx` < 200 dòng sau khi xong.
@@ -277,10 +277,10 @@ Sửa:
 | Rủi ro | Khả năng | Ảnh hưởng | Đối phó |
 |---|---|---|---|
 | Viết ternary bọc fragment → TC ID-35 đỏ | **Cao** | **Cao** | Bẫy 1; đọc `home.spec.ts:324-332` trước khi viết JSX |
-| Quên `data-testid="home-widget-fab"` → TC37 đỏ ở `buttonCount` dù UI đúng, dễ chẩn sai thành "morph chưa xong" | **Cao** | Trung bình | Bẫy 2; nếu TC37 CHỈ đỏ ở `buttonCount` thì thiếu testid, không phải thiếu morph |
-| Giữ `hover:scale-105` → TC37 đỏ ở assertion cuối, flaky | **Cao** | Trung bình | Bẫy 3; không transition hình học |
+| Quên `data-testid="home-widget-fab"` → TC eaecd588 đỏ ở `buttonCount` dù UI đúng, dễ chẩn sai thành "morph chưa xong" | **Cao** | Trung bình | Bẫy 2; nếu TC eaecd588 CHỈ đỏ ở `buttonCount` thì thiếu testid, không phải thiếu morph |
+| Giữ `hover:scale-105` → TC eaecd588 đỏ ở assertion cuối, flaky | **Cao** | Trung bình | Bẫy 3; không transition hình học |
 | Thêm `transition` cho morph "cho mượt" → phép đo ±2px flaky | Trung bình | Trung bình | Ghi rõ cấm; chỉ transition màu/shadow |
-| Ẩn text `/` bằng `hidden`/`sr-only` thay vì không render → TC36 vẫn đỏ | Trung bình | Trung bình | R3: `toContainText` đọc `textContent` |
+| Ẩn text `/` bằng `hidden`/`sr-only` thay vì không render → TC ID-54 vẫn đỏ | Trung bình | Trung bình | R3: `toContainText` đọc `textContent` |
 | Hardcode 149px cho "Thể lệ" | Trung bình | Thấp | Width nội tại + `p-4`; clarifications § Hợp đồng thị giác |
 | Đổi 1 locale, quên locale kia | Trung bình | Thấp | `messages-parity.test.ts` chặn ở `pnpm test:unit` |
 | `widget-button.tsx` vượt 200 dòng | Trung bình | Thấp | Hằng class mức module; nếu > 190, tách `widget-button-options.tsx` (nhận `activeIndex`, `registerItem`, `close`, 2 label) |
@@ -304,5 +304,5 @@ Trường hợp panel lỗi nặng lúc đã merge: revert commit của phase 02
 ## Next Steps
 
 Phase 03 chạy cổng kiểm chứng đầy đủ + bằng chứng thị giác qua Playwright MCP. Bàn giao cho
-`tester`: `redCommand`, `redExitCode: 1`, `redFailure` (TC36 `/` không ẩn, TC37 width 106≠56,
-TC38/TC40 thiếu `a[href="/standards"]`) để đối chiếu RED→GREEN trên **đúng** lệnh đó.
+`tester`: `redCommand`, `redExitCode: 1`, `redFailure` (TC ID-54 `/` không ẩn, TC eaecd588 width 106≠56,
+TC c4b65775/TC e0451b6d thiếu `a[href="/standards"]`) để đối chiếu RED→GREEN trên **đúng** lệnh đó.

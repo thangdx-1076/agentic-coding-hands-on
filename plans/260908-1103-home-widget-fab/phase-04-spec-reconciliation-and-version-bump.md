@@ -27,7 +27,7 @@
     của nút ×"*
   - `spec/F003_Homepage/functional-spec.md:125` — *"widget hành động nhanh có thêm một nút đóng"*
 - Sai ở chỗ: `tests/e2e/home.spec.ts:303-338` [TC ID-35] click
-  `button[aria-label="Hành động nhanh"]` **lần thứ hai lúc panel đang mở** để đóng, và TC36/TC37
+  `button[aria-label="Hành động nhanh"]` **lần thứ hai lúc panel đang mở** để đóng, và TC ID-54 / TC eaecd588
   của `home-widget-fab.spec.ts` đọc `aria-expanded` trên đúng label đó. Đổi label sang "Hủy" (hoặc
   thêm button thứ hai) làm cả 3 test đỏ. Spec draft cũng tự mâu thuẫn: `spec.md:157` viết
   *"Trigger (E19) tự nó luôn hiện — chỉ đổi hình dạng pill↔×"*, tức chính là morph một button.
@@ -155,7 +155,7 @@ Không. Không secret trong spec; không đổi cấu hình, không đổi quy�
 
 **Product/Process decisions (for human):**
 - Test case MoMorph của cả 2 frame FAB đều **rỗng** (`get_frame_test_cases → []`). E2E được viết
-  từ spec + design. **Có ghi ngược 5 test case (TC36-40) lên MoMorph không?** — cần người quyết.
+  từ spec + design. **Có ghi ngược 5 test case (ID-54, eaecd588, c4b65775, 3b6565d3, e0451b6d) lên MoMorph không?** — cần người quyết.
 - Frame thu gọn `_hphd32jN2` vẫn `design_status: in_progress` dù đã có node data và repo đã dựng
   theo nó từ phase homepage. **Có đánh `done` trên MoMorph không?** — cần người quyết.
 

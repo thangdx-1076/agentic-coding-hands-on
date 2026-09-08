@@ -26,13 +26,34 @@ import { test, expect } from "@playwright/test";
  * Related test: tests/e2e/home.spec.ts [TC ID-30–35] tests the collapsed state
  * and menu keyboard/click behavior. This suite focuses on the expanded panel design
  * and must not break existing tests.
+ *
+ * TEST-ID NUMBERING — read before adding a case here.
+ *
+ * `ID-<n>` is NOT a free-form label: it is a real MoMorph test-case id from the
+ * frame's own 62-case list (`download_test_cases` on `i87tDx10uM`, mirrored in
+ * F003's traceability line as `ID-0…ID-62`). This file originally invented
+ * `ID-36`–`ID-40`, all five of which were already taken by unrelated cases:
+ * ID-36/37/38 are the account-menu cases and ID-39/40 are the countdown cases
+ * (ID-39 collided outright with `home.spec.ts`'s own `[TC ID-24, ID-39]`).
+ *
+ * Exactly one real MoMorph case covers this widget: **ID-54** — "Click widget
+ * button (bottom right) → Quick action menu opens with available options" — so
+ * the panel-opens case carries it. The other four assert the DESIGNED panel
+ * (morph geometry, the two navigations, open/close consistency), for which no
+ * MoMorph case exists at all: both FAB frames (`_hphd32jN2`, `Sv7DFwBw1h`)
+ * return an empty `test_cases` list. Those therefore use the repo's existing
+ * convention for coverage with no upstream id — an 8-hex stable slug, as in
+ * `[TC b9805e65]` (login.spec.ts) and `[TC 20d87e28]` — not a made-up `ID-<n>`.
+ *
+ * So: only reuse an `ID-<n>` you have actually read out of that frame's
+ * test-case list, and mint an 8-hex slug for anything genuinely new.
  */
 test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
   test.describe("Unauthenticated user", () => {
     // Ensure no auth cookies for consistency with other homepage tests
     test.use({ storageState: { cookies: [], origins: [] } });
 
-    test("[TC ID-36] Widget button opens and shows designed expanded panel with 'Thể lệ' and 'Viết KUDOS' options", async ({
+    test("[TC ID-54] Widget button opens and shows designed expanded panel with 'Thể lệ' and 'Viết KUDOS' options", async ({
       page,
     }) => {
       await page.goto("/");
@@ -111,7 +132,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       ); // Should be on the right side
     });
 
-    test("[TC ID-37] Widget button morphs to × icon (56×56) when open, clicking it closes panel and returns focus", async ({
+    test("[TC eaecd588] Widget button morphs to × icon (56×56) when open, clicking it closes panel and returns focus", async ({
       page,
     }) => {
       await page.goto("/");
@@ -180,7 +201,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       await expect(widgetTrigger).toContainText("/");
     });
 
-    test("[TC ID-38] Clicking 'Thể lệ' link navigates to /standards and closes panel", async ({
+    test("[TC c4b65775] Clicking 'Thể lệ' link navigates to /standards and closes panel", async ({
       page,
     }) => {
       await page.goto("/");
@@ -211,7 +232,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       // the same realistic budget rather than one being a latent flake.
       //
       // Do NOT "simplify" this back to a bare `toHaveAttribute("href", ...)`
-      // the way TC ID-44/45/53 in `home.spec.ts` do: TC ID-36 already asserts
+      // the way TC ID-44/45/53 in `home.spec.ts` do: TC ID-54 already asserts
       // both hrefs, so an href-only check here would be a pure duplicate.
       // What this test uniquely proves is that the click actually navigates —
       // both menuitems carry `onClick={() => close(false)}`, and a handler
@@ -220,7 +241,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       await expect(page).toHaveURL(/\/standards/, { timeout: 15_000 });
     });
 
-    test("[TC ID-39] Clicking 'Viết KUDOS' link navigates to /kudos and closes panel", async ({
+    test("[TC 3b6565d3] Clicking 'Viết KUDOS' link navigates to /kudos and closes panel", async ({
       page,
     }) => {
       await page.goto("/");
@@ -236,7 +257,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       const writeKudosLink = page.locator('a[role="menuitem"][href="/kudos"]');
       await writeKudosLink.click();
 
-      // Assert navigation to /kudos — see TC ID-38 for why the timeout is
+      // Assert navigation to /kudos — see TC c4b65775 for why the timeout is
       // raised. This is the case that actually failed CI run 34190836567:
       // the URL was still `http://localhost:3000/` when the 5s default
       // expired, and the `[WebServer] destination stream closed early` lines
@@ -245,7 +266,7 @@ test.describe("Homepage Widget Button FAB — EXPANDED state", () => {
       await expect(page).toHaveURL(/\/kudos/, { timeout: 15_000 });
     });
 
-    test("[TC ID-40] Expanded panel remains consistent across open/close cycles", async ({
+    test("[TC e0451b6d] Expanded panel remains consistent across open/close cycles", async ({
       page,
     }) => {
       await page.goto("/");

@@ -25,7 +25,7 @@
       "command": "E2E_PORT=3100 npx playwright test tests/e2e/home-widget-fab.spec.ts",
       "exitCode": 0,
       "status": "pass",
-      "summary": "5/5 pass (TC ID-36..40). Cung lenh nay truoc khi implement la exit 1 voi 4 fail / 1 pass — chuyen tiep RED->GREEN tren dung mot command.",
+      "summary": "5/5 pass (TC ID-54, eaecd588, c4b65775, 3b6565d3, e0451b6d). Cung lenh nay truoc khi implement la exit 1 voi 4 fail / 1 pass — chuyen tiep RED->GREEN tren dung mot command.",
       "ts": "2026-09-08T05:04:00.000Z"
     },
     {
