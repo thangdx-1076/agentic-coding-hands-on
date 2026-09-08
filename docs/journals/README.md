@@ -20,5 +20,6 @@
 - [260907-1624-momorph-ui-fidelity-audit-five-screens-layout-consistency-naming.md](260907-1624-momorph-ui-fidelity-audit-five-screens-layout-consistency-naming.md) — 260907 1624 momorph ui fidelity audit five screens layout consistency naming
 - [260907-2236-kudos-live-board-design-conflict-agent-report-traps.md](260907-2236-kudos-live-board-design-conflict-agent-report-traps.md) — 260907 2236 kudos live board design conflict agent report traps
 - [260908-0845-kudos-compose-dialog-e2e-red-first-agent-verification-traps.md](260908-0845-kudos-compose-dialog-e2e-red-first-agent-verification-traps.md) — 260908 0845 kudos compose dialog e2e red first agent verification traps
+- [260908-1040-kudos-addlink-box-nested-dialog-react-oncancel-bubbling-and-evidence-honesty.md](260908-1040-kudos-addlink-box-nested-dialog-react-oncancel-bubbling-and-evidence-honesty.md) — 260908 1040 kudos addlink box nested dialog react oncancel bubbling and evidence honesty
 
 <!-- end-generated -->

@@ -11,14 +11,17 @@ import type { KudosComposeCopy } from "../_shared/kudos-compose-copy";
 import type { MarkdownMarkerKind } from "../_utils/insert-markdown-marker";
 
 import { KudosComposeBody } from "./kudos-compose-body";
+import { KudosComposeLinkDialog } from "./kudos-compose-link-dialog";
 import { KudosContentField } from "./kudos-content-field";
 import type { FormatKind } from "./kudos-format-toolbar";
 import { KudosRecipientField } from "./kudos-recipient-field";
 import type { KudosSunnerOption as KudosSunnerFieldOption } from "./kudos-sunner-options";
 import { KudosTitleField } from "./kudos-title-field";
 
-/** Hook's `fullName: string | null` vs `./kudos-sunner-options`'s
- * `fullName: string` (rendered as option text) — coalesced at this boundary. */
+/** Imperative opener `KudosComposeLinkDialog` registers on mount. */
+type OpenLinkFn = (t: HTMLTextAreaElement) => void;
+
+/** Hook's `fullName: string | null` vs `./kudos-sunner-options`'s `fullName: string` (option text) — coalesced here. */
 function toSunnerFieldOption(
   option: KudosSunnerOption,
 ): KudosSunnerFieldOption {
@@ -29,8 +32,7 @@ export type KudosComposeFormProps = {
   copy: KudosComposeCopy;
   draft: KudosComposeDraft;
   errors: KudosComposeFieldErrors;
-  /** Form-level failure (e.g. `unauthenticatedHint`) — per-field failures
-   * live in `errors`/`imageError` instead. */
+  /** Form-level failure (e.g. `unauthenticatedHint`); per-field failures live in `errors`/`imageError`. */
   submitError: string | null;
   /** `board.filters.hashtags`, unchanged — no extra query. */
   hashtagVocabulary: string[];
@@ -46,6 +48,7 @@ export type KudosComposeFormProps = {
     format: MarkdownMarkerKind,
     textarea: HTMLTextAreaElement,
     url?: string,
+    linkText?: string,
   ) => void;
   mentionQuery: string | null;
   mentionOptions: KudosSunnerOption[];
@@ -65,16 +68,14 @@ export type KudosComposeFormProps = {
 };
 
 /**
- * The "Viết Kudo" form body's TOP half (C04 order: Người nhận → Danh hiệu →
- * toolbar+Nội dung) in a native `<form>` — the bottom half lives in the
- * sibling `kudos-compose-body.tsx` (a second file, under the 200-line cap).
- * Every prop is destructured from `useKudosComposeForm`'s return at ITS call
- * site (`kudos-compose-launcher.tsx`), never the whole hook object.
+ * The "Viết Kudo" form body's TOP half (C04: Người nhận → Danh hiệu →
+ * toolbar+Nội dung); the bottom half lives in `kudos-compose-body.tsx`.
+ * Props come from `useKudosComposeForm`'s return via `kudos-compose-launcher.tsx`.
  *
- * Owns one local `<textarea>` node ref, bridging `KudosContentField`'s
- * `onFormat(kind)` to `applyFormat(kind, textarea, url?)`. `<form>`'s
- * `onSubmit` only calls `preventDefault` — the real submit path is the
- * footer's `Gửi` button, a DOM sibling kept outside this form.
+ * Owns the `<textarea>` ref. `handleFormat` bridges `onFormat(kind)` to
+ * `applyFormat(kind, textarea, url?, linkText?)`, except `"link"`, which
+ * opens `KudosComposeLinkDialog` (A5) via an imperative ref it registers
+ * on mount — that dialog calls `applyFormat` once "Lưu" validates.
  */
 export function KudosComposeForm({
   copy,
@@ -108,6 +109,7 @@ export function KudosComposeForm({
   onAnonymousNameChange,
 }: KudosComposeFormProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const openLinkRef = useRef<OpenLinkFn | null>(null);
 
   // Closed once a recipient is picked (`draft.recipient` set); editing the
   // query text away from that name clears it back to `null` and reopens it.
@@ -117,14 +119,7 @@ export function KudosComposeForm({
   function handleFormat(kind: FormatKind) {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    if (kind === "link") {
-      // `window.prompt` collects a URL; blank/cancelled is a no-op
-      // (`insertMarkdownMarker` treats an empty `url` that way already).
-      const url = window.prompt(copy.toolbar.link);
-      if (!url) return;
-      applyFormat(kind, textarea, url);
-      return;
-    }
+    if (kind === "link") return openLinkRef.current?.(textarea);
     applyFormat(kind, textarea);
   }
 
@@ -166,9 +161,7 @@ export function KudosComposeForm({
         copy={copy}
         value={draft.content}
         onChange={onContentChange}
-        registerTextarea={(node) => {
-          textareaRef.current = node;
-        }}
+        registerTextarea={(node) => (textareaRef.current = node)}
         onFormat={handleFormat}
         error={errors.content ?? null}
         mentionOpen={mentionQuery !== null}
@@ -194,6 +187,13 @@ export function KudosComposeForm({
         onRemoveImage={onRemoveImage}
         onToggleAnonymous={onToggleAnonymous}
         onAnonymousNameChange={onAnonymousNameChange}
+      />
+
+      <KudosComposeLinkDialog
+        copy={copy}
+        applyFormat={applyFormat}
+        getTextarea={() => textareaRef.current}
+        registerOpen={(open) => (openLinkRef.current = open)}
       />
     </form>
   );

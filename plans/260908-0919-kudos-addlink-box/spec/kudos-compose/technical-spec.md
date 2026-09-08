@@ -1,7 +1,7 @@
 ---
-status: implemented
+status: draft
 authored_by: takumi
-created: 2026-09-07
+created: 2026-09-08
 lang: vi
 fcode: F009
 ---
@@ -21,12 +21,10 @@ Tính năng cho Sunner đã đăng nhập mở dialog "Viết Kudo" đè lên tr
 lời cảm ơn có định dạng cơ bản tới đồng đội, kèm tối đa 5 hashtag, tối đa 5 ảnh và tuỳ chọn gửi ẩn
 danh. Gồm 2 Server Action (tìm người nhận, ghi Kudo) và 1 migration (RLS insert + 2 cột ẩn danh +
 bucket Storage); phần UI dựng bằng `<dialog>` native. Bổ sung của phiên này: nút "Chèn liên kết"
-trên toolbar định dạng — trước đây gọi `window.prompt` — nay mở một `<dialog>` native thứ hai —
+trên toolbar định dạng, hiện gọi `window.prompt`, được thay bằng một `<dialog>` native thứ hai —
 "Thêm đường dẫn" — lồng trên dialog Viết Kudo, cho nhập Nội dung liên kết + URL rồi chèn markdown
 `[Nội dung](URL)` vào đúng vị trí đang soạn; toàn bộ phần bổ sung này thuần client-side, không thêm
-Server Action/migration/route. **Cập nhật 2026-09-08**: đã implement (nhánh
-`feat/kudos-write-modal`, e2e `kudos-link-dialog.spec.ts` 11/11 GREEN, không còn `window.prompt`
-nào trong `src/`) — mọi nhãn `(planned)` bên dưới đã thay bằng `path:line` thật.
+Server Action/migration/route.
 
 ## 2. Action Index
 
@@ -37,7 +35,7 @@ nào trong `src/`) — mọi nhãn `(planned)` bên dưới đã thay bằng `pa
 | **A2** | `` `searchSunners` `` | `server action` · `searchSunners` | FR-202, US001 | — *(read-only)* | § 3.1 |
 | **A3** | `` `useKudosComposeForm` `` | — *(client-side)* | FR-203, FR-204, FR-205, FR-206, FR-207, FR-403, FR-404, BR-002, BR-003, BR-004, BR-005, DEC-001, US002, US003, US004 | — | § 3.1 |
 | **A4** | `` `createKudo` `` | `server action` · `createKudo` | FR-001, FR-002, FR-201, FR-208, FR-401, FR-402, BR-001, BR-002, BR-003, BR-004, DEC-002, US001, SM-001, INT-001 | `kudos`, `storage.objects` | § 3.1 ▸ **diagram** |
-| **A5** | `` `useKudosLinkDialog` `` | — *(client-side)* | FR-209, FR-405, FR-406, BR-007, BR-008, BR-009, DEC-003, SM-002, US001 | — | § 3.1 |
+| **A5** | `` `useKudosLinkDialog` `` *(planned)* | — *(client-side)* | FR-209, FR-405, FR-406, BR-007, BR-008, BR-009, DEC-003, SM-002, US001 | — | § 3.1 |
 
 ## 3. Actions
 
@@ -208,46 +206,45 @@ sequenceDiagram
 ---
 
 #### A5 · Chèn liên kết qua dialog "Thêm đường dẫn"
-`— (client-side)` → `` `useKudosLinkDialog` ``
+`— (client-side)` → `` `useKudosLinkDialog` `` *(planned)*
 `FR-209` `FR-405` `FR-406` · `US001` · `SCR008_KudosCompose` · `SM-002`
 
 **Who** · Sunner đang gõ trong Nội dung (E06), bấm nút "Chèn liên kết" trên toolbar *(gate A0 —
 § 4.4)*.
-**FE** · Nút Link (`data-format="link"`, `kudos-format-toolbar.tsx:58-71`) gọi `handleFormat("link")`
-trong `kudos-compose-form.tsx:119-124`, mở `KudosComposeLinkDialog`
-(`kudos-compose-link-dialog.tsx:45-97`) → `KudosLinkDialog` (`kudos-link-dialog.tsx:73-201`) —
-`<dialog>` native lồng trong dialog Viết Kudo, `showModal()` qua hook
-`use-kudos-link-dialog.ts:70-164` (không còn gọi `window.prompt`). Hook snapshot
-`selectionStart`/`selectionEnd` của textarea Nội dung lúc mở (`use-kudos-link-dialog.ts:94-109`,
-focus đã rời textarea khi dialog con nhận focus) để `setSelectionRange` lại trước khi gọi
-`applyFormat` (`kudos-compose-link-dialog.tsx:68-79`). Nội dung liên kết (E18) prefill từ text đang
-bôi đen tại thời điểm bấm nút Link, nếu có (`use-kudos-link-dialog.ts:98-101`).
+**FE** · Nút Link (`data-format="link"`, `kudos-format-toolbar.tsx:59-68`) HIỆN TẠI gọi
+`window.prompt` qua `handleFormat` trong `kudos-compose-form.tsx:117-129` — hành vi sẽ bị thay.
+Kế hoạch: `handleFormat` mở `kudos-link-dialog.tsx` *(planned)* — `<dialog>` native lồng trong
+dialog Viết Kudo, `showModal()` qua hook `use-kudos-link-dialog.ts` *(planned)* — thay vì gọi
+`window.prompt`. Hook snapshot `selectionStart`/`selectionEnd` của textarea Nội dung lúc mở (focus
+đã rời textarea khi dialog con nhận focus) để `setSelectionRange` lại trước khi gọi `applyFormat`.
+Nội dung liên kết (E18) prefill từ text đang bôi đen tại thời điểm bấm nút Link, nếu có.
 **Request** · không có request server — thuần state cục bộ (2 trường: Nội dung liên kết, URL).
 **BE** · không có.
 **Rule**
 - **BR-007 — Nội dung liên kết bắt buộc, tối đa 100 ký tự sau `trim()`.** Validate trong
-  `validate-link-draft.ts:46-54` khi bấm "Lưu". *(§ 4.4)*
+  `validate-link-draft.ts` *(planned)* khi bấm "Lưu". *(§ 4.4)*
 - **BR-008 — URL bắt buộc, 5–2048 ký tự sau `trim()`, phải `new URL()` parse được và
   `protocol ∈ {http:, https:}`.** Cùng whitelist scheme với `parse-kudo-markdown.ts:34`; validate
-  trong `validate-link-draft.ts:67-88`, khi bấm "Lưu" và thêm một lần khi blur ô URL
-  (`use-kudos-link-dialog.ts:121-124`). *(§ 4.4)*
+  khi bấm "Lưu", và thêm một lần khi blur ô URL. *(§ 4.4)*
 
 | DEC | subtype | Condition | What the user sees | Source |
 |---|---|---|---|---|
-| **DEC-003** | interaction | click nút "Chèn liên kết" trên toolbar (`data-format="link"`) | mở dialog "Thêm đường dẫn" lồng trên dialog Viết Kudo | `kudos-format-toolbar.tsx:58-71` (trigger); `kudos-link-dialog.tsx:73-201` |
+| **DEC-003** | interaction | click nút "Chèn liên kết" trên toolbar (`data-format="link"`) | mở dialog "Thêm đường dẫn" lồng trên dialog Viết Kudo | `kudos-format-toolbar.tsx:59-68` (trigger hiện có); `kudos-link-dialog.tsx` *(planned)* |
 
 **Result** · Lưu hợp lệ: chèn `[Nội dung](URL)` vào textarea Nội dung (E06) tại vị trí selection đã
-chụp lúc mở, ghi đè vùng chọn nếu có (`insertLink` trong `insert-markdown-marker.ts:106-144`, tham
-số `linkText?` — khi có, LUÔN thắng vùng chọn cũ), rồi đóng dialog "Thêm đường dẫn" và reset 2
-trường + lỗi (`use-kudos-link-dialog.ts:126-140`). Không ghi gì xuống máy chủ — state mới của Nội
-dung chỉ là input cho A3/A4 khi Sunner bấm Gửi sau đó. Hủy/Escape: đóng dialog "Thêm đường dẫn",
-KHÔNG đổi textarea Nội dung (`use-kudos-link-dialog.ts:82-92, 142-148`).
+chụp lúc mở, ghi đè vùng chọn nếu có (`insertLink` trong `insert-markdown-marker.ts:99-124`, mở
+rộng thêm tham số `linkText?` *(planned)*), rồi đóng dialog "Thêm đường dẫn" và reset 2 trường +
+lỗi. Không ghi gì xuống máy chủ — state mới của Nội dung chỉ là input cho A3/A4 khi Sunner bấm Gửi
+sau đó. Hủy/Escape: đóng dialog "Thêm đường dẫn", KHÔNG đổi textarea Nội dung.
 **State** · `SM-002`: `Closed` → `Open` → `Validating` → `Closed` *(§ 4.3)*
-**Source:** `src/app/(public)/kudos/_components/kudos-format-toolbar.tsx:58-71` →
-`src/app/(public)/kudos/_components/kudos-compose-form.tsx:119-124` →
-`src/app/(public)/kudos/_components/kudos-compose-link-dialog.tsx:45-97` →
-`src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts:70-164` →
-`src/app/(public)/kudos/_utils/insert-markdown-marker.ts:106-144` (`insertLink`, tham số `linkText?`)
+**Source:** `src/app/(public)/kudos/_components/kudos-format-toolbar.tsx:59-68` →
+`src/app/(public)/kudos/_components/kudos-compose-form.tsx:117-129` (hành vi `window.prompt` hiện
+tại, sẽ thay) → `src/app/(public)/kudos/_utils/insert-markdown-marker.ts:99-124` (`insertLink` hiện
+tại, sẽ mở rộng thêm `linkText?`)
+**Planned (chưa viết — không có line citation):**
+`src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts`,
+`src/app/(public)/kudos/_components/kudos-link-dialog.tsx`,
+`src/app/(public)/kudos/_utils/validate-link-draft.ts`
 
 <!-- Không cần diagram: 0 write, không background/async, đủ diễn đạt bằng bảng DEC + rung Rule/Result. -->
 
@@ -279,10 +276,10 @@ KHÔNG đổi textarea Nội dung (`use-kudos-link-dialog.ts:82-92, 142-148`).
 | `searchSunners` (Server Action) | tìm Sunner theo tên qua `profile_cards` | A2 | `_actions/search-sunners.ts` |
 | `createKudo` (Server Action) | validate + upload ảnh + ghi Kudo mới | A4 | `_actions/create-kudo.ts`, `_actions/upload-kudo-images.ts` |
 | `useKudosComposeForm`, `useKudosComposeDialog`, `useSunnerSuggest` | state machine form/dialog/gợi ý người nhận | A1, A3, A4 | `_hooks/use-kudos-compose-{form,dialog}.ts`, `_hooks/use-sunner-suggest.ts` |
-| `KudosLinkDialog`, `KudosComposeLinkDialog` | dialog "Thêm đường dẫn" — 2 trường Nội dung/URL + Hủy/Lưu, class button chép từ `KudosComposeFooter`; container mỏng resolve lỗi + gọi hook | A5 | `_components/kudos-link-dialog.tsx`, `_components/kudos-compose-link-dialog.tsx` |
-| `useKudosLinkDialog` | state machine mở/đóng/validate dialog link (SM-002), snapshot `selectionStart`/`selectionEnd` lúc mở, `setSelectionRange` lại trước khi `applyFormat` | A5 | `_hooks/use-kudos-link-dialog.ts` |
-| `validateLinkDraft` | validate Nội dung (BR-007) + URL (BR-008) | A5 | `_utils/validate-link-draft.ts` |
-| `KudosComposeIcons` | `IconClose`/`IconLink` dùng chung, tách khỏi khai báo cục bộ lặp lại ở footer/toolbar | A1, A3, A4, A5 | `_components/kudos-compose-icons.tsx` |
+| `KudosLinkDialog` *(planned — chưa viết)* | dialog "Thêm đường dẫn" — 2 trường Nội dung/URL + Hủy/Lưu, class button chép từ `KudosComposeFooter` | A5 | `_components/kudos-link-dialog.tsx` |
+| `useKudosLinkDialog` *(planned — chưa viết)* | state machine mở/đóng/validate dialog link (SM-002), snapshot `selectionStart`/`selectionEnd` lúc mở, `setSelectionRange` lại trước khi `applyFormat` | A5 | `_hooks/use-kudos-link-dialog.ts` |
+| `validateLinkDraft` *(planned — chưa viết)* | validate Nội dung (BR-007) + URL (BR-008) | A5 | `_utils/validate-link-draft.ts` |
+| `KudosComposeIcons` *(planned — refactor, chưa viết)* | tách `IconClose`/`IconLink` thành `const` dùng chung, thay vì khai báo cục bộ lặp lại ở footer/toolbar | A1, A3, A4, A5 | `_components/kudos-compose-icons.tsx` |
 
 ### 4.2 Data Model
 
@@ -350,7 +347,7 @@ nêu trên cạnh đó (§ 3.1) — không lặp lại ở đây.
 
 **kind:** ui
 **Linked FR:** FR-209
-**Source:** `src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts:70-164`
+**Planned (chưa viết — không có line citation):** `src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts`
 
 Độc lập với `SM-001` — đóng/mở dialog con không tự đóng/mở dialog Viết Kudo bên ngoài.
 
@@ -529,8 +526,7 @@ tên ẩn danh được lưu.
   đúng là đã có sẵn như giả định.
 - *(A5)* Giả định `showModal()` trên dialog "Thêm đường dẫn" trong khi dialog Viết Kudo đã `open`
   không bị trình duyệt chặn (spec HTML `<dialog>` cho phép nhiều modal, dialog mở sau nằm trên
-  cùng). **Đúng như giả định**: `use-kudos-link-dialog.ts:105-108` gọi `showModal()` có guard
-  `if (!node.open)`; e2e `kudos-link-dialog.spec.ts` 11/11 GREEN xác nhận cả 2 dialog cùng mở đúng.
+  cùng) — chưa xác nhận bằng code thật tới khi implement; xem § 5.3.
 
 ### 5.3 Unresolved Questions
 
@@ -544,11 +540,11 @@ tên ẩn danh được lưu.
 3. **Tên ẩn danh rỗng khi Gửi** *(A4)*: hành vi cụ thể chưa được xác nhận — xem Open Decision D001
    trong functional-spec.md. **Đã chốt**: giữ default của spec — chặn submit, báo lỗi tại ô tên ẩn
    danh (không có design nào phủ nhận default này khi implement).
-4. **Thứ tự `showModal()` lồng 2 dialog + chỉ một instance** *(A5)*: **Đã chốt** — `<dialog>` con
-   `showModal()`-ed trong khi `<dialog>` cha đang `open` hoạt động đúng trên Chromium
-   (`playwright.config`); double-open (bấm nút Link liên tiếp) được chặn bởi guard
-   `if (!node.open)` trong `use-kudos-link-dialog.ts:105-108` — native's no-op-khi-đã-open không
-   cần thêm chặn nào khác. Xác nhận qua e2e `kudos-link-dialog.spec.ts` GREEN.
+4. **Thứ tự `showModal()` lồng 2 dialog + chỉ một instance** *(A5)*: chưa có code để xác nhận thực
+   tế trên Chromium (`playwright.config`) liệu `<dialog>` con `showModal()`-ed trong khi `<dialog>`
+   cha cũng đang `open` hoạt động đúng ngay lần đầu, và liệu native's no-op-khi-đã-open đã đủ chặn
+   double-open (bấm nút Link liên tiếp nhanh) hay hook cần tự chặn thêm — implementer xác nhận khi
+   viết `use-kudos-link-dialog.ts`.
 
 ### 5.4 Source References
 
@@ -556,12 +552,12 @@ tên ẩn danh được lưu.
 |---|---|---|---|---|
 | — | 1 | `Kudos` | `supabase/migrations/0009_kudos_write_anonymity.sql:1-40` | entity `kudos` này feature xoay quanh (cột ẩn danh + RLS insert) |
 | A1-A5 | 2 | `KudosComposeLauncher` | `src/app/(public)/kudos/_components/kudos-compose-launcher.tsx:1-167` | điểm mở modal, wire dialog + form + footer |
-| A3 | 3 | `KudosFormatToolbar` | `src/app/(public)/kudos/_components/kudos-format-toolbar.tsx:1-119` | toolbar định dạng, gồm trigger nút "Chèn liên kết" cho A5 |
-| A3, A5 | 4 | `insertMarkdownMarker`/`insertLink` | `src/app/(public)/kudos/_utils/insert-markdown-marker.ts:106-170` | string/index math chèn markdown; A5 dùng qua tham số `linkText?` mở rộng |
+| A3 | 3 | `KudosFormatToolbar` | `src/app/(public)/kudos/_components/kudos-format-toolbar.tsx:1-145` | toolbar định dạng, gồm trigger nút "Chèn liên kết" cho A5 |
+| A3, A5 | 4 | `insertMarkdownMarker`/`insertLink` | `src/app/(public)/kudos/_utils/insert-markdown-marker.ts:99-149` | string/index math chèn markdown; A5 dùng qua tham số `linkText?` mở rộng *(planned)* |
 | A4 | 5 | `createKudo` | `src/app/(public)/kudos/_actions/create-kudo.ts:95-165` | validate + upload ảnh + ghi Kudo mới |
-| A5 | 6 | `KudosLinkDialog`, `KudosComposeLinkDialog` | `src/app/(public)/kudos/_components/kudos-link-dialog.tsx:73-201`, `kudos-compose-link-dialog.tsx:45-97` | dialog "Thêm đường dẫn" presentational + container |
-| A5 | 7 | `useKudosLinkDialog` | `src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts:70-164` | state machine mở/đóng/validate dialog link (SM-002) |
-| A5 | 8 | `validateLinkDraft` | `src/app/(public)/kudos/_utils/validate-link-draft.ts:46-109` | validate BR-007 (Nội dung), BR-008 (URL) |
+| A5 | 6 | `KudosLinkDialog` *(planned — chưa viết)* | `src/app/(public)/kudos/_components/kudos-link-dialog.tsx` | dialog "Thêm đường dẫn" — chưa có code, xem § 5.3 |
+| A5 | 7 | `useKudosLinkDialog` *(planned — chưa viết)* | `src/app/(public)/kudos/_hooks/use-kudos-link-dialog.ts` | state machine mở/đóng/validate dialog link (SM-002) |
+| A5 | 8 | `validateLinkDraft` *(planned — chưa viết)* | `src/app/(public)/kudos/_utils/validate-link-draft.ts` | validate BR-007 (Nội dung), BR-008 (URL) |
 
 #### Data Flow
 
@@ -572,8 +568,8 @@ tên ẩn danh được lưu.
 Nhánh A5 (chưa qua `createKudo`):
 
 ```text
-{selection snapshot lúc mở} -> {Nội dung + URL} -> validateLinkDraft ->
-insertLink({linkText}) -> textarea Nội dung (A3) -> {vào luồng createKudo khi bấm Gửi}
+{selection snapshot lúc mở} -> {Nội dung + URL} -> validateLinkDraft (planned) ->
+insertLink({linkText}) (planned) -> textarea Nội dung (A3) -> {vào luồng createKudo khi bấm Gửi}
 ```
 
 ### 5.5 Artifact References

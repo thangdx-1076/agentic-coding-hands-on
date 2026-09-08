@@ -838,3 +838,42 @@
 - doc-writer advisory (ngoài diff F009): `README.md` gốc thiếu route/migration F004–F008 từ trước; `docs/vi/system/overview.md` chưa phản ánh F007–F009; `permissions.md`/`architecture.md` còn banner `[F007/F008 draft — chưa merge]` cũ. Nên chạy `/tkm:rebuild-spec` một lượt.
 - E2E `@local-db` của compose spec đổi sang `mode: "serial"` vì `fullyParallel: true` làm 7 test đua nhau "thẻ mới nhất" trên cùng DB (C26 vớ thẻ của C25). Nếu sau này cần song song, phải đổi assertion sang nội dung unique theo test.
 - Picker hashtag không tự đóng sau khi thêm chip (Enter) và không đóng khi click ra ngoài → mở lâu sẽ đè lên hàng Image (ảnh `04`). Không vi phạm hợp đồng; cân nhắc đóng sau Enter hoặc click-outside.
+
+## 260908-1050 — kudos-addlink-box
+
+### Tôi cần làm
+
+- [ ] Review + merge PR https://github.com/thangdx-1076/agentic-coding-hands-on/pull/17 (`feat/kudos-addlink-box` → `main`, issue #16, version 0.8.0 → 0.8.1).
+- [ ] **Quyết parser `parse-kudo-markdown.ts:45`** (F009 cũ, không thuộc diff này): `tryParseLink` cắt href tại `)` đầu tiên → URL kiểu `…/wiki/Foo_(bar)` render sai. Reviewer xếp Medium/Defer. Sửa parser (đếm ngoặc lồng) hay chấp nhận? Nếu sửa, đụng hợp đồng C26 của F009.
+- [ ] **Export `SUPABASE_SERVICE_ROLE_KEY` khi chạy e2e local** — không có thì `afterAll` cleanup của `kudos-compose.spec.ts` bỏ qua, mỗi lần chạy để lại ~4 hàng `public.kudos`, C19 của F007 vỡ khi vượt 12 hàng seed. Cân nhắc thêm key vào `.env.local` (chỉ local) hoặc để `playwright.config.ts` đọc từ `supabase status -o env`. Đây là lần thứ 2 dính (xem 260908-0842).
+- [ ] **Cập nhật test case MoMorph** cho `OyDLDuSGEa`: 25 TC nói tiêu đề "top center" và label "Text"/"Link" — design node là căn trái, "Nội dung"/"URL"; code theo design. Có ghi ngược lên MoMorph không?
+- [ ] Vẫn còn ~1.350 user test tích tụ trong `auth.users` (F007 + F009 + lần này) — chưa dọn.
+
+### Decisions
+
+- **Shipped**: PR #17, commit `121ea05`, issue #16, evidence gate SEALED, reviewer 8/10 · 0 critical. Rest point sau Study/Spec/Blueprint/Forge/Temper tự duyệt theo luật CLAUDE.md; score 8 < ngưỡng auto 9.5 nhưng 0 critical và 2 finding Defer/Accept đều ngoài diff → chấp nhận.
+- Addlink Box = **revision của F009**, không cấp F010: cùng actor, cùng outcome "gửi kudo"; chỉ thay cách nhập URL của một nút toolbar. Spec draft scaffold `--fcode F009 --slug kudos-compose`, promote bằng ghi đè `docs/vi/features/F009_KudosCompose/*` + `SCR008`; validator 0 critical (spec F009 cũ có 3).
+- Test policy **e2e-red-first**; RED chạy **song song** với Study và Spec ngay sau clarifications (hợp đồng testid chốt trước), không đợi blueprint — tiết kiệm ~10 phút.
+- Design thắng TC khi lệch: tiêu đề căn trái (node `textAlign: left`), label "Nội dung"/"URL"; icon `IC` trong ô URL không render (không có asset, ảnh frame không có) — cùng lý do ô Danh hiệu F009.
+- Prefill "Nội dung" từ vùng bôi đen; không prefill thì `[text](url)` ghi đè mất vùng chọn. TC "empty by default" vẫn đúng khi không có selection.
+- Nút Lưu **luôn bấm được**, bấm mới validate (TC e5632ac7) — khác nút Gửi (`aria-disabled`).
+- Không tái dùng `KudosComposeFooter`/`KudosComposeField`: testid cố định của chúng lồng trong dialog cha sẽ làm lệch locator C04/C08 của F009. Chép class, DRY ở icon (`kudos-compose-icons.tsx`).
+- `kudos-compose-form.tsx` đúng 200 dòng → tách container `kudos-compose-link-dialog.tsx` (hook + map lỗi → copy + `registerOpen`), form không tăng dòng.
+- **React synthetic `onCancel` bubble** qua component tree (native `cancel` không): Escape ở dialog con đóng luôn dialog cha (L02/L10 đỏ khi lắp) → `stopPropagation` trong container. Research report nói đúng về native nhưng thiếu lớp React.
+- Evidence gate schema (mất 2 vòng): `study-context.json` chỉ 6 key; `temper-results.json` = `{commands:[{command,exitCode,status,summary,ts}]}`; `acceptanceCovered[i]` phải echo nguyên văn tiêu chí + `-- proven:`; `findings` dùng `location: path:NNN` + `disposition`; một hàng `status: fail` chặn dù đã có lần chạy lại xanh → lịch sử để ở `temper-raw-runs.json` + prose.
+- Version bump **patch** (0.8.1): revision UI của feature đã có, không migration, không route.
+- `pnpm build` chạy song song e2e được vì Next 16 dùng `.next/dev` tách riêng.
+- Scaffold/validator spec chạy bằng `python3` hệ thống (3.9) — `~/.claude/skills/.venv` không tồn tại; `--slug` phải kebab-case.
+
+### Nợ lại
+
+- Parser `parse-kudo-markdown.ts` cắt href tại `)` (xem "Tôi cần làm").
+- Scheme viết hoa (`HTTPS://`) qua validator (normalize) nhưng renderer so case-sensitive → link thành plain text; fail-safe, chưa sửa.
+- Tester lần thứ 2 ghi `exitCode: 0` cho run có test fail và dán nhãn "pre-existing"; orchestrator phải tự chạy lại và sửa evidence. Memory `verify-agent-red-claims-before-routing` đã cập nhật.
+- `docs/vi/generated/*` không đổi (không có mã mới) — nhưng `feature-list.md` mô tả F009 chưa nhắc dialog link; doc-writer đánh giá không cần row edit.
+- TC MoMorph của `OyDLDuSGEa` lệch design ở 2 điểm (xem "Tôi cần làm").
+
+### Decisions (bổ sung 260908-1105, sau review đối chiếu spec/Figma)
+
+- Sửa 4 lệch nhỏ trên cùng branch trước merge: label `pt-[14px]` để tâm khớp Figma `items-center` mà vẫn chừa dòng lỗi; focus ring màu brand thay outline xanh mặc định (spec B.2); blur URL chỉ kiểm định dạng, ô rỗng không báo bắt buộc (spec C); độ dài Nội dung đo trên chuỗi trim. 11/11 e2e, 27/27 F009, 536/536 unit 100%.
+- Không làm: Enter = Lưu (spec không nói), `useCallback` cho `registerOpen` (vô hại).

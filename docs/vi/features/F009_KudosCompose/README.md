@@ -40,6 +40,10 @@ chưa gắn handler.
   line; `functional-spec.md § 11/§ 12` cũng cập nhật theo as-built. Nguồn sự thật vẫn là
   `clarifications.md` + 26 spec item / 57 test case MoMorph
   (`plans/260907-2338-kudos-write-modal/momorph/`) cho mọi quyết định thiết kế/hành vi.
+- **Bổ sung 2026-09-08 (Addlink Box)**: nút "Chèn liên kết" trên toolbar, trước đây gọi
+  `window.prompt`, nay mở dialog `<dialog>` native lồng "Thêm đường dẫn" (A5, SM-002, BR-007,
+  BR-008) — không cấp F###/SCR### mới, xem `plans/260908-0919-kudos-addlink-box/clarifications.md`.
+  Đã implement và reconcile về real `path:line` (e2e `kudos-link-dialog.spec.ts` 11/11 GREEN).
 - Design có **4 trường bắt buộc** (Danh hiệu có node `*` thật) trong khi 57 test case tải về chỉ
   biết 3 — hợp đồng e2e cố ý đi xa hơn CSV, lý do ở `clarifications.md § Hai node`.
 - 3 frame không có node data (dropdown gợi ý người nhận, state lỗi, state đã tick ẩn danh) →

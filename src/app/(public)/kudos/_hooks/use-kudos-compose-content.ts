@@ -22,6 +22,7 @@ export type KudosComposeContent = {
     format: MarkdownMarkerKind,
     textarea: HTMLTextAreaElement,
     url?: string,
+    linkText?: string,
   ) => void;
   mentionQuery: string | null;
   mentionOptions: SunnerSuggestion[];
@@ -56,10 +57,18 @@ export function useKudosComposeContent(): KudosComposeContent {
     format: MarkdownMarkerKind,
     textarea: HTMLTextAreaElement,
     url?: string,
+    linkText?: string,
   ): void {
     const start = textarea.selectionStart ?? content.length;
     const end = textarea.selectionEnd ?? content.length;
-    const result = insertMarkdownMarker(content, start, end, format, url);
+    const result = insertMarkdownMarker(
+      content,
+      start,
+      end,
+      format,
+      url,
+      linkText,
+    );
     // The DOM's `.value` is mutated FIRST, imperatively — React hasn't
     // re-rendered with the new `content` yet at this point in the same
     // synchronous handler, so calling `setSelectionRange` against the

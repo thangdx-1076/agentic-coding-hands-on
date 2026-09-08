@@ -140,6 +140,23 @@ describe("useKudosComposeContent", () => {
     unmount();
   });
 
+  it("applyFormat forward linkText cho insertMarkdownMarker (dialog Thêm đường dẫn, A5) → thay selection bằng [linkText](url), caret sau ')'", () => {
+    const { result, unmount } = renderHook(() => useKudosComposeContent());
+    const textarea = makeTextarea("hello world", 0, 5);
+
+    act(() => {
+      result.current.setContent("hello world");
+    });
+    act(() => {
+      result.current.applyFormat("link", textarea, "https://a.com/x", "hello");
+    });
+
+    expect(result.current.content).toBe("[hello](https://a.com/x) world");
+    expect(textarea.selectionStart).toBe(24);
+    expect(textarea.selectionEnd).toBe(24);
+    unmount();
+  });
+
   it("reset() đưa content và caret về rỗng", () => {
     const { result, unmount } = renderHook(() => useKudosComposeContent());
 

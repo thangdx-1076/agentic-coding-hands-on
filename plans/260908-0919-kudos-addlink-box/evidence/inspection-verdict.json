@@ -1,0 +1,64 @@
+{
+  "score": 8,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "tests/e2e/kudos-link-dialog.spec.ts (new, @auth) is RED before implementation for a real assertion reason, then passes 100% with E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts (exit 0) -- proven: evidence/red-evidence.md shows all 11 failing on missing [data-testid=kudos-link-dialog] (assertion-only, not infra); evidence/green-evidence.md + temper-results.json record the same command exit 0, 11 passed; cross-checked the spec's assertions (testids, error copy, markdown-insert value) against the actual kudos-link-dialog.tsx/use-kudos-link-dialog.ts/validate-link-draft.ts implementation and they match exactly",
+    "Clicking [data-testid=kudos-format-button][data-format=link] opens [data-testid=kudos-link-dialog] as a modal on top of the compose dialog; no window.prompt is called anywhere in src/ -- proven: grep -rn 'window.prompt' src/ returns zero matches (ran myself); kudos-format-toolbar.tsx's Link button -> kudos-compose-form.tsx handleFormat('link') -> openLinkRef -> KudosComposeLinkDialog.registerOpen wiring read end to end, no prompt() call anywhere in the chain",
+    "Escape or Hủy closes only the link dialog; the compose dialog stays open and the textarea value is unchanged -- proven: React's synthetic onCancel bubbles (unlike native cancel) and KudosComposeDialog also listens on onCancel, so kudos-compose-link-dialog.tsx:63-66 calling event.stopPropagation() before link.onCancel() is load-bearing, verified present and correctly targeted at the SyntheticEvent<HTMLDialogElement> from the inner dialog only; e2e L02/L03 pass per green-evidence.md/temper-results.json",
+    "Lưu with empty/whitespace Nội dung, Nội dung > 100 chars, empty URL, URL < 5 or > 2048 chars, or a non-http(s)/unparseable URL shows the field error(s), blocks save, and keeps the link dialog open -- proven: validate-link-draft.ts's validateLinkText/validateLinkUrl (required, 1-100 trim, 5-2048 trim, new URL() + http/https allowlist) and use-kudos-link-dialog.ts's save() (sets errors, returns null, never calls close() on invalid) read directly; validate-link-draft.test.ts covers every boundary (0/1/100/101 chars, 4/5/2048/2049 chars, javascript:, ftp:, unparseable, single-label host); pnpm test:unit:coverage re-run by me: 534/534 passed, 100% statements/branches/functions/lines",
+    "Lưu with valid values closes the link dialog and the textarea contains [<Nội dung>](<URL>) at the selection captured when the dialog opened; a prior text selection prefills Nội dung -- proven: insert-markdown-marker.ts's extended insertLink(..., linkText) replaces [start,end) and collapses caret after ')'; use-kudos-link-dialog.ts's open() snapshots selectionStart/End and prefills text from the selected substring; kudos-compose-link-dialog.tsx's handleSave restores that selection via setSelectionRange before applyFormat -- all read directly and matched against insert-markdown-marker.test.ts's new cases and use-kudos-link-dialog.test.ts's L08/L09 cases",
+    "F009 contract tests/e2e/kudos-compose.spec.ts is unmodified and still green (C09 toolbar count 6, C10 standards link) -- proven: git status/diff show this file untouched (not in the changed-file list); green-evidence.md + temper-results.json record 27/27 exit 0",
+    "Unit tests cover insert-markdown-marker link-text extension, the link validation util and the link dialog hook; pnpm test:unit:coverage stays 100% on the .ts allowlist -- proven: validate-link-draft.ts's validateLinkText/validateLinkUrl (required, 1-100 trim, 5-2048 trim, new URL() + http/https allowlist) and use-kudos-link-dialog.ts's save() (sets errors, returns null, never calls close() on invalid) read directly; validate-link-draft.test.ts covers every boundary (0/1/100/101 chars, 4/5/2048/2049 chars, javascript:, ftp:, unparseable, single-label host); pnpm test:unit:coverage re-run by me: 534/534 passed, 100% statements/branches/functions/lines",
+    "Storybook story exists for kudos-link-dialog.tsx; pnpm build, pnpm typecheck, pnpm lint --max-warnings 0 and pnpm format:check are clean -- proven: kudos-link-dialog.stories.tsx exists (3 stories: Empty/WithErrors/Prefilled, correct copy/prop shapes); I re-ran pnpm typecheck (exit 0, 0 errors), pnpm lint --max-warnings 0 (exit 0, 0 warnings), pnpm format:check (exit 0, clean) myself; pnpm build was run by the orchestrator per task constraint (not re-run by me) and recorded exit 0 in plan.md's Done section -- build-storybook itself not independently re-run (out of scope per task instructions, avoiding a dev-server-like process)",
+    "messages/vi.json and messages/en.json carry the kudos.composeModal.linkDialog.* keys with parity -- proven: read both diffs directly -- identical 8-key leaf (title, textLabel, urlLabel, cancel, save, errorTextTooLong, errorUrlInvalid, errorUrlLength) added to both locales; kudos-compose-copy.ts's KudosLinkDialogCopy type and defaultKudosComposeCopy literal match the same 5 non-error fields; build-kudos-copy.ts's existing tKudos.raw('composeModal') as KudosComposeCopy cast (untouched by this diff) stays safe because the JSON shape it reads now matches the widened type"
+  ],
+  "regressionChecked": [
+    "F009 compose dialog (kudos-compose.spec.ts, C01-C27) -- file unmodified, 27/27 green per evidence",
+    "F007 kudos board (kudos.spec.ts) -- orchestrator caught the tester's tester mis-scored C19 as 'exit 0' when it was actually a real failure from leftover @local-db test rows (unrelated to this feature's code, footer/toolbar edits are icon-import only); root-caused via psql, cleaned up, re-ran 28 passed/1 skipped exit 0 -- documented honestly in green-evidence.md's correction section rather than papered over",
+    "insertMarkdownMarker's 5 existing kinds (bold/italic/strike/number/quote) and the old no-linkText link path -- read the full diff: old behavior is byte-identical (variable renamed text->linkText internally but the branching and output are unchanged), original test cases untouched, only new cases appended",
+    "IconClose/IconLink extraction to kudos-compose-icons.tsx -- diffed the moved SVG path data character-by-character against the original inline consts in kudos-compose-footer.tsx/kudos-format-toolbar.tsx: identical",
+    "DOM id/testid uniqueness -- grepped every id=\"kudos-*\" across _components/*.tsx: kudos-link-title/kudos-link-text-input/kudos-link-url-input/kudos-link-text-error/kudos-link-url-error are all new, distinct from kudos-compose-title/kudos-title-field/kudos-anonymous-name-input/kudos-image-input -- no collisions",
+    "No `any` type introduced -- grepped the 4 new core files, zero matches outside prose comments",
+    "200-line file cap -- kudos-link-dialog.tsx is 201 lines, 1 over the project's own guidance (trivial, noted as a Low finding)"
+  ],
+  "contractStatus": "OK",
+  "riskGate": {
+    "touchesSensitiveArea": false,
+    "signoffRequired": false,
+    "humanSignedOff": false
+  },
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Medium",
+      "category": "Correctness",
+      "location": "src/app/(public)/kudos/_utils/parse-kudo-markdown.ts:45",
+      "summary": "tryParseLink() finds the FIRST ')' after '](' to close the URL, and the FIRST ']' to close the text -- a real http(s) URL containing a literal ')' (very common: Wikipedia-style .../wiki/Foo_(bar), or any query string with an encoded-looking paren) gets its href silently truncated at that paren, with the remainder of the real URL leaking as literal trailing text; the same applies to link text containing an unescaped ']' or '('. Not exploitable for scheme bypass (verified by hand-tracing several injection attempts: the extracted url substring always starts at the literal text right after '](', so it can never be coerced into starting with 'http'/'https' unless it genuinely is one -- javascript:/data: attempts always get rejected by isSafeLinkUrl's startsWith check regardless of how the parens are arranged). This file is untouched by this diff and the bug predates it (window.prompt already fed raw text through the same insertLink/parse path), but the new dialog is the first UI surface that legitimizes users pasting real-world URLs freely, making the bug more reachable than before. Fix: Track paren/bracket depth (or require the URL segment to have no unescaped ')') in tryParseLink so a URL like https://en.wikipedia.org/wiki/Foo_(bar) parses whole; out of scope for this ship since it is pre-existing and not in this PR's touchpoints.",
+      "disposition": "Defer"
+    },
+    {
+      "severity": "Low",
+      "category": "Correctness",
+      "location": "src/app/(public)/kudos/_utils/validate-link-draft.ts:78",
+      "summary": "validateLinkUrl() checks protocol via new URL(trimmed).protocol, which the WHATWG URL parser normalizes to lowercase -- so a user-entered 'HTTP://example.com' passes validation. But the hook (use-kudos-link-dialog.ts:134) stores and later inserts the RAW trimmed string, not the normalized parsed.href, and parse-kudo-markdown.ts's isSafeLinkUrl/isSafeHref use a case-sensitive startsWith('http://'). Net effect: an uppercase-scheme URL validates fine in the dialog but silently fails to render as a clickable link later (degrades to plain text) -- fails safe, not a security issue, just an inconsistency between the two gates. Fix: Either insert parsed.href (normalized) instead of the raw trimmed string, or make isSafeLinkUrl/isSafeHref case-insensitive to match. Low priority -- uppercase URL schemes are rare in practice.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Documentation",
+      "location": "plans/260908-0919-kudos-addlink-box/evidence/green-evidence.md:226",
+      "summary": "The 'React Event Bubbling Fix' section claims both Save AND Cancel buttons call e.stopPropagation() in onClick handlers, with a code snippet showing that. The actual shipped code (kudos-compose-link-dialog.tsx) only calls stopPropagation() once, on the dialog's onCancel handler (wired to Escape / native cancel) -- the Save/Cancel BUTTON onClick handlers (onSave, onCancelClick) pass straight through with no stopPropagation wrapper. This happens to be harmless (both buttons are type=\"button\" so they never trigger the outer <form>'s onSubmit regardless of click-bubbling, and that form's onSubmit already calls preventDefault() unconditionally), and the actual bubbling risk the note describes (React's synthetic onCancel bubbling to the outer dialog's own onCancel) IS correctly fixed at the right event -- but the evidence doc's code claim does not match the code that shipped. Fix: Correct the evidence note to describe the actual fix (stopPropagation on the nested dialog's onCancel, not on button onClick) so a future reader isn't misled about where the bubbling risk actually lived.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Craft",
+      "location": "src/app/(public)/kudos/_components/kudos-link-dialog.tsx:201",
+      "summary": "File is 201 lines, 1 line over the project's 200-line-per-file guidance (development-rules.md). Fix: Trivial -- not worth splitting for 1 line; flagged for completeness only.",
+      "disposition": "Reject"
+    }
+  ]
+}

@@ -248,7 +248,17 @@
       "errorHashtagMax": "Maximum 5 hashtags.",
       "errorImageInvalid": "Invalid file format — only .jpg or .png, up to 5 images.",
       "errorFormIncomplete": "Please fill in all required fields.",
-      "unauthenticatedHint": "Please sign in to send a Kudos."
+      "unauthenticatedHint": "Please sign in to send a Kudos.",
+      "linkDialog": {
+        "title": "Add link",
+        "textLabel": "Text",
+        "urlLabel": "URL",
+        "cancel": "Cancel",
+        "save": "Save",
+        "errorTextTooLong": "Maximum 100 characters.",
+        "errorUrlInvalid": "Invalid URL — only http or https is accepted.",
+        "errorUrlLength": "URL must be 5 to 2048 characters."
+      }
     },
     "heroSearch": {
       "placeholder": "Tìm kiếm profile Sunner",

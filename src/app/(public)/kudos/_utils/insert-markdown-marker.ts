@@ -90,36 +90,56 @@ function insertLinePrefix(
 }
 
 /**
- * Inserts `[text](url)` — `text` is the current selection when there is
- * one, otherwise the literal placeholder `"text"` selected in place so
+ * Inserts `[text](url)`. With an explicit `linkText` (the "Thêm đường
+ * dẫn" dialog, A5/SM-002 — the user typed/edited the link text
+ * themselves), that value ALWAYS wins over whatever was selected: the
+ * `[start,end)` range is replaced outright and the caret collapses right
+ * after the closing `)`, so typing continues after the freshly inserted
+ * link rather than re-selecting it. Without `linkText` (the placeholder
+ * toolbar behavior, unchanged), `text` falls back to the current
+ * selection or the literal placeholder `"text"` selected in place so
  * typing immediately replaces it. A blank/missing `url` (the URL prompt
- * was cancelled) is a no-op — a link to nowhere is worse than no toolbar
- * feedback at all.
+ * was cancelled, or the dialog somehow reached here without one) is a
+ * no-op either way — a link to nowhere is worse than no toolbar feedback
+ * at all.
  */
 function insertLink(
   value: string,
   selectionStart: number,
   selectionEnd: number,
   url: string,
+  linkText?: string,
 ): MarkdownMarkerResult {
   const trimmedUrl = url.trim();
   if (trimmedUrl === "") {
     return { value, selectionStart, selectionEnd };
   }
 
-  const hasSelection = selectionStart !== selectionEnd;
-  const linkText = hasSelection
-    ? value.slice(selectionStart, selectionEnd)
-    : LINK_PLACEHOLDER_TEXT;
   const before = value.slice(0, selectionStart);
   const after = value.slice(selectionEnd);
-  const markdown = `[${linkText}](${trimmedUrl})`;
+
+  if (linkText !== undefined) {
+    const markdown = `[${linkText}](${trimmedUrl})`;
+    const caret = before.length + markdown.length;
+
+    return {
+      value: `${before}${markdown}${after}`,
+      selectionStart: caret,
+      selectionEnd: caret,
+    };
+  }
+
+  const hasSelection = selectionStart !== selectionEnd;
+  const text = hasSelection
+    ? value.slice(selectionStart, selectionEnd)
+    : LINK_PLACEHOLDER_TEXT;
+  const markdown = `[${text}](${trimmedUrl})`;
   const textStart = before.length + 1;
 
   return {
     value: `${before}${markdown}${after}`,
     selectionStart: textStart,
-    selectionEnd: textStart + linkText.length,
+    selectionEnd: textStart + text.length,
   };
 }
 
@@ -129,6 +149,7 @@ export function insertMarkdownMarker(
   selectionEnd: number,
   kind: MarkdownMarkerKind,
   url?: string,
+  linkText?: string,
 ): MarkdownMarkerResult {
   if (kind === "bold") {
     return wrapSelection(value, selectionStart, selectionEnd, "**");
@@ -145,5 +166,5 @@ export function insertMarkdownMarker(
   if (kind === "quote") {
     return insertLinePrefix(value, selectionStart, selectionEnd, "> ");
   }
-  return insertLink(value, selectionStart, selectionEnd, url ?? "");
+  return insertLink(value, selectionStart, selectionEnd, url ?? "", linkText);
 }

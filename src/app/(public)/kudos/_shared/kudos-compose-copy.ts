@@ -14,8 +14,7 @@
  * `useTranslations` and instead receive this shape as props).
  *
  * Every field is threaded to whichever of phases 08-12's components render
- * it; this file is intentionally the ONE place all 5 of those phases read
- * their copy shape from, so none of them has to edit a file it does not own.
+ * it; this file is the ONE place those phases read their copy shape from.
  */
 export type KudosComposeCopy = {
   /** mm:I520:11647;520:9870 (A) — dialog heading, "cám ơn" spelling verbatim. */
@@ -120,6 +119,28 @@ export type KudosComposeCopy = {
   errorFormIncomplete: string;
   /** functional-spec.md § 9, verbatim — shown when an unauthenticated request reaches the compose flow (FR-102/FR-601). */
   unauthenticatedHint: string;
+  /** A5/SM-002 — nested "Thêm đường dẫn" sub-dialog copy, own leaf like `toolbar` above (clarifications.md § "Copy lỗi và namespace"). */
+  linkDialog: KudosLinkDialogCopy;
+};
+
+/** A5/SM-002's copy shape, standalone so the hook/component can import just this slice. */
+export type KudosLinkDialogCopy = {
+  /** "Thêm đường dẫn" — dialog heading. */
+  title: string;
+  /** "Nội dung" (vi) / "Text" (en) — link text field label. */
+  textLabel: string;
+  /** "URL" both locales — url field label. */
+  urlLabel: string;
+  /** "Hủy" (vi) / "Cancel" (en). */
+  cancel: string;
+  /** "Lưu" (vi) / "Save" (en). */
+  save: string;
+  /** BR-007 — text over 100 chars after typing (empty case reuses `KudosComposeCopy.errorRequired`). */
+  errorTextTooLong: string;
+  /** BR-008 — `new URL()` throws, or protocol not in {http:, https:}. */
+  errorUrlInvalid: string;
+  /** BR-008 — url outside the 5-2048 char range after `trim()`. */
+  errorUrlLength: string;
 };
 
 export const defaultKudosComposeCopy: KudosComposeCopy = {
@@ -165,4 +186,14 @@ export const defaultKudosComposeCopy: KudosComposeCopy = {
     "Sai định dạng file — chỉ nhận .jpg hoặc .png, tối đa 5 ảnh.",
   errorFormIncomplete: "Vui lòng điền đầy đủ thông tin bắt buộc.",
   unauthenticatedHint: "Vui lòng đăng nhập để gửi Kudo.",
+  linkDialog: {
+    title: "Thêm đường dẫn",
+    textLabel: "Nội dung",
+    urlLabel: "URL",
+    cancel: "Hủy",
+    save: "Lưu",
+    errorTextTooLong: "Tối đa 100 ký tự.",
+    errorUrlInvalid: "URL không hợp lệ — chỉ nhận http hoặc https.",
+    errorUrlLength: "URL phải từ 5 đến 2048 ký tự.",
+  },
 };

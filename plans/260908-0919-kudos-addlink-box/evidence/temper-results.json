@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-link-dialog.spec.ts --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "11 passed (re-run after post-review spec-fidelity fixes, still 11/11)",
+      "ts": "2026-09-08T03:52:10Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos-compose.spec.ts --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "27 passed",
+      "ts": "2026-09-08T03:35:42Z"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "536 passed, 100% statements/branches/functions/lines (2 tests added post-review)",
+      "ts": "2026-09-08T03:52:10Z"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "clean",
+      "ts": "2026-09-08T03:35:42Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "clean",
+      "ts": "2026-09-08T03:35:42Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "clean",
+      "ts": "2026-09-08T03:35:42Z"
+    },
+    {
+      "command": "E2E_PORT=3100 pnpm exec playwright test tests/e2e/kudos.spec.ts --workers=1 --reporter=list",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "28 passed, 1 skipped — rerun after deleting 8 e2e test-user kudos rows from local DB (first run: 1 failed C19 due to DB pollution, not this change; history kept in temper-raw-runs.json + green-evidence.md § Orchestrator correction)",
+      "ts": "2026-09-08T03:26:54Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "Next 16 production build, 0 warnings (run by orchestrator; .next/dev isolated so parallel with e2e)",
+      "ts": "2026-09-08T03:20:00Z"
+    }
+  ]
+}
