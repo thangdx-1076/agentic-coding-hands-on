@@ -5,9 +5,9 @@ import { logoutAction } from "../../_actions/logout";
 import { getViewer } from "../../_utils/get-viewer";
 
 import { HomeClient } from "./_components/home-client";
-import { parseTargetDate } from "./_utils/countdown";
 import { defaultHomeCopy, type HomeCopy } from "./_shared/home-copy";
 
+import { parseTargetDate } from "@/utils/countdown";
 import { LOCALE_LABEL, normalizeLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {

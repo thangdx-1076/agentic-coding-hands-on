@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { pad2, parseTargetDate, remaining } from "../_utils/countdown";
+import { pad2, parseTargetDate, remaining } from "@/utils/countdown";
 
 export type CountdownDisplay = {
   /** Zero-padded (≥2 digits, 3 once days reaches 100). */

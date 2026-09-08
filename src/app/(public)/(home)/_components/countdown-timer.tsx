@@ -1,8 +1,7 @@
 "use client";
 
-import { useCountdown } from "../_hooks/use-countdown";
-
-import { CountdownTiles } from "./countdown-tiles";
+import { useCountdown } from "@/hooks/use-countdown";
+import { CountdownTiles } from "@/components/countdown-tiles";
 
 export type CountdownTimerLabels = {
   days: string;
