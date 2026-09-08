@@ -311,5 +311,8 @@
       "close": "Đóng",
       "error": "Có lỗi khi mở Secret Box, vui lòng thử lại"
     }
+  },
+  "prelaunch": {
+    "title": "Sự kiện sẽ bắt đầu sau"
   }
 }

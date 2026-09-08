@@ -35,6 +35,7 @@ function DigitBox({ value }: { value: string }) {
         }}
       />
       <span
+        data-testid="tile-digits"
         className="relative text-[28px] leading-none font-normal text-white tabular-nums sm:text-[38px] lg:text-[49.152px]"
         style={{ fontFamily: '"Digital Numbers", monospace' }}
       >
@@ -46,7 +47,10 @@ function DigitBox({ value }: { value: string }) {
 
 function TileLabel({ children }: { children: string }) {
   return (
-    <span className="font-montserrat text-sm leading-5 font-bold text-white sm:text-lg sm:leading-6 lg:text-2xl lg:leading-8">
+    <span
+      data-testid="tile-label"
+      className="font-montserrat text-sm leading-5 font-bold text-white sm:text-lg sm:leading-6 lg:text-2xl lg:leading-8"
+    >
       {children}
     </span>
   );
@@ -80,21 +84,30 @@ export function CountdownTiles({
     /* mm:2167:9037 */
     <div role="timer" className="flex items-center gap-4 sm:gap-6 lg:gap-10">
       {/* mm:2167:9038 */}
-      <div className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]">
+      <div
+        data-testid="tile"
+        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+      >
         {/* mm:2167:9039 */}
         <DigitBox value={days} />
         {/* mm:2167:9042 */}
         <TileLabel>{daysLabel}</TileLabel>
       </div>
       {/* mm:2167:9043 */}
-      <div className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]">
+      <div
+        data-testid="tile"
+        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+      >
         {/* mm:2167:9044 */}
         <DigitBox value={hours} />
         {/* mm:2167:9047 */}
         <TileLabel>{hoursLabel}</TileLabel>
       </div>
       {/* mm:2167:9048 */}
-      <div className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]">
+      <div
+        data-testid="tile"
+        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+      >
         {/* mm:2167:9049 */}
         <DigitBox value={minutes} />
         {/* mm:2167:9052 */}

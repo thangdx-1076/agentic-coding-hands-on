@@ -311,5 +311,8 @@
       "close": "Close",
       "error": "Something went wrong opening the Secret Box, please try again"
     }
+  },
+  "prelaunch": {
+    "title": "Event starts in"
   }
 }
