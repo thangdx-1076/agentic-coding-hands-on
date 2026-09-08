@@ -1,0 +1,158 @@
+# E2E RED Evidence — Secret Box Modal (MoMorph J3-4YFIpMM)
+
+**Date:** 260908-1403  
+**Policy:** e2e-red-first  
+**Status:** VALID RED — Feature not implemented, button hardcoded disabled  
+
+## Test Execution
+
+**Test File:**
+```
+tests/e2e/secret-box.spec.ts
+```
+
+**Exact Command:**
+```bash
+pnpm run test:e2e tests/e2e/secret-box.spec.ts
+```
+
+**Real Exit Code:** `1` (test suite failed)  
+**Tests:** 14 total | 13 failed | 1 passed
+
+---
+
+## Primary RED Assertion: FAILED ✘
+
+**Test:** `[S01] Entitled user (unopened=1): kudos-open-gift ENABLED`  
+**Location:** `tests/e2e/secret-box.spec.ts:239–254`  
+**Setup:** Seeded 5 hearts from sender→viewer (unopened = floor(5/5) = 1)  
+**Tag:** `@auth @local-db`
+
+**Failure Output:**
+```
+Error: expect(locator).toBeEnabled() failed
+
+Locator:  locator('[data-testid=kudos-open-gift]')
+Expected: enabled
+Received: disabled
+Timeout:  5000ms
+
+Call log:
+  - locator resolved to <button disabled type="button" 
+    data-testid="kudos-open-gift" ... >
+     - unexpected value "disabled"
+```
+
+**Assertion:**
+```typescript
+await expect(openGiftBtn).toBeEnabled();
+```
+
+**Cause:** Feature not implemented. Button exists, is visible, but `kudos/page.tsx:146-147` hardcodes:
+```typescript
+secretBoxOpened: 0,
+secretBoxUnopened: 0,  // ← Should be real value (1 when 5+ hearts)
+```
+
+**Why Valid RED:**
+- ✓ Failure caused by missing feature implementation
+- ✓ NOT a config/dependency/browser-install error
+- ✓ Seeding succeeded (5 hearts stored)
+- ✓ Button correctly exists in DOM (hardcoded disabled state)
+- ✓ Assertion is correct: unopened=1 → button MUST be enabled
+- ✓ Non-zero exit due to assertion failure
+
+---
+
+## Secondary Failures (Blocked by S01)
+
+**[S02] Click kudos-open-gift: modal dialog opens**  
+- **Failure:** Test timeout (30s) trying to click disabled button
+- **Reason:** S01 not satisfied (button still disabled)
+- **Assertion:** `await openGiftBtn.click()` → Playwright won't click disabled buttons
+- **Real blocker:** Modal component (`[data-testid=secret-box-dialog]`) doesn't exist yet
+
+**[S03–S12] Modal state/interaction assertions**  
+- **Failures:** Test timeout on button click (same as S02)
+- **Real blockers:** Modal component, RPC, modal state management not implemented
+- **All will PASS once:** S01 passes (button enabled) AND modal component exists
+
+---
+
+## Regression Guard: PASSED ✓
+
+**[S15] Anonymous viewer: no kudos-open-gift button**  
+- **Status:** PASSED
+- **Verification:** Anonymous users see no stat rows, no button (correct)
+- **Preservation:** C09 contract maintained — must keep passing
+
+---
+
+## Seeding Strategy Verified
+
+✓ Sender→receiver kudo created with `heart_count: 5`  
+✓ Backend calculates: `unopened = floor(5/5) - 0 = 1`  
+✓ User is provably entitled to 1 unopened box  
+✓ Entitled user sees button disabled (hardcoded counts override real calculation)
+
+---
+
+## MoMorph Test-Case Mapping
+
+**Primary RED corresponds to:**
+- `84a5ba82` — access control: button enabled when unopened > 0
+
+**All 12 blocked assertions map to verified test cases:**
+
+| TC | Description | Status |
+|----|---|---|
+| a0cd2f27 | Unopened title | Blocked by modal component |
+| a891383a / d9d6e01a | Instruction display + hidden | Blocked by modal component |
+| 4bbf0b67 / 56da7ec8 | Badge image display | Blocked by RPC + modal |
+| 3a8ac6b5 / ce44f5ed | Counter label + value | Blocked by modal component |
+| 632c600b / 982ae7f9 | Close button + closes | Blocked by modal component |
+| 7c3c912f | Click box → reveal + decrement | Blocked by RPC |
+| 2a8a63de | Disabled at count=0 | Blocked by S01 (button disabled) |
+| 5cc072ad / 2e7bec78 | Tamper resistance | Blocked by RPC |
+
+---
+
+## Implementation Blockers
+
+1. **Primary:**  
+   - `kudos/page.tsx:146-147` must read real unopened count instead of hardcoding 0
+   - Once changed, S01 will PASS → S02–S12 will execute against modal
+
+2. **Secondary (S02–S12):**
+   - Modal component must exist: `src/app/(public)/kudos/_components/secret-box-dialog.tsx`
+   - RPC `open_secret_box(user_id)` must exist (migration 0011)
+   - Server action + hook to wire RPC to frontend
+
+---
+
+## Unresolved Questions
+
+None. All seeding, auth patterns, and acceptance criteria verified against `clarifications.md`.
+
+---
+
+## Next Steps
+
+1. ✓ **RED captured** — Button disabled (feature missing) causes [S01] failure
+2. → **Track A (UI):** Implement `secret-box-dialog.tsx` component
+3. → **Track B (backend):** Migration 0011, `open_secret_box` RPC, server action
+4. → **Main:** Update `kudos/page.tsx:146-147` to read real counts (this triggers S01 GREEN)
+5. → **Tester:** Re-run same command → expected result: S01 GREEN, S02–S12 run (some may still FAIL due to missing modal/RPC)
+
+---
+
+## Report Metadata
+
+**Test Suite Duration:** ~34.9s  
+**Browser:** Chromium  
+**Seeding:** Real Supabase local instance, no mocks  
+**Auth:** Real sign-up flow via `createTestSession`  
+**Service Role:** Used for kudo seeding (REST API POST)
+
+**Generated by:** tester agent (e2e-red-first policy)  
+**Date:** 260908-1403

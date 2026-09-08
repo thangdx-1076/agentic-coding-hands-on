@@ -5,12 +5,9 @@ created: 2026-09-06
 lang: vi
 ---
 <!--
-FORWARD-DRAFT NOTICE (F007_KudosLiveBoard + F008_KudosHeartReaction,
-plans/260907-1725-kudos-live-board):
-Nội dung dưới đây là bản SAO NGUYÊN VĂN của `docs/vi/system/architecture.md` (đọc 2026-09-07), cộng
-CHỈ phần delta mà F007/F008 giới thiệu. Mọi dòng gốc giữ nguyên 100% — không sửa, không xoá.
-Phần MỚI nằm trọn trong mục cuối file. File này CHƯA merge vào `docs/vi/system/architecture.md` thật;
-nó được promote ở implement-start và được đối chiếu lại với as-built ở Delivery.
+RECONCILED (F010_SecretBoxModal, plans/260908-1337-secret-box-modal): mục cuối file bên dưới
+("Bổ sung dự kiến — SecretBoxModal") đã được đối chiếu lại với as-built sau khi feature merge —
+không còn là forward-draft. Mọi dòng gốc phía trên giữ nguyên 100%.
 -->
 
 
@@ -591,3 +588,81 @@ seed data không chứa marker nào).
 - `domain/`, `contexts/`, `src/configs/env.ts` tiếp tục CHƯA tồn tại — F009
   không tạo consumer đầu tiên cho các thư mục này (YAGNI, cùng ghi chú ở
   mục gốc phía trên).
+
+## Bổ sung dự kiến — SecretBoxModal
+
+> **[F010_SecretBoxModal — đã merge]** Delta của feature đã build xong trong
+> `plans/260908-1337-secret-box-modal/`. Quyết định gốc: `clarifications.md § Session 260908`.
+> Mã feature `F010` đã cấp ở `feature-list.md`; PERM###/BL### riêng vẫn chờ Core `rebuild-spec`
+> pass — KHÔNG tự đoán số ở đây.
+
+### Lần đầu ứng dụng có đường gọi `.rpc()` — một lane mới cạnh DAL→table hiện có
+
+Tính tới F009, MỌI đường đọc/ghi của repo đi qua `.from(table)` (query builder PostgREST) —
+grep `src/` không có lệnh gọi `.rpc(...)` nào. SecretBoxModal thêm lane thứ hai: một Server
+Action gọi `supabase.rpc("open_secret_box")` thay vì `.from("secret_box_openings").insert(...)`.
+Lý do KHÔNG dùng `.from().insert()` như `kudos_insert_own`/`kudo_hearts_insert_own` đã làm: hai
+policy đó chỉ cần đối chiếu danh tính hàng (`sender_id = auth.uid()`); ở đây phép tính "còn bao
+nhiêu hộp" phải chạy TRƯỚC lượt ghi, TRONG cùng transaction, và không được lộ ra ngoài cho client
+tự tính rồi gửi kết quả lên — một RLS `WITH CHECK` đơn thuần không diễn tả được yêu cầu đó, cần
+hẳn một hàm Postgres. Tiền lệ ghi-có-thẩm-quyền gần nhất trong repo là trigger
+`sync_kudo_heart_count` của `0007` (xem permissions.md § SecretBoxModal) — cùng cơ chế
+`SECURITY DEFINER` + `SET search_path`, khác cách kích hoạt (gọi trực tiếp, không phải trigger).
+
+```text
+đọc (không đổi) : page.tsx (RSC) → getKudosStats (src/dal/kudos-stats.ts) → HTML
+ghi (mới)       : nút "Mở Secret Box" (client) → Server Action → supabase.rpc("open_secret_box")
+                    → Postgres: khoá theo user, tính lại entitlement, INSERT secret_box_openings
+                    → trả badge_key → revalidatePath(ROUTES.KUDOS) → RSC render lại
+```
+
+Ranh giới component/DAL/adapter giữ nguyên như mọi feature trước: dialog không tự tạo Supabase
+client, action vẫn dùng CÙNG client `@supabase/ssr` cookie-based đã gọi `auth.getUser()` cho
+những Server Action khác trong repo — không có client mới, không có service-role mới.
+
+### Biên kiểu runtime tại RPC — tiếp tục pattern `unknown`-boundary
+
+`createClient()` không mang `Database` generic (`src/lib/supabase/server.ts`), nên kết quả của
+`.rpc()` cũng KHÔNG có kiểu tĩnh nào hơn `any`/`unknown` — đúng vấn đề mà
+`toggleKudoHeart` (`toggle-kudo-heart.ts:136-139`) đã gặp và giải quyết cho `heart_count`: gán
+qua `unknown` trước, rồi `typeof` check thành kiểu thật, thay vì để `any` lọt ra ngoài function
+boundary. Server Action đọc kết quả `open_secret_box()` (badge key, số hộp còn lại) áp dụng ĐÚNG
+pattern đó — không phát minh cách kiểm tra kiểu mới cho response của RPC.
+
+### Log mở hộp, không phải cột đếm — tránh lệch với trigger `0007`
+
+`secret_box_openings` là một BẢNG LOG (mỗi lượt mở = 1 hàng), không phải một cột đếm cộng dồn
+trên `public.users`. Lý do là bài học đã có sẵn trong repo: `kudos.heart_count` (một cột đếm)
+sống được CHỈ vì đúng một trigger (`sync_kudo_heart_count`, `0007`) là writer DUY NHẤT của nó —
+mọi writer thứ hai sẽ làm nó lệch khỏi dữ liệu gốc. Một cột đếm "số hộp đã mở" trên `secret_box`
+sẽ phải đồng bộ với CHÍNH `open_secret_box()`, nghĩa là thêm một điểm có thể lệch mà không mang
+lại lợi ích gì `count(*)` không cho sẵn. `opened = count(*) FROM secret_box_openings WHERE user_id
+= viewer`, `unopened = entitlement − opened` — không có trạng thái nào tách rời khỏi log để lệch.
+
+### Thuật toán rút thăm có trọng số (ALG)
+
+Verbatim theo spec row C của MoMorph (không tự suy tỷ lệ khác): Stay Gold 30%, Flow to Horizon
+25%, Touch of Light 20%, Beyond the Boundary 10%, Revival 10%, Root Further 5% (tổng 100%). Một
+huy hiệu MỖI lượt mở; trùng huy hiệu giữa các lượt là hợp lệ — spec không có luật chống trùng
+(xem permissions.md § SecretBoxModal cho lý lẽ đầy đủ). Rút thăm chạy TRONG hàm Postgres, không
+phải phía client hay phía Server Action — cùng lý do bắt buộc dùng `.rpc()` ở trên.
+
+### Luồng dữ liệu tới màn hình
+
+`/kudos` server component (`page.tsx`) đã gọi `getKudosStats` cho 3 counter hiện có
+(`received`/`sent`/`hearts`); SecretBoxModal thêm một đường đọc song song cho
+`secretBoxOpened`/`secretBoxUnopened` (thay 2 giá trị hardcode `0` trước đây, qua
+`buildViewerStats` tại `page.tsx:78`), gộp
+vào CÙNG props đi xuống `KudosStatList` — không tạo Server Component riêng cho modal. Chuỗi:
+server component đọc stats → props xuống dialog client → người dùng bấm → Server Action → RPC
+`open_secret_box()` → `revalidatePath` → RSC render lại với số mới + huy hiệu vừa nhận.
+
+### Phạm vi: chỉ `/kudos`, `src/proxy.ts` không đổi
+
+Cùng lý lẽ F009 đã lập cho `/kudos` (§ "Vì sao `/kudos` KHÔNG vào `src/proxy.ts` dù đã có đường
+ghi" ở trên): gate nằm ở HÀNH ĐỘNG (gọi RPC), không nằm ở ROUTE. `/kudos` tiếp tục PUBLIC, không
+thêm vào `config.matcher`. Khác F009 ở một điểm: SecretBoxModal không cần lớp UX "mở dialog hay
+điều hướng `/login`" riêng, vì nút "Mở Secret Box" chỉ tồn tại trên DOM khi `stats !== null` —
+tức là chỉ render khi đã có viewer, không có nhánh anonymous nào để điều hướng (xem
+permissions.md § SecretBoxModal). `/profile` không đổi gì — nút ở đó vẫn `disabled`, không route,
+không component nào của `/profile` bị chạm bởi feature này.

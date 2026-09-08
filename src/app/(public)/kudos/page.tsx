@@ -120,13 +120,14 @@ function firstNonEmpty(value: string | string[] | undefined): string | null {
 }
 
 /**
- * `received`/`sent`/`hearts` come from `getKudosStats` (`src/dal/kudos-
- * stats.ts`), a per-viewer aggregate over `kudos` — see that file's own
- * doc comment for why `hearts` sums the viewer's SENT kudos, not their
- * received ones. `secretBoxOpened`/`secretBoxUnopened` stay `0` because
- * they are true zeros — no gift system exists yet (AD-8). Same
- * disclosed-limitation shape as `/profile`'s `ProfileStatisticsCard`,
- * which hardcodes those same two counters to `0` for the same reason.
+ * All 5 counters come from `getKudosStats` (`src/dal/kudos-stats.ts`), a
+ * per-viewer aggregate over `kudos` + `secret_box_openings` — see that
+ * file's own doc comment for why `hearts` sums the viewer's SENT kudos, not
+ * their received ones, and how `secretBoxOpened`/`secretBoxUnopened` are
+ * derived (F000_SecretBoxModal, phase 04). `KudosStatsSummary` and
+ * `KudosStats` are structurally identical, so this is a passthrough, not a
+ * remap — kept as its own function (rather than inlined at the call site)
+ * only for the `null`-for-anonymous short-circuit below.
  *
  * Short-circuits to `null` for an anonymous visitor without ever touching
  * the client (D001) — `KudosStatList` renders nothing at all for `null`.
@@ -138,12 +139,5 @@ async function buildViewerStats(
   if (viewerId === null) {
     return null;
   }
-  const { received, sent, hearts } = await getKudosStats(client, viewerId);
-  return {
-    received,
-    sent,
-    hearts,
-    secretBoxOpened: 0,
-    secretBoxUnopened: 0,
-  };
+  return getKudosStats(client, viewerId);
 }

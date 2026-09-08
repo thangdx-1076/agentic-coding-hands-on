@@ -58,7 +58,7 @@ loadEnv();
  * | C24 | `@local-db` | `[data-testid=kudos-card-detail]` render nhưng **không** phải `<a href>` và click không đổi URL *(đích hoãn)* | TC[34] | § Out of scope |
  * | C25 | `@auth` | Đã đăng nhập: bấm tim trên kudo người khác → icon đổi sang trạng thái `data-hearted="true"`, số tim +1; bấm lại → về `false`, -1 | TC[32], TC[24] | F008 FR-401, BR-001 |
  * | C26 | `@auth` | Kudo do chính mình gửi → nút tim `disabled` | TC[23] | F008 FR-202, BR-002 |
- * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` (disabled) | TC[15] | FR-211 |
+ * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` visible, trạng thái enable/disable lấy từ `secretBoxUnopened` thật (DEC-001) — viewer test mới (0 tim đã gửi) nên vẫn `disabled` | TC[15] | FR-211 |
  * | C28 | `@auth` | Bấm tên/avatar trên thẻ → URL tới `/profile?id=<uuid>` | TC[00], TC[35], TC[36] | FR-402, US008 |
  * | C29 | `@auth` | Ẩn danh bấm tên/avatar → URL về `/login` *(gate `(protected)/layout.tsx` có sẵn, không code mới)* | TC[02] | FR-601, BR-013 |
  * ========================================================
@@ -482,29 +482,27 @@ test.describe(
       // C19: Cuộl tới cuối dữ liệu → sentinel biến mất, không request thêm, **không** empty state
       await page.goto("/kudos");
 
-      // Scroll to absolute end
-      await page.evaluate(() => {
-        window.scrollBy(0, document.body.scrollHeight);
-      });
+      // Keep scrolling to the sentinel until it unmounts (when hasMore becomes false)
+      for (let i = 0; i < 50; i++) {
+        const sentinel = page.locator("[data-testid=kudos-feed-sentinel]");
+        const sentinelCount = await sentinel.count();
 
-      // Wait for sentinel to disappear or become invisible
+        // If sentinel is unmounted from DOM, we've reached the end
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (sentinelCount === 0) {
+          break;
+        }
+
+        // Scroll sentinel into view to trigger intersection observer
+        await sentinel.scrollIntoViewIfNeeded();
+
+        // eslint-disable-next-line playwright/no-wait-for-timeout
+        await page.waitForTimeout(300);
+      }
+
+      // Verify sentinel has been unmounted (proves we reached true end of data)
       const sentinel = page.locator("[data-testid=kudos-feed-sentinel]");
-      await expect
-        .poll(
-          async () => {
-            const count = await sentinel.count();
-            const visible =
-              count > 0
-                ? await sentinel
-                    .first()
-                    .isVisible()
-                    .catch(() => false)
-                : false;
-            return count === 0 || !visible;
-          },
-          { timeout: 5000 },
-        )
-        .toBeTruthy();
+      await expect(sentinel).toHaveCount(0);
     });
 
     test("[C20] Spotlight total count matches pattern and seed count", async ({
@@ -744,7 +742,10 @@ test.describe(
 
       const openGift = sidebar.locator("[data-testid=kudos-open-gift]");
       await expect(openGift).toBeVisible();
-      await expect(openGift).toBeDisabled();
+      // Data-driven contract (DEC-001), not the old hardcoded placeholder:
+      // this test's viewer is freshly created with 0 hearts sent, so real
+      // `secretBoxUnopened` is 0 and the button legitimately stays disabled.
+      await expect(openGift).toHaveJSProperty("disabled", true);
     });
 
     test("[C28] Click sender/receiver name navigates to /profile?id=<uuid>", async ({

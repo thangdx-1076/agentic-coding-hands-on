@@ -162,6 +162,14 @@ export function buildKudosCopy(
       rankBoardTitle: tKudos("sidebar.rankBoard"),
       giftBoardTitle: tKudos("sidebar.giftBoard"),
       emptyBoard: tKudos("sidebar.emptyBoard"),
+      secretBox: {
+        titleUnopened: tKudos("secretBox.titleUnopened"),
+        titleRevealed: tKudos("secretBox.titleRevealed"),
+        instruction: tKudos("secretBox.instruction"),
+        label: tKudos("secretBox.label"),
+        close: tKudos("secretBox.close"),
+        error: tKudos("secretBox.error"),
+      },
     },
     // `.raw()`, not per-field `t()` calls: `hashtagRemove`/`imageRemove` are
     // manual `{tag}`/`{index}` templates the CALLER `.replace()`s later

@@ -1,0 +1,63 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Anonymous viewer on /kudos sees no stat rows and no kudos-open-gift button (kudos.spec.ts:43 C09 preserved). — verified: KudosStatList returns null for stats===null (kudos-stat-list.tsx:66-68); ran tests/e2e/secret-box.spec.ts S15 GREEN locally (statRows count 0, kudos-open-gift count 0).",
+    "Logged-in viewer with secretBoxUnopened === 0 sees kudos-open-gift visible but disabled; modal cannot open. — verified: ran S13 GREEN locally, button visible+disabled, SecretBoxDialog gated behind canMount so toHaveCount(0) holds (secret-box-launcher.tsx:69,111).",
+    "Logged-in viewer with secretBoxUnopened > 0 sees kudos-open-gift enabled; clicking it opens the Secret Box dialog. — verified: ran S01/S02 GREEN locally.",
+    "Unopened state renders title 'KHÁM PHÁ SECRET BOX CỦA BẠN', instruction 'Click vào box để tiếp tục mở', the closed-box artwork, label 'Secretbox chưa mở' and the unopened count. — verified: ran S03/S04/S05/S06 GREEN locally (secret-box-dialog.tsx renders the four verbatim strings/artwork from copy props).",
+    "Clicking the box calls the server, reveals exactly one badge of the 6, and the unopened count decreases by exactly 1. — verified: ran S07/S08 GREEN locally; open_secret_box() (0011_secret_box.sql) draws exactly one badge and returns unopened decremented by 1 in the same statement.",
+    "Reveal state renders title 'MỞ SECRET BOX THÀNH CÔNG' with the awarded badge image at intrinsic 64x64, not upscaled. — verified: ran S09 GREEN locally; secret-box-badge-asset.ts renders at SECRET_BOX_BADGE_ASSET_SIZE=64 with no upscale, badge boundingBox asserted <=65px in S07.",
+    "When unopened count reaches 0 inside the open modal, the instruction line is hidden and the box is no longer clickable. — verified: ran S10 GREEN locally, instruction hidden and box disabled after draining to 0.",
+    "The dialog closes via its X button and via Escape, following the repo's native <dialog> pattern. — verified: ran S11/S12 GREEN locally; use-secret-box-dialog.ts mirrors use-kudos-compose-dialog.ts's ref-callback + onCancel pattern.",
+    "Badge draw and unopened count are computed server-side; client-side tampering with the count or badge id cannot change what is persisted. — verified: open_secret_box() is SECURITY DEFINER, resolves auth.uid() itself with no user-id parameter; SecretBoxLauncher never decrements 'live' locally, only from result.unopened; parseOpeningRow in secret-box.ts fails closed (throws) on any malformed/unrecognized RPC response shape, exercised by secret-box.test.ts.",
+    "Two concurrent/double-clicked open requests never consume more boxes than the viewer is entitled to. — verified by reading open_secret_box(): pg_advisory_xact_lock(hashtextextended(v_user_id::text,0)) serializes per-user calls, entitlement/opened are re-SELECTed AFTER lock acquisition inside the same transaction as the INSERT, so a blocked second call re-reads post-commit state and correctly raises no_boxes_left when exhausted.",
+    "Entitlement equals floor(sum(kudos.heart_count where sender_id = viewer)/5) minus count of that viewer's openings. — verified in both the RPC SQL and src/dal/kudos-stats.ts's getKudosStats (used for initial render) — both read kudos.sender_id, never receiver_id, matching the sender-credits-hearts rule.",
+    "kudos/page.tsx no longer hardcodes secretBoxOpened/secretBoxUnopened to 0; both come from the database. — verified: page.tsx calls buildViewerStats -> getKudosStats(toKudosStatsClient(supabase), viewerId), no hardcoded 0 remains; git diff confirms the prior hardcode was replaced.",
+    "pnpm typecheck, pnpm lint, and the full pnpm test:e2e suite all pass; kudos.spec.ts:745-747's disabled assertion is updated to the new enabled contract. — PARTIAL: pnpm typecheck clean (0 errors), pnpm lint 0 errors (5 warnings, none from this feature's implementation code), pnpm test:unit 591/591 passed, secret-box.spec.ts run directly 14/14 GREEN, kudos.spec.ts C27 assertion confirmed updated to toHaveJSProperty('disabled', true) driven by real secretBoxUnopened. The full pnpm test:e2e suite is NOT currently green: temper-results.json records exit 1 because of the pre-existing [C19] paging-test bug in kudos.spec.ts (unrelated to this feature, CI already excludes it via --grep-invert '@auth|@local-db'). A tester is fixing C19 concurrently; this criterion will be fully met once that lands and temper is re-run. Not claiming the full suite passes today."
+  ],
+  "regressionChecked": [
+    "kudos.spec.ts:745-747 (C27) — contract updated to data-driven enable/disable, not deleted; diff reviewed line-by-line.",
+    "kudos.spec.ts:43 (C09, anonymous sees no stat rows/button) — untouched, verified GREEN via S15 in secret-box.spec.ts which re-asserts the same guarantee.",
+    "profile.spec.ts C6/C7 — zero diff in this range (git diff 975f4f8..HEAD --stat shows no profile.spec.ts entry); profile-statistics-card.tsx:31 still renders unconditional disabled button, confirmed by direct read.",
+    "src/dal/kudos-stats.ts widening KudosStatsSummary — checked kudos-stats.test.ts (13 tests, passing) and the one caller (page.tsx) for shape compatibility; EMPTY_STATS updated consistently.",
+    "migration 0007's sync_kudo_heart_count trigger — untouched (no diff), and 0011 adds no competing counter column, confirmed by reading both migrations plus getKudosStats deriving secretBoxUnopened via live count(*) never a stored column.",
+    "First .rpc() call precedent — confirmed via grep -rn '\\.rpc(' src/ that only this feature's files call .rpc(), so no other caller could regress from a shape/behavior change here.",
+    "Supabase local instance migration application — confirmed via psql against supabase_migrations.schema_migrations that 0011 was applied through migration up (present alongside 0007-0010), not a db reset."
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Warning",
+      "category": "Error boundaries",
+      "location": "src/app/(public)/kudos/_actions/open-secret-box.ts:35",
+      "summary": "Catch-all in openSecretBoxAction swallows every unrecognized error (thrown Postgres error, createClient() failure) into {ok:false, reason:'unknown'} with no server-side logging, making an unexpected failure mode invisible in production even though the client-facing behavior (no leaked stack trace) is correct.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Craft",
+      "location": "src/app/(public)/kudos/_components/secret-box-launcher.tsx:69",
+      "summary": "canMount and the trigger button's disabled state are frozen from the first-render stats.secretBoxUnopened by design (required for S13/S07/S09/S10); once true, the outer button stays clickable even after live drains to 0, reopening the dialog at 00 with the box disabled — harmless but the disabled-reason tooltip never reappears. No test covers this path; flagging so it reads as considered, not missed.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Craft",
+      "location": "tests/e2e/secret-box.spec.ts:520",
+      "summary": "S13's inline comment is a stale RED-era note claiming the pass is 'both hardcoded to 0' when it now reflects the real computed secretBoxUnopened=0; no functional impact, comment drift only.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Suggestion",
+      "category": "Craft",
+      "location": "tests/e2e/secret-box.spec.ts:416",
+      "summary": "3 playwright/no-useless-not lint warnings (not.toBeVisible() instead of toBeHidden()) at lines 416, 439, 456 — style only, 0 errors, auto-fixable.",
+      "disposition": "Accept"
+    }
+  ]
+}
