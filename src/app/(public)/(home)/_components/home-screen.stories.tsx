@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { defaultHomeCopy } from "../_shared/home-copy";
+import { CountdownTiles } from "../../_components/countdown-tiles";
 
 import { HomeScreen } from "./home-screen";
-
-import { CountdownTiles } from "@/components/countdown-tiles";
 
 /**
  * Story route cho `/` (F003 Homepage) — dựng từ `HomeScreen`, component trình

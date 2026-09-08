@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { PrelaunchScreen } from "./prelaunch-screen";
+import { CountdownTiles } from "../../_components/countdown-tiles";
 
-import { CountdownTiles } from "@/components/countdown-tiles";
+import { PrelaunchScreen } from "./prelaunch-screen";
 
 /**
  * Story route cho `/prelaunch` (F011 / SCR009) — `PrelaunchScreen` là

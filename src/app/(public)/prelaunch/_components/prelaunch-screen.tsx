@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
-import { CountdownTiles } from "@/components/countdown-tiles";
+import { CountdownTiles } from "../../_components/countdown-tiles";
+
 import { montserrat, montserratAlternates } from "@/styles/fonts";
 
 export type PrelaunchScreenProps = {
