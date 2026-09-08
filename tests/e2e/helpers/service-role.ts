@@ -11,14 +11,17 @@ import { execFileSync } from "child_process";
  * (it asserts a single scroll reaches the end of a seed-sized feed).
  *
  * So the key is now DERIVED rather than required: env first, then the
- * local CLI, which prints it from the running stack. Memoized because
- * `supabase status` costs ~1s and every spec's `afterEach` wants it.
+ * local CLI, which prints it from the running stack.
  *
- * Local-only by construction. CI never runs the `@local-db` tier and has
- * no Supabase CLI, so the lookup fails there and callers fall back to
- * skipping cleanup — which is correct, there is nothing to clean.
+ * Only a SUCCESS is memoized. Caching the failure too would recreate this
+ * bug in a new shape: one transient `supabase status` miss — Docker still
+ * coming up, a cold CLI start — would pin the whole worker to the "no key"
+ * branch for the rest of the run, and the only trace would be a warn line
+ * per test in a long log. Retrying costs ~1s on a path that is local-only
+ * anyway (CI excludes the `@local-db` tier entirely), which is a much
+ * better trade than silently stopping cleanup again.
  */
-let cached: string | null | undefined;
+let cached: string | undefined;
 
 export function getServiceRoleKey(): string | null {
   if (cached !== undefined) {
@@ -40,14 +43,18 @@ export function getServiceRoleKey(): string | null {
       encoding: "utf-8",
     });
     const line = out.split("\n").find((l) => l.startsWith("SERVICE_ROLE_KEY="));
-    cached = line
+    const key = line
       ? line.slice("SERVICE_ROLE_KEY=".length).trim().replace(/^"|"$/g, "")
-      : null;
+      : "";
+    if (key) {
+      cached = key;
+      return cached;
+    }
   } catch {
-    cached = null;
+    // Fall through — deliberately NOT cached, see the docblock.
   }
 
-  return cached;
+  return null;
 }
 
 /** Base URL of the local Supabase REST/auth API. */
@@ -131,25 +138,19 @@ export async function deleteTestUser(userId: string): Promise<void> {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
   const url = getSupabaseUrl();
 
-  // Storage first: `storage.objects.owner` references the auth user, and
-  // nothing cascades, so removing the user first strands the files.
+  // Storage is the one thing that does NOT come away with the user, so it
+  // has to go first and by hand: `storage.objects` carries no foreign key to
+  // `auth.users` (`0010_kudo_images_bucket`), which is how 100 orphaned
+  // objects survived a cleanup that left `users` and `kudos` looking spotless.
   await deleteUserImages(url, headers, userId);
 
-  // Rows next, then the auth user: the FKs point at the user, so deleting
-  // the user first is what leaves orphans behind.
-  for (const path of [
-    `/rest/v1/kudo_hearts?user_id=eq.${userId}`,
-    `/rest/v1/kudos?sender_id=eq.${userId}`,
-    `/rest/v1/kudos?receiver_id=eq.${userId}`,
-    `/rest/v1/secret_box_openings?user_id=eq.${userId}`,
-  ]) {
-    try {
-      await fetch(`${url}${path}`, { method: "DELETE", headers });
-    } catch (error) {
-      console.warn(`[cleanup] ${path} failed:`, error);
-    }
-  }
-
+  // Everything else needs no help. The chain cascades the whole way down —
+  // `public.users.id -> auth.users` ON DELETE CASCADE (`0001_users_table`),
+  // then `kudos.sender_id`/`receiver_id`, `kudo_hearts.user_id` and
+  // `secret_box_openings.user_id` all -> `public.users` ON DELETE CASCADE
+  // (`0006`, `0007`, `0011`). Verified against pg_constraint, not assumed.
+  // An earlier version deleted those four tables by hand first, on the
+  // backwards theory that removing the user would strand them.
   try {
     const res = await fetch(`${url}/auth/v1/admin/users/${userId}`, {
       method: "DELETE",
