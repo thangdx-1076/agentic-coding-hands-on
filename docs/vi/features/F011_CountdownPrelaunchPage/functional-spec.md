@@ -1,11 +1,11 @@
 ---
-status: draft
+status: implemented
 authored_by: takumi
 created: 2026-09-08
 lang: vi
 ---
 
-# Functional Spec — CountdownPrelaunchPage
+# Functional Spec — F011_CountdownPrelaunchPage
 
 **Priority**: P1
 **Type**: mixed

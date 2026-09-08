@@ -10,7 +10,9 @@
 
 ## Overview
 
-**Priority:** P1 · **Status:** pending · **Effort:** 1.5h · **Deps:** 01
+**Priority:** P1 · **Status:** ✅ completed · **Effort:** 1.5h · **Deps:** 01
+
+Commit: `175432c` (test(prelaunch): add red screen-level e2e and prelaunch-lock unit spec)
 
 testPolicy là `e2e-red-first`, nên phải có một test e2e cấp màn, chạy được, **đỏ vì assertion thật**
 trước khi ai viết dòng implementation nào. Phase này chỉ viết test. Runner đã có sẵn
@@ -120,12 +122,12 @@ cứ file nào dưới `src/app/(public)/prelaunch/`.
 
 ## Todo List
 
-- [ ] `tests/e2e/prelaunch.spec.ts` với C1..C6, không tag `@auth`/`@local-db`
-- [ ] `pnpm exec playwright test tests/e2e/prelaunch.spec.ts` exit ≠ 0, lý do là assertion `status() 404 ≠ 200`
-- [ ] `src/domain/prelaunch-lock.test.ts` vét cạn bảng chân trị
-- [ ] `pnpm test:unit` exit ≠ 0
-- [ ] `reports/red-evidence-260908-prelaunch.md` có đủ 4 trường red*
-- [ ] commit riêng, KHÔNG mở PR ở trạng thái này
+- [x] `tests/e2e/prelaunch.spec.ts` với C1..C6, không tag `@auth`/`@local-db`
+- [x] `pnpm exec playwright test tests/e2e/prelaunch.spec.ts` exit ≠ 0, lý do là assertion `status() 404 ≠ 200`
+- [x] `src/domain/prelaunch-lock.test.ts` vét cạn bảng chân trị
+- [x] `pnpm test:unit` exit ≠ 0
+- [x] `reports/red-evidence-260908-prelaunch.md` có đủ 4 trường red*
+- [x] commit riêng, KHÔNG mở PR ở trạng thái này
 
 ## Success Criteria
 

@@ -1,0 +1,36 @@
+{
+  "task": "Countdown Prelaunch Page (F011/SCR009): public /prelaunch screen counting down to EVENT_START_AT, plus a site-wide navigation lock gated on PRELAUNCH_LOCK_ENABLED that redirects every page route to /prelaunch until the event starts.",
+  "mode": "takumi",
+  "acceptanceCriteria": [
+    "GET /prelaunch returns 200 and renders exactly one role=timer with 3 tiles labelled DAYS, HOURS, MINUTES",
+    "Each tile renders a 2-digit zero-padded value; negative or out-of-range clamps to 00",
+    "Title renders from next-intl: vi 'Su kien se bat dau sau', en 'Event starts in'",
+    "Absent or malformed EVENT_START_AT degrades to 00/00/00 and never throws",
+    "With PRELAUNCH_LOCK_ENABLED true and the event not reached, every page route redirects to /prelaunch",
+    "Exempt from the lock: /prelaunch, /auth/*, /api/*, /_next/* and static files",
+    "Once the event is reached the lock lifts and /prelaunch redirects to /",
+    "BR-005: a request outside the original 6-route proxy whitelist must not reach Supabase or touch cookies",
+    "The 6 pre-existing proxy routes keep their prior auth behaviour when the lock is off",
+    "No regression in the existing e2e suite after widening config.matcher"
+  ],
+  "touchpoints": [
+    "src/app/(public)/prelaunch/page.tsx",
+    "src/app/(public)/prelaunch/_components/prelaunch-screen.tsx",
+    "src/app/(public)/prelaunch/_components/prelaunch-countdown.tsx",
+    "src/domain/prelaunch-lock.ts",
+    "src/proxy.ts",
+    "src/utils/countdown.ts",
+    "src/hooks/use-countdown.ts",
+    "src/components/countdown-tiles.tsx",
+    "src/constants/routes.ts",
+    "messages/vi.json",
+    "messages/en.json"
+  ],
+  "blastRadius": "src/proxy.ts is the highest-blast-radius file in the repo: config.matcher widened from a literal 6-route whitelist to a negative lookahead, so the proxy now runs on nearly every request including routes it never saw (/kudos). Server Action POSTs route through it too. The three promoted countdown modules are also consumed by the homepage.",
+  "contracts": [
+    "ProxyPlan / planProxy / isPrelaunchLockEnabled signature fixed by plan.md Integration contract",
+    "DOM contract for /prelaunch asserted by tests/e2e/prelaunch.spec.ts",
+    "config.matcher must stay a statically-analysable literal (Next cannot evaluate an imported constant)",
+    "messages/vi.json and messages/en.json must carry identical key sets (messages-parity test)"
+  ]
+}

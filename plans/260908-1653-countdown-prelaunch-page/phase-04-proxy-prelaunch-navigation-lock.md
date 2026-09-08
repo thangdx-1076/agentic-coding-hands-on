@@ -10,7 +10,9 @@
 
 ## Overview
 
-**Priority:** P1 · **Status:** pending · **Effort:** 2h · **Deps:** 03
+**Priority:** P1 · **Status:** ✅ completed · **Effort:** 2h · **Deps:** 03
+
+Commits: `8194482` (feat(proxy): add prelaunch navigation lock behind PRELAUNCH_LOCK_ENABLED), `39fc232` (fix(proxy): reorder planProxy decision tree), `c57efb7` (fix(proxy): use 303 for non-GET/HEAD lock redirects)
 
 Phần duy nhất thật sự mới của feature. Mở rộng edge guard đã có — **không** tạo `src/middleware.ts`
 (Next 16 đã đổi tên `middleware` → `proxy`; file mới sẽ không bao giờ chạy). Mở `config.matcher` từ
@@ -119,32 +121,54 @@ matcher là cố ý — defense-in-depth, và là thứ khiến BR-002 có test.
 8. `pnpm test:unit:coverage` → 100%, exit 0.
 9. Regression đầy đủ: `pnpm exec playwright test --grep-invert "@auth|@local-db"` — số test pass phải
    bằng trước phase 04 cộng số test mới của `prelaunch.spec.ts`.
-10. Kiểm tay trạng thái KHOÁ (không phải gate CI, nhưng bắt buộc trước khi đóng phase):
+10. Kiểm tay trạng thái KHOÁ (không phải gate CI, nhưng bắt buộc trước khi đóng phase).
+    **Số liệu dưới đây là ĐO THẬT trên dev server ngày 2026-09-08, không phải kỳ vọng.** Khoá xếp
+    trên whitelist legacy: mọi route trang đều bị chặn, chỉ `/prelaunch` + `/auth/*` + `/api/*` +
+    `/_next/*` + file tĩnh được miễn.
     ```bash
     PRELAUNCH_LOCK_ENABLED=true EVENT_START_AT=2099-12-31T18:30:00+07:00 pnpm dev --port 3100
-    curl -sI localhost:3100/todo     | head -2   # kỳ vọng 307 → location: /prelaunch
-    curl -sI localhost:3100/prelaunch| head -2   # kỳ vọng 200
-    curl -sI localhost:3100/api/x    | head -2   # kỳ vọng KHÔNG redirect
-    # rồi đổi EVENT_START_AT sang 2020-01-01T00:00:00+07:00, restart:
-    curl -sI localhost:3100/todo     | head -2   # kỳ vọng KHÔNG redirect (khoá đã gỡ)
-    curl -sI localhost:3100/prelaunch| head -2   # kỳ vọng 307 → location: /
+    curl -sI localhost:3100/todo      | head -2   # 307 → /prelaunch  (BỊ KHOÁ, không phải /login)
+    curl -sI localhost:3100/          | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/login     | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/awards    | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/standards | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/profile   | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/kudos     | head -2   # 307 → /prelaunch
+    curl -sI localhost:3100/prelaunch | head -2   # 200
+    curl -sI localhost:3100/api/x     | head -2   # 404, không qua proxy
+    # Server Action POST: 303 (KHÔNG phải 307 — 307 giữ method, action bị POST lại sang
+    # /prelaunch và trả 404 x-nextjs-action-not-found)
+    curl -s -o /dev/null -w '%{http_code}\n' -X POST --data '[]' localhost:3100/kudos   # 303
+    curl -s -o /dev/null -w '%{http_code}\n' -L -X POST --data '[]' localhost:3100/kudos # 200 tại /prelaunch
+
+    # đổi EVENT_START_AT sang 2020-01-01T00:00:00+07:00, restart:
+    curl -sI localhost:3100/          | head -2   # 200 (đã tới giờ → khoá gỡ)
+    curl -sI localhost:3100/kudos     | head -2   # 200
+    curl -sI localhost:3100/prelaunch | head -2   # 307 → / (cờ còn bật nhưng đã tới giờ)
     ```
-    Dán output vào `reports/manual-lock-verification-260908.md`.
+    Output đầy đủ ở `reports/manual-lock-verification-260908.md` § SUPERSEDED.
+
+    **Cảnh báo lịch sử:** bản đầu của step 10 này viết `/todo` kỳ vọng 307 → `/login` với lý do
+    "route legacy được miễn khoá". SAI. Đó đúng là hành vi của commit `8194482`, và chính nó là con
+    bug mà `39fc232` sửa — khoá mà vẫn cho `/`, `/login`, `/awards`, `/standards` đi qua thì không
+    khoá gì cả, vì đó chính là toàn bộ trang public. `isLegacyProxyRoute` giờ chỉ còn quyết định
+    *ai phải trả tiền cho session lookup* (BR-005), không quyết định *ai được đi qua*.
+
 11. Commit: `feat(proxy): add prelaunch navigation lock behind PRELAUNCH_LOCK_ENABLED`.
 
 ## Todo List
 
-- [ ] `src/domain/prelaunch-lock.ts` với đúng 4 export công khai theo Integration contract
-- [ ] `pnpm test:unit src/domain/prelaunch-lock.test.ts` xanh, KHÔNG sửa file test
-- [ ] Nhánh khoá là việc đầu tiên trong `proxy()`, trước mọi I/O
-- [ ] `kind: "pass"` trả `NextResponse.next()` trần — 0 cookie, 0 Supabase
-- [ ] Nhánh `auth` giữ nguyên logic cũ từng ký tự
-- [ ] `config.matcher` = negative lookahead, vẫn là mảng literal
-- [ ] `src/proxy.ts` ≤ 200 dòng
-- [ ] `pnpm test:unit:coverage` 100%
-- [ ] Regression e2e đầy đủ xanh, `/kudos` và 6 route cũ không đổi hành vi
-- [ ] Kiểm tay 4 trường hợp khoá, output lưu vào `reports/`
-- [ ] KHÔNG có `src/middleware.ts` nào được tạo
+- [x] `src/domain/prelaunch-lock.ts` với đúng 4 export công khai theo Integration contract
+- [x] `pnpm test:unit src/domain/prelaunch-lock.test.ts` xanh, KHÔNG sửa file test
+- [x] Nhánh khoá là việc đầu tiên trong `proxy()`, trước mọi I/O
+- [x] `kind: "pass"` trả `NextResponse.next()` trần — 0 cookie, 0 Supabase
+- [x] Nhánh `auth` giữ nguyên logic cũ từng ký tự
+- [x] `config.matcher` = negative lookahead, vẫn là mảng literal
+- [x] `src/proxy.ts` ≤ 200 dòng
+- [x] `pnpm test:unit:coverage` 100%
+- [x] Regression e2e đầy đủ xanh, `/kudos` và 6 route cũ không đổi hành vi
+- [x] Kiểm tay 4 trường hợp khoá, output lưu vào `reports/` (với sửa lỗi step 10)
+- [x] KHÔNG có `src/middleware.ts` nào được tạo
 
 ## Success Criteria
 

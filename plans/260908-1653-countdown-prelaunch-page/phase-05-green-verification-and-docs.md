@@ -15,7 +15,9 @@
 
 ## Overview
 
-**Priority:** P1 · **Status:** pending · **Effort:** 1h · **Deps:** 04
+**Priority:** P1 · **Status:** 🔄 in progress · **Effort:** 1h · **Deps:** 04
+
+Verification evidence collected by orchestrator: pnpm typecheck / lint / format:check / test:unit:coverage / build / build-storybook all clean; pnpm exec playwright test 194 passed/4 skipped/0 failed; manual lock verification completed.
 
 Đóng vòng RED→GREEN, chạy đúng bộ lệnh mà CI chạy (không phải bộ lệnh local quen tay), làm visual
 validation, cập nhật tài liệu, và ghi lại phần e2e không phủ được cho người sau khỏi tưởng là đã phủ.
@@ -103,16 +105,16 @@ không vá tại phase 05.
 
 ## Todo List
 
-- [ ] `.playwright-mcp/` đã xoá trước `format:check`
-- [ ] 6 lệnh của job `quality` xanh, đúng thứ tự (`typecheck` sau `build`)
-- [ ] `--grep-invert "@auth|@local-db"` xanh, ghi số test thật
-- [ ] `--grep "@auth"` xanh (guard `/todo`, `/profile` còn nguyên)
-- [ ] Visual 375 / 768 / 1512, đối chiếu frame `2268:35127`
-- [ ] README: bảng route + `PRELAUNCH_LOCK_ENABLED`
-- [ ] `reports/green-evidence-...md` có mục "Không phủ được"
-- [ ] `plans/action-items.md` có đủ Decisions / Nợ lại / Tôi cần làm
-- [ ] Journal entry
-- [ ] PR mở với `--repo thangdx-1076/agentic-coding-hands-on`
+- [x] `.playwright-mcp/` đã xoá trước `format:check`
+- [x] 6 lệnh của job `quality` xanh, đúng thứ tự (`typecheck` sau `build`)
+- [x] `--grep-invert "@auth|@local-db"` xanh, ghi số test thật (194 passed, 4 skipped, 0 failed)
+- [x] `--grep "@auth"` xanh (guard `/todo`, `/profile` còn nguyên)
+- [x] Visual 375 / 768 / 1512, đối chiếu frame `2268:35127`
+- [ ] README: bảng route + `PRELAUNCH_LOCK_ENABLED` (pending orchestrator)
+- [ ] `reports/green-evidence-...md` có mục "Không phủ được" (pending orchestrator)
+- [ ] `plans/action-items.md` có đủ Decisions / Nợ lại / Tôi cần làm (pending orchestrator)
+- [ ] Journal entry (pending orchestrator)
+- [ ] PR mở với `--repo thangdx-1076/agentic-coding-hands-on` (pending orchestrator)
 
 ## Success Criteria
 

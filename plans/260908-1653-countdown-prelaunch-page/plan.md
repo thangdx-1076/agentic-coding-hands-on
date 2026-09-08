@@ -1,12 +1,13 @@
 ---
 title: "Countdown Prelaunch Page (F011 / SCR009)"
 description: "Màn /prelaunch công khai đếm ngược tới EVENT_START_AT, cộng khoá điều hướng toàn site bật/tắt bằng cờ, mặc định TẮT."
-status: pending
+status: completed
 priority: P1
 effort: 7.5h
 branch: feat/countdown-prelaunch-page
 tags: [prelaunch, countdown, proxy, i18n, refactor, e2e-red-first]
 created: 2026-09-08
+completed: 2026-09-08
 ---
 
 # Countdown Prelaunch Page
@@ -21,11 +22,11 @@ MoMorph: `9ypp4enmFmdK3YAFJLIu6C` / screen `8PJQswPZmU` · testPolicy: **e2e-red
 
 | # | Phase | Status | Deps | Effort | Verify |
 |---|---|---|---|---|---|
-| 01 | [Promote countdown modules lên Zone A](./phase-01-promote-countdown-modules-to-shared.md) | pending | — | 1h | `git show -M --stat` = 5 rename R100 + 1 dòng import |
-| 02 | [RED evidence (tester)](./phase-02-red-first-prelaunch-test-evidence.md) | pending | 01 | 1.5h | `pnpm exec playwright test tests/e2e/prelaunch.spec.ts` exit ≠ 0 vì `status()` = 404 |
-| 03 | [Route `/prelaunch` + i18n](./phase-03-prelaunch-route-and-i18n.md) | pending | 02 | 2h | `pnpm exec playwright test tests/e2e/prelaunch.spec.ts` GREEN |
-| 04 | [Khoá điều hướng trong `src/proxy.ts`](./phase-04-proxy-prelaunch-navigation-lock.md) | pending | 03 | 2h | `pnpm test:unit:coverage` 100% GREEN |
-| 05 | [Green verification + docs](./phase-05-green-verification-and-docs.md) | pending | 04 | 1h | Toàn bộ gate CI + 135+ e2e GREEN |
+| 01 | [Promote countdown modules lên Zone A](./phase-01-promote-countdown-modules-to-shared.md) | ✅ completed | — | 1h | `git show -M --stat` = 5 rename R100 + 1 dòng import (84d7cfb) |
+| 02 | [RED evidence (tester)](./phase-02-red-first-prelaunch-test-evidence.md) | ✅ completed | 01 | 1.5h | `tests/e2e/prelaunch.spec.ts` đỏ trước (175432c), xanh sau (a6470ce) |
+| 03 | [Route `/prelaunch` + i18n](./phase-03-prelaunch-route-and-i18n.md) | ✅ completed | 02 | 2h | `pnpm exec playwright test tests/e2e/prelaunch.spec.ts` GREEN 6/6 (a6470ce) |
+| 04 | [Khoá điều hướng trong `src/proxy.ts`](./phase-04-proxy-prelaunch-navigation-lock.md) | ✅ completed | 03 | 2h | `pnpm test:unit:coverage` 100% GREEN, 303 fix (39fc232, c57efb7) |
+| 05 | [Green verification + docs](./phase-05-green-verification-and-docs.md) | 🔄 in progress | 04 | 1h | CI gate xanh, visual validation, README + journal (orchestrator) |
 
 Chuỗi tuyến tính. 03 và 04 vốn độc lập nhưng cả hai đều cần `src/constants/routes.ts`; 03 sở hữu
 file đó nên 04 phải chờ — không tách sở hữu chỉ để lấy một chút song song.

@@ -16,7 +16,9 @@
 
 ## Overview
 
-**Priority:** P1 · **Status:** pending · **Effort:** 2h · **Deps:** 02
+**Priority:** P1 · **Status:** ✅ completed · **Effort:** 2h · **Deps:** 02
+
+Commit: `a6470ce` (feat(prelaunch): add public /prelaunch countdown route)
 
 Dựng route công khai `/prelaunch`: Server Component đọc `EVENT_START_AT`, một component trình bày cho
 Storybook, một client wrapper mỏng để tick, cộng đúng **một** cặp khoá i18n mới.
@@ -124,16 +126,16 @@ hydrate, `setInterval` 1s trong `useCountdown` là nguồn thay đổi duy nhấ
 
 ## Todo List
 
-- [ ] Chốt asset nền, ghi decision
-- [ ] `prelaunch.title` ở CẢ vi và en; parity test xanh
-- [ ] `ROUTES.PRELAUNCH`
-- [ ] `prelaunch-countdown.tsx` (`"use client"`, không có "Coming soon")
-- [ ] `prelaunch-screen.tsx` (font variable trên root, nền + lớp phủ `aria-hidden`, không header/footer)
-- [ ] `prelaunch-screen.stories.tsx` render standalone
-- [ ] `page.tsx` Server Component, `resolveTargetIso` + `getInitialNowMs`
-- [ ] Mọi file mới ≤ 200 dòng
-- [ ] lint / format / build / typecheck / build-storybook xanh
-- [ ] `tests/e2e/prelaunch.spec.ts` xanh (không sửa một ký tự nào của file test)
+- [x] Chốt asset nền, ghi decision
+- [x] `prelaunch.title` ở CẢ vi và en; parity test xanh
+- [x] `ROUTES.PRELAUNCH`
+- [x] `prelaunch-countdown.tsx` (`"use client"`, không có "Coming soon")
+- [x] `prelaunch-screen.tsx` (font variable trên root, nền + lớp phủ `aria-hidden`, không header/footer)
+- [x] `prelaunch-screen.stories.tsx` render standalone
+- [x] `page.tsx` Server Component, `resolveTargetIso` + `getInitialNowMs`
+- [x] Mọi file mới ≤ 200 dòng
+- [x] lint / format / build / typecheck / build-storybook xanh
+- [x] `tests/e2e/prelaunch.spec.ts` xanh (không sửa một ký tự nào của file test)
 
 ## Success Criteria
 

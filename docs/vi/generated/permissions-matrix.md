@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 3 route xác nhận PUBLIC không route-guard (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 4 route xác nhận PUBLIC không route-guard cho chính nó (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard, `/prelaunch` F011_CountdownPrelaunchPage — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, nhánh `feat/countdown-prelaunch-page` chưa merge `main` — cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI route trang kể cả 3 guard active và cả `/`, `/awards`, `/standards` khi bật, xem mục `/prelaunch`) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -30,6 +30,13 @@
 **Ground-truth note (verified against source, not assumed)**: Dự án này KHÔNG có RBAC — không role, không ownership check, không policy table. Mọi tài khoản Google xác thực thành công đều nhận đúng một mức truy cập giống nhau. Cơ chế phân quyền duy nhất là **route-guard theo trạng thái đăng nhập** (đã auth / chưa auth), thực thi ở HAI lớp cho mỗi route được bảo vệ: `proxy.ts` (optimistic, tên mới của `middleware` trong Next 16) và một lần re-check `getUser()`/tương đương AUTHORITATIVE ở chính trang đó. Vì vậy cột "Role" trong bảng `Permission Rules` bên dưới giữ đúng hai giá trị **Anonymous** / **Authenticated** — đây là trạng thái đăng nhập, không phải vai trò tổ chức (admin/manager/owner không tồn tại trong code).
 
 **Cập nhật 2026-09-06 (F003_Homepage)**: `public.users` nay có cột `role` (`member`|`admin`), đọc qua `lib/auth/get-user-role.ts` để quyết định một mục HIỂN THỊ trong menu tài khoản của SCR003_HomeScreen ("Trang quản trị") — đây KHÔNG phải một route-guard mới (không route nào bị chặn theo `role`), nên KHÔNG được cấp mã `PERM###` mới ở đây; xem "Role-based screen-permission" ở cuối mục này.
+
+**Cập nhật 2026-09-08 (F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page` chưa
+merge `main`) — PERM002/PERM003 dưới đây có thể bị PREEMPT bởi một nhánh chạy TRƯỚC chúng.** Khi
+`PRELAUNCH_LOCK_ENABLED=true` VÀ countdown chưa về 0, `src/proxy.ts` redirect `/login` và `/todo`
+(cùng `/`, `/awards`, `/standards`, `/profile`) sang `/prelaunch` TRƯỚC KHI predicate của PERM002/
+PERM003 từng chạy — cơ chế route-guard của cả hai mã KHÔNG đổi, chỉ đơn giản không được nhường
+đường tới trong lúc khoá bật. Xem mục `/prelaunch` cuối file này cho chi tiết đầy đủ.
 
 ## Permissions Index
 
@@ -385,6 +392,61 @@ upload ảnh vào `kudo-images` khi đã đăng nhập · đọc công khai ản
 
 ---
 
+## `/prelaunch` — PUBLIC cho chính nó + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, chưa cấp mã PERM### riêng)
+
+`/prelaunch` gia nhập nhóm PUBLIC (`/`, `/awards`, `/standards`, `/kudos`) cho chính nó — không
+qua `(protected)/layout.tsx`, không route-guard riêng, không phân biệt vai trò. Màn không có gì
+cần bảo vệ (đếm ngược tĩnh, không PII), không cấp `PERM###` mới cho việc XEM màn — cùng lý do
+`/awards`/`/standards`/`/kudos` không cấp mã.
+
+**Khác MỌI route PUBLIC trước đó: route này đi kèm một trục khoá áp cho TOÀN BỘ ứng dụng, không
+riêng chính nó.** Cờ `PRELAUNCH_LOCK_ENABLED` (mặc định TẮT — fail-safe, chỉ đúng chuỗi `"true"`
+mới bật, xác nhận tại `isPrelaunchLockEnabled`) kết hợp countdown `EVENT_START_AT` chưa về 0 →
+redirect MỌI route trang về `/prelaunch`, **kể cả 3 route-guard active ở trên** (PERM002_LoginRouteGuard,
+PERM003_TodoRouteGuard, và `/profile` gia nhập cơ chế PERM003) **lẫn 3 route PUBLIC khác**
+(`/`, `/awards`, `/standards`). Chỉ 4 ngoại lệ kỹ thuật thoát được: `/prelaunch` (chính nó — luật
+riêng, xem dưới), `/auth/*`, `/api/*`, `/_next/*`/file tĩnh.
+
+Trục này KHÁC HẲN mọi `PERM###` đã có — không dựa trên danh tính (đã đăng nhập hay chưa), mà trên
+**(a) một cờ vận hành + (b) một điều kiện thời gian**, áp dụng đồng nhất bất kể actor là ai (kể cả
+`admin`). Đây gần với khái niệm maintenance-mode hơn RBAC/ownership — không có "ai được miễn" theo
+danh tính, chỉ có danh sách miễn theo ĐƯỜNG DẪN (kỹ thuật, xem trên).
+
+| Điều kiện | Hành vi |
+|---|---|
+| Khoá TẮT (mặc định) hoặc countdown đã về 0 | Mọi route hoạt động y hệt trước F011 — không đổi |
+| Khoá BẬT & countdown CHƯA về 0, path ∈ {`/auth/*`, `/api/*`, `/_next/*`, file tĩnh} | pass-through (miễn khoá kỹ thuật) |
+| Khoá BẬT & countdown CHƯA về 0, path === `/prelaunch` | render bình thường (không redirect vòng lặp) |
+| Khoá BẬT & countdown CHƯA về 0, path bất kỳ khác | redirect `/prelaunch` — bao gồm `/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile` |
+| path === `/prelaunch`, khoá BẬT & countdown ĐÃ về 0 | redirect `/` (BR-003 — tự gỡ khoá khi tới giờ) |
+
+**Fail-safe, không phải fail-open/fail-closed theo nghĩa lỗi-đọc-dữ-liệu**: cờ này không có khái
+niệm "lỗi khi đọc" — chỉ 2 giá trị tường minh. Mặc định khi biến môi trường KHÔNG được set là TẮT,
+tránh một môi trường quên set biến này vô tình khoá toàn site. `EVENT_START_AT` thiếu/sai định dạng
+parse ra `null` → đọc là "chưa về 0" (không bao giờ tự khoá lặp do lỗi parse).
+
+**303 cho redirect không phải GET/HEAD** — sửa phát sinh khi implement: 307 (mặc định của
+`NextResponse.redirect`) giữ nguyên method, nên một Server Action POST bị khoá sẽ re-POST sang
+`/prelaunch` (không có action đó) và nhận 404 thay vì màn đếm ngược. GET/HEAD vẫn nhận redirect
+mặc định.
+
+Không cấp `PERM###` mới ở đây (cùng tiền lệ `/awards`/`/standards`/`/kudos` — mã chính thức chờ
+`rebuild-spec` Core pass kế tiếp quyết định). Bốn bề mặt đang chờ mã: redirect toàn site khi khoá
+bật · miễn khoá cho 4 ngoại lệ kỹ thuật · gỡ khoá tự động khi tới giờ · `/prelaunch` tự redirect
+`/` khi truy cập lại sau khi đã tới giờ.
+
+### Related Routes
+- (GET) /prelaunch — SCR009_CountdownPrelaunch, không redirect cho chính route này (trừ điều kiện
+  BR-003 ở bảng trên)
+
+### Related Screens
+- SCR009_CountdownPrelaunch — Countdown Prelaunch (F011_CountdownPrelaunchPage)
+
+### Related Modules
+- src/app/(public)/prelaunch/page.tsx
+- src/domain/prelaunch-lock.ts (`planProxy`, `isPrelaunchLockEnabled`)
+- src/proxy.ts (nhánh khoá mở rộng, chạy trước predicate auth cũ)
+
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
@@ -407,9 +469,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008, F009 không tạo PERM### mới — F007/F008/F009 mở trục phân quyền GHI mới nhưng chờ core pass cấp mã)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose tồn tại trong screen-flow.md/screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008, F009, F010, F011 không tạo PERM### mới — F007/F008/F009/F010 mở trục phân quyền GHI mới, F011 mở trục khoá site-wide mới, đều chờ core pass cấp mã)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/prelaunch`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose, SCR009_CountdownPrelaunch tồn tại trong screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

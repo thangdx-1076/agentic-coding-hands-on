@@ -28,6 +28,7 @@
 | SCR006_Profile | Hồ sơ Sunner | atomic | 11 | `ProfileCard` (chưa cấp MODEL### riêng — view `public.profile_cards`), MODEL002_SupabaseUser (email, dùng chung header F003), MODEL001_AppLocale |
 | SCR007_KudosLiveBoard | Bảng Kudos trực tiếp | composite | 11 | `Kudo`/`KudoCard` (view `public.kudos_cards`, chưa cấp MODEL### riêng), `KudoHeart` (`public.kudo_hearts`, F008), MODEL002_SupabaseUser (email + cột `department` mới), MODEL001_AppLocale |
 | SCR008_KudosCompose | Viết Kudo (dialog soạn Kudos trên /kudos) | composite | 12 | `Kudo` mở rộng (2 cột ẩn danh, F009), `ProfileCard` (view `profile_cards`, nguồn autocomplete người nhận), `KudoImage` (`storage.objects`, chưa cấp MODEL### riêng) |
+| SCR009_CountdownPrelaunch | Countdown Prelaunch | atomic | 2 | Không MODEL### — 2 biến môi trường (`EVENT_START_AT`, `PRELAUNCH_LOCK_ENABLED`) là nguồn duy nhất, không Supabase |
 
 ---
 
@@ -347,23 +348,24 @@ SCR006_Profile.
 
 ## Summary
 
-- **Total Screens**: 8 (cập nhật 2026-09-08 — thêm SCR008_KudosCompose, F009_KudosCompose)
+- **Total Screens**: 9 (cập nhật 2026-09-08 — thêm SCR009_CountdownPrelaunch, F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page` chưa merge `main`)
 
 ---
 
 ## Cross-Reference Validation
 
 - [x] All SCR### codes are unique
-- [ ] All SCR### codes are referenced in ScreenFlow.md — SCR001-SCR006 có; **SCR007_KudosLiveBoard
-  CHƯA có trong `screen-flow.md`** (Navigation Map còn node `"/kudos - chưa implement, 404"` đã lỗi
-  thời kể từ lượt promote này). `screen-flow.md` do core pass sở hữu (Screen Access Paths, Screen
-  Transitions, Guard Logic đều phái sinh từ code chưa tồn tại) — không tự ý vá ở bước promote;
-  `/tkm:rebuild-spec` kế tiếp sau khi `/kudos` lên code sẽ đồng bộ.
+- [ ] All SCR### codes are referenced in ScreenFlow.md — SCR001-SCR006 có; **SCR007_KudosLiveBoard,
+  SCR008_KudosCompose, SCR009_CountdownPrelaunch CHƯA có trong `screen-flow.md`** (Navigation Map
+  còn node `"/kudos - chưa implement, 404"` đã lỗi thời kể từ lượt promote SCR007, và không có node
+  `/prelaunch` nào). `screen-flow.md` do core pass sở hữu (Screen Access Paths, Screen Transitions,
+  Guard Logic đều phái sinh từ code chưa tồn tại ở wave gốc) — không tự ý vá ở bước promote;
+  `/tkm:rebuild-spec` kế tiếp sẽ đồng bộ.
 - [x] All related screen references are valid
-- [x] All route URLs are properly formatted (`/`, `/awards`, `/kudos`, `/login`, `/profile`, `/standards`, `/todo` — `/kudos` mới ở lượt này, `route-list.md` do core pass kế tiếp cập nhật)
-- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006; SCR007 → F007+F008; SCR008 → F009)
+- [x] All route URLs are properly formatted (`/`, `/awards`, `/kudos`, `/login`, `/prelaunch`, `/profile`, `/standards`, `/todo` — `/prelaunch` mới ở lượt này, `route-list.md` đã cập nhật cùng lượt)
+- [x] All SCR### codes are referenced in FeatureList.md (SCR001+SCR002 → F001/F002; SCR003 → F003; SCR004 → F004; SCR005 → F005; SCR006 → F006; SCR007 → F007+F008; SCR008 → F009; SCR009 → F011)
 - [x] No orphaned screen references
-- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 7 spec.md) — SCR001-003, SCR005, SCR006 atomic có justification 2-of-3 gate; SCR007_KudosLiveBoard khai `Type: composite` KÈM justification H1/H2/H3 đầy đủ và ghi rõ lý do hoãn `REG###` (code chưa tồn tại ở lượt promote), dùng nhãn layout R1-R8; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây
+- [x] No REG### emitted trong toàn bộ app (grep xác nhận 0 tham chiếu `REG` ở cả 9 spec.md) — SCR001-003, SCR005, SCR006, SCR009 atomic có justification 2-of-3 gate (SCR009 dùng nhãn layout R1-R2, không phải mã REG### chính thức); SCR007_KudosLiveBoard khai `Type: composite` KÈM justification H1/H2/H3 đầy đủ và ghi rõ lý do hoãn `REG###` (code chưa tồn tại ở lượt promote), dùng nhãn layout R1-R8; SCR004_Awards tự khai `Type: composite` trong `docs/vi/screens/SCR004_Awards/spec.md` nhưng không kèm justification H1/H2/H3 hay bảng REG### nào (chỉ có "Layout Regions" R1-R5 mô tả layout, không phải mã REG### chính thức) — gap có sẵn từ trước, nằm ngoài phạm vi F005/F006, không tự ý vá ở đây
 
 ## SCR008_KudosCompose
 
@@ -390,3 +392,45 @@ unauthenticated-redirect (`/login`, dialog không mở)
 
 Chi tiết đầy đủ (layout, UI states, validation feedback, DOM contract): `docs/vi/screens/SCR008_KudosCompose/spec.md`.
 Hợp đồng e2e: `tests/e2e/kudos-compose.spec.ts` (C01–C27).
+
+---
+
+## SCR009_CountdownPrelaunch
+
+**Type**: atomic
+
+**Feature:** F011 — Màn đếm ngược tiền sự kiện (`/prelaunch`) + khoá điều hướng site-wide
+**Route:** /prelaunch
+**Description:** Màn toàn màn hình, không cuộn, PUBLIC, không route-guard cho chính nó: ảnh nền
+full-bleed (`/prelaunch/Prelaunch_BG.png`) + lớp phủ gradient tối, nội dung căn giữa gồm tiêu đề
+(`prelaunch.title`, i18n) và 3 ô đếm ngược (DAYS/HOURS/MINUTES) tái dùng nguyên `CountdownTiles`
+(`src/components/countdown-tiles.tsx`, đã climb lên Zone A cho feature này) qua hook
+`useCountdown` dùng chung với `/`. Không header/footer, không modal. `page.tsx` (Server Component)
+đọc `EVENT_START_AT` một lần (hàm `resolveTargetIso`, cố ý KHÔNG chia sẻ code với `(home)/page.tsx`
+— xem `architecture.md`), seed tick đầu cho client qua `PrelaunchCountdown`. Nhận traffic theo 2
+đường: bị nhánh khoá của `src/proxy.ts` redirect tới khi `PRELAUNCH_LOCK_ENABLED=true` VÀ chưa tới
+giờ sự kiện (áp cho hầu hết route khác trong app), HOẶC vào thẳng URL.
+**States:** ticking (còn thời gian, 3 ô giảm mỗi giây), reached (đếm ngược về 0 trong lúc màn đang
+mở — vẫn ở lại màn, không tự chuyển; một lượt truy cập MỚI sau đó mới bị đưa về `/`)
+
+### Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| PrelaunchScreen (`_components/prelaunch-screen.tsx`) | layout (root) | Ảnh nền full-bleed + gradient scrim + cột nội dung căn giữa (tiêu đề + slot đếm ngược); không header/footer |
+| PrelaunchCountdown (`_components/prelaunch-countdown.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`src/hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống, `showComingSoon` cố ý KHÔNG dùng (màn này không có copy "Coming soon") |
+
+### Data Displayed
+
+- Không có Data Entity (MODEL###) nào — 2 biến môi trường (`EVENT_START_AT`, `PRELAUNCH_LOCK_ENABLED`) là nguồn duy nhất, không Supabase
+
+### Routes/URLs
+
+- `/prelaunch`
+
+### Related Screens
+
+- SCR003_HomeScreen: Trang chủ (Homepage) — chia sẻ `CountdownTiles`/`use-countdown.ts`/`countdown.ts` (nay Zone A dùng chung); là đích redirect khi countdown về 0 trong lúc `/prelaunch` đang mở
+
+Chi tiết đầy đủ (layout, UI states, accessibility, responsive): `docs/vi/screens/SCR009_CountdownPrelaunch/spec.md`.
+Hợp đồng e2e: `tests/e2e/prelaunch.spec.ts`.

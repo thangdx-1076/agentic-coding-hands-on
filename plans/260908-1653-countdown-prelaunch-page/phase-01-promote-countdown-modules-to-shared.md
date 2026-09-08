@@ -10,7 +10,9 @@
 
 ## Overview
 
-**Priority:** P1 · **Status:** pending · **Effort:** 1h · **Deps:** —
+**Priority:** P1 · **Status:** ✅ completed · **Effort:** 1h · **Deps:** —
+
+Commit: `84d7cfb` (refactor(countdown): promote countdown modules to shared layers)
 
 Ba module đếm ngược đang nằm private trong `(home)`. Nay có route thứ 2 dùng chúng, scope ladder bắt
 phải climb lên Zone A. Đây là **phép dời file thuần** — không đổi một dòng logic nào. Phase này chạm
@@ -90,18 +92,18 @@ glob của cả ba đã bao phủ đích đến.
 
 ## Todo List
 
-- [ ] 6 `git mv`
-- [ ] 1 dòng import trong `src/hooks/use-countdown.ts`
-- [ ] 4 importer trang chủ, khối import đúng thứ tự
-- [ ] 2 thư mục rỗng đã xoá
-- [ ] `pnpm lint --max-warnings 0` xanh
-- [ ] `pnpm format:check` xanh
-- [ ] `pnpm test:unit:coverage` 100%
-- [ ] `pnpm build && pnpm typecheck` xanh
-- [ ] `pnpm build-storybook` xanh
-- [ ] e2e CI-safe xanh (không có test mới nào ở phase này)
-- [ ] `git show -M --stat HEAD` xác nhận 5 rename thuần + 1 dòng đổi
-- [ ] commit riêng, không trộn phase khác
+- [x] 6 `git mv`
+- [x] 1 dòng import trong `src/hooks/use-countdown.ts`
+- [x] 4 importer trang chủ, khối import đúng thứ tự
+- [x] 2 thư mục rỗng đã xoá
+- [x] `pnpm lint --max-warnings 0` xanh
+- [x] `pnpm format:check` xanh
+- [x] `pnpm test:unit:coverage` 100%
+- [x] `pnpm build && pnpm typecheck` xanh
+- [x] `pnpm build-storybook` xanh
+- [x] e2e CI-safe xanh (không có test mới nào ở phase này)
+- [x] `git show -M --stat HEAD` xác nhận 5 rename thuần + 1 dòng đổi
+- [x] commit riêng, không trộn phase khác
 
 ## Success Criteria
 

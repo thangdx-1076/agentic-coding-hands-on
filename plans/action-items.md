@@ -1137,3 +1137,45 @@
   `src/domain/prelaunch-lock.test.ts` (type chưa resolve) và `tests/e2e/prelaunch.spec.ts`
   (2 rule Playwright: `no-networkidle`, `no-wait-for-timeout`) — cả 2 file đều KHÔNG thuộc sở hữu
   phase này. Đã xác nhận bằng lint riêng 6 file của tôi: 0 error/0 warning.
+
+## 260908-1653 — countdown-prelaunch-page
+
+### Tôi cần làm
+
+- [ ] Quyết định ai được bật `PRELAUNCH_LOCK_ENABLED` trên production và bật lúc nào. Cờ đã sẵn sàng
+      nhưng mặc định TẮT; bật là khoá toàn site về `/prelaunch` cho tới `EVENT_START_AT`.
+- [ ] Trước khi bật thật: đặt `EVENT_START_AT` đúng giờ sự kiện trên môi trường production. Nếu cờ bật
+      mà `EVENT_START_AT` thiếu/hỏng thì site khoá vĩnh viễn — `reached` không bao giờ thành `true`.
+      Đây là fail-safe cố ý (không bao giờ fail-open thành "đã tới giờ"), nhưng cần biết.
+- [ ] Xác nhận ảnh nền `public/prelaunch/Prelaunch_BG.png` (3.0M) đúng là asset thiết kế muốn dùng.
+      Đã tải từ MoMorph và so md5 với `public/home/Keyvisual_BG.png` — khác file.
+
+### Decisions
+
+- Chọn màn Countdown - Prelaunch page (`8PJQswPZmU`) làm việc tiếp theo: màn web duy nhất còn
+  `spec_status: done` mà chưa code. Mọi màn còn lại spec đều `in_progress`.
+- Nguồn target datetime: tái dùng env `EVENT_START_AT` sẵn có thay vì dựng API endpoint như spec ghi
+  `TODO`. Rule (b) — khớp pattern homepage đang dùng.
+- Guard: mở rộng `src/proxy.ts`, KHÔNG tạo `src/middleware.ts`. Next 16.3.4 đã đổi tên
+  `middleware` → `proxy`; file mới sẽ không bao giờ chạy.
+- Khoá cần cờ riêng `PRELAUNCH_LOCK_ENABLED`, mặc định TẮT. Nếu khoá chỉ theo countdown thì
+  `playwright.config.ts` và `.env.local` (đều đặt `EVENT_START_AT` tương lai) sẽ làm đỏ toàn bộ e2e
+  và app không vào được khi dev.
+- Khoá xếp TRÊN whitelist legacy 6 route. Bản đầu làm ngược lại và `/`, `/login`, `/awards`,
+  `/standards`, `/profile`, `/todo` vẫn vào được khi khoá — tức là không khoá gì cả.
+- Redirect non-GET/HEAD dùng 303, không phải 307. 307 giữ method nên Server Action POST bị POST lại
+  sang `/prelaunch` và trả 404 `x-nextjs-action-not-found`.
+- 3 module countdown nâng từ `(home)/_*` lên shared layer vì đã có route thứ hai dùng.
+
+### Nợ lại
+
+- Font "Digital Numbers" vẫn chưa nạp, `CountdownTiles` fallback `monospace`. Nợ thừa hưởng từ phase
+  homepage, không phát sinh mới ở đây.
+- 4 test case ACCESSING của MoMorph (`68d82c58`, `e6a59553`, `1c266552`, `17aa9e0d`) không hiện thực:
+  đều là boilerplate sinh tự động, `Sub_Category` ghi "Access control unspecified", Expected_Result là
+  "---". Màn public, không có phân quyền.
+- e2e không chứng minh được trạng thái KHOÁ: `playwright.config.ts` ghim env của web server cho cả
+  lượt chạy nên không test nào lật được cờ. Phủ bằng 58 case unit trên `planProxy` (gate coverage
+  100%) cộng ma trận curl đo tay ghi ở `reports/manual-lock-verification-260908.md`.
+- `Prelaunch_BG.png` 3.0M chưa tối ưu. Cùng cỡ với `Keyvisual_BG.png` 4.3M đang có, nên không phải
+  hồi quy — nhưng cả hai đều nên nén lại một lượt.

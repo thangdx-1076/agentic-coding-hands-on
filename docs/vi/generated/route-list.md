@@ -24,7 +24,7 @@ Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callba
 
 ## Frontend Routes/Pages
 
-Tám route frontend: bảy route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
+Chín route frontend: tám route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
 ### File: app/page.tsx
 
@@ -90,6 +90,21 @@ Guard AUTHORITATIVE ở đây bọc try/catch và fail OPEN (lỗi Supabase khô
 
 Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có user thì redirect `/login`. Đây là trang todo placeholder (chưa có tính năng todo thật), tồn tại để chứng minh auth guard end-to-end.
 
+### File: src/app/(public)/prelaunch/page.tsx
+
+| Path | Component | Route Name |
+|------|-----------|------------|
+| /prelaunch | PrelaunchPage | prelaunch (F011_CountdownPrelaunchPage) |
+
+Route `/prelaunch` render SCR009_CountdownPrelaunch — màn đếm ngược toàn màn hình tới
+`EVENT_START_AT`, tái dùng nguyên logic đếm ngược của `/` (nay shared: `src/utils/countdown.ts`,
+`src/hooks/use-countdown.ts`, `src/components/countdown-tiles.tsx`). PUBLIC by design, bản thân
+route không qua guard nào (giống `/`, `/awards`, `/standards`). Không đọc Supabase — toàn bộ trạng
+thái từ 2 biến môi trường (`EVENT_START_AT`, `PRELAUNCH_LOCK_ENABLED`). Mới từ 2026-09-08
+(F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page`, chưa merge `main`). Xem mục
+"Middleware / Proxy Guard Layer" dưới đây cho vai trò route này đóng trong nhánh khoá điều hướng
+site-wide.
+
 ### File: (none — Next.js App Router framework default, no app-authored source)
 
 | Path | Component | Route Name |
@@ -98,10 +113,28 @@ Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED — không có 
 
 ## Middleware / Proxy Guard Layer
 
-`proxy.ts` (root) là lớp `proxy` của Next 16 (tên cũ: `middleware`) — guard optimistic, KHÔNG phải authoritative. Matcher whitelist tường minh:
+`proxy.ts` (root) là lớp `proxy` của Next 16 (tên cũ: `middleware`) — guard optimistic, KHÔNG phải authoritative.
+
+**Cập nhật 2026-09-08 (F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page`, chưa
+merge `main`) — matcher đổi từ whitelist literal sang negative lookahead:**
 
 ```
-matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards", "/profile"]
+matcher: ["/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"]
+```
+
+Pattern do `node_modules/next/dist/docs/.../proxy.md` § Matcher khuyến nghị cho "khớp mọi thứ trừ
+một danh sách loại trừ ngắn" — thay whitelist 6-route cũ (giữ lại làm ghi chú lịch sử ngay dưới)
+vì nhánh khoá prelaunch (xem cuối mục này) phải thấy MỌI route mới redirect được nó về
+`/prelaunch`. Route nào mới lộ ra do matcher rộng hơn (vd. `/kudos`) mà không nằm trong 6 route cũ
+chỉ nhận `{ kind: "pass" }` với ZERO I/O từ nhánh khoá TRƯỚC khi `getUserOrNull` từng chạy — không
+hồi quy chi phí Supabase cho route chưa từng có (`src/domain/prelaunch-lock.ts`, hàm
+`isLegacyProxyRoute` tái tạo đúng whitelist 6-route cũ cho mục đích khác: chỉ 6 route đó chạy
+`auth`/session-lookup khi không bị nhánh khoá redirect, còn lại luôn `pass`).
+
+Whitelist 6-route cũ (nay chỉ còn ý nghĩa lịch sử — vẫn là nội dung của `isLegacyProxyRoute`):
+
+```
+whitelist cũ: "/", "/login", "/todo/:path*", "/awards", "/standards", "/profile"
 ```
 
 **Cập nhật 2026-09-07 (F005_StandardsRulesPage)**: `/awards` (F004, đã thêm trước đó) và `/standards`
@@ -114,12 +147,25 @@ route thực sự bị chặn khi chưa đăng nhập. Predicate đổi từ so 
 sang so khớp theo mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` — vẫn optimistic
 pre-check, `(protected)/layout.tsx` vẫn là gate authoritative duy nhất.
 
-**Cập nhật 2026-09-07 (đợt 3 — F007_KudosLiveBoard + F008_KudosHeartReaction)**: `/kudos` KHÔNG có
-trong `matcher` này (`proxy.ts:139` không đổi khi F007/F008 được xây) — khác hẳn `/awards`/`/standards`/
-`/profile`, route mới này nằm HOÀN TOÀN ngoài lớp `proxy`. Hệ quả quan sát được: không có bước refresh
-session cookie hay chuẩn hoá `NEXT_LOCALE` nào chạy khi truy cập `/kudos` trực tiếp — route tự đọc
-session qua `getCurrentUser()`/`getViewer()` ngay trong `page.tsx` (`src/app/(public)/kudos/page.tsx`),
-không phụ thuộc `proxy.ts`.
+**Cập nhật 2026-09-07 (đợt 3 — F007_KudosLiveBoard + F008_KudosHeartReaction)**: `/kudos` không nằm
+trong whitelist 6-route cũ — khác hẳn `/awards`/`/standards`/`/profile`, route này không chạy qua
+`auth`/refresh-cookie của proxy. Kể từ F011 (matcher đổi sang negative lookahead), `/kudos` CÓ khớp
+matcher mới nhưng vẫn chỉ nhận `pass` (không phải `auth`) vì không nằm trong `isLegacyProxyRoute` —
+hệ quả quan sát được không đổi khi khoá TẮT: không refresh session cookie/chuẩn hoá `NEXT_LOCALE`
+nào chạy khi truy cập `/kudos` trực tiếp, route tự đọc session qua `getCurrentUser()`/`getViewer()`
+ngay trong `page.tsx`. Khi khoá BẬT, `/kudos` redirect về `/prelaunch` như mọi route khác (xem
+"Nhánh khoá điều hướng" cuối mục này).
+
+**Mới 2026-09-08 (F011_CountdownPrelaunchPage) — nhánh khoá điều hướng, chạy TRƯỚC mọi predicate
+auth khác:** cờ `PRELAUNCH_LOCK_ENABLED` (mặc định TẮT, fail-safe — chỉ đúng chuỗi `"true"` mới
+bật) VÀ `EVENT_START_AT` chưa về mốc (tính bằng `parseTargetDate`/`remaining`, đúng cặp hàm
+`/prelaunch` dùng) → redirect MỌI route trang về `/prelaunch`, **kể cả 6 route thuộc whitelist cũ**
+(`/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile`) — chỉ 4 ngoại lệ kỹ thuật thoát được:
+`/prelaunch` (chính nó, luật riêng), `/auth/*`, `/api/*`, `/_next/*`/file tĩnh. Xem
+`docs/vi/system/architecture.md` và `docs/vi/system/permissions.md` § "Bổ sung dự kiến —
+CountdownPrelaunchPage" cho chi tiết + lý do thứ tự (`src/domain/prelaunch-lock.ts`, hàm
+`planProxy`). Redirect của nhánh khoá dùng **303** cho request không phải GET/HEAD (tránh 307 mặc
+định re-POST một Server Action sang `/prelaunch` rồi 404); GET/HEAD nhận redirect mặc định.
 
 **Cập nhật 2026-09-08 (F009_KudosCompose)**: `/kudos` VẪN KHÔNG thêm vào `matcher` dù đã có đường
 ghi thật (INSERT `public.kudos` + upload Storage) — quyết định có chủ đích, không phải bỏ sót
@@ -128,16 +174,17 @@ bảo mật cho hành động ghi nằm BÊN TRONG Server Action `createKudo` (t
 closed) — route-level guard chỉ trả lời "xem được trang hay không", còn F009 tách hành động ghi
 khỏi hành động xem trên CÙNG một route công khai.
 
-Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **đổi từ 2026-09-06 (F003_Homepage)**: hai predicate bên trong đã thu hẹp còn đúng `/login` và các path trong `PROTECTED_ROUTES`; `path === "/"` không còn khớp nhánh redirect nào, dù vẫn nằm trong `matcher` để refresh session cookie mỗi lượt ghé:
+Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua `createProxyClient`) — **thứ tự as-built (`src/domain/prelaunch-lock.ts`, hàm `planProxy`), nhánh khoá chạy TRƯỚC mọi predicate auth dưới đây**:
 
 | Điều kiện | Redirect tới |
 |-----------|--------------|
-| đã login & path === /login | / (đổi từ /todo) |
-| chưa login & path bắt đầu bằng /todo HOẶC /profile | /login |
-| path === / | pass-through LUÔN — không redirect (public, F003_Homepage; trước đây redirect theo trạng thái đăng nhập) |
-| path === /awards | pass-through LUÔN — không redirect (public, F004_AwardSystemPage) |
-| path === /standards | pass-through LUÔN — không redirect (public, F005_StandardsRulesPage) |
-| còn lại | pass-through (giữ cookie đã refresh) |
+| path === /prelaunch & khoá bật & countdown đã về 0 | / (BR-003) |
+| path ∈ {/auth/*, /api/*, /_next/*, file tĩnh} | pass-through LUÔN (miễn khoá kỹ thuật) |
+| khoá bật (`PRELAUNCH_LOCK_ENABLED=true`) & countdown CHƯA về 0 | /prelaunch — áp dụng cho MỌI path còn lại, kể cả `/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile` |
+| đã login & path === /login (chỉ tới đây khi khoá tắt hoặc đã về 0) | / (đổi từ /todo) |
+| chưa login & path bắt đầu bằng /todo HOẶC /profile (chỉ tới đây khi khoá tắt hoặc đã về 0) | /login |
+| path === / , /awards, /standards (chỉ tới đây khi khoá tắt hoặc đã về 0) | pass-through — không redirect (public) |
+| còn lại | pass-through (giữ cookie đã refresh nếu path ∈ whitelist 6-route cũ) |
 
 `/auth/callback` bị loại khỏi matcher một cách tường minh — route đó tự xử lý redirect riêng (xem Backend Routes). `proxy.ts` cũng chuẩn hoá cookie `NEXT_LOCALE` (ghi đè cả trên `request` lẫn `response` nếu giá trị không hợp lệ) trước khi chạy auth guard.
 
@@ -146,5 +193,5 @@ Ma trận redirect (đọc `request.nextUrl.pathname`, gọi `getUserOrNull` qua
 | Category | Count |
 |----------|-------|
 | Backend Routes | 1 |
-| Frontend Pages | 8 |
-| Total | 9 |
+| Frontend Pages | 9 |
+| Total | 10 |

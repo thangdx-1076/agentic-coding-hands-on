@@ -1,0 +1,58 @@
+{
+  "score": 9.6,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "GET /prelaunch returns 200 and renders exactly one role=timer with 3 tiles labelled DAYS, HOURS, MINUTES — tests/e2e/prelaunch.spec.ts C1 and C3, green",
+    "Each tile renders a 2-digit zero-padded value; negative or out-of-range clamps to 00 — src/utils/countdown.test.ts plus e2e C3 digit regex",
+    "Title renders from next-intl: vi 'Su kien se bat dau sau', en 'Event starts in' — e2e C2 green, keys present in both message files",
+    "Absent or malformed EVENT_START_AT degrades to 00/00/00 and never throws — src/utils/countdown.test.ts parseTargetDate null path",
+    "With PRELAUNCH_LOCK_ENABLED true and the event not reached, every page route redirects to /prelaunch — measured curl matrix, 7 routes all 307",
+    "Exempt from the lock: /prelaunch, /auth/*, /api/*, /_next/* and static files — planProxy truth table plus measured /auth/callback and /api/health",
+    "Once the event is reached the lock lifts and /prelaunch redirects to / — measured with EVENT_START_AT in the past",
+    "BR-005: a request outside the original 6-route proxy whitelist must not reach Supabase or touch cookies — planProxy returns pass before getUserOrNull; reviewer confirmed by reading src/proxy.ts",
+    "The 6 pre-existing proxy routes keep their prior auth behaviour when the lock is off — 194 e2e green with the flag unset, which is the default CI state",
+    "No regression in the existing e2e suite after widening config.matcher — 194 passed, 4 skipped, 0 failed"
+  ],
+  "regressionChecked": [
+    "Full playwright suite after the matcher widening: 194 passed, 4 skipped, 0 failed",
+    "Homepage still renders the promoted countdown modules: home.spec.ts 27/27 green after the move and after the data-testid additions",
+    "Commit 1 confirmed a pure relocation via git -M rename detection: 5 byte-identical renames, 1 import line",
+    "Server Action POST under lock measured end to end after switching to 303; previously 404'd with x-nextjs-action-not-found",
+    "pnpm build and pnpm build-storybook both succeed, so the widened matcher passes Next's build-time validation"
+  ],
+  "contractStatus": "HONORED",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "medium",
+      "location": "plans/260908-1653-countdown-prelaunch-page/reports/manual-lock-verification-260908.md:50",
+      "summary": "Evidence report documented pre-fix behaviour and called it correct. Superseded section appended with the re-measured matrix.",
+      "disposition": "Accept",
+      "category": "documentation"
+    },
+    {
+      "severity": "medium",
+      "location": "src/proxy.ts:61",
+      "summary": "Lock redirected non-GET with 307, which preserves the method, so Server Action POSTs re-POSTed to /prelaunch and 404'd. Fixed by using 303 for non-GET/HEAD.",
+      "disposition": "Accept",
+      "category": "correctness"
+    },
+    {
+      "severity": "low",
+      "location": "src/proxy.ts:78",
+      "summary": "auth branch was a bare fallthrough; a future fourth ProxyPlan variant would silently behave as auth. Added a never-style exhaustiveness assignment.",
+      "disposition": "Accept",
+      "category": "maintainability"
+    },
+    {
+      "severity": "low",
+      "location": "plans/260908-1653-countdown-prelaunch-page/spec/countdown-prelaunch-page/functional-spec.md:90",
+      "summary": "BR-004 wording claimed days clamp to 00 outside range; pad2 only pads up, so 120 renders as 120. Spec wording corrected, code unchanged.",
+      "disposition": "Accept",
+      "category": "documentation"
+    }
+  ]
+}
