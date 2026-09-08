@@ -877,3 +877,70 @@
 
 - Sửa 4 lệch nhỏ trên cùng branch trước merge: label `pt-[14px]` để tâm khớp Figma `items-center` mà vẫn chừa dòng lỗi; focus ring màu brand thay outline xanh mặc định (spec B.2); blur URL chỉ kiểm định dạng, ô rỗng không báo bắt buộc (spec C); độ dài Nội dung đo trên chuỗi trim. 11/11 e2e, 27/27 F009, 536/536 unit 100%.
 - Không làm: Enter = Lưu (spec không nói), `useCallback` cho `registerOpen` (vô hại).
+
+## 260908-1125 — home-widget-fab (blueprint)
+
+### Tôi cần làm
+
+- [ ] Quyết: có ghi ngược 5 test case TC36-40 lên MoMorph không (2 frame FAB `get_frame_test_cases` rỗng)?
+- [ ] Quyết: có đánh `design_status: done` cho frame thu gọn `_hphd32jN2` trên MoMorph không?
+
+### Decisions
+
+- Spec draft F003 (screen spec E22 dòng 100/188, technical dòng 159, BR-007) coi nút × là button thứ hai `aria-label="Hủy"` → **sai**, mâu thuẫn `home.spec.ts` TC ID-35. Theo clarifications: một button morph, label cố định. Sửa spec ở phase 04 trước khi promote sang `docs/`.
+- `home-screen.tsx` trả fragment, `<WidgetButton>` thành sibling của div gốc — bắt buộc, không phải thẩm mỹ: TC37 `buttonCount === 1` quét mọi div tổ tiên và div gốc chứa `<button>` của `LanguageSelector` (đo thật: đếm ra 2). Kèm theo: `montserrat.variable` chuyển lên wrapper của widget.
+- Bỏ `hover:scale-105` khỏi trigger: `boundingBox()` tính cả transform (đo thật `111.3×67.2` thay vì `106×64`) → TC37 đỏ ở assertion cuối. Hover đổi sang shadow; cấm transition hình học.
+- Bump patch 0.8.1 → 0.8.2; `#D4271D` dùng arbitrary value, không thêm token vào `globals.css`.
+
+### Nợ lại
+
+- Path data logo Sun* trùng 2 chỗ giữa phase 01 và 02 (chủ ý, để ownership disjoint) — phase 02 khử, có bước grep trong Success Criteria.
+- `cancelLabel` chỉ dùng làm `title` của trigger lúc mở; không test nào assert nó.
+
+## 260908-1207 — home-widget-fab (đính chính blueprint + kết quả)
+
+### Tôi cần làm
+
+- [ ] Review + merge PR của `feat/home-widget-fab` (F003 revision, 0.8.1 → 0.8.2).
+- [ ] Quyết: có ghi ngược 5 test case TC36-40 lên MoMorph không (2 frame FAB `get_frame_test_cases` rỗng)?
+- [ ] Quyết: có đánh `design_status: done` cho frame thu gọn `_hphd32jN2` trên MoMorph không?
+
+### Decisions
+
+- **ĐÍNH CHÍNH mục `## 260908-1125` ở trên.** Dòng *"`home-screen.tsx` trả fragment,
+  `<WidgetButton>` thành sibling của div gốc — bắt buộc"* **đã bị bác, không ship.** File này
+  append-only nên dòng đó không sửa được tại chỗ; đọc dòng này thay cho nó.
+  Lý do bác: div gốc mang `montserrat.variable` + `montserratAlternates.variable`; dời widget ra
+  là mất kế thừa font → phải import `next/font` vào client component → ba thay đổi cấu trúc trên
+  trang đã ship & review, tất cả chỉ để lách **một locator sai**. Locator sai thì sửa locator.
+  Thực tế đã làm: TC37 đổi `page.locator("div").filter({has})` → `page.getByTestId("home-widget-fab")`,
+  và `widget-button.tsx` thêm `data-testid="home-widget-fab"` vào wrapper `fixed` có sẵn.
+  `home-screen.tsx` chỉ đổi tên 3 prop. Concern "client component import `next/font`" do đó không
+  còn tồn tại.
+- **ĐÍNH CHÍNH: spec × đã sửa ngay trong draft, không đợi phase 04.** 5 chỗ trong
+  `spec/F003_Homepage/` đã sửa: `E22` giờ định nghĩa rõ là *trạng thái mở của E19*, không phải
+  element riêng; `cancelLabel` chỉ dùng cho `<title>` icon, không bao giờ là accessible name.
+- **Copy `en` — lỗi của orchestrator, đã sửa.** Tôi dặn `writeKudosItem` giữ "Viết KUDOS" ở cả 2
+  locale, viện dẫn `standards-footer-actions.tsx` mà không kiểm giá trị `en` của nó. Repo dịch hẳn:
+  `standards.footer.writeKudos` en = "Write KUDOS". Đã sửa `messages/en.json` → `"Write KUDOS"`.
+  E2E không ảnh hưởng (locale mặc định `vi`).
+- Giữ nguyên: bỏ `hover:scale-105` (spec CSV `_hphd32jN2` ghi hover là "Bóng nhẹ" → transform cũ
+  lệch spec sẵn); bump patch 0.8.2; `#D4271D` arbitrary value.
+- Rest point Study/Spec/Blueprint/Forge/Temper/Inspect tự duyệt theo luật CLAUDE.md.
+  Reviewer 9/10 · 0 critical · 0 high.
+
+### Nợ lại
+
+- **Tester dán nhãn sai nguyên nhân đỏ 1 lần nữa** (lần thứ 3 tính cả 2 session trước): báo TC ID-36
+  đỏ vì "thiếu link /standards", thật ra là strict-mode violation ở dòng 50 (`hasText: "/"` khớp cả
+  span bọc ngoài). Orchestrator phải tự chạy `--grep` mới ra. Vẫn phải tự verify, không tin báo cáo.
+- **Orphaned dev server trên :3100** làm tôi chẩn sai một lần: `pnpm dev` mồ côi (PPID 1) bị
+  `reuseExistingServer` dùng lại, thiếu `EVENT_START_AT` mà `playwright.config.ts:63` inject →
+  countdown test đỏ cố định 2/2 lần, đọc y như bug có sẵn. Memory
+  `stale-dev-server-fakes-e2e-flakiness` đã bổ sung biến thể này + cách check ancestry.
+- `menuBox!.right` (không tồn tại trên `boundingBox()`) lọt qua mọi lần RED vì TC36 đỏ sớm hơn nên
+  không bao giờ chạy tới dòng 109. Playwright một mình không bắt được; `pnpm typecheck` bắt ngay.
+  → tester cần chạy typecheck trên file spec nó tự viết.
+- Focus ring nút × đỏ dùng `ring-login-button` (vàng) trên nền `#D4271D` — pattern có sẵn, không
+  phải mới, reviewer xếp Low.
+- Chưa có test panel 224px cao ở viewport thấp/hẹp (reviewer Low, ngoài scope homepage-only).

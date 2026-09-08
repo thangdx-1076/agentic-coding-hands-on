@@ -1,0 +1,44 @@
+{
+  "task": "Revision cua F003 (Homepage): thay menu suy dien cua Widget Button bang trang thai mo co design (FAB) — 2 option vang \"The le\" -> /standards va \"Viet KUDOS\" -> /kudos, tren mot trigger morph tu pill 106x64 thanh nut tron do 56x56. MoMorph Sv7DFwBw1h + _hphd32jN2, instance i87tDx10uM node 5022:15169.",
+  "mode": "interactive",
+  "acceptanceCriteria": [
+    "Trigger giu aria-label \"Hanh dong nhanh\" co dinh o ca 2 trang thai; aria-expanded mang trang thai",
+    "Dong: pill 106x64. Mo: 56x56 tron, bg #D4271D, chua IconClose trang 24x24",
+    "Mo thi noi dung pill ke ca text \"/\" khong render",
+    "role=menu chua dung 2 a[role=menuitem]: href=/standards chu \"The le\", href=/kudos chu \"Viet KUDOS\"",
+    "Moi option cao 64px",
+    "Khong con a[href=/awards] va chu \"Award Information\" trong menu",
+    "Trong role=menu khong co button nao; trong cum widget chi co 1 button",
+    "Click trigger lan 2 / click ngoai / Escape / chon option deu dong; Escape tra focus ve trigger",
+    "Panel neo phai duoi cung diem voi pill, mep phai lon hon 0.8 x chieu rong viewport",
+    "widget-button.tsx duoi 200 dong va useMenuKeyboardNav dung nguyen trang itemCount 2"
+  ],
+  "touchpoints": [
+    "src/app/(public)/(home)/_components/widget-button.tsx",
+    "src/app/(public)/(home)/_components/home-screen.tsx",
+    "src/app/(public)/(home)/_components/widget-button.stories.tsx",
+    "src/app/(public)/(home)/_shared/home-copy.ts",
+    "src/app/(public)/(home)/page.tsx",
+    "src/app/_components/icons/icon-close.tsx",
+    "src/app/_components/icons/icon-close.stories.tsx",
+    "src/app/_components/icons/icon-sun-logo.tsx",
+    "src/app/_components/icons/icon-sun-logo.stories.tsx",
+    "src/app/(public)/kudos/_components/kudos-compose-icons.tsx",
+    "messages/vi.json",
+    "messages/en.json",
+    "tests/e2e/home-widget-fab.spec.ts"
+  ],
+  "blastRadius": [
+    "Trang / (homepage) — widget noi goc duoi phai, ca 2 trang thai",
+    "tests/e2e/home.spec.ts TC ID-30..35 phai giu xanh: click trigger lan 2 de dong + Escape tra focus phu thuoc aria-label co dinh va DOM node khong remount",
+    "src/app/(public)/kudos/_components/kudos-link-dialog.tsx va kudos-compose-footer.tsx — import IconClose qua re-export shim sau khi promote",
+    "src/lib/i18n/messages-parity.test.ts — cong chan doi khoa vi/en dong thoi",
+    "src/hooks/use-menu-keyboard-nav.ts — dung nguyen trang, unit test cua no khong doi"
+  ],
+  "contracts": [
+    "aria-label=\"Hanh dong nhanh\" la accessible name CO DINH cua trigger o ca 2 trang thai (BR-007); cancelLabel chi lam title tooltip",
+    "data-testid=\"home-widget-fab\" tren wrapper fixed — locator contract cua tests/e2e/home-widget-fab.spec.ts",
+    "home.widget copy keys: bo kudosItem/awardsItem, them standardsItem/writeKudosItem/cancelLabel tren ca vi.json va en.json",
+    "tests/e2e/home.spec.ts va tests/e2e/home-widget-fab.spec.ts la hop dong read-only voi implementer"
+  ]
+}

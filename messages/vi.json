@@ -99,8 +99,9 @@
     },
     "widget": {
       "label": "Hành động nhanh",
-      "kudosItem": "Sun* Kudos",
-      "awardsItem": "Award Information"
+      "standardsItem": "Thể lệ",
+      "writeKudosItem": "Viết KUDOS",
+      "cancelLabel": "Hủy"
     }
   },
   "awards": {

@@ -57,8 +57,9 @@ export type HomeCopy = SiteChromeCopy & {
   };
   widget: {
     label: string;
-    kudosItem: string;
-    awardsItem: string;
+    standardsItem: string;
+    writeKudosItem: string;
+    cancelLabel: string;
   };
 };
 
@@ -145,9 +146,8 @@ export const defaultHomeCopy: HomeCopy = {
   },
   widget: {
     label: "Hành động nhanh",
-    // Menu content inferred from the 2 widget icons — user override pending,
-    // see clarifications.md § Widget button.
-    kudosItem: "Sun* Kudos",
-    awardsItem: "Award Information",
+    standardsItem: "Thể lệ",
+    writeKudosItem: "Viết KUDOS",
+    cancelLabel: "Hủy",
   },
 };

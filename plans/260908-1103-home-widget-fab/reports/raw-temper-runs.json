@@ -1,0 +1,32 @@
+[
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "summary": "TypeScript compilation successful, no errors"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "summary": "ESLint passed after fixing 4 Playwright best-practice warnings in test file"
+  },
+  {
+    "command": "pnpm test:unit",
+    "exitCode": 0,
+    "summary": "536 unit tests passed across 63 test files, 100% coverage maintained"
+  },
+  {
+    "command": "E2E_PORT=3100 npx playwright test tests/e2e/home-widget-fab.spec.ts",
+    "exitCode": 0,
+    "summary": "5 FAB E2E tests passed: TC ID-36, 37, 38, 39, 40 (7.6s)"
+  },
+  {
+    "command": "E2E_PORT=3100 npx playwright test tests/e2e/home.spec.ts",
+    "exitCode": 0,
+    "summary": "27 baseline home E2E tests passed, no regression (10.6s)"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "Code formatting verified via Prettier"
+  }
+]

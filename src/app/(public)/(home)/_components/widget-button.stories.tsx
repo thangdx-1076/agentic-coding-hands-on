@@ -8,9 +8,10 @@ import { WidgetButton } from "./widget-button";
 const meta = {
   component: WidgetButton,
   args: {
-    kudosLabel: defaultHomeCopy.widget.kudosItem,
-    awardsLabel: defaultHomeCopy.widget.awardsItem,
+    standardsLabel: defaultHomeCopy.widget.standardsItem,
+    writeKudosLabel: defaultHomeCopy.widget.writeKudosItem,
     buttonLabel: defaultHomeCopy.widget.label,
+    cancelLabel: defaultHomeCopy.widget.cancelLabel,
   },
   decorators: [
     (Story) => (
