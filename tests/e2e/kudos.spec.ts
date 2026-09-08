@@ -482,29 +482,27 @@ test.describe(
       // C19: Cuộl tới cuối dữ liệu → sentinel biến mất, không request thêm, **không** empty state
       await page.goto("/kudos");
 
-      // Scroll to absolute end
-      await page.evaluate(() => {
-        window.scrollBy(0, document.body.scrollHeight);
-      });
+      // Keep scrolling to the sentinel until it unmounts (when hasMore becomes false)
+      for (let i = 0; i < 50; i++) {
+        const sentinel = page.locator("[data-testid=kudos-feed-sentinel]");
+        const sentinelCount = await sentinel.count();
 
-      // Wait for sentinel to disappear or become invisible
+        // If sentinel is unmounted from DOM, we've reached the end
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (sentinelCount === 0) {
+          break;
+        }
+
+        // Scroll sentinel into view to trigger intersection observer
+        await sentinel.scrollIntoViewIfNeeded();
+
+        // eslint-disable-next-line playwright/no-wait-for-timeout
+        await page.waitForTimeout(300);
+      }
+
+      // Verify sentinel has been unmounted (proves we reached true end of data)
       const sentinel = page.locator("[data-testid=kudos-feed-sentinel]");
-      await expect
-        .poll(
-          async () => {
-            const count = await sentinel.count();
-            const visible =
-              count > 0
-                ? await sentinel
-                    .first()
-                    .isVisible()
-                    .catch(() => false)
-                : false;
-            return count === 0 || !visible;
-          },
-          { timeout: 5000 },
-        )
-        .toBeTruthy();
+      await expect(sentinel).toHaveCount(0);
     });
 
     test("[C20] Spotlight total count matches pattern and seed count", async ({
