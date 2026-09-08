@@ -8,6 +8,7 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
+import { deleteTestUser } from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -126,6 +127,7 @@ test.describe("Kudos Compose Dialog (CI-safe, no Supabase data required)", () =>
 
 test.describe("Kudos Compose Dialog (@auth)", () => {
   let testUserEmail = "";
+  let sessionUserId = "";
 
   test.beforeEach(async ({ context }) => {
     // Create authenticated session
@@ -135,13 +137,14 @@ test.describe("Kudos Compose Dialog (@auth)", () => {
     testUserEmail = `test-${Date.now()}-${Math.random().toString(36).substring(7)}@kudos-test.dev`;
     const password = "Test@123456";
 
-    const { access_token, refresh_token } = await createTestSession(
+    const { access_token, refresh_token, user_id } = await createTestSession(
       supabaseUrl,
       publishableKey,
       testUserEmail,
       password,
       { full_name: "Test User" },
     );
+    sessionUserId = user_id;
 
     const cookies = await generateSupabaseCookies(
       supabaseUrl,
@@ -151,6 +154,17 @@ test.describe("Kudos Compose Dialog (@auth)", () => {
     );
 
     await injectSupabaseSession(context, cookies);
+  });
+
+  // This block creates a user per test too. It had no teardown at all, so it
+  // was the other half of the pile-up: 18 `@kudos-test.dev` users per run,
+  // measured 2026-09-09. These tests never write a kudo, so only the user
+  // itself needs removing.
+  test.afterEach(async () => {
+    if (sessionUserId) {
+      await deleteTestUser(sessionUserId);
+      sessionUserId = "";
+    }
   });
 
   test("[C03] Authenticated: click pill → dialog opens with correct title", async ({
@@ -796,31 +810,15 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
   // by 3+ rows per run, and F007's kudos.spec C19 (single scroll reaches the
   // end of the seed-sized feed) starts timing out — observed at 88 rows on
   // 2026-09-08. The test user itself cannot DELETE (no policy, by design), so
-  // the delete goes through the service role when the runner exports it
-  // (`supabase status -o env` prints SERVICE_ROLE_KEY locally); CI never runs
-  // this tier. Missing key → warn once, never fail the test.
+  // the delete goes through the service role, resolved by
+  // `helpers/service-role.ts` (env, else `supabase status -o env`); CI never
+  // runs this tier. No key → warn, never fail the test.
   test.afterEach(async () => {
-    const serviceRoleKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
     if (!testUserId) return;
-    if (!serviceRoleKey) {
-      console.warn(
-        "[kudos-compose] SUPABASE_SERVICE_ROLE_KEY not set — test kudos left in local DB",
-      );
-      return;
-    }
-    const supabaseUrl = process.env.SUPABASE_URL || "http://127.0.0.1:55321";
-    try {
-      await fetch(`${supabaseUrl}/rest/v1/kudos?sender_id=eq.${testUserId}`, {
-        method: "DELETE",
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-      });
-    } catch {
-      // cleanup is best-effort; the assertion above already decided the test
-    }
+    // The key is derived (env, else `supabase status`) rather than required —
+    // it used to be neither exported nor derivable, so this hook took its
+    // "missing key" branch on every run and left its rows behind.
+    await deleteTestUser(testUserId);
   });
 
   test("[C21] Type recipient name → dropdown shows seeded Sunners; select one → field filled, dropdown closed", async ({

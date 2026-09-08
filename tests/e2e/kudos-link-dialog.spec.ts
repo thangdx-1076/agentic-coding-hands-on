@@ -8,6 +8,7 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
+import { deleteTestUser } from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -66,6 +67,7 @@ loadEnv();
 
 test.describe("Kudos Add-link Dialog (@auth)", () => {
   let testUserEmail = "";
+  let sessionUserId = "";
 
   test.beforeEach(async ({ context }) => {
     // Create authenticated session
@@ -75,13 +77,14 @@ test.describe("Kudos Add-link Dialog (@auth)", () => {
     testUserEmail = `test-${Date.now()}-${Math.random().toString(36).substring(7)}@kudos-test.dev`;
     const password = "Test@123456";
 
-    const { access_token, refresh_token } = await createTestSession(
+    const { access_token, refresh_token, user_id } = await createTestSession(
       supabaseUrl,
       publishableKey,
       testUserEmail,
       password,
       { full_name: "Test User" },
     );
+    sessionUserId = user_id;
 
     const cookies = await generateSupabaseCookies(
       supabaseUrl,
@@ -91,6 +94,15 @@ test.describe("Kudos Add-link Dialog (@auth)", () => {
     );
 
     await injectSupabaseSession(context, cookies);
+  });
+
+  // Had no teardown at all — one `@kudos-test.dev` user per test, kept
+  // forever. These tests never write a kudo, so only the user needs removing.
+  test.afterEach(async () => {
+    if (sessionUserId) {
+      await deleteTestUser(sessionUserId);
+      sessionUserId = "";
+    }
   });
 
   /**

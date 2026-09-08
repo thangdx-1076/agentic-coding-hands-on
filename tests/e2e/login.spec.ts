@@ -9,6 +9,7 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
+import { deleteTestUser } from "./helpers/service-role";
 import { supabaseReachable } from "./helpers/supabase-reachable";
 
 /** Shape reported by the browser-side MutationObserver in the "Button
@@ -643,6 +644,7 @@ test.describe("Login Screen", () => {
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
     const testEmail = `e2e-${Date.now()}@example.com`;
     const testPassword = `e2e-${randomUUID().slice(0, 8)}`; // Random per run, never logged
+    let sessionUserId = "";
 
     test.beforeEach(async ({ context }) => {
       // Create test user
@@ -652,6 +654,7 @@ test.describe("Login Screen", () => {
         testEmail,
         testPassword,
       );
+      sessionUserId = session.user_id;
 
       // Generate cookies using @supabase/ssr (ensures correct format)
       const cookies = await generateSupabaseCookies(
@@ -663,6 +666,16 @@ test.describe("Login Screen", () => {
 
       // Inject into browser context
       await injectSupabaseSession(context, cookies);
+    });
+
+    // `testEmail` is computed once per worker, so all tests in this block
+    // share one user — `afterAll`, not `afterEach`. Without this the block
+    // left one `@example.com` user per worker behind on every run.
+    test.afterAll(async () => {
+      if (sessionUserId) {
+        await deleteTestUser(sessionUserId);
+        sessionUserId = "";
+      }
     });
 
     test("[TC f62b0c97] Authenticated user redirects /login to /", async ({
