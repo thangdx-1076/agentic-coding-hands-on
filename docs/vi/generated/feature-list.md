@@ -20,6 +20,7 @@
 | F008_KudosHeartReaction | Thả tim cho Kudos | mixed | TypeScript | agentic-coding-hands-on | P1 |
 | F009_KudosCompose | Viết Kudo (dialog soạn Kudos trên /kudos) | mixed | TypeScript | agentic-coding-hands-on | P1 |
 | F010_SecretBoxModal | Mở Secret Box trên /kudos | mixed | TypeScript | agentic-coding-hands-on | P2 |
+| F011_CountdownPrelaunchPage | Màn đếm ngược tiền sự kiện (`/prelaunch`) + khoá điều hướng site-wide | mixed | TypeScript | agentic-coding-hands-on | P1 |
 
 ## Feature Details
 
@@ -344,31 +345,31 @@ trong migration để lần sau không phải migrate lại.
 
 ## Summary
 
-- **Total Features**: 10 (cập nhật 2026-09-08 — thêm F010)
-- **Total Screens**: 8 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 + F010 — screen được BA F### cùng tham chiếu, F010 chỉ mở modal phủ trên, không có SCR### riêng), SCR008_KudosCompose (F009 — dialog không route riêng); cả tám đều được ít nhất một F### tham chiếu
-- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F010 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008,F009,F010`)
-- **Total Routes**: 1 — ROUTE001 (F001); F004-F010 không có ROUTE### mới (frontend page + Server Action/RPC, không route BE nào tự viết — F009 thêm 2 Server Action mới, `createKudo`/`searchSunners`; F010 thêm 1 Server Action `openSecretBoxAction` gọi `.rpc("open_secret_box")`, không phải ROUTE###)
-- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `KudoImage` trên `storage.objects` (F009), `SecretBoxOpening` (F010, bảng `public.secret_box_openings`) đều chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003); F009 mở rộng `Kudo` sẵn có (2 cột ẩn danh) thay vì tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không ghi thêm cột nào lên đó
-- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003/F007/F009 dùng lại BL002); F004-F010 không có BL### mới (RPC `open_secret_box()` của F010 là hàm Postgres `SECURITY DEFINER`, logic trong DB, không phải BL### client)
-- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp); F007/F008 (thả tim), F009 (gửi Kudo + upload ảnh + ẩn danh) và F010 (RPC `open_secret_box`, chỉ `authenticated` được `GRANT EXECUTE`) đều mở trục phân quyền GHI mới nhưng CHƯA cấp mã PERM### riêng — chờ `rebuild-spec` Core pass, xem `permissions-matrix.md § /kudos` và `permissions.md § Bổ sung dự kiến`
+- **Total Features**: 11 (cập nhật 2026-09-08 — thêm F011, nhánh `feat/countdown-prelaunch-page`, chưa merge `main`)
+- **Total Screens**: 9 — SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen (F003), SCR004_Awards (F004), SCR005_Standards (F005), SCR006_Profile (F006), SCR007_KudosLiveBoard (F007 + F008 + F010 — screen được BA F### cùng tham chiếu, F010 chỉ mở modal phủ trên, không có SCR### riêng), SCR008_KudosCompose (F009 — dialog không route riêng), SCR009_CountdownPrelaunch (F011 — route riêng `/prelaunch`); cả chín đều được ít nhất một F### tham chiếu
+- **Total User Stories**: 3 — US001 (F002), US002 (F001), US003 (F001); F003-F011 chưa có US### chính thức (TBD, xem `/tkm:rebuild-spec --features F003,F004,F005,F006,F007,F008,F009,F010,F011`)
+- **Total Routes**: 1 — ROUTE001 (F001); F004-F011 không có ROUTE### mới cấp mã chính thức (frontend page + Server Action/RPC, không route BE nào tự viết — F009 thêm 2 Server Action mới, `createKudo`/`searchSunners`; F010 thêm 1 Server Action `openSecretBoxAction` gọi `.rpc("open_secret_box")`; F011 thêm 1 frontend page `/prelaunch`, xem `route-list.md`, không phải ROUTE### backend)
+- **Total Data Models**: 3 — MODEL001 (F002), MODEL002 (F001 + F003, mở rộng `role`), MODEL003 (không map F### — copy tĩnh của SCR001, xem ghi chú bên dưới); `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `KudoImage` trên `storage.objects` (F009), `SecretBoxOpening` (F010, bảng `public.secret_box_openings`) đều chưa có MODEL### riêng (TBD, xem `entities.md`); F005 không có MODEL### mới (`StandardsCopy` là content-shape tĩnh, cùng lý do MODEL003); F009 mở rộng `Kudo` sẵn có (2 cột ẩn danh) thay vì tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không ghi thêm cột nào lên đó; F011 không có model mới — 2 biến môi trường là nguồn dữ liệu duy nhất, không bảng/view Supabase nào
+- **Total Background Logic**: 3 — BL001, BL002, BL003 (F001; F003/F007/F009 dùng lại BL002); F004-F011 không có BL### mới (RPC `open_secret_box()` của F010 là hàm Postgres `SECURITY DEFINER`, logic trong DB, không phải BL### client; `src/domain/prelaunch-lock.ts` của F011 là domain logic thuần, không phải integration client)
+- **Total Permissions**: 4 — PERM001-004 (F001; PERM001 nay superseded do F003 — xem `permissions-matrix.md`); F004, F005 không tạo PERM### mới (`/awards`, `/standards` PUBLIC, cùng nhóm `/`); F006 không tạo PERM### mới (`/profile` protected, gia nhập cơ chế PERM003 hiện có — mã "TBD (draft)", cấp bởi core pass kế tiếp); F007/F008 (thả tim), F009 (gửi Kudo + upload ảnh + ẩn danh), F010 (RPC `open_secret_box`, chỉ `authenticated` được `GRANT EXECUTE`) và F011 (redirect toàn site theo cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI actor bất kể danh tính) đều mở trục phân quyền mới nhưng CHƯA cấp mã PERM### riêng — chờ `rebuild-spec` Core pass, xem `permissions-matrix.md § /kudos`/`§ /prelaunch` và `permissions.md § Bổ sung dự kiến`
 - **Languages Detected**: TypeScript
 
 **Ghi chú MODEL003_LoginCopy**: đây là content-shape tĩnh (copy Figma của `/login`, không phải domain data) dùng chung bởi cả hai vùng của SCR001 (hero copy thuộc F001, `languageLabel` thuộc F002) — không gán riêng cho một F### vì không có US### nào trực tiếp tiêu thụ nó như dữ liệu nghiệp vụ; đây là input tĩnh cho UI, tương tự cách `data-model.md` tự mô tả nó ("không phải domain/persisted data"). Không phải orphan theo nghĩa quy tắc reviewer (quy tắc coverage chỉ bắt buộc với US###/SCR###), nêu ở đây để tường minh.
 
 ## Cross-Reference Validation
 
-- [x] All F### codes are unique (F001-F010 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, F009 kế tiếp liền, F010 kế tiếp liền, id_contiguity PASS)
-- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003-F010 chưa có US### chính thức (TBD)
-- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose tồn tại trong `screen-flow.md`/`screen-list.md`)
+- [x] All F### codes are unique (F001-F011 — không trùng, không renumber; F007/F008 cấp ở block liền `[F007..F008]`, F009 kế tiếp liền, F010 kế tiếp liền, F011 kế tiếp liền, id_contiguity PASS)
+- [x] All F### codes are referenced in UserStories.md — N/A hướng ngược: mọi US### đều được một F### tham chiếu (US001→F002, US002→F001, US003→F001); F003-F011 chưa có US### chính thức (TBD)
+- [x] All screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose, SCR009_CountdownPrelaunch tồn tại trong `screen-list.md`; SCR009 CHƯA có trong `screen-flow.md`, cùng gap đã ghi cho SCR007/SCR008 — core pass kế tiếp đồng bộ)
 - [x] All user story references are valid (US001-003 tồn tại trong `user-stories.md`)
-- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004-F010 không có ROUTE### mới)
-- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `SecretBoxOpening` (F010) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào; F009 mở rộng `Kudo` sẵn có, không tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không tạo model mới)
-- [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`)
-- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới; F007/F008/F009/F010 chờ mã core pass, xem Summary)
+- [x] All route references are valid (ROUTE001 tồn tại trong `route-list.md`; F004-F011 không có ROUTE### backend mới — F011 thêm 1 frontend page `/prelaunch`)
+- [x] All data model references are valid (MODEL001, MODEL002 tồn tại trong `entities.md`; `Award` (F004), `ProfileCard` (F006), `Kudo`/`KudoHeart` (F007/F008), `SecretBoxOpening` (F010) thêm mới, chưa có MODEL### riêng; F005 không thêm model nào; F009 mở rộng `Kudo` sẵn có, không tạo model mới; F010 chỉ đọc `Kudo` sẵn có, không tạo model mới; F011 không có model mới)
+- [x] All behavior logic references are valid (BL001-003 tồn tại trong `behavior-logic.md`; F011 không có BL### mới)
+- [x] All permission references are valid (PERM001-004 tồn tại trong `permissions-matrix.md`; PERM001 nay superseded; F004, F005, F006 không tạo PERM### mới; F007/F008/F009/F010/F011 chờ mã core pass, xem Summary)
 - [x] Every US has a parent feature (F###) — US001→F002; US002, US003→F001
-- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008+F010; SCR008→F009
-- [x] Every route maps to a feature (F###) — ROUTE001→F001
-- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006; `Kudo`/`KudoHeart`→F007/F008 (F009 mở rộng `Kudo`, F010 chỉ đọc); `SecretBoxOpening`→F010
+- [x] Every screen has a parent feature (F###) — SCR001→F001+F002; SCR002→F001; SCR003→F003; SCR004→F004; SCR005→F005; SCR006→F006; SCR007→F007+F008+F010; SCR008→F009; SCR009→F011
+- [x] Every route maps to a feature (F###) — ROUTE001→F001; `/prelaunch`→F011 (route-list.md, không phải ROUTE### backend)
+- [x] Every data model maps to a feature (F###) — MODEL001→F002; MODEL002→F001+F003; MODEL003 dùng chung, xem ghi chú Summary; `Award`→F004; `ProfileCard`→F006; `Kudo`/`KudoHeart`→F007/F008 (F009 mở rộng `Kudo`, F010 chỉ đọc); `SecretBoxOpening`→F010; F011 không map model nào
 - [x] Every background logic maps to a feature (F###) — BL001-003→F001 (BL002 dùng lại ở F003/F007/F009)
 - [x] Every permission maps to a feature (F###) — PERM001-004→F001
 
@@ -477,3 +478,54 @@ lập (mở hộp để nhận thưởng).
 **Ngoài phạm vi**: nút "Mở Secret Box" trên `/profile` (giữ `disabled` — chưa có đường ống stats
 thật, xem `functional-spec.md § 3` D002); phản chiếu huy hiệu vừa nhận vào `BadgeCollection` của
 `/profile` (D003) — bảng `secret_box_openings` đã đủ dữ liệu để làm sau, ngoài scope PR này.
+
+---
+
+### F011: Màn đếm ngược tiền sự kiện (`/prelaunch`) + khoá điều hướng site-wide
+
+**Type**: mixed
+**Description**: Route mới `/prelaunch` hiển thị đếm ngược toàn màn hình tới `EVENT_START_AT`,
+tái dùng 100% logic đếm ngược đã có ở `/` (nay nâng cấp thành shared: `src/utils/countdown.ts`,
+`src/app/(public)/_hooks/use-countdown.ts`, `src/app/(public)/_components/countdown-tiles.tsx`). Phần THẬT SỰ mới: mở rộng
+edge guard `src/proxy.ts` — cờ `PRELAUNCH_LOCK_ENABLED` (mặc định TẮT) kết hợp countdown chưa về 0
+sẽ redirect TOÀN BỘ route trang (kể cả `/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile`)
+về `/prelaunch`, trừ 4 ngoại lệ kỹ thuật (`/prelaunch` chính nó, `/auth/*`, `/api/*`, `/_next/*`/file
+tĩnh). Feature đầu tiên của repo KHÔNG chạm Supabase — toàn bộ trạng thái tính từ 2 biến môi trường.
+
+**Vì sao đây là outcome RIÊNG, không gộp vào F001 (route-guard)**: F001 gác theo TRẠNG THÁI ĐĂNG
+NHẬP; F011 gác theo THỜI ĐIỂM + CỜ CẤU HÌNH, áp dụng đồng nhất bất kể actor đã đăng nhập hay chưa
+(kể cả `admin`) — một trục khoá hoàn toàn khác, không phải một route-guard mới theo nghĩa PERM001-004.
+
+**Workspace**: agentic-coding-hands-on
+**Languages**: TypeScript
+**Components** *(đã lên code, nhánh `feat/countdown-prelaunch-page`, chưa merge `main`)*:
+`src/app/(public)/prelaunch/{page.tsx,_components/{prelaunch-screen,prelaunch-countdown}.tsx}` +
+`src/domain/prelaunch-lock.ts` (`planProxy`, `isPrelaunchLockEnabled`, thuần, zero I/O) +
+`src/proxy.ts` (mở rộng, không phải guard mới) + 3 module climb lên Zone A:
+`src/utils/countdown.ts`, `src/app/(public)/_hooks/use-countdown.ts`, `src/app/(public)/_components/countdown-tiles.tsx` +
+`src/constants/routes.ts` (thêm `ROUTES.PRELAUNCH`) + khoá i18n `prelaunch.title`
+(`messages/{vi,en}.json`)
+
+**Related Screens**:
+- SCR009_CountdownPrelaunch: Countdown Prelaunch (atomic, PUBLIC, không route-guard cho chính nó)
+
+**Related User Stories**:
+- TBD (draft, local) — xem `features/F011_CountdownPrelaunchPage/functional-spec.md § 6`
+  (US001-US002 local, cùng tiền lệ F007-F010)
+
+**Related APIs/Routes**:
+- (GET) /prelaunch — ROUTE### mới, chưa cấp mã chính thức (frontend page, không phải backend route
+  handler theo quy ước `route-list.md`); xem `route-list.md § File: src/app/(public)/prelaunch/page.tsx`
+
+**Related Data Models**:
+- Không có model mới — 2 biến môi trường (`EVENT_START_AT`, `PRELAUNCH_LOCK_ENABLED`) là nguồn dữ
+  liệu duy nhất, không bảng/view Supabase nào
+
+**Related Background Logic**:
+- Không có BL### mới — `src/domain/prelaunch-lock.ts` là domain logic thuần (không phải
+  integration client), không khớp 10 loại BL### đã liệt kê
+
+**Related Permissions**:
+- TBD (draft) — redirect toàn site về `/prelaunch` khi `PRELAUNCH_LOCK_ENABLED=true` VÀ chưa tới
+  giờ sự kiện, áp cho MỌI route kể cả whitelist cũ của `proxy.ts`; xem
+  `docs/vi/system/permissions.md § Bổ sung dự kiến — CountdownPrelaunchPage`

@@ -133,7 +133,15 @@ chế mới.
   đọc — gate đăng nhập của `(protected)/layout.tsx` không đổi bất kể `getProfileCard` có lỗi hay
   không. Cùng triết lý `getAwards`/`getUserRole` đã ghi ở trên.
 - **Fail-open cho nội dung giải, không phải cho quyền truy cập (F004):** DAL `getAwards` fail-open trả `[]` khi Supabase lỗi — đây là fail-open NỘI DUNG (empty-state), không phải fail-open QUYỀN (trang vẫn luôn public, không có nhánh nào biến `/awards` thành protected khi lỗi). Cùng triết lý `getUserRole` fail-open `"member"` ở F003: một lỗi đọc dữ liệu không được phép biến thành một quyết định phân quyền.
-- Không có time-based restriction, IP-based rule, hay feature-flag nào gate quyền truy cập — không đổi. Biến môi trường mới `EVENT_START_AT` (đếm ngược sự kiện) KHÔNG phải một permission env-gate — nó chỉ đổi chữ hiển thị ("Coming soon" ẩn/hiện, số đếm ngược), không chặn hay mở bất kỳ route/nội dung nào.
+- **Cập nhật (CountdownPrelaunchPage): nay CÓ một feature-flag gate quyền truy cập** — dòng gốc bên
+  dưới không còn đúng nguyên vẹn, giữ lại để thấy sự thay đổi. `EVENT_START_AT` một mình KHÔNG phải
+  permission env-gate — nó chỉ đổi chữ hiển thị. Nhưng cờ MỚI `PRELAUNCH_LOCK_ENABLED`, kết hợp
+  `EVENT_START_AT` chưa về mốc, LÀ một `env-gate`/`feature-flag` chặn thật (redirect toàn site về
+  `/prelaunch`) — xem § "Bổ sung dự kiến — CountdownPrelaunchPage" bên dưới cho chi tiết đầy đủ.
+- Không có time-based restriction hay IP-based rule nào khác gate quyền truy cập — không đổi.
+  `EVENT_START_AT` MỘT MÌNH (không có `PRELAUNCH_LOCK_ENABLED` đi kèm) KHÔNG phải một permission
+  env-gate — nó chỉ đổi chữ hiển thị ("Coming soon" ẩn/hiện, số đếm ngược), không chặn hay mở bất
+  kỳ route/nội dung nào tự nó.
 
 
 ## Bổ sung dự kiến — F007_KudosLiveBoard + F008_KudosHeartReaction
@@ -460,3 +468,73 @@ mặt mới dưới đây, cũng chờ mã ở bước promote — KHÔNG đoán
 - gọi `open_secret_box()` khi đã đăng nhập và còn hộp chưa mở
 - chặn gọi `open_secret_box()` khi chưa đăng nhập
 - chặn mở vượt entitlement (kể cả khi client gửi số/URL badge giả)
+
+## Bổ sung dự kiến — CountdownPrelaunchPage
+
+> **[F011_CountdownPrelaunchPage — đã lên code, chưa merge main]** Delta của feature xây trong
+> `plans/260908-1653-countdown-prelaunch-page/` (nhánh `feat/countdown-prelaunch-page`). Quyết
+> định gốc: `clarifications.md § Session 2026-09-08`. `PERM###` cho bề mặt dưới đây vẫn
+> `TBD (draft)` — cấp ở promote. Đối chiếu lại với `src/domain/prelaunch-lock.ts`/`src/proxy.ts`
+> as-built, KHÔNG phải draft ban đầu — 2 điểm draft từng để ngỏ nay đã chốt, ghi rõ ở dưới.
+
+### `/prelaunch` là route công khai, không route-guard cho CHÍNH NÓ — hệ thống KHÔNG đổi phân loại `other`
+
+`/prelaunch` gia nhập đúng nhóm PUBLIC hiện có — không qua `(protected)/layout.tsx`, không phân
+biệt vai trò `member`/`admin`. Màn này không có gì cần bảo vệ (đếm ngược tĩnh, không PII), nên
+không tự nó tạo permission-item cho việc XEM màn.
+
+### Trục khoá MỚI: khoá theo THỜI ĐIỂM + CỜ CẤU HÌNH, không phải theo danh tính — và áp cho MỌI route khác, không riêng `/prelaunch`
+
+Mọi `PERM###` từ F001 tới F010 trả lời câu hỏi "đã đăng nhập hay chưa" (hoặc, F008/F009, thêm "có
+phải chủ sở hữu hàng dữ liệu"). CountdownPrelaunchPage thêm một trục khoá KHÁC HẲN, không dựa trên
+danh tính: **khoá điều hướng dựa trên (a) cờ vận hành `PRELAUNCH_LOCK_ENABLED` và (b) điều kiện
+thời gian (đếm ngược đã về 0 hay chưa)**. Người dùng `admin` đã đăng nhập bị khoá y hệt người chưa
+đăng nhập — trục này không phân biệt actor.
+
+`PRELAUNCH_LOCK_ENABLED` **KHÔNG phải một permission-item theo actor** — nó là một cổng vận hành
+áp cho MỌI actor như nhau, gần maintenance-mode hơn RBAC/ownership.
+
+**Sửa lại so với draft ban đầu — phạm vi khoá RỘNG HƠN nhiều so với "chỉ route mới lộ ra":**
+as-built (`src/domain/prelaunch-lock.ts`, hàm `planProxy`) xác nhận nhánh khoá chạy TRƯỚC phép so
+khớp whitelist 6-route cũ của `proxy.ts`. Nghĩa là **khi khoá đang bật, redirect về `/prelaunch` áp
+dụng cho MỌI route trang, kể cả 6 route mà hệ thống từng chỉ có 4 `PERM###` route-guard/refresh-cookie
+cho chúng: `/` (từng PERM001, nay superseded), `/login` (PERM002), `/todo` (PERM003), `/awards`,
+`/standards`, `/profile` (gia nhập PERM003's cơ chế)**. Trước sự kiện và khi cờ bật, KHÔNG route nào
+trong 6 route đó chạy tới nhánh guard/refresh-cookie gốc của nó — nhánh khoá đã redirect trước khi
+tới đó. Hai lớp guard hiện có (`proxy.ts` optimistic + `(protected)/layout.tsx` authoritative) không
+hề bị tắt hay yếu đi bởi thay đổi này — chúng chỉ đơn giản không được nhường đường tới trong lúc
+khoá còn bật; khi khoá tắt (mặc định) hoặc countdown đã về 0, toàn bộ 6 route trở lại hành vi guard
+y hệt trước feature này, không đổi gì.
+
+### Danh sách miễn khoá — không phải một danh sách quyền, một danh sách kỹ thuật
+
+`/prelaunch`, `/auth/*`, `/api/*`, `/_next/*`, file tĩnh — miễn khoá vì lý do KỸ THUẬT (tránh vòng
+lặp redirect, tránh hỏng OAuth callback, route handler không phải trang), không phải vì các route
+đó có quyền cao hơn. `/login` và `/todo` KHÔNG nằm trong danh sách miễn khoá này — khác draft ban
+đầu có thể gợi ý, chúng bị khoá y hệt mọi route khác khi cờ bật (xem mục trên).
+
+### Fail-safe: mặc định TẮT, không fail-open/fail-closed theo nghĩa cũ
+
+Khác các fail-open/fail-closed đã ghi cho F003-F009 (xử lý LỖI khi đọc dữ liệu), cờ này không có
+khái niệm "lỗi khi đọc" — chỉ 2 giá trị tường minh (`"true"`, không phân biệt hoa/thường, hoặc bất
+kỳ giá trị nào khác = tắt, xác nhận tại `isPrelaunchLockEnabled`). Mặc định khi biến môi trường
+KHÔNG được set là TẮT (an toàn) — một môi trường quên set biến này sẽ KHÔNG vô tình khoá toàn site.
+
+### 303 cho redirect không phải GET/HEAD — sửa phát sinh khi implement, không có trong draft
+
+Draft ban đầu không lường điểm này: redirect của nhánh khoá dùng **303**, không phải 307 mặc định
+của `NextResponse.redirect`. Lý do: 307 giữ nguyên method, nên một Server Action POST tới một route
+đang bị khoá sẽ re-POST sang `/prelaunch` (không có action đó) và nhận 404
+`x-nextjs-action-not-found` thay vì màn đếm ngược — đo được lúc implement. GET/HEAD vẫn nhận
+redirect mặc định (không cần 303). Đây là chi tiết kỹ thuật của redirect, không đổi bất kỳ ma trận
+quyền nào ở trên.
+
+### Bề mặt cần cấp PERM### thật khi promote
+
+`PERM001`–`PERM004` đã dùng (F001–F006); F007–F010 vẫn `TBD (draft)`. CountdownPrelaunchPage thêm
+bề mặt mới dưới đây, cũng chờ mã ở bước promote — KHÔNG đoán số:
+
+- redirect TOÀN BỘ route trang (bao gồm `/`, `/login`, `/todo`, `/awards`, `/standards`, `/profile`)
+  về `/prelaunch` khi `PRELAUNCH_LOCK_ENABLED=true` VÀ chưa tới giờ sự kiện
+- miễn khoá cho `/prelaunch`, `/auth/*`, `/api/*`, `/_next/*`, file tĩnh (bản thân danh sách ngoại lệ)
+- gỡ khoá tự động + redirect `/prelaunch` → `/` khi đã tới giờ sự kiện

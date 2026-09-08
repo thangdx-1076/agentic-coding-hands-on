@@ -9,7 +9,7 @@ export type KudosBannerProps = {
  * Readonly per spec A — no interactive children.
  *
  * `MM_MEDIA_KV Background` (`I2940:13432;2167:5141`, real export
- * `kv-background.png`, Figma's own `aspect-ratio: 45/16` reused verbatim
+ * `kv-background.webp`, Figma's own `aspect-ratio: 45/16` reused verbatim
  * below) is a shared full-bleed backdrop that in the design sits BEHIND both
  * this banner and the separate compose pill (A.1, `kudos-compose-pill.tsx`)
  * — but file ownership splits those into two leaf components, so each only
@@ -18,7 +18,11 @@ export type KudosBannerProps = {
  * background, never an `<img>`/`next/image`, unlike every other full-bleed
  * background in this repo (`KeyvisualBackground`, `KudosSection`), which is
  * why this component deliberately does not follow that `next/image fill`
- * precedent.
+ * precedent. The trade-off of staying on a CSS background is that nothing
+ * re-encodes the file for the browser the way `next/image` would, so the
+ * source itself has to be the optimized one: the 1440x512 export ships as
+ * WebP q90 (138K) instead of the original PNG (1.54M, 91% of it wasted on
+ * every visit to `/kudos`).
  *
  * Content (title + logo) is vertically centered in the artwork band —
  * the source frame's own absolute Y offset is relative to a Figma mock
@@ -31,7 +35,7 @@ export function KudosBanner({ title, logoAlt }: KudosBannerProps) {
     <section
       data-testid="kudos-banner"
       className="relative flex aspect-[45/16] w-full items-center bg-cover bg-center"
-      style={{ backgroundImage: "url(/kudos/kv-background.png)" }}
+      style={{ backgroundImage: "url(/kudos/kv-background.webp)" }}
     >
       {/* mm:I2940:13432;1210:12612 `Cover` — the readability scrim this frame
           layers over its own artwork, same role as `mm:2167:9029` in the

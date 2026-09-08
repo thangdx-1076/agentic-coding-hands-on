@@ -7,6 +7,9 @@ import {
 } from "@/lib/i18n/locale";
 import { createProxyClient } from "@/lib/supabase/proxy-client";
 import { ROUTES } from "@/constants/routes";
+import { parseTargetDate, remaining } from "@/utils/countdown";
+import { isPrelaunchLockEnabled, planProxy } from "@/domain/prelaunch-lock";
+import { redirectStatusFor } from "@/utils/http/redirect-status";
 
 /**
  * Every route that requires a session. Widen this list — never add a
@@ -24,20 +27,61 @@ const PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE];
  * "should not be your only line of defense."
  *
  * Redirect matrix (§ E2E contract):
- *   authed   & path = /login              → /
- *   !authed  & path ∈ PROTECTED_ROUTES    → /login
- *   path = /                              → pass through, no redirect (public;
- *                                            cookie refresh via getUserOrNull
- *                                            still runs — see `config.matcher`)
- *   else                                   → pass through (with refreshed cookies)
+ *   prelaunch lock ON & !reached & route not exempt/legacy → /prelaunch (BR-001/BR-002/BR-005)
+ *   /prelaunch & lock ON & reached                          → / (BR-003)
+ *   authed   & path = /login                                → /
+ *   !authed  & path ∈ PROTECTED_ROUTES                       → /login
+ *   path = /                                                 → pass through, no redirect (public;
+ *                                                               cookie refresh via getUserOrNull
+ *                                                               still runs — see `config.matcher`)
+ *   else                                                      → pass through (with refreshed cookies)
+ *
+ * The prelaunch-lock branch runs FIRST and does zero I/O (BR-005): computing
+ * `lockEnabled`/`reached` is a string compare plus a pure date calculation,
+ * never a network call, so widening `config.matcher` below never adds a
+ * Supabase round-trip to a route that never had one — `planProxy` returns
+ * `{ kind: "pass" }` for any such route before `getUserOrNull` is ever
+ * reached. See `src/domain/prelaunch-lock.ts` for the decision table.
  */
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const lockEnabled = isPrelaunchLockEnabled(
+    process.env.PRELAUNCH_LOCK_ENABLED,
+  );
+  // Same `parseTargetDate`/`remaining` the `/prelaunch` page uses (DRY) —
+  // an absent or malformed `EVENT_START_AT` parses to `null`, which reads
+  // as "never reached", never as "already reached" (would loop the
+  // /prelaunch → / redirect) and never throws (BR-004).
+  const target = parseTargetDate(process.env.EVENT_START_AT);
+  const reached = target ? remaining(target, Date.now()).reached : false;
+
+  const plan = planProxy({ pathname, lockEnabled, reached });
+
+  if (plan.kind === "redirect") {
+    // 303 for anything with a body to re-send — see `redirectStatusFor`.
+    return NextResponse.redirect(
+      new URL(plan.to, request.url),
+      redirectStatusFor(request.method),
+    );
+  }
+
+  if (plan.kind === "pass") {
+    return NextResponse.next();
+  }
+
+  // `plan.kind` is "auth" here. TypeScript proves it: the two branches above
+  // narrow the 3-value union down to one member, so adding a 4th variant to
+  // `ProxyPlan` without handling it here fails this assignment at build time
+  // rather than silently falling through into the session lookup.
+  const _exhaustive: "auth" = plan.kind;
+  void _exhaustive;
+
   const response = NextResponse.next({ request });
 
   normalizeLocaleCookie(request, response);
 
   const user = await getUserOrNull(request, response);
-  const { pathname } = request.nextUrl;
 
   const isAuthPage = pathname === ROUTES.LOGIN;
   const isProtectedPage = PROTECTED_ROUTES.some((route) =>
@@ -115,26 +159,31 @@ function redirectPreservingCookies(
 }
 
 /**
- * Matcher whitelist (not a broad negative-lookahead): only the routes this
- * proxy actually needs to touch. `/auth/callback` is deliberately excluded
- * (it handles its own redirect logic) and no `_next`/asset path is
- * matched, per the phase's risk assessment on proxy overreach.
+ * Widened from a 6-route whitelist to a negative lookahead (phase 04 /
+ * CAP-02): the prelaunch lock has to see every route to be able to redirect
+ * it to `/prelaunch`, which the old whitelist — by definition — never
+ * exposed to this proxy. Pattern is the one
+ * `node_modules/next/dist/docs/.../proxy.md` § Matcher recommends for
+ * "match everything except a short exclude list": `_next/static`,
+ * `_next/image`, `favicon.ico`, `api`, `auth`, and any path with a file
+ * extension (static assets) never reach `proxy()` at all.
  *
- * `/awards` (F004_AwardSystemPage) and `/standards` (F005_StandardsRulesPage)
- * are matched for the same reason `/` is: locale-cookie normalization +
- * session refresh for a public page that takes no guard branch above — they
- * are NOT added to `PROTECTED_ROUTES`, which tests `ROUTES.TODO` and
- * `ROUTES.PROFILE`.
+ * This does NOT reintroduce the "proxy overreach" this file's history
+ * warned against: every route that is newly in-scope (e.g. `/kudos`) is
+ * caught by the lock branch's `{ kind: "pass" }` result — computed with
+ * zero I/O — before `getUserOrNull` ever runs. The old 6 routes
+ * (`/`, `/login`, `/todo/:path*`, `/awards`, `/standards`, `/profile`) keep
+ * running the exact same auth/locale logic as before, bit-for-bit; see
+ * `isLegacyProxyRoute` in `src/domain/prelaunch-lock.ts` for how `planProxy`
+ * reproduces that whitelist.
  *
- * `/profile` (F006_ProfilePage) IS a protected route (see
- * `PROTECTED_ROUTES` above) — it needs the matcher entry so this proxy
- * actually runs for it, same as `/todo/:path*`.
- *
- * Stays a LITERAL array, never `ROUTES.*`: Next statically analyzes
- * `config.matcher` at build time (it cannot evaluate an imported constant),
- * so this is the one place in `src/**` that intentionally keeps its own
- * route strings.
+ * Stays a LITERAL array (single string), never `ROUTES.*` or an imported
+ * constant: Next statically analyzes `config.matcher` at build time and
+ * cannot evaluate an import, so this is the one place in `src/**` that
+ * intentionally keeps its own route string. Keep the `\\.` (escaped dot,
+ * doubled for the TS string literal) exactly as written — a single `\.`
+ * changes what the regex matches.
  */
 export const config = {
-  matcher: ["/", "/login", "/todo/:path*", "/awards", "/standards", "/profile"],
+  matcher: ["/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

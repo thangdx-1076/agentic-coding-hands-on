@@ -1,0 +1,607 @@
+Found 6 direct dependencies. Resolving transitive graph...
+
+
+Phase timings: discovery 0.0s, transitive walk 0.2s, batch pre-pass 0.3s, license resolution 0.0s
+
+  Project license: Proprietary
+
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━
+┃ Package              ┃ Ecosystem ┃ Group ┃ Source       ┃ License      ┃ Risk 
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━
+│ @playwright/test     │ npm       │ prod  │ package.json │ Apache-2.0   │ permi
+│ (1.62.1)             │           │       │              │              │      
+│ @supabase/ssr        │ npm       │ prod  │ package.json │ MIT          │ permi
+│ (0.12.5)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/auth-js    │           │       │              │              │      
+│ (2.115.0) (also:     │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/functions… │           │       │              │              │      
+│ (2.115.0) (also:     │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/phoenix    │           │       │              │              │      
+│ (0.4.5) (also:       │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/postgrest… │           │       │              │              │      
+│ (2.115.0) (also:     │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/realtime-… │           │       │              │              │      
+│ (2.115.0) (also:     │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @supabase/storage-js │           │       │              │              │      
+│ (2.115.0) (also:     │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─ cookie (1.1.1)  │ npm       │ prod  │              │ MIT          │ permi
+│   └─ iceberg-js      │ npm       │ prod  │              │ MIT          │ permi
+│ (0.8.1) (also:       │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│   └─ tslib (2.8.1)   │ npm       │ prod  │              │ 0BSD         │ permi
+│ (also:               │           │       │              │              │      
+│ @supabase/supabase-… │           │       │              │              │      
+│ next +1 more)        │           │       │              │              │      
+│ @supabase/supabase-… │ npm       │ prod  │ package.json │ MIT          │ permi
+│ (2.115.0)            │           │       │              │              │      
+│ @types/node          │ npm       │ prod  │ package.json │ MIT          │ permi
+│ (20.19.43)           │           │       │              │              │      
+│ next (16.3.4)        │ npm       │ prod  │ package.json │ MIT          │ permi
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/code-frame    │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/compat-data   │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/core     │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/generator     │           │       │              │              │      
+│ (7.29.8) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-compi… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-globa… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-modul… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-modul… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-strin… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-valid… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @babel/helper-valid… │           │       │              │              │      
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/helpers  │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/parser   │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.8) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/template │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.7) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/traverse │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.8) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @babel/types    │ npm       │ prod  │              │ MIT          │ permi
+│ (7.29.8) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @emnapi/runtime │ npm       │ prod  │              │ MIT          │ permi
+│ (1.10.0) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @emnapi/runtime │ npm       │ prod  │              │ MIT          │ permi
+│ (1.11.0) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @emnapi/runtime │ npm       │ prod  │              │ MIT          │ permi
+│ (1.11.3) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @emnapi/runtime │ npm       │ prod  │              │ MIT          │ permi
+│ (1.9.2) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @img/colour     │ npm       │ prod  │              │ MIT          │ permi
+│ (1.1.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-darwin-a… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-darwin-x… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-freebsd-… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ LGPL-3.0-or… │ weak-
+│ @img/sharp-libvips-… │           │       │              │              │      
+│ (1.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-arm │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-ar… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-pp… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-ri… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-s3… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linux-x64 │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linuxmus… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-linuxmus… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ weak-
+│ @img/sharp-wasm32    │           │       │              │ AND          │      
+│ (0.35.4) (also:      │           │       │              │ LGPL-3.0-or… │      
+│ next-intl)           │           │       │              │ AND MIT      │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @img/sharp-webconta… │           │       │              │              │      
+│ (0.35.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ weak-
+│ @img/sharp-win32-ar… │           │       │              │ AND          │      
+│ (0.35.4) (also:      │           │       │              │ LGPL-3.0-or… │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ weak-
+│ @img/sharp-win32-ia… │           │       │              │ AND          │      
+│ (0.35.4) (also:      │           │       │              │ LGPL-3.0-or… │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ weak-
+│ @img/sharp-win32-x64 │           │       │              │ AND          │      
+│ (0.35.4) (also:      │           │       │              │ LGPL-3.0-or… │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @jridgewell/gen-map… │           │       │              │              │      
+│ (0.3.13) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @jridgewell/remappi… │           │       │              │              │      
+│ (2.3.5) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @jridgewell/resolve… │           │       │              │              │      
+│ (3.1.2) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @jridgewell/sourcem… │           │       │              │              │      
+│ (1.6.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @jridgewell/trace-m… │           │       │              │              │      
+│ (0.3.31) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @next/env       │ npm       │ prod  │              │ MIT          │ permi
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-darwin-ar… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-darwin-x64 │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-linux-arm… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-linux-arm… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-linux-x64… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-linux-x64… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-win32-arm… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @next/swc-win32-x64… │           │       │              │              │      
+│ (16.3.4) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ @swc/helpers    │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (0.5.23) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ baseline-browser-ma… │           │       │              │              │      
+│ (2.11.21) (also:     │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ browserslist    │ npm       │ prod  │              │ MIT          │ permi
+│ (4.28.8) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ caniuse-lite    │ npm       │ prod  │              │ CC-BY-4.0    │ permi
+│ (1.0.30001810)       │           │       │              │              │      
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ client-only     │ npm       │ prod  │              │ MIT          │ permi
+│ (0.0.1) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ convert-source-map   │           │       │              │              │      
+│ (2.0.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ debug (2.6.9)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ debug (3.2.7)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ debug (4.4.3)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ detect-libc     │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (2.1.2) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ ISC          │ permi
+│ electron-to-chromium │           │       │              │              │      
+│ (1.5.422) (also:     │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ escalade        │ npm       │ prod  │              │ MIT          │ permi
+│ (3.2.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ fsevents        │ npm       │ prod  │              │ MIT          │ permi
+│ (2.3.2) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ fsevents        │ npm       │ prod  │              │ MIT          │ permi
+│ (2.3.3) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ gensync         │ npm       │ prod  │              │ MIT          │ permi
+│ (1.0.0-beta.2)       │           │       │              │              │      
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ has-flag        │ npm       │ prod  │              │ MIT          │ permi
+│ (4.0.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ js-tokens       │ npm       │ prod  │              │ MIT          │ permi
+│ (10.0.0) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ js-tokens       │ npm       │ prod  │              │ MIT          │ permi
+│ (4.0.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ js-tokens       │ npm       │ prod  │              │ MIT          │ permi
+│ (9.0.1) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ jsesc (3.1.0)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ json5 (1.0.2)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ json5 (2.2.3)   │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ lru-cache       │ npm       │ prod  │              │ ISC          │ permi
+│ (10.4.3) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ lru-cache       │ npm       │ prod  │              │ BlueOak-1.0… │ permi
+│ (11.5.2) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ lru-cache       │ npm       │ prod  │              │ ISC          │ permi
+│ (5.1.1) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ minimist        │ npm       │ prod  │              │ MIT          │ permi
+│ (1.2.8) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ ms (2.0.0)      │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ ms (2.1.3)      │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ nanoid (3.3.18) │ npm       │ prod  │              │ MIT          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ node-releases   │ npm       │ prod  │              │ MIT          │ permi
+│ (2.0.54) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ picocolors      │ npm       │ prod  │              │ ISC          │ permi
+│ (1.1.1) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ playwright      │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (1.62.1) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ playwright-core │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (1.62.1) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ postcss         │ npm       │ prod  │              │ MIT          │ permi
+│ (8.5.23) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ postcss         │ npm       │ prod  │              │ MIT          │ permi
+│ (8.5.28) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ scheduler       │ npm       │ prod  │              │ MIT          │ permi
+│ (0.27.0) (also:      │           │       │              │              │      
+│ next-intl,           │           │       │              │              │      
+│ react-dom)           │           │       │              │              │      
+│   └─ semver (6.3.1)  │ npm       │ prod  │              │ ISC          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ semver (7.8.5)  │ npm       │ prod  │              │ ISC          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ sharp (0.35.4)  │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│   └─ source-map-js   │ npm       │ prod  │              │ BSD-3-Clause │ permi
+│ (1.2.1) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ styled-jsx      │ npm       │ prod  │              │ MIT          │ permi
+│ (5.1.6) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ supports-color  │ npm       │ prod  │              │ MIT          │ permi
+│ (7.2.0) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ undici-types    │ npm       │ prod  │              │ MIT          │ permi
+│ (6.21.0) (also:      │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ update-browserslist… │           │       │              │              │      
+│ (1.3.2) (also:       │           │       │              │              │      
+│ next-intl)           │           │       │              │              │      
+│   └─ yallist (3.1.1) │ npm       │ prod  │              │ ISC          │ permi
+│ (also: next-intl)    │           │       │              │              │      
+│ next-intl (4.14.2)   │ npm       │ prod  │ package.json │ MIT          │ permi
+│   └─ @eloqnt/config  │ npm       │ prod  │              │ MIT          │ permi
+│ (0.1.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @eloqnt/format-json  │           │       │              │              │      
+│ (0.1.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @eloqnt/format-po    │           │       │              │              │      
+│ (0.1.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @formatjs/fast-memo… │           │       │              │              │      
+│ (3.1.7)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @formatjs/icu-messa… │           │       │              │              │      
+│ (3.5.17)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @formatjs/icu-skele… │           │       │              │              │      
+│ (2.1.11)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @formatjs/intl-loca… │           │       │              │              │      
+│ (0.8.13)             │           │       │              │              │      
+│   └─ @parcel/watcher │ npm       │ prod  │              │ MIT          │ permi
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-and… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-dar… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-dar… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-fre… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-lin… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-win… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @parcel/watcher-win… │           │       │              │              │      
+│ (2.6.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ @schummar/icu-type-… │           │       │              │              │      
+│ (1.21.5)             │           │       │              │              │      
+│   └─ @swc/core       │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-darwin-ar… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-darwin-x64 │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-arm… │           │       │              │              │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-arm… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-arm… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-ppc… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-s39… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-x64… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-linux-x64… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-win32-arm… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-win32-ia3… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ @swc/core-win32-x64… │           │       │              │ AND MIT      │      
+│ (1.16.1)             │           │       │              │              │      
+│   └─ @swc/counter    │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (0.1.3)              │           │       │              │              │      
+│   └─ @swc/types      │ npm       │ prod  │              │ Apache-2.0   │ permi
+│ (0.1.28)             │           │       │              │              │      
+│   └─ content-type    │ npm       │ prod  │              │ MIT          │ permi
+│ (2.1.0)              │           │       │              │              │      
+│   └─ icu-minify      │ npm       │ prod  │              │ MIT          │ permi
+│ (4.14.2)             │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ BSD-3-Clause │ permi
+│ intl-messageformat   │           │       │              │              │      
+│ (11.2.14)            │           │       │              │              │      
+│   └─ is-extglob      │ npm       │ prod  │              │ MIT          │ permi
+│ (2.1.1)              │           │       │              │              │      
+│   └─ is-glob (4.0.3) │ npm       │ prod  │              │ MIT          │ permi
+│   └─ negotiator      │ npm       │ prod  │              │ MIT          │ permi
+│ (1.1.0)              │           │       │              │              │      
+│   └─                 │ npm       │ prod  │              │ MIT          │ permi
+│ next-intl-swc-plugi… │           │       │              │              │      
+│ (4.14.2)             │           │       │              │              │      
+│   └─ node-addon-api  │ npm       │ prod  │              │ MIT          │ permi
+│ (7.1.1)              │           │       │              │              │      
+│   └─ picomatch       │ npm       │ prod  │              │ MIT          │ permi
+│ (2.3.2)              │           │       │              │              │      
+│   └─ picomatch       │ npm       │ prod  │              │ MIT          │ permi
+│ (4.0.7)              │           │       │              │              │      
+│   └─ po-parser       │ npm       │ prod  │              │ MIT          │ permi
+│ (2.2.0)              │           │       │              │              │      
+│   └─ use-intl        │ npm       │ prod  │              │ MIT          │ permi
+│ (4.14.2)             │           │       │              │              │      
+│ react (19.2.8)       │ npm       │ prod  │ package.json │ MIT          │ permi
+│ react-dom (19.2.8)   │ npm       │ prod  │ package.json │ MIT          │ permi
+└──────────────────────┴───────────┴───────┴──────────────┴──────────────┴──────
+
+  Summary: 14 warnings, 157 ok
+  Completed in: 0.57s
+
+  Details:
+    ⚠ @img/sharp-libvips-darwin-arm64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-darwin-x64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-arm uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-arm64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-ppc64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-riscv64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-s390x uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linux-x64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linuxmusl-arm64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-libvips-linuxmusl-x64 uses LGPL-3.0-or-later — weak copyleft 
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+    ⚠ @img/sharp-wasm32 uses Apache-2.0 AND LGPL-3.0-or-later AND MIT — weak 
+copyleft license — modifications to the licensed files must remain under the 
+same license; linking from other files is allowed. Review whether this is 
+acceptable for your Proprietary project
+    ⚠ @img/sharp-win32-arm64 uses Apache-2.0 AND LGPL-3.0-or-later — weak 
+copyleft license — modifications to the licensed files must remain under the 
+same license; linking from other files is allowed. Review whether this is 
+acceptable for your Proprietary project
+    ⚠ @img/sharp-win32-ia32 uses Apache-2.0 AND LGPL-3.0-or-later — weak 
+copyleft license — modifications to the licensed files must remain under the 
+same license; linking from other files is allowed. Review whether this is 
+acceptable for your Proprietary project
+    ⚠ @img/sharp-win32-x64 uses Apache-2.0 AND LGPL-3.0-or-later — weak copyleft
+license — modifications to the licensed files must remain under the same 
+license; linking from other files is allowed. Review whether this is acceptable 
+for your Proprietary project
+
+  Generated by licenseal check. Versions shown are the resolved releases 
+checked.
+

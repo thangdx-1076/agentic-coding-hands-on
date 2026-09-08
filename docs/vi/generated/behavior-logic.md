@@ -36,7 +36,7 @@ authored_by: rebuild-spec
 |------|------|---------|---------|--------------|
 | BL001_SupabaseBrowserClient | SupabaseBrowserClient | Client component cần Supabase Auth phía trình duyệt (hiện tại: `useLoginActions.handleLoginClick` gọi `signInWithGoogle` trước khi gọi `signInWithOAuth`) | — | N/A — not a file-exchange type |
 | BL002_SupabaseServerClient | SupabaseServerClient | Server Component / Server Action / Route Handler cần Supabase Auth phía server, mỗi request — nay còn gồm `/kudos` page + 2 Server Action `toggleKudoHeart`/`loadMoreKudos` (F007/F008, 2026-09-07) | — | N/A — not a file-exchange type |
-| BL003_SupabaseProxyClient | SupabaseProxyClient | `proxy.ts` trên mọi request khớp matcher `["/", "/login", "/todo/:path*"]` | — | N/A — not a file-exchange type |
+| BL003_SupabaseProxyClient | SupabaseProxyClient | `proxy.ts` trên request khớp `config.matcher` VÀ rơi vào nhánh `auth` của `planProxy` (`src/domain/prelaunch-lock.ts`) — kể từ F011_CountdownPrelaunchPage (2026-09-08, nhánh `feat/countdown-prelaunch-page`) `config.matcher` là negative lookahead khớp gần hết mọi route, nhưng client này CHỈ được tạo cho 6 route whitelist cũ (`/`, `/login`, `/todo/:path*`, `/awards`, `/standards`, `/profile`) khi KHÔNG bị nhánh khoá prelaunch redirect trước — mọi route khác (kể cả 6 route đó lúc khoá đang bật) nhận `{ kind: "pass" \| "redirect" }` với ZERO lời gọi Supabase | — | N/A — not a file-exchange type |
 
 ---
 
@@ -133,14 +133,14 @@ _(none — instance chỉ dùng để gọi `signInWithOAuth`, không có dòng 
 ## BL003_SupabaseProxyClient
 
 **Type**: integration
-**Trigger**: `proxy.ts` (lớp proxy/middleware Next 16) trên mọi request khớp matcher `["/", "/login", "/todo/:path*"]`
+**Trigger**: `proxy.ts` (lớp proxy/middleware Next 16), CHỈ khi request rơi vào nhánh `auth` của `planProxy` — tức 1 trong 6 route whitelist cũ (`/`, `/login`, `/todo/:path*`, `/awards`, `/standards`, `/profile`) VÀ không bị nhánh khoá prelaunch redirect trước (F011_CountdownPrelaunchPage, 2026-09-08). `config.matcher` bản thân nó (negative lookahead, khớp gần hết mọi route từ F011) không còn là điều kiện đủ — xem `docs/vi/generated/route-list.md § Middleware / Proxy Guard Layer`.
 **File Schema**: N/A — not a file-exchange type
 **Source File**: lib/supabase/proxy-client.ts
 **Source Symbol**: createProxyClient
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory bọc `createServerClient`, ghi cookie đồng thời lên cả `request` (để phần còn lại của cùng pass thấy giá trị đã refresh) lẫn `response` (để browser thực sự nhận cookie session mới/xoay vòng) — pattern proxy chuẩn của `@supabase/ssr`. **Intent matched**: integration — external API/service client (Supabase Auth SDK cho tầng proxy). **No-row reason**: giống BL001/BL002 — không có dòng Next.js App Router trong bảng. **Observed pattern**: export `createProxyClient(request, response)`, gọi duy nhất tại `proxy.ts:73` bên trong `getUserOrNull()` — chỉ dùng để existence-check `user` quyết định redirect optimistic trước khi trang render.
+`[SIGNAL_INFERRED]` Factory bọc `createServerClient`, ghi cookie đồng thời lên cả `request` (để phần còn lại của cùng pass thấy giá trị đã refresh) lẫn `response` (để browser thực sự nhận cookie session mới/xoay vòng) — pattern proxy chuẩn của `@supabase/ssr`. **Intent matched**: integration — external API/service client (Supabase Auth SDK cho tầng proxy). **No-row reason**: giống BL001/BL002 — không có dòng Next.js App Router trong bảng. **Observed pattern**: export `createProxyClient(request, response)`, gọi duy nhất tại `proxy.ts:141` bên trong `getUserOrNull()` — chỉ dùng để existence-check `user` quyết định redirect optimistic trước khi trang render. Nhánh khoá prelaunch (`planProxy`, chạy trước) không bao giờ gọi hàm này — quyết định khoá là thuần string-compare + tính ngày, zero I/O.
 
 ### Related Modules
 

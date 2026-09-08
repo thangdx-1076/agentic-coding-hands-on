@@ -5,7 +5,7 @@ import viMessages from "../../../../../messages/vi.json";
 import { TodoScreen } from "./todo-screen";
 
 /**
- * Story route cho `/todo` (FR-005, US004) — dựng từ `TodoScreen`, component
+ * Story route cho `/todo` (FR-301/FR-302, US002_LoginWithGoogle) — dựng từ `TodoScreen`, component
  * trình bày thuần được tách ra khỏi `app/todo/page.tsx`. Copy lấy nguyên từ
  * `messages/vi.json` (`todo.greeting`, `todo.logout`); placeholder
  * `{email}` trong `greeting` được thay bằng một địa chỉ demo, không phải

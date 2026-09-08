@@ -8,6 +8,7 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
+import { deleteTestUser } from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -235,20 +236,19 @@ test.describe(
     });
 
     test.afterEach(async () => {
-      // Clean up: delete viewer user (sender cleanup optional)
+      // `/auth/v1/admin/*` needs the SERVICE ROLE. This used to send the
+      // publishable key plus the viewer's own access token, which that
+      // endpoint always rejects — and the rejection was swallowed, so every
+      // run silently leaked its user. See helpers/service-role.ts.
+      //
+      // BOTH users, not just the viewer: `beforeEach` creates a counterpart
+      // too, and the old "sender cleanup optional" note meant half of every
+      // run stayed behind for good.
       if (viewerSession?.user_id) {
-        await fetch(
-          `${supabaseUrl}/auth/v1/admin/users/${viewerSession.user_id}`,
-          {
-            method: "DELETE",
-            headers: {
-              apikey: publishableKey,
-              Authorization: `Bearer ${viewerSession.access_token}`,
-            },
-          },
-        ).catch(() => {
-          // Silently ignore cleanup errors
-        });
+        await deleteTestUser(viewerSession.user_id);
+      }
+      if (counterpartId) {
+        await deleteTestUser(counterpartId);
       }
     });
 
@@ -516,19 +516,9 @@ test.describe(
     });
 
     test.afterEach(async () => {
+      // Same service-role fix as the block above.
       if (viewerSession?.user_id) {
-        await fetch(
-          `${supabaseUrl}/auth/v1/admin/users/${viewerSession.user_id}`,
-          {
-            method: "DELETE",
-            headers: {
-              apikey: publishableKey,
-              Authorization: `Bearer ${viewerSession.access_token}`,
-            },
-          },
-        ).catch(() => {
-          // Ignore cleanup errors
-        });
+        await deleteTestUser(viewerSession.user_id);
       }
     });
 

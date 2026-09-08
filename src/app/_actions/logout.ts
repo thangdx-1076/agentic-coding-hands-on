@@ -7,7 +7,7 @@ import { ROUTES } from "@/constants/routes";
 
 /**
  * Logout Server Action bound to the `/todo` page's logout form
- * (FR-603/US004). Always redirects to `/login` afterward, even if
+ * (FR-603/US003_LogOut). Always redirects to `/login` afterward, even if
  * `signOut()` itself fails (e.g. session already expired server-side) —
  * the user's intent is to leave the authenticated area either way, and
  * `/login`'s own guard will re-derive the correct state.

@@ -229,10 +229,16 @@ không phải RLS mở như `public.awards`. `GRANT SELECT` chỉ cho `authentic
 logic, chỉ đổi thư mục cha. `src/utils/url/next-path.ts` (`safeNextPath`, chống open-redirect,
 business-agnostic) tách khỏi `lib/supabase/` vì không phải vendor glue cho Supabase.
 
-`domain/`, `contexts/`, `components/` (shared, ngoài `language-selector`) CHƯA tồn tại — chưa
-tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `src/configs/env.ts` cũng chưa tồn tại:
-`EVENT_START_AT` tiếp tục đọc trực tiếp trong `src/app/(public)/(home)/page.tsx`
-(`resolveTargetIso()`, dòng 177-188) cho tới khi có biến env thứ hai cần đọc.
+`contexts/` CHƯA tồn tại — chưa tạo trước, tạo khi có consumer thật đầu tiên (YAGNI). `domain/`
+và `components/` (shared, ngoài `language-selector`) TỪNG chưa tồn tại nhưng nay đã có consumer
+đầu tiên từ CountdownPrelaunchPage: `src/domain/prelaunch-lock.ts` (`planProxy`,
+`isPrelaunchLockEnabled`) và `src/app/(public)/_components/countdown-tiles.tsx` — xem § "Bổ sung dự kiến —
+CountdownPrelaunchPage" cuối file. `src/configs/env.ts` vẫn chưa tồn tại: `EVENT_START_AT` nay đọc
+trực tiếp ở BA nơi độc lập — `src/app/(public)/(home)/page.tsx` (`resolveTargetIso()`),
+`src/app/(public)/prelaunch/page.tsx` (hàm cùng tên, cố ý KHÔNG chia sẻ — 8 dòng đọc env không
+đáng tách, theo quyết định của phase build feature này) và `src/proxy.ts` (qua
+`parseTargetDate`/`remaining` dùng chung từ `src/utils/countdown.ts`) — vẫn chưa tới ngưỡng cần
+`src/configs/env.ts`.
 
 ## Tech Stack
 
@@ -666,3 +672,85 @@ thêm vào `config.matcher`. Khác F009 ở một điểm: SecretBoxModal không
 tức là chỉ render khi đã có viewer, không có nhánh anonymous nào để điều hướng (xem
 permissions.md § SecretBoxModal). `/profile` không đổi gì — nút ở đó vẫn `disabled`, không route,
 không component nào của `/profile` bị chạm bởi feature này.
+
+## Bổ sung dự kiến — CountdownPrelaunchPage
+
+> **[F011_CountdownPrelaunchPage — đã lên code, chưa merge main]** Delta của feature xây trong
+> `plans/260908-1653-countdown-prelaunch-page/` (nhánh `feat/countdown-prelaunch-page`). Quyết
+> định gốc: `clarifications.md § Session 2026-09-08`. Đối chiếu lại với `src/domain/prelaunch-lock.ts`
+> và `src/proxy.ts` as-built — hai điểm SAU khi draft ban đầu được viết đã đổi (xem 2 mục cuối).
+
+### Route mới, PUBLIC, không route-guard riêng cho chính nó
+
+`src/app/(public)/prelaunch/` (Server Component `page.tsx`) — cùng nhóm `(public)` như `/`,
+`/awards`, `/standards`; bản thân route không đọc session để quyết định hiển thị. Ba module đếm
+ngược trước đây riêng của `(home)` đã CLIMB scope-ladder lên Zone A dùng chung — cùng nguyên tắc
+climb đã áp dụng cho `SiteHeader`/`SiteFooter`/`get-viewer.ts` ở các đợt trước, khác ở chỗ lần này
+lên hẳn `src/<layer>/` (không phải một `_*` private folder của route-group) vì cả 2 consumer
+(`(home)` và `prelaunch`) là component/hook/util thuần:
+- `src/utils/countdown.ts` (từ `(home)/_utils/countdown.ts`)
+- `src/app/(public)/_hooks/use-countdown.ts` (từ `(home)/_hooks/use-countdown.ts`)
+- `src/app/(public)/_components/countdown-tiles.tsx` (từ `(home)/_components/countdown-tiles.tsx`) — consumer
+  ĐẦU TIÊN của `src/components/`, thư mục mới chưa từng tồn tại tính tới F010.
+
+Domain logic thuần mới: `src/domain/prelaunch-lock.ts` (`planProxy`, `isPrelaunchLockEnabled`) —
+zero I/O, không tự gọi `Date.now()` hay Supabase; consumer ĐẦU TIÊN của `src/domain/`, thư mục
+cũng mới chưa từng tồn tại tính tới F010.
+
+### Điểm thật sự mới: mở rộng edge guard `src/proxy.ts`, KHÔNG phải một guard thứ hai
+
+Khoá điều hướng của feature này là một nhánh MỞ RỘNG chạy TRƯỚC nhánh guard đăng nhập optimistic
+hiện có bên trong `proxy()` — không phải file guard mới. Cờ mới `PRELAUNCH_LOCK_ENABLED`, mặc định
+TẮT (fail-safe: chỉ đúng chuỗi `"true"`, không phân biệt hoa/thường, mới bật khoá — thiếu biến,
+rỗng, hay bất kỳ giá trị nào khác kể cả `"1"` đều là TẮT). Điều kiện khoá là AND của 2 vế:
+
+```text
+khoá khi:  PRELAUNCH_LOCK_ENABLED === "true"  AND  countdown (EVENT_START_AT) chưa về 0
+```
+
+`reached` tính bằng ĐÚNG `parseTargetDate`/`remaining` mà `/prelaunch` dùng (DRY — một phép tính
+ngày cho cả feature); `EVENT_START_AT` thiếu/sai định dạng parse ra `null` → đọc là "chưa về 0"
+(không bao giờ tự khoá lặp `/prelaunch` → `/` do lỗi parse, BR-004).
+
+**Ngoại lệ miễn khoá** (không route nào trong danh sách bị redirect dù khoá đang bật): `/prelaunch`
+(chính nó — có luật riêng, xem dưới), `/auth/*` (OAuth callback), `/api/*` (route handler),
+`/_next/*` và mọi file tĩnh có phần mở rộng. Khi countdown đã về 0, khoá tự gỡ hoàn toàn dù cờ còn
+`true`; vào lại `/prelaunch` lúc đó bị đưa về `/`.
+
+### Đúng như draft đã lường trước: 2 điểm draft để ngỏ nay đã chốt bằng code thật
+
+**(a) Thứ tự ưu tiên — khoá đè lên TOÀN BỘ whitelist cũ của `proxy.ts`, không chỉ các route mới.**
+Draft ban đầu chỉ liệt kê ngoại lệ kỹ thuật (`/auth/*`, `/api/*`, `/_next/*`, static); as-built
+(`src/domain/prelaunch-lock.ts:94-120`, hàm `planProxy`) xác nhận thứ tự quyết định là: (1) chính
+`/prelaunch` → luật riêng; (2) 4 ngoại lệ kỹ thuật ở trên → `pass`; (3) khoá bật & chưa về 0 →
+redirect `/prelaunch` — **nhánh này chạy TRƯỚC phép so khớp whitelist 6-route cũ**
+(`isLegacyProxyRoute`: `/`, `/login`, `/awards`, `/standards`, `/profile`, `/todo`); (4) chỉ khi
+không bị redirect, 6 route cũ đó mới được xử lý `auth` (session lookup), còn lại `pass`. Hệ quả
+quan sát được: **khi khoá đang bật, MỌI route trang — kể cả `/`, `/login`, `/awards`, `/standards`,
+`/profile`, `/todo` — đều redirect về `/prelaunch`**, không riêng gì các route mới lộ ra do
+`config.matcher` mở rộng. `/login` và `/todo` không nằm trong danh sách miễn khoá, nên trước sự
+kiện không có đường nào vào được luồng đăng nhập/khu vực bảo vệ — hai lớp guard hiện có
+(`proxy.ts` optimistic + `(protected)/layout.tsx` authoritative) không hề bị tắt hay yếu đi, chúng
+chỉ đơn giản không bao giờ được nhánh khoá nhường đường tới trong lúc khoá còn bật.
+
+**(b) Cú pháp matcher "tất cả trừ..." đã xác nhận, cộng một sửa lỗi phát sinh khi implement.**
+`config.matcher` đổi từ whitelist 6-route literal sang một negative lookahead:
+```
+matcher: ["/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"]
+```
+— pattern do `node_modules/next/dist/docs/.../proxy.md` § Matcher khuyến nghị cho "khớp mọi thứ
+trừ một danh sách loại trừ ngắn". Route mới lộ ra do matcher rộng hơn (vd. `/kudos`) được nhánh
+khoá trả `{ kind: "pass" }` với ZERO I/O trước khi `getUserOrNull` từng chạy — không hồi quy chi
+phí Supabase cho route chưa từng có. Sửa phát sinh khi implement: redirect của nhánh khoá dùng
+**303**, không phải 307 mặc định của `NextResponse.redirect` — 307 giữ nguyên method nên một
+Server Action POST bị khoá sẽ re-POST sang `/prelaunch` (không có action đó) và nhận 404
+`x-nextjs-action-not-found` thay vì màn đếm ngược (đo được lúc implement, không phải suy đoán).
+303 chỉ áp cho request không phải GET/HEAD; GET/HEAD vẫn nhận redirect mặc định của
+`NextResponse.redirect`.
+
+### Không đổi
+
+Không service backend mới, không Supabase call mới trong nhánh khoá — feature không chạm database,
+toàn bộ trạng thái tính từ 2 biến môi trường. Hai lớp guard hiện có cho `/todo`/`/profile` giữ
+nguyên cơ chế; nhánh khoá prelaunch là một quyết định ĐỘC LẬP chạy trước chúng, không thay thế hay
+làm yếu chúng.

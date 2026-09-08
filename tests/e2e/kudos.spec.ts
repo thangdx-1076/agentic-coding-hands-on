@@ -8,6 +8,7 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
+import { deleteTestUser } from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -637,21 +638,13 @@ test.describe(
     });
 
     test.afterEach(async () => {
-      // Clean up test accounts to prevent accumulation
-      // Each test run creates a new account; without cleanup they pile up in auth.users
+      // This hook always intended to stop accounts piling up, and never did:
+      // `/auth/v1/admin/*` requires the SERVICE ROLE, but it was sending the
+      // publishable key plus the user's own access token, which that endpoint
+      // rejects — and `.catch(() => {})` hid the rejection. 194 stale
+      // `@kudos-e2e.saa` users had accumulated by 2026-09-09.
       if (authSession?.user_id) {
-        await fetch(
-          `${supabaseUrl}/auth/v1/admin/users/${authSession.user_id}`,
-          {
-            method: "DELETE",
-            headers: {
-              apikey: publishableKey,
-              Authorization: `Bearer ${authSession.access_token}`,
-            },
-          },
-        ).catch(() => {
-          // Silently ignore cleanup errors (user may not exist or session may have expired)
-        });
+        await deleteTestUser(authSession.user_id);
       }
     });
 

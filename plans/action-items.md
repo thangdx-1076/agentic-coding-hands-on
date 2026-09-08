@@ -1049,3 +1049,224 @@
   step này **chưa từng chạy local** vì job CI chết ở Lint trước khi tới nó, và `build-storybook`
   cũng chưa từng chạy. Giờ CI xanh cả 2 job. Đã lưu memory
   `ci-quality-job-is-stricter-than-local-pnpm-lint` với đủ 6 lệnh của job Quality.
+
+## 260908-1719 — countdown-prelaunch-page (planning)
+
+### Tôi cần làm
+
+- [ ] Quyết định thời điểm bật `PRELAUNCH_LOCK_ENABLED=true` ở production và ai là người bật/tắt —
+      không có UI vận hành nào cho cờ này, chỉ env + restart.
+- [ ] Xác nhận asset nền MoMorph `2268:35129` có trùng `public/home/Keyvisual_BG.png` không
+      (blocking cho phase 03 bước 1; clarifications để "xác nhận ở Track A").
+
+### Decisions
+
+- **Đè bảng DEC của `technical-spec.md § 3.2` dòng 2.** Bảng ghi `/prelaunch` AND (`reached` OR
+  *cờ tắt*) → redirect `/`. Sai: `clarifications.md`, `FR-103`, `SC-003` và bảng edge case
+  `functional-spec.md § 9` đều nói cờ tắt thì `/prelaunch` render bình thường. Thêm nữa, theo bảng
+  DEC thì `/prelaunch` sẽ redirect `/` trong mọi lượt CI (cờ luôn tắt) và màn này không bao giờ
+  e2e được. → Luật đúng: **redirect `/` chỉ khi `lockEnabled && reached`**. Rule (b) + bằng chứng
+  áp đảo 4-1.
+- **Luật khoá sống trong `src/domain/prelaunch-lock.ts`, không nhét thẳng vào `src/proxy.ts`.**
+  `proxy.ts` không nằm trong allowlist coverage của `vitest.config.ts`, còn `src/domain/**/*.ts`
+  thì có (gate 100%). Vì e2e không lật được cờ khoá, unit vét cạn trên hàm thuần là bằng chứng tự
+  động duy nhất cho trạng thái KHOÁ. `src/domain/` là thư mục mới — skill cho phép tạo ở consumer
+  thật đầu tiên.
+- **Nhánh `pass` của proxy trả `NextResponse.next()` trần**, không `normalizeLocaleCookie`, không
+  `getUserOrNull`. Mở matcher khiến proxy chạy trên `/kudos` (hôm nay nó không chạy); pass trần giữ
+  `/kudos` không đổi hành vi, và `src/i18n/request.ts` vốn tự normalize locale khi đọc cookie.
+- **`src/utils/countdown.ts` để phẳng**, không theo pattern thư mục con `a11y/`/`url/` đang có.
+  Spec (`technical-spec.md § 4.1`, `§ 5.4`) ghi đúng đường dẫn phẳng và spec là input authoritative.
+- **Gộp i18n vào phase route thay vì tách phase riêng.** Feature chỉ đẻ đúng 1 khoá mới
+  (`prelaunch.title`); nhãn DAYS/HOURS/MINUTES tái dùng `home.hero.*`. Một phase cho một khoá JSON
+  là thừa. Rule (c).
+- **Không tái dùng `(home)/_components/countdown-timer.tsx`.** Nó mang logic "Coming soon" mà
+  `SCR009 § 3` không có, và là file private của segment `(home)` — import ngang segment bị
+  `eslint.config.mjs` chặn. Viết wrapper riêng trong `prelaunch/_components/`.
+- **Phase tuyến tính 01→05, không song song.** Phase 03 và 04 vốn độc lập nhưng cả hai đều cần
+  `src/constants/routes.ts`; tách sở hữu chỉ để lấy chút song song thì không đáng rủi ro tranh file.
+
+### Nợ lại
+
+- **Trạng thái KHOÁ không có e2e.** `playwright.config.ts` ghim `EVENT_START_AT=2099-...` và không
+  set `PRELAUNCH_LOCK_ENABLED`; env web server cố định cho cả lượt chạy nên không test nào lật được
+  cờ. FR-102, FR-103, BR-002, BR-003 chỉ được phủ bởi unit trên `planProxy` cộng recipe curl kiểm
+  tay (phase 04 bước 10). Đã loại tường minh: webServer thứ hai, runner thứ hai, route handler
+  test-only để bơm cờ.
+- FR-205 (tick 1s) và FR-002 (env hỏng) cũng ngoài tầm e2e — màn hiển thị tới PHÚT, và env e2e luôn
+  hợp lệ. Phủ bởi `use-countdown.test.ts` / `countdown.test.ts` đã có.
+- Dời 6 file ở phase 01 làm `docs/vi/_source-to-fcode.json` lệch đường dẫn — chờ `rebuild-spec` core
+  pass ở promote, không sửa tay docs sinh máy.
+- 4 test case ACCESSING (`68d82c58`, `e6a59553`, `1c266552`, `17aa9e0d`) bỏ qua có chủ đích:
+  boilerplate tự sinh, `Expected_Result` = `---`.
+- Font "Digital Numbers" vẫn chưa nạp, digit fallback `monospace` — nợ kế thừa từ trang chủ.
+- `F011` / `SCR009` / `PERM###` đều còn provisional, cấp số thật ở bước promote.
+
+## 260908-1749 — countdown-prelaunch-page (phase 03: route + i18n)
+
+### Tôi cần làm
+
+- [ ] Review PR khi phase 04/05 xong (chưa mở PR ở phase này — commit riêng theo plan).
+
+### Decisions
+
+- Prompt gọi `mode: screen` nhưng phase file không có field `mode`, ownership bounded
+  (4 file tạo + 3 file sửa) và "Cấm chạm" nêu rõ file của phase khác + "Next Steps" nói
+  phase 04 mới làm tiếp → xử lý như bounded section work (không gọi `Agent`, không bắt
+  buộc kích hoạt skill `tkm:momorph-implement-design`), đúng pattern đã ghi nhận 2 lần
+  trước ở kudos-live-board và secret-box-modal.
+- Asset nền `2268:35129` KHÁC `public/home/Keyvisual_BG.png` (md5 khác nhau, crop khác:
+  1512×1077 full-bleed vs 1512×1392 aspect) → tải mới về `public/prelaunch/Prelaunch_BG.png`
+  (3.1MB, PNG 1512×1077, đã đúng crop sẵn theo export MoMorph).
+- Thêm 3 `data-testid` (`tile`, `tile-label`, `tile-digits`) vào `src/components/countdown-tiles.tsx`
+  (file KHÔNG nằm trong ownedFiles cũng KHÔNG nằm trong danh sách "Cấm chạm") — RED test
+  `tests/e2e/prelaunch.spec.ts` C3 dùng selector `[data-testid='tile'/'tile-label'/'tile-digits']`
+  mà component dùng chung (phase 01) chưa có; đây là bổ sung thuần thuộc tính, không đổi DOM
+  shape/visual, đúng convention `data-testid` đã dùng rộng khắp `kudos/_components/**`. Đã chạy lại
+  `tests/e2e/home.spec.ts` (27/27 xanh) để xác nhận không phá route dùng chung.
+- `aria-hidden="true"` phải đặt trực tiếp trên thẻ `<img>` (qua prop của `next/image`, không phải
+  trên `<div>` bọc ngoài) — C4 dùng selector `img[aria-hidden="true"]` đúng nghĩa đen.
+
+### Nợ lại
+
+- `pnpm build` và `pnpm typecheck` full-repo vẫn đỏ đúng 1 lỗi (`src/domain/prelaunch-lock.test.ts`
+  không resolve được `./prelaunch-lock`) — xác nhận bằng `git stash` là lỗi PRE-EXISTING, không phải
+  do phase này, và đúng như phase 03's Success Criteria đã ghi ("phase 04 mới đóng nó"). Không sửa
+  vì `src/domain/**` là "Cấm chạm" (phase 02/04).
+- `pnpm lint --max-warnings 0` full-repo cũng đỏ 109 lỗi/3 warning, toàn bộ nằm ở
+  `src/domain/prelaunch-lock.test.ts` (type chưa resolve) và `tests/e2e/prelaunch.spec.ts`
+  (2 rule Playwright: `no-networkidle`, `no-wait-for-timeout`) — cả 2 file đều KHÔNG thuộc sở hữu
+  phase này. Đã xác nhận bằng lint riêng 6 file của tôi: 0 error/0 warning.
+
+## 260908-1653 — countdown-prelaunch-page
+
+### Tôi cần làm
+
+- [ ] Quyết định ai được bật `PRELAUNCH_LOCK_ENABLED` trên production và bật lúc nào. Cờ đã sẵn sàng
+      nhưng mặc định TẮT; bật là khoá toàn site về `/prelaunch` cho tới `EVENT_START_AT`.
+- [ ] Trước khi bật thật: đặt `EVENT_START_AT` đúng giờ sự kiện trên môi trường production. Nếu cờ bật
+      mà `EVENT_START_AT` thiếu/hỏng thì site khoá vĩnh viễn — `reached` không bao giờ thành `true`.
+      Đây là fail-safe cố ý (không bao giờ fail-open thành "đã tới giờ"), nhưng cần biết.
+- [ ] Xác nhận ảnh nền `public/prelaunch/Prelaunch_BG.png` (3.0M) đúng là asset thiết kế muốn dùng.
+      Đã tải từ MoMorph và so md5 với `public/home/Keyvisual_BG.png` — khác file.
+
+### Decisions
+
+- Chọn màn Countdown - Prelaunch page (`8PJQswPZmU`) làm việc tiếp theo: màn web duy nhất còn
+  `spec_status: done` mà chưa code. Mọi màn còn lại spec đều `in_progress`.
+- Nguồn target datetime: tái dùng env `EVENT_START_AT` sẵn có thay vì dựng API endpoint như spec ghi
+  `TODO`. Rule (b) — khớp pattern homepage đang dùng.
+- Guard: mở rộng `src/proxy.ts`, KHÔNG tạo `src/middleware.ts`. Next 16.3.4 đã đổi tên
+  `middleware` → `proxy`; file mới sẽ không bao giờ chạy.
+- Khoá cần cờ riêng `PRELAUNCH_LOCK_ENABLED`, mặc định TẮT. Nếu khoá chỉ theo countdown thì
+  `playwright.config.ts` và `.env.local` (đều đặt `EVENT_START_AT` tương lai) sẽ làm đỏ toàn bộ e2e
+  và app không vào được khi dev.
+- Khoá xếp TRÊN whitelist legacy 6 route. Bản đầu làm ngược lại và `/`, `/login`, `/awards`,
+  `/standards`, `/profile`, `/todo` vẫn vào được khi khoá — tức là không khoá gì cả.
+- Redirect non-GET/HEAD dùng 303, không phải 307. 307 giữ method nên Server Action POST bị POST lại
+  sang `/prelaunch` và trả 404 `x-nextjs-action-not-found`.
+- 3 module countdown nâng từ `(home)/_*` lên shared layer vì đã có route thứ hai dùng.
+- Version 0.8.3 → 0.9.0 (minor). Tiền lệ: mỗi màn mới đều minor — 0.4.0 awards, 0.5.0 standards,
+  0.6.0 profile, 0.7.0 kudos. Không hỏi lại vì không mất dữ liệu/tiền/secret.
+- Quyết định `redirectStatusFor` sống trong `src/domain/` chứ không inline trong `proxy.ts`: đó là
+  glob duy nhất mà gate coverage 100% với tới được, nên bug 303 mới có lưới CI thật.
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/22
+
+### Nợ lại
+
+- Font "Digital Numbers" vẫn chưa nạp, `CountdownTiles` fallback `monospace`. Nợ thừa hưởng từ phase
+  homepage, không phát sinh mới ở đây.
+- 4 test case ACCESSING của MoMorph (`68d82c58`, `e6a59553`, `1c266552`, `17aa9e0d`) không hiện thực:
+  đều là boilerplate sinh tự động, `Sub_Category` ghi "Access control unspecified", Expected_Result là
+  "---". Màn public, không có phân quyền.
+- e2e không chứng minh được trạng thái KHOÁ: `playwright.config.ts` ghim env của web server cho cả
+  lượt chạy nên không test nào lật được cờ. Phủ bằng 58 case unit trên `planProxy` (gate coverage
+  100%) cộng ma trận curl đo tay ghi ở `reports/manual-lock-verification-260908.md`.
+- `Prelaunch_BG.png` 3.0M chưa tối ưu. Cùng cỡ với `Keyvisual_BG.png` 4.3M đang có, nên không phải
+  hồi quy — nhưng cả hai đều nên nén lại một lượt.
+
+## 260909-0010 — trả nợ tồn đọng
+
+Rà 86 mục "Tôi cần làm" + 139 mục "Nợ lại" trên 30 phiên. Phần lớn đã tự hết hạn hoặc là việc của
+người; dưới đây là những gì thực sự còn đúng và đã xử lý.
+
+### Tôi cần làm
+
+- [ ] Font "Digital Numbers" — **chặn ở asset, không code được**. Không có trong repo, không có trên
+      Google Fonts, là font bên thứ ba. Cần bạn quyết: mua/xin file license được, hay chọn một font
+      LED thay thế. Trong lúc chờ, `CountdownTiles` fallback `monospace` (nợ từ phase homepage).
+- [ ] Ảnh nền còn nặng: `login/keyvisual.png` 9.0M, `home/Keyvisual_BG.png` 4.3M,
+      `prelaunch/Prelaunch_BG.png` 3.0M, `standards/secret-box-closed.png` 1.2M. Cả bốn đi qua
+      `next/image` nên **người dùng không gánh** — chỉ nặng repo và thời gian build. Chuyển sang WebP
+      được, nhưng đổi asset gốc là quyết định của design, nên tôi không tự làm.
+- [ ] `profile.spec.ts` C2a rớt một lần khi chạy full suite, chạy riêng thì xanh. Nhiễu giữa các
+      worker song song, không phải hồi quy — nhưng đáng theo dõi, chạy lại 2 lượt sau đó đều xanh.
+
+### Decisions
+
+- Ảnh banner `/kudos`: chuyển PNG → WebP q90 (1.54M → 138K). Đây là background CSS nên không có
+  `next/image` tối ưu hộ — bytes đó ship thẳng cho người dùng. Giữ CSS background vì C02 yêu cầu
+  đúng một `<img>` trong banner.
+- Empty catch block ở `auth/callback/route.ts:40` và `lib/supabase/server.ts:32`: **không sửa**. Cả
+  hai đã có comment nói rõ vì sao nuốt lỗi là cố ý (fall-through sang redirect chung; Server
+  Component không có response để ghi cookie). SunLint C029 báo nhầm vì comment không tính là
+  statement. Không bẻ code đang đúng để chiều heuristic.
+- Guard tim dùng `useRef` chứ không `useState`: hai click trong cùng một tick thì state chưa apply
+  kịp — đúng cái case cần chặn.
+
+### Nợ đã đóng
+
+- Rác `@local-db`: 2 499 user + 412 kudos + 88 secret_box_opening đã dọn; 5 spec vá cleanup; chạy
+  full suite 2 lượt liên tiếp → users 21→21→21, kudos 12→12→12. Gốc là gọi endpoint admin bằng
+  publishable key + access token của chính user (endpoint đòi service role), rồi `.catch(() => {})`
+  nuốt luôn lỗi.
+- `kudos.spec` C19 đỏ: hệ quả trực tiếp của rác trên, hết sau khi dọn.
+- Mã traceability ma (`US004`, `FR-005`) trong 6 comment: sửa hết; quét toàn repo giờ không còn mã
+  nào cited trong `src/` mà thiếu trong `docs/vi/`.
+- `docs/vi/system/overview.md` stale: viết lại, mọi citation `path:line` đã mở kiểm.
+- Nút tim thiếu guard in-flight: đã vá, 3 test, đã kiểm test bắt được bug thật.
+
+## 260909-0105 — review logic & design
+
+Reviewer soi 6 commit vá nợ (trước đó chưa qua review lần nào): 0 critical, 2 high, 2 medium.
+Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi reviewer trả lời.
+
+### Tôi cần làm
+
+- [ ] `kudos-compose` C23 và `profile` C2a flake ở full suite (2 lần đỏ / ~8 lượt chạy hôm nay; 3 lượt
+      cuối liên tiếp đều 194 pass). Nguyên nhân có tên: cả hai assert "dòng tôi vừa tạo xuất hiện trong
+      feed dùng chung", trong khi worker khác đang xoá/ghi cùng feed. Block `@local-db` của
+      `kudos-compose` **đã** `mode: "serial"` (dòng 777) — nhưng `mode: "serial"` chỉ serialize trong
+      một describe, không chặn `kudos-compose` chạy song song `kudos.spec`. Muốn diệt hẳn thì phải cho
+      cả tier `@local-db` về một worker (project riêng `workers: 1`), là đổi config có ảnh hưởng rộng.
+      **CI không dính** — `.github/workflows/ci.yml` loại hẳn `@auth|@local-db` bằng `--grep-invert`.
+      Nên tôi để nguyên và báo, chứ không tự đổi config vì một flake chỉ có ở máy local.
+      Lưu ý trung thực: cleanup mới có thể làm lộ flake này rõ hơn — trước đây row test tích tụ nên
+      feed ổn định giả tạo, giờ xoá ngay nên feed biến động thật.
+
+### Decisions
+
+- `redirectStatusFor` chuyển từ `src/domain/prelaunch-lock.ts` sang `src/utils/http/redirect-status.ts`.
+  Hàm này không biết gì về prelaunch — docblock của chính nó thừa nhận đặt ở domain chỉ vì đó là nơi
+  coverage với tới. `src/utils/**` cũng trong allowlist nên được cả hai: đúng cohesion, vẫn có lưới CI.
+  (Reviewer chấm "no action needed"; tôi không đồng ý và vẫn chuyển — trade-off đó không cần thiết.)
+- Bỏ 4 lệnh DELETE thủ công trong `deleteTestUser`, dựa vào cascade. Đã kiểm `pg_constraint`:
+  `public.users.id -> auth.users` và `kudos`/`kudo_hearts`/`secret_box_openings -> public.users` đều
+  `ON DELETE CASCADE`. Comment cũ của tôi giải thích **ngược** — nói xoá user trước sẽ bỏ sót row.
+- `getServiceRoleKey` không memo hoá thất bại nữa. Cache `null` là tái tạo đúng con bug im lặng mà
+  helper này sinh ra để diệt: một lần `supabase status` trượt vì Docker chưa lên là cả worker tắt
+  cleanup tới hết lượt.
+- `use-countdown` + `countdown-tiles` hạ một rung từ Zone A xuống `(public)/_hooks|_components`.
+  Luật thang bậc nói lấy segment chung sâu nhất — cả 2 consumer đều dưới `(public)` — và checklist
+  reviewer của chính skill ghi phải **fail review** khi có business noun dưới `src/components|hooks|utils`.
+  `src/components/` biến mất, nó vốn chỉ được tạo ra để chứa widget này. `src/utils/countdown.ts` ở
+  lại Zone A vì `src/proxy.ts` cần, mà Zone A không được import `src/app`.
+
+### Nợ đã đóng
+
+- **Rò storage bucket** — tôi tự bắt: commit trước đo `users`/`kudos` thấy đứng yên rồi tuyên bố hết
+  rò, nhưng `storage.objects` không có FK về `auth.users` nên 100 object mồ côi vẫn nằm đó, +2 mỗi
+  lượt. Đã dọn và vá. Giờ đo đủ 5 bảng: users 21, kudos 12, hearts 31, objects 0, openings 0 — đứng
+  yên qua 2 lượt full suite.
+- Citation trong 5 file docs trỏ sai sau khi di chuyển file; đã quét lại, mọi `path:line` trong F011
+  specs + system docs đều resolve.

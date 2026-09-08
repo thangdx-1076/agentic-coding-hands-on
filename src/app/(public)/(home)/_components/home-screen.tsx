@@ -6,9 +6,9 @@ import { SiteHeader } from "../../../_components/site-header";
 import { KudosSection } from "../../../_components/kudos-section";
 import { SiteFooter } from "../../../_components/site-footer";
 import type { SiteViewer } from "../../../_shared/site-chrome";
+import { CountdownTiles } from "../../_components/countdown-tiles";
 
 import { HeroSection } from "./hero-section";
-import { CountdownTiles } from "./countdown-tiles";
 import { CtaButtons } from "./cta-buttons";
 import { RootFurtherContent } from "./root-further-content";
 import { AwardsSection } from "./awards-section";

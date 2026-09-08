@@ -17,4 +17,5 @@ export const ROUTES = {
   STANDARDS: "/standards",
   KUDOS: "/kudos",
   PROFILE: "/profile",
+  PRELAUNCH: "/prelaunch",
 } as const;
