@@ -1049,3 +1049,91 @@
   step này **chưa từng chạy local** vì job CI chết ở Lint trước khi tới nó, và `build-storybook`
   cũng chưa từng chạy. Giờ CI xanh cả 2 job. Đã lưu memory
   `ci-quality-job-is-stricter-than-local-pnpm-lint` với đủ 6 lệnh của job Quality.
+
+## 260908-1719 — countdown-prelaunch-page (planning)
+
+### Tôi cần làm
+
+- [ ] Quyết định thời điểm bật `PRELAUNCH_LOCK_ENABLED=true` ở production và ai là người bật/tắt —
+      không có UI vận hành nào cho cờ này, chỉ env + restart.
+- [ ] Xác nhận asset nền MoMorph `2268:35129` có trùng `public/home/Keyvisual_BG.png` không
+      (blocking cho phase 03 bước 1; clarifications để "xác nhận ở Track A").
+
+### Decisions
+
+- **Đè bảng DEC của `technical-spec.md § 3.2` dòng 2.** Bảng ghi `/prelaunch` AND (`reached` OR
+  *cờ tắt*) → redirect `/`. Sai: `clarifications.md`, `FR-103`, `SC-003` và bảng edge case
+  `functional-spec.md § 9` đều nói cờ tắt thì `/prelaunch` render bình thường. Thêm nữa, theo bảng
+  DEC thì `/prelaunch` sẽ redirect `/` trong mọi lượt CI (cờ luôn tắt) và màn này không bao giờ
+  e2e được. → Luật đúng: **redirect `/` chỉ khi `lockEnabled && reached`**. Rule (b) + bằng chứng
+  áp đảo 4-1.
+- **Luật khoá sống trong `src/domain/prelaunch-lock.ts`, không nhét thẳng vào `src/proxy.ts`.**
+  `proxy.ts` không nằm trong allowlist coverage của `vitest.config.ts`, còn `src/domain/**/*.ts`
+  thì có (gate 100%). Vì e2e không lật được cờ khoá, unit vét cạn trên hàm thuần là bằng chứng tự
+  động duy nhất cho trạng thái KHOÁ. `src/domain/` là thư mục mới — skill cho phép tạo ở consumer
+  thật đầu tiên.
+- **Nhánh `pass` của proxy trả `NextResponse.next()` trần**, không `normalizeLocaleCookie`, không
+  `getUserOrNull`. Mở matcher khiến proxy chạy trên `/kudos` (hôm nay nó không chạy); pass trần giữ
+  `/kudos` không đổi hành vi, và `src/i18n/request.ts` vốn tự normalize locale khi đọc cookie.
+- **`src/utils/countdown.ts` để phẳng**, không theo pattern thư mục con `a11y/`/`url/` đang có.
+  Spec (`technical-spec.md § 4.1`, `§ 5.4`) ghi đúng đường dẫn phẳng và spec là input authoritative.
+- **Gộp i18n vào phase route thay vì tách phase riêng.** Feature chỉ đẻ đúng 1 khoá mới
+  (`prelaunch.title`); nhãn DAYS/HOURS/MINUTES tái dùng `home.hero.*`. Một phase cho một khoá JSON
+  là thừa. Rule (c).
+- **Không tái dùng `(home)/_components/countdown-timer.tsx`.** Nó mang logic "Coming soon" mà
+  `SCR009 § 3` không có, và là file private của segment `(home)` — import ngang segment bị
+  `eslint.config.mjs` chặn. Viết wrapper riêng trong `prelaunch/_components/`.
+- **Phase tuyến tính 01→05, không song song.** Phase 03 và 04 vốn độc lập nhưng cả hai đều cần
+  `src/constants/routes.ts`; tách sở hữu chỉ để lấy chút song song thì không đáng rủi ro tranh file.
+
+### Nợ lại
+
+- **Trạng thái KHOÁ không có e2e.** `playwright.config.ts` ghim `EVENT_START_AT=2099-...` và không
+  set `PRELAUNCH_LOCK_ENABLED`; env web server cố định cho cả lượt chạy nên không test nào lật được
+  cờ. FR-102, FR-103, BR-002, BR-003 chỉ được phủ bởi unit trên `planProxy` cộng recipe curl kiểm
+  tay (phase 04 bước 10). Đã loại tường minh: webServer thứ hai, runner thứ hai, route handler
+  test-only để bơm cờ.
+- FR-205 (tick 1s) và FR-002 (env hỏng) cũng ngoài tầm e2e — màn hiển thị tới PHÚT, và env e2e luôn
+  hợp lệ. Phủ bởi `use-countdown.test.ts` / `countdown.test.ts` đã có.
+- Dời 6 file ở phase 01 làm `docs/vi/_source-to-fcode.json` lệch đường dẫn — chờ `rebuild-spec` core
+  pass ở promote, không sửa tay docs sinh máy.
+- 4 test case ACCESSING (`68d82c58`, `e6a59553`, `1c266552`, `17aa9e0d`) bỏ qua có chủ đích:
+  boilerplate tự sinh, `Expected_Result` = `---`.
+- Font "Digital Numbers" vẫn chưa nạp, digit fallback `monospace` — nợ kế thừa từ trang chủ.
+- `F011` / `SCR009` / `PERM###` đều còn provisional, cấp số thật ở bước promote.
+
+## 260908-1749 — countdown-prelaunch-page (phase 03: route + i18n)
+
+### Tôi cần làm
+
+- [ ] Review PR khi phase 04/05 xong (chưa mở PR ở phase này — commit riêng theo plan).
+
+### Decisions
+
+- Prompt gọi `mode: screen` nhưng phase file không có field `mode`, ownership bounded
+  (4 file tạo + 3 file sửa) và "Cấm chạm" nêu rõ file của phase khác + "Next Steps" nói
+  phase 04 mới làm tiếp → xử lý như bounded section work (không gọi `Agent`, không bắt
+  buộc kích hoạt skill `tkm:momorph-implement-design`), đúng pattern đã ghi nhận 2 lần
+  trước ở kudos-live-board và secret-box-modal.
+- Asset nền `2268:35129` KHÁC `public/home/Keyvisual_BG.png` (md5 khác nhau, crop khác:
+  1512×1077 full-bleed vs 1512×1392 aspect) → tải mới về `public/prelaunch/Prelaunch_BG.png`
+  (3.1MB, PNG 1512×1077, đã đúng crop sẵn theo export MoMorph).
+- Thêm 3 `data-testid` (`tile`, `tile-label`, `tile-digits`) vào `src/components/countdown-tiles.tsx`
+  (file KHÔNG nằm trong ownedFiles cũng KHÔNG nằm trong danh sách "Cấm chạm") — RED test
+  `tests/e2e/prelaunch.spec.ts` C3 dùng selector `[data-testid='tile'/'tile-label'/'tile-digits']`
+  mà component dùng chung (phase 01) chưa có; đây là bổ sung thuần thuộc tính, không đổi DOM
+  shape/visual, đúng convention `data-testid` đã dùng rộng khắp `kudos/_components/**`. Đã chạy lại
+  `tests/e2e/home.spec.ts` (27/27 xanh) để xác nhận không phá route dùng chung.
+- `aria-hidden="true"` phải đặt trực tiếp trên thẻ `<img>` (qua prop của `next/image`, không phải
+  trên `<div>` bọc ngoài) — C4 dùng selector `img[aria-hidden="true"]` đúng nghĩa đen.
+
+### Nợ lại
+
+- `pnpm build` và `pnpm typecheck` full-repo vẫn đỏ đúng 1 lỗi (`src/domain/prelaunch-lock.test.ts`
+  không resolve được `./prelaunch-lock`) — xác nhận bằng `git stash` là lỗi PRE-EXISTING, không phải
+  do phase này, và đúng như phase 03's Success Criteria đã ghi ("phase 04 mới đóng nó"). Không sửa
+  vì `src/domain/**` là "Cấm chạm" (phase 02/04).
+- `pnpm lint --max-warnings 0` full-repo cũng đỏ 109 lỗi/3 warning, toàn bộ nằm ở
+  `src/domain/prelaunch-lock.test.ts` (type chưa resolve) và `tests/e2e/prelaunch.spec.ts`
+  (2 rule Playwright: `no-networkidle`, `no-wait-for-timeout`) — cả 2 file đều KHÔNG thuộc sở hữu
+  phase này. Đã xác nhận bằng lint riêng 6 file của tôi: 0 error/0 warning.

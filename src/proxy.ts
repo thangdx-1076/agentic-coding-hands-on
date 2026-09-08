@@ -58,12 +58,33 @@ export async function proxy(request: NextRequest) {
   const plan = planProxy({ pathname, lockEnabled, reached });
 
   if (plan.kind === "redirect") {
-    return NextResponse.redirect(new URL(plan.to, request.url));
+    // 303 for anything that isn't a GET/HEAD, not the 307 `NextResponse.redirect`
+    // defaults to. 307 preserves the method, so a Server Action POST on a locked
+    // route would be re-POSTed to `/prelaunch` — which has no action of that id
+    // and answers 404 with `x-nextjs-action-not-found` instead of showing the
+    // countdown (measured, not assumed). 303 is exactly the "never mind, go look
+    // at this other resource with a GET" status this case needs. Every page in
+    // the app reaches a Server Action as a POST to its own route, so without
+    // this the lock 404s the language selector on /kudos, /awards and /standards.
+    const isBodylessRead =
+      request.method === "GET" || request.method === "HEAD";
+
+    return NextResponse.redirect(
+      new URL(plan.to, request.url),
+      isBodylessRead ? undefined : 303,
+    );
   }
 
   if (plan.kind === "pass") {
     return NextResponse.next();
   }
+
+  // `plan.kind` is "auth" here. TypeScript proves it: the two branches above
+  // narrow the 3-value union down to one member, so adding a 4th variant to
+  // `ProxyPlan` without handling it here fails this assignment at build time
+  // rather than silently falling through into the session lookup.
+  const _exhaustive: "auth" = plan.kind;
+  void _exhaustive;
 
   const response = NextResponse.next({ request });
 
