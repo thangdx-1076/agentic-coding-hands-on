@@ -55,6 +55,64 @@ export function getSupabaseUrl(): string {
   return process.env.SUPABASE_URL || "http://127.0.0.1:55321";
 }
 
+/** Bucket the compose flow uploads kudo images into (`0010_kudo_images_bucket`). */
+const KUDO_IMAGES_BUCKET = "kudo-images";
+
+/**
+ * Removes the user's uploaded images. `upload-kudo-images` namespaces every
+ * object as `<userId>/<uuid>.<ext>`, so the user id is a clean prefix.
+ *
+ * Deleting the DB rows is not enough and the row count hides it: storage
+ * objects live in `storage.objects`, nothing cascades to them from
+ * `auth.users`, and the first version of this helper left 100 orphaned
+ * objects behind while `users` and `kudos` both looked clean.
+ */
+async function deleteUserImages(
+  url: string,
+  headers: Record<string, string>,
+  userId: string,
+): Promise<void> {
+  try {
+    const listed = await fetch(
+      `${url}/storage/v1/object/list/${KUDO_IMAGES_BUCKET}`,
+      {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ prefix: userId, limit: 1000 }),
+      },
+    );
+    if (!listed.ok) {
+      console.warn(
+        `[cleanup] listing ${KUDO_IMAGES_BUCKET}/${userId} returned ${listed.status}`,
+      );
+      return;
+    }
+
+    const objects = (await listed.json()) as { name: string }[];
+    if (!Array.isArray(objects) || objects.length === 0) {
+      return;
+    }
+
+    const removed = await fetch(
+      `${url}/storage/v1/object/${KUDO_IMAGES_BUCKET}`,
+      {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prefixes: objects.map((o) => `${userId}/${o.name}`),
+        }),
+      },
+    );
+    if (!removed.ok) {
+      console.warn(
+        `[cleanup] deleting ${objects.length} object(s) under ${userId}/ returned ${removed.status}`,
+      );
+    }
+  } catch (error) {
+    console.warn(`[cleanup] image cleanup for ${userId} failed:`, error);
+  }
+}
+
 /**
  * Deletes one test user and everything hanging off them, using the service
  * role. Best-effort by design — a failed cleanup must never turn a passing
@@ -73,7 +131,11 @@ export async function deleteTestUser(userId: string): Promise<void> {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
   const url = getSupabaseUrl();
 
-  // Rows first, then the auth user: the FKs point at the user, so deleting
+  // Storage first: `storage.objects.owner` references the auth user, and
+  // nothing cascades, so removing the user first strands the files.
+  await deleteUserImages(url, headers, userId);
+
+  // Rows next, then the auth user: the FKs point at the user, so deleting
   // the user first is what leaves orphans behind.
   for (const path of [
     `/rest/v1/kudo_hearts?user_id=eq.${userId}`,
