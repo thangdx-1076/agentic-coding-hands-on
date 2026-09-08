@@ -1038,3 +1038,6 @@
 - **`set role anon` trong psql làm segfault cả container Postgres local** (reproduce được với
   function không liên quan → quirk có sẵn, không do `0011`). Verify anon phải đi qua PostgREST +
   anon key (HTTP 401), đừng dùng `set role`.
+- **Shipped**: PR https://github.com/thangdx-1076/agentic-coding-hands-on/pull/21, issue #20,
+  version 0.8.2 → 0.8.3, 11 commit, evidence gate SEALED (hard), reviewer SEALED 9/10 · 0 critical.
+  Bump patch theo tiền lệ PR #19 (cũng là feature), không phải minor.
