@@ -120,8 +120,11 @@ test.describe("Notifications Panel", { tag: "@auth @local-db" }, () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // Panel must have title "Thông báo"
-      const panelTitle = dialog.locator("text=Thông báo");
+      // Tiêu đề panel. Dùng role thay vì `text=`: chuỗi trạng thái rỗng
+      // "Bạn chưa có thông báo" cũng CHỨA "Thông báo", nên `text=` khớp 2
+      // phần tử và Playwright báo strict mode violation — đó là locator mơ
+      // hồ, không phải panel sai.
+      const panelTitle = dialog.getByRole("heading", { name: "Thông báo" });
       await expect(panelTitle).toBeVisible();
 
       // Panel must have "Đánh dấu đọc tất cả" button
@@ -684,7 +687,14 @@ test.describe("Notifications Panel", { tag: "@auth @local-db" }, () => {
     try {
       await pageA.goto("/");
 
-      // User B seeds a notification for user A (simulating realtime arrival)
+      // Realtime chỉ giao những sự kiện xảy ra SAU khi kênh đã đăng ký.
+      // `NotificationBell` lấy `userId` qua `auth.getUser()` phía client rồi
+      // mới subscribe, nên seed ngay sau `goto` sẽ rơi vào khoảng trống đó và
+      // INSERT mất luôn. Chờ chuông render xong (mốc cho thấy client đã
+      // hydrate) rồi cho thêm một nhịp cho vòng auth + subscribe.
+      await expect(pageA.getByRole("button", { name: /Thông báo/ })).toBeVisible();
+      await pageA.waitForTimeout(2000);
+
       await seedNotification(sessionA.user_id, "kudos_received", {
         kudosId: "k1",
         senderName: "Bob",
