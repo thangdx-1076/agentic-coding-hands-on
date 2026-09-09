@@ -684,16 +684,51 @@ test.describe("Notifications Panel", { tag: "@auth @local-db" }, () => {
 
     await injectSupabaseSession(contextA, cookiesA);
 
+    // Bắt đầu nghe TRƯỚC khi điều hướng — websocket được mở trong lúc
+    // trang hydrate, nên gắn listener sau `goto` là đã có thể muộn.
+    //
+    // Phải LỌC THEO URL: `next dev` mở socket HMR của chính nó trước, và
+    // `waitForEvent("websocket")` trần sẽ bắt đúng cái đó rồi chờ mãi một
+    // khung `phx_reply` không bao giờ tới (đo được: treo đủ 30s, 2/2 lượt).
+    const joined = pageA
+      .waitForEvent("websocket", {
+        predicate: (ws) => ws.url().includes("/realtime/v1/websocket"),
+      })
+      .then(
+        (ws) =>
+          new Promise<void>((resolve) => {
+            ws.on("framereceived", (frame) => {
+              const payload =
+                typeof frame.payload === "string"
+                  ? frame.payload
+                  : frame.payload.toString();
+              if (
+                payload.includes("phx_reply") &&
+                payload.includes('"status":"ok"')
+              ) {
+                resolve();
+              }
+            });
+          }),
+      );
+
     try {
       await pageA.goto("/");
 
       // Realtime chỉ giao những sự kiện xảy ra SAU khi kênh đã đăng ký.
       // `NotificationBell` lấy `userId` qua `auth.getUser()` phía client rồi
-      // mới subscribe, nên seed ngay sau `goto` sẽ rơi vào khoảng trống đó và
-      // INSERT mất luôn. Chờ chuông render xong (mốc cho thấy client đã
-      // hydrate) rồi cho thêm một nhịp cho vòng auth + subscribe.
-      await expect(pageA.getByRole("button", { name: /Thông báo/ })).toBeVisible();
-      await pageA.waitForTimeout(2000);
+      // mới subscribe, nên seed ngay sau `goto` sẽ rơi vào khoảng trống đó
+      // và INSERT mất luôn.
+      //
+      // Chờ bằng TÍN HIỆU THẬT chứ không phải `waitForTimeout`: Supabase
+      // Realtime trả một khung `phx_reply` với `"status":"ok"` khi lệnh
+      // `phx_join` cho kênh được chấp nhận. Nhận được khung đó nghĩa là
+      // kênh đã sống — một giấc ngủ cố định thì hoặc thừa, hoặc thiếu trên
+      // máy chậm, và đó chính là mầm flake.
+      await expect(
+        pageA.getByRole("button", { name: /Thông báo/ }),
+      ).toBeVisible();
+      await joined;
 
       await seedNotification(sessionA.user_id, "kudos_received", {
         kudosId: "k1",

@@ -52,6 +52,11 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
+  // Dọn notification mà emitter F012 để lại trên user seed — cascade chỉ
+  // chạy cho user mà lượt test tự xoá, còn người NHẬN của `heart_received`
+  // là chủ kudo demo, không ai xoá. Xem `tests/e2e/global-teardown.ts`.
+  globalTeardown: "./tests/e2e/global-teardown.ts",
+
   webServer: {
     command: `pnpm dev --port ${PORT}`,
     url: BASE_URL,
