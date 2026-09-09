@@ -1,0 +1,57 @@
+{
+  "task": "F012_NotificationsPanel — panel thông báo neo vào chuông header: bảng notifications + RLS + realtime, 2 emitter trigger, DAL/action, hook, badge số, i18n. MoMorph screen 6-1LRz3vqr.",
+  "mode": "e2e-red-first",
+  "acceptanceCriteria": [
+    "Badge hiện SỐ chưa đọc, ẩn khi 0, cap 9+",
+    "Panel mở/đóng, có tiêu đề và nút Đánh dấu đọc tất cả",
+    "Danh sách 10 mục mỗi trang, Xem thêm không trùng, ẩn khi hết",
+    "Bấm mục = mark-read, không điều hướng; bền qua reload",
+    "Người dùng chỉ đọc được thông báo của chính mình, cưỡng chế ở RLS",
+    "markRead trên id người khác và id không tồn tại cho CÙNG một kết quả",
+    "Tạo kudos phát kudos_received cho người nhận; tự gửi cho mình không phát",
+    "Kudos ẩn danh chỉ lưu biệt danh, không có tên thật hay sender_id trong payload",
+    "Thả/bỏ/thả lại tim phát đúng 1 thông báo và sống sót qua lần bỏ tim",
+    "Emit hỏng không làm hỏng thao tác gốc",
+    "Thông báo mới làm badge tăng không cần reload",
+    "Message dựng từ template i18n nên đổi ngôn ngữ áp dụng hồi tố"
+  ],
+  "touchpoints": [
+    "supabase/migrations/0012_notifications.sql",
+    "supabase/migrations/0013_notification_emitters.sql",
+    "src/dal/notifications.ts",
+    "src/dal/notifications-query.ts",
+    "src/dal/notifications-client.ts",
+    "src/api/notifications.ts",
+    "src/app/_actions/notifications.ts",
+    "src/app/_hooks/use-notifications.ts",
+    "src/app/_hooks/use-notifications-realtime.ts",
+    "src/app/_components/notification-bell.tsx",
+    "src/app/_components/notifications/notification-panel.tsx",
+    "src/app/_components/notifications/notification-item.tsx",
+    "src/app/_shared/site-chrome.ts",
+    "src/app/_utils/get-viewer.ts",
+    "src/app/_utils/get-notifications-copy.ts",
+    "src/utils/notification-message.ts",
+    "src/utils/split-link-template.ts",
+    "src/utils/datetime/relative-time.ts",
+    "messages/vi.json",
+    "messages/en.json",
+    "tests/e2e/notifications.spec.ts",
+    "tests/e2e/notifications-emitters.spec.ts",
+    "tests/e2e/global-teardown.ts"
+  ],
+  "blastRadius": [
+    "4 điểm render SiteHeader (home, awards, kudos, profile) — SiteViewer đổi kiểu, unreadCount thành field bắt buộc",
+    "8 file *-screen.tsx / *-client.tsx từng hardcode unreadCount={0}",
+    "public.kudos và public.kudo_hearts nhận thêm AFTER INSERT trigger — mọi đường tạo kudo/thả tim đi qua",
+    "messages/vi.json + en.json: home.notifications.empty dời sang notifications.empty, 4 consumer phải sửa",
+    "e2e: mọi test thả tim kudo demo giờ sinh notification row — cần globalTeardown"
+  ],
+  "contracts": [
+    "RLS notifications: SELECT own-row; UPDATE own-row giới hạn cột is_read qua GRANT theo cột; không INSERT policy cho authenticated",
+    "heart_received gửi cho kudos.sender_id (khớp open_secret_box ghi công tim cho sender), không phải receiver_id",
+    "payload.senderName là string|null — fallback 'Sunner' ở tầng render, đúng quy ước kudos-card-person.tsx",
+    "badge không bao giờ do client tự tăng/giảm — server count là nguồn đúng, realtime chỉ invalidate",
+    "kudos_hidden và secret_box_available ship enum + renderer nhưng KHÔNG có emitter ở v1"
+  ]
+}

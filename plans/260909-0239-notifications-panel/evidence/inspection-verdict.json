@@ -1,0 +1,53 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "Badge hiện SỐ chưa đọc, ẩn khi 0, cap 9+ — verified in src/app/_components/notification-bell.tsx:117,137-142 (badgeText = unreadCount>9?'9+':String(unreadCount), badge only rendered when unreadCount>0) and live e2e TC-003/004/005 all passed (pnpm exec playwright test tests/e2e/notifications.spec.ts, 14 passed / 1 skipped, run in this session).",
+    "Panel mở/đóng, có tiêu đề và nút Đánh dấu đọc tất cả — verified in src/app/_components/notifications/notification-panel.tsx (h2 title + markAllRead button) and live TC-006 passed in the same run.",
+    "Danh sách 10 mục mỗi trang, Xem thêm không trùng, ẩn khi hết — verified keyset pagination (created_at,id) in src/dal/notifications.ts:83-119 and src/api/notifications.ts:82-116, client-side id-dedup in src/app/_hooks/use-notifications.ts:120-141, and live TC-018 passed (10 then 15 items, loadMore button hidden once exhausted).",
+    "Bấm mục = mark-read, không điều hướng; bền qua reload — verified src/app/_components/notifications/notification-item.tsx (role=button div, embedded <Link> stops propagation, no navigation) and live TC-016/017 passed (persists after reload).",
+    "Người dùng chỉ đọc được thông báo của chính mình, cưỡng chế ở RLS — verified live against the running local Postgres (docker exec supabase_db_saa-app psql): notifications has RLS enabled+forced, exactly 2 policies (notifications_select_own, notifications_update_own_read) both `user_id = auth.uid()`, anon has zero grants on the table, authenticated has SELECT + column-scoped UPDATE(is_read) only. Live e2e TC-002 passed.",
+    "markRead trên id người khác và id không tồn tại cho CÙNG một kết quả — verified src/dal/notifications.ts:133-154 (single {ok:false} shape, no reason field) and live-executed TC-020 (direct PostgREST PATCH with user A's JWT against a real row owned by B and a nonexistent id) passed: identical status, identical body ([]), B's row still unread.",
+    "Tạo kudos phát kudos_received cho người nhận; tự gửi cho mình không phát — verified supabase/migrations/0013_notification_emitters.sql:66-109 (emit_kudos_received, self-kudos short-circuit) and live-executed TC-010/TC-011 passed against the real trigger.",
+    "Kudos ẩn danh chỉ lưu biệt danh, không có tên thật hay sender_id trong payload — verified migration 0013:82-98 (senderName = anonymous_name only when is_anonymous, sender_id never inserted) and live-executed TC-012 passed, including the raw-JSON-string assertion that sender.user_id never appears in the payload.",
+    "Thả/bỏ/thả lại tim phát đúng 1 thông báo và sống sót qua lần bỏ tim — verified the partial unique index uq_notifications_heart_received_dedupe (confirmed present live via psql) plus migration 0013:120-175, and live-executed TC-013 passed (1 row after heart→unheart→re-heart).",
+    "Emit hỏng không làm hỏng thao tác gốc — verified exception-branch order in emit_heart_received (WHEN unique_violation before WHEN OTHERS, migration 0013:158-171) and live-executed TC-021 passed: the second heart re-add succeeds and the original heart action is never rolled back.",
+    "Thông báo mới làm badge tăng không cần reload — verified src/app/_hooks/use-notifications-realtime.ts (postgres_changes INSERT subscription calling refetchCount(), never client-side increment) and src/api/notifications.ts:154-178 (subscribeToNotifications, RLS-bounded filter documented as non-authoritative); live-executed TC-019 passed (badge updates over the real realtime websocket).",
+    "Message dựng từ template i18n nên đổi ngôn ngữ áp dụng hồi tố — verified notifications.type/payload only (no stored text) in migration 0012, template resolution at render time in src/utils/notification-message.ts and src/app/_utils/get-notifications-copy.ts; live-executed TC-009 passed (old notification's message changes when locale changes)."
+  ],
+  "regressionChecked": [
+    "4 SiteHeader render points (home/awards/kudos/profile) — SiteViewer.unreadCount is now required; git diff confirms all 4 page.tsx call getViewer()/getUnreadCount() and build a full SiteViewer; `pnpm exec tsc --noEmit` is clean, no missed call site.",
+    "8 *-screen.tsx/*-client.tsx files that hardcoded unreadCount={0} — git diff confirms all 8 dropped the hardcoded prop/default now that SiteHeader reads viewer.unreadCount directly; stories updated to match (profile/home/awards stories pass unreadCount inside viewer).",
+    "public.kudos / public.kudo_hearts gaining AFTER INSERT triggers — confirmed live both triggers exist and are enabled (pg_trigger, tgenabled='O'); ran the full existing kudos.spec.ts + secret-box.spec.ts suite live against the real DB after the migrations: 42 passed, 1 skipped, 0 failed — kudo creation, heart toggling, and secret-box entitlement (which itself reads heart_count maintained by a pre-existing trigger on the same table) are unaffected.",
+    "messages/vi.json + en.json notifications.* namespace move (home.notifications.empty relocated) — grep confirms home.notifications no longer exists in either file, notifications.* present with matching keys in both locales, and src/lib/i18n/messages-parity.test.ts passed in the full vitest run (796/796 passed).",
+    "e2e globalTeardown for kudo-demo notification leakage — tests/e2e/global-teardown.ts wired into playwright.config.ts (globalTeardown key confirmed in diff) and throws (not warns) on cleanup failure, matching the documented anti-silent-leak rationale."
+  ],
+  "contractStatus": "HELD",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Medium",
+      "category": "Input Validation",
+      "location": "src/api/notifications.ts:90-91",
+      "summary": "Pagination cursor's createdAt/id (client-decoded, only type-checked as `string`) are interpolated unescaped into a PostgREST `.or()` filter string (also duplicated server-side at src/dal/notifications.ts:95-96). A crafted cursor containing `,` or `)` could break out of the intended `and(...)` group and add arbitrary OR'd filter clauses. Impact is bounded — RLS (`user_id = auth.uid()`, confirmed live) still governs row visibility regardless of the filter shape, so this cannot leak another user's data, only affects the caller's own query correctness.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Medium",
+      "category": "Logic / Output Injection",
+      "location": "src/utils/notification-message.ts:103-107",
+      "summary": "senderName/actorName (sourced from users.full_name or the free-text kudos.anonymous_name, which create-kudo.ts only `.trim()`s — no character restriction, confirmed in src/app/(public)/kudos/_actions/create-kudo.ts:152) is substituted into the message template BEFORE `<link>` and `**bold**` markers are parsed. A sender who sets an anonymous nickname containing `**` or `<link>...</link>` gets that markup rendered in the recipient's notification (fake bold text or a fake underlined link). Not exploitable for XSS or open-redirect — the link's `href` is hardcoded to ROUTES.STANDARDS regardless of the injected text (src/app/_components/notifications/notification-item.tsx:96) — but it is a real, demonstrable content-integrity gap at a system boundary (user-controlled free text) that the spec's marker convention did not anticipate.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Maintainability",
+      "location": "src/app/(protected)/profile/page.tsx:104-116",
+      "summary": "`/profile` still builds its own role + unreadCount read by hand instead of calling the shared `getViewer()` helper the other 3 screens use — pre-existing duplication (not introduced by this PR) that this PR extends by one more duplicated `getUnreadCount` call. Already tracked as debt in plans/action-items.md per the delivery-tracker report; scoped out of this PR deliberately to keep the diff to notifications.",
+      "disposition": "Defer"
+    }
+  ]
+}
