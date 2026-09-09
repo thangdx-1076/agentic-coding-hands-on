@@ -29,6 +29,16 @@ export function useNotificationsRealtime(
   }, [open]);
 
   useEffect(() => {
+    // `NotificationBell` bắt đầu với `userId` rỗng và chỉ điền sau khi
+    // `auth.getUser()` trả về. Đăng ký ngay lúc đó sẽ mở một kênh
+    // `notifications:` với bộ lọc `user_id=eq.` — không khớp dòng nào, rồi
+    // bị huỷ và thay bằng kênh thật một nhịp sau.
+    //
+    // Kênh rác đó không chỉ lãng phí: nó khiến "kênh đầu tiên đã join"
+    // KHÔNG còn đồng nghĩa với "đã sẵn sàng nhận thông báo", và làm rộng
+    // thêm cửa sổ mà một INSERT có thể lọt qua không ai nghe.
+    if (!userId) return;
+
     const unsubscribe = subscribeToNotifications(userId, () => {
       refetchCount();
       if (openRef.current) {

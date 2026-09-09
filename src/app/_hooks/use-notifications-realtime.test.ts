@@ -37,6 +37,41 @@ describe("useNotificationsRealtime", () => {
     unmount();
   });
 
+  it("userId rỗng → KHÔNG mở channel nào", () => {
+    // `NotificationBell` render lần đầu với `userId` rỗng và chỉ điền sau
+    // khi `auth.getUser()` trả về. Đăng ký lúc đó tạo một kênh với bộ lọc
+    // `user_id=eq.` — không khớp dòng nào — rồi bị huỷ ngay.
+    //
+    // Kênh rác đó từng làm TC-019 đỏ: nó khiến "kênh đầu tiên đã join"
+    // không còn đồng nghĩa với "sẵn sàng nhận thông báo".
+    const { unmount } = renderHook(() =>
+      useNotificationsRealtime("", false, vi.fn(), vi.fn()),
+    );
+
+    expect(subscribeToNotifications).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it("userId rỗng rồi có giá trị → chỉ subscribe MỘT lần, bằng id thật", () => {
+    const { rerender, unmount } = renderHook(
+      ({ userId }: { userId: string }) =>
+        useNotificationsRealtime(userId, false, vi.fn(), vi.fn()),
+      { initialProps: { userId: "" } },
+    );
+
+    expect(subscribeToNotifications).not.toHaveBeenCalled();
+
+    rerender({ userId: "user-1" });
+
+    expect(subscribeToNotifications).toHaveBeenCalledExactlyOnceWith(
+      "user-1",
+      expect.any(Function),
+    );
+
+    unmount();
+  });
+
   it("unmount → gọi hàm huỷ channel", () => {
     const { unmount } = renderHook(() =>
       useNotificationsRealtime("user-1", false, vi.fn(), vi.fn()),
