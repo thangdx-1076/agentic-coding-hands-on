@@ -27,7 +27,6 @@ export type KudosScreenProps = {
   copy: KudosPageCopy;
   viewer: SiteViewer | null;
   locale?: AppLocale;
-  unreadCount?: number;
   onSelectLocale?: (locale: AppLocale) => void;
   logoutAction?: () => void | Promise<void>;
 
@@ -82,7 +81,6 @@ export function KudosScreen({
   copy,
   viewer,
   locale = "vi",
-  unreadCount = 0,
   onSelectLocale,
   logoutAction,
   highlightItems,
@@ -114,7 +112,6 @@ export function KudosScreen({
         copy={copy}
         languageLabel={languageLabel}
         viewer={viewer}
-        unreadCount={unreadCount}
         onSelectLocale={onSelectLocale}
         logoutAction={logoutAction}
       />

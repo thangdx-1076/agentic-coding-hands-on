@@ -38,8 +38,26 @@ export type SiteChromeCopy = {
     admin: string;
     logout: string;
   };
+  /**
+   * Panel copy for `NotificationBell`/`NotificationPanel` (phase 08).
+   * `types` carries the 4 raw, un-interpolated message templates keyed by
+   * `NotificationType` (`src/domain/notifications/types.ts`) — `{senderName}`/
+   * `{actorName}` placeholders and the `kudos_hidden` `<link>` tag are
+   * resolved per-notification by the panel item, not here (see
+   * `get-notifications-copy.ts`'s doc comment for why this shared copy
+   * build can't call next-intl's own interpolation for these leaves).
+   */
   notifications: {
     empty: string;
+    title: string;
+    markAllRead: string;
+    loadMore: string;
+    types: {
+      kudos_received: string;
+      heart_received: string;
+      secret_box_available: string;
+      kudos_hidden: string;
+    };
   };
 };
 
@@ -76,6 +94,16 @@ export const defaultSiteChromeCopy: SiteChromeCopy = {
   },
   notifications: {
     empty: "Bạn chưa có thông báo",
+    title: "Thông báo",
+    markAllRead: "Đánh dấu đọc tất cả",
+    loadMore: "Xem thêm",
+    types: {
+      kudos_received: "**{senderName}** đã gửi Kudos cho bạn",
+      heart_received: "**{actorName}** đã thả tim Kudos của bạn",
+      secret_box_available: "Bạn có một Hộp bí mật mới, mở ngay nhé!",
+      kudos_hidden:
+        "Kudos của bạn đã bị ẩn do vi phạm <link>Tiêu chuẩn cộng đồng ↗</link>",
+    },
   },
 };
 
@@ -88,4 +116,13 @@ export const defaultSiteChromeCopy: SiteChromeCopy = {
 export type SiteViewer = {
   email: string;
   isAdmin: boolean;
+  /**
+   * Required, not optional (phase-07 Key Insight 1,
+   * `plans/260909-0239-notifications-panel/phase-07-wire-unread-count-and-copy.md`):
+   * the only 2 places that PRODUCE a `SiteViewer` (`get-viewer.ts`,
+   * `(protected)/profile/page.tsx`) must both supply a real count, or the
+   * omission is a compile error — never a silent `0` badge like before this
+   * field existed.
+   */
+  unreadCount: number;
 };

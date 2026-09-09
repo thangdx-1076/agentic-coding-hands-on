@@ -1,36 +1,94 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "next-intl";
+
+import { useNotifications } from "../_hooks/use-notifications";
+import type { SiteChromeCopy } from "../_shared/site-chrome";
 
 import { IconBell } from "./icons/icon-bell";
+import { NotificationPanel } from "./notifications/notification-panel";
+
+import { createClient } from "@/lib/supabase/client";
 
 export type NotificationBellProps = {
-  label?: string;
-  unreadCount?: number;
-  emptyStateText: string;
+  label: string;
+  /** Server-rendered count, valid at first paint (`SiteViewer.unreadCount`,
+   * phase-07). From then on `useNotifications` owns the live value — see
+   * `unreadCount` below. */
+  unreadCount: number;
+  copy: SiteChromeCopy["notifications"];
 };
 
+const MAX_BADGE_COUNT = 9;
+
 /**
- * Header notification bell (mm:I2167:9091;186:2101). Empty-state-only panel
- * for now — no notifications schema exists yet in `saa-app`
- * (clarifications.md § Header, ghi nợ nguồn dữ liệu thật). Badge dot
- * (mm:I2167:9091;186:2101;186:2089) renders only when `unreadCount > 0`; it
- * is 2 plain `RECTANGLE` layers in Figma, not an asset, so it's built as a
- * plain absolutely-positioned `span` per code-rules 2.
+ * Header notification bell + panel (mm:I2167:9091;186:2101, MoMorph screen
+ * `589:9132`). Badge is now a NUMBER (FR-002), not a dot: hidden at 0,
+ * shown as-is up to 9, capped at `"9+"` beyond that (phase-08 Key Insight
+ * 3 — a one-line rule, kept inline since `.tsx` isn't in the coverage
+ * allowlist; TC-003/004/005 are the evidence).
  *
- * A single `useState` boolean toggles the `[role="dialog"]` panel — the
- * documented exception in `separate-hook-logic-from-components` for a lone
- * boolean that only controls visibility (not a full menu, so it does not
- * reuse `useMenuKeyboardNav`).
+ * Escape-closes-and-refocuses + click-outside-closes is unchanged from the
+ * empty-state-only version of this component (Key Insight 2) — only the
+ * `open` boolean's owner changed, from a local `useState` to
+ * `useNotifications`'s `open`/`setOpen`, so the component stops holding
+ * data-fetching state itself.
+ *
+ * `userId` is resolved client-side via `supabase.auth.getUser()` purely to
+ * scope `useNotifications`'s realtime channel filter (never a security
+ * boundary — RLS is). `SiteViewer` (`_shared/site-chrome.ts`) does not
+ * carry the raw auth id yet (only `email`/`isAdmin`/`unreadCount`,
+ * phase-07 scope) — threading it there, mirroring how `/kudos` threads its
+ * own `viewerId` prop, is the more idiomatic fix and is the right shape
+ * for a follow-up phase (`plans/action-items.md`) rather than a scope
+ * expansion of this one. Until the real id resolves, `useNotifications`
+ * subscribes to a channel that matches nothing — harmless, and it
+ * re-subscribes the moment the real id lands (`userId` is in that hook's
+ * effect dependency array).
  */
 export function NotificationBell({
-  label = "Thông báo",
-  unreadCount = 0,
-  emptyStateText,
+  label,
+  unreadCount: initialUnreadCount,
+  copy,
 }: NotificationBellProps) {
-  const [open, setOpen] = useState(false);
+  const locale = useLocale();
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    void supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!cancelled && data.user) {
+          setUserId(data.user.id);
+        }
+      })
+      .catch(() => {
+        // Fails closed to the placeholder "" id above — the panel still
+        // works (list/count reads rely on RLS, not this value), it just
+        // won't receive realtime pushes until a later mount succeeds.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const {
+    open,
+    setOpen,
+    items,
+    nextCursor,
+    unreadCount,
+    loading,
+    error,
+    loadMore,
+    markRead,
+    markAllRead,
+  } = useNotifications({ userId, initialUnreadCount });
 
   useEffect(() => {
     if (!open) return;
@@ -54,7 +112,9 @@ export function NotificationBell({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
+
+  const badgeText = unreadCount > MAX_BADGE_COUNT ? "9+" : String(unreadCount);
 
   return (
     // mm:I2167:9091;186:2101
@@ -69,24 +129,30 @@ export function NotificationBell({
         aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(!open)}
         className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded text-white transition-colors duration-200 ease-out hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background motion-reduce:transition-none"
       >
         {/* mm:I2167:9091;186:2101;186:2020;186:1420 */}
         <IconBell className="h-6 w-6" />
         {unreadCount > 0 && (
-          // mm:I2167:9091;186:2101;186:2089
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#D4271D]" />
+          // mm:I2167:9091;186:2101;186:2089 — dot → number badge (phase-08)
+          <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D4271D] px-1 text-[10px] leading-none font-bold text-white">
+            {badgeText}
+          </span>
         )}
       </button>
       {open && (
-        <div
-          role="dialog"
-          aria-label={label}
-          className="animate-login-menu-in absolute top-full right-0 z-30 mt-1 w-64 rounded bg-[#0B0F12] p-4 font-montserrat text-sm text-white shadow-lg"
-        >
-          {emptyStateText}
-        </div>
+        <NotificationPanel
+          copy={copy}
+          locale={locale}
+          items={items}
+          nextCursor={nextCursor}
+          loading={loading}
+          error={error}
+          onMarkRead={markRead}
+          onMarkAllRead={markAllRead}
+          onLoadMore={loadMore}
+        />
       )}
     </div>
   );

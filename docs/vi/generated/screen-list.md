@@ -129,7 +129,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 | HomeFooter | footer | Logo + nav 4 link + dòng bản quyền (tái dùng `login.footer`) |
 | WidgetButton | interactive (dropdown menu) | Nút nổi fixed bottom-right, menu 2 mục (Thể lệ → `/standards`, Viết KUDOS → `/kudos`); trigger morph pill↔nút tròn "×" khi mở (đổi từ 2026-09-08, trước đó menu là Sun* Kudos/Award Information suy diễn) |
 | AccountMenu | interactive (dropdown menu) | Menu tài khoản (Hồ sơ/Trang quản trị theo role/Đăng xuất), dùng `useMenuKeyboardNav` |
-| NotificationBell | interactive (dialog) | Panel thông báo — luôn rỗng ("Bạn chưa có thông báo"), badge chỉ hiện khi `unreadCount > 0` |
+| NotificationBell | interactive (dialog) | Panel thông báo thật (F012_NotificationsPanel, 2026-09-09): danh sách phân trang keyset 10 mục/trang, đánh dấu đã đọc, cập nhật realtime; badge SỐ (trước đây chấm tròn không số) ẩn khi `unreadCount = 0`, cap `9+` khi > 9; trạng thái trống ("Bạn chưa có thông báo") giờ chỉ xuất hiện khi thật sự 0 thông báo, không còn cố định |
 
 ### Data Displayed
 

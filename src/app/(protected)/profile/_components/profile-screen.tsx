@@ -19,7 +19,6 @@ export type ProfileScreenProps = {
    * gate, unlike `AwardsScreen`, which still accepts an anonymous visitor. */
   viewer: SiteViewer;
   locale?: "vi" | "en";
-  unreadCount?: number;
   onSelectLocale?: (locale: "vi" | "en") => void;
   logoutAction?: () => void | Promise<void>;
 };
@@ -49,7 +48,6 @@ export function ProfileScreen({
   isSelf,
   viewer,
   locale = "vi",
-  unreadCount = 0,
   onSelectLocale,
   logoutAction,
 }: ProfileScreenProps) {
@@ -68,7 +66,6 @@ export function ProfileScreen({
         copy={copy}
         languageLabel={languageLabel}
         viewer={viewer}
-        unreadCount={unreadCount}
         onSelectLocale={onSelectLocale}
         logoutAction={logoutAction}
       />

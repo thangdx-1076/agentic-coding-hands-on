@@ -62,6 +62,57 @@ export function getSupabaseUrl(): string {
   return process.env.SUPABASE_URL || "http://127.0.0.1:55321";
 }
 
+let cachedAnonKey: string | undefined;
+
+/**
+ * Resolves the local Supabase anon (publishable) key, the same way
+ * `getServiceRoleKey()` resolves the service-role one: env first, then the
+ * local CLI.
+ *
+ * Why derived rather than required: `playwright.config.ts` leaves dotenv
+ * commented out (line 7), so `.env.local` never reaches the test process.
+ * The first version of the F012 specs worked around that by hand-rolling a
+ * `loadEnv()` per spec file — two copies of a parser that also had to get
+ * `=` inside values right. Deriving it here keeps one source and matches the
+ * precedent already set above.
+ *
+ * Only a SUCCESS is memoized, for the reason spelled out in
+ * `getServiceRoleKey`'s docblock: caching a transient miss would pin the
+ * whole worker to the failing branch for the rest of the run.
+ */
+export function getAnonKey(): string | null {
+  if (cachedAnonKey !== undefined) {
+    return cachedAnonKey;
+  }
+
+  const fromEnv =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.ANON_KEY;
+  if (fromEnv) {
+    cachedAnonKey = fromEnv;
+    return cachedAnonKey;
+  }
+
+  try {
+    const out = execFileSync("npx", ["supabase", "status", "-o", "env"], {
+      cwd: process.cwd(),
+      stdio: ["ignore", "pipe", "ignore"],
+      encoding: "utf-8",
+    });
+    const line = out.split("\n").find((l) => l.startsWith("ANON_KEY="));
+    const key = line
+      ? line.slice("ANON_KEY=".length).trim().replace(/^"|"$/g, "")
+      : "";
+    if (key) {
+      cachedAnonKey = key;
+      return cachedAnonKey;
+    }
+  } catch {
+    // Fall through — deliberately NOT cached.
+  }
+
+  return null;
+}
+
 /** Bucket the compose flow uploads kudo images into (`0010_kudo_images_bucket`). */
 const KUDO_IMAGES_BUCKET = "kudo-images";
 

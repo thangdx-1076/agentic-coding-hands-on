@@ -1,0 +1,67 @@
+{
+  "commands": [
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0 error 0 warning trên toàn repo",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "không file nào lệch format",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit sạch",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "798 test / 82 file pass; coverage 100% cả 4 nhóm (sau 2 bản vá từ review)",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm test:e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "214 pass / 5 skip / 0 fail, exit 0. Hai lượt đỏ trước đó đều do `next dev` mồ côi giữ :3000 mang EVENT_START_AT sai — không phải hồi quy; đã xác minh bằng cách diệt tiến trình rồi chạy lại.",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm test:e2e tests/e2e/notifications.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "14 pass / 1 skip, xanh 2 lượt liên tiếp sau khi thay waitForTimeout bằng tín hiệu phx_reply",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "pnpm test:e2e tests/e2e/notifications-emitters.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "6 pass — emitter tạo kudo/tim thật qua PostgREST bằng JWT người dùng, đọc lại bằng service role",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "supabase migration up",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "0012 + 0013 áp dụng sạch; verify trên DB: RLS forced, anon 0 quyền, authenticated SELECT + UPDATE(is_read) theo cột, 3 index, publication realtime",
+      "ts": "2026-09-09T10:35:00+07:00"
+    },
+    {
+      "command": "docker exec psql — đếm row sau full e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "users=21 kudos=12 hearts=31 notifications=0 openings=0 — đúng baseline, globalTeardown hoạt động",
+      "ts": "2026-09-09T10:35:00+07:00"
+    }
+  ]
+}

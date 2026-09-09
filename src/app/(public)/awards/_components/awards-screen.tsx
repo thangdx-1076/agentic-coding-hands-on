@@ -20,7 +20,6 @@ export type AwardsScreenProps = {
   copy?: AwardsCopy;
   locale?: "vi" | "en";
   viewer?: SiteViewer | null;
-  unreadCount?: number;
   onSelectLocale?: (locale: "vi" | "en") => void;
   logoutAction?: () => void | Promise<void>;
 };
@@ -42,7 +41,6 @@ export function AwardsScreen({
   copy = defaultAwardsCopy,
   locale = "vi",
   viewer = null,
-  unreadCount = 0,
   onSelectLocale,
   logoutAction,
 }: AwardsScreenProps) {
@@ -61,7 +59,6 @@ export function AwardsScreen({
         copy={copy}
         languageLabel={languageLabel}
         viewer={viewer}
-        unreadCount={unreadCount}
         onSelectLocale={onSelectLocale}
         logoutAction={logoutAction}
       />

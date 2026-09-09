@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
 import { getViewer } from "../../_utils/get-viewer";
+import { getNotificationsCopy } from "../../_utils/get-notifications-copy";
 
 import { AwardsClient } from "./_components/awards-client";
 import type { AwardsCopy } from "./_shared/awards-copy";
@@ -44,11 +45,12 @@ export default async function AwardsPage() {
   const t = await getTranslations("awards");
   const tHome = await getTranslations("home");
   const tLogin = await getTranslations("login");
+  const notificationsCopy = await getNotificationsCopy();
 
   const supabase = await createClient();
   const awards = await getAwards(toAwardsClient(supabase), locale);
 
-  const copy = buildCopy(t, tHome, tLogin, locale);
+  const copy = buildCopy(t, tHome, tLogin, notificationsCopy, locale);
 
   return (
     <AwardsClient
@@ -80,6 +82,7 @@ function buildCopy(
   t: Translator,
   tHome: Translator,
   tLogin: Translator,
+  notifications: AwardsCopy["notifications"],
   locale: AppLocale,
 ): AwardsCopy {
   return {
@@ -117,9 +120,7 @@ function buildCopy(
       admin: tHome("account.admin"),
       logout: tHome("account.logout"),
     },
-    notifications: {
-      empty: tHome("notifications.empty"),
-    },
+    notifications,
     caption: t("caption"),
     heading: t("heading"),
     navAriaLabel: t("navLabel"),

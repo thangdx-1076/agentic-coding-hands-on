@@ -44,8 +44,11 @@ export const Anonymous: Story = {
  */
 export const Member: Story = {
   args: {
-    viewer: { email: "member@sun-asterisk.com", isAdmin: false },
-    unreadCount: 2,
+    viewer: {
+      email: "member@sun-asterisk.com",
+      isAdmin: false,
+      unreadCount: 2,
+    },
   },
 };
 

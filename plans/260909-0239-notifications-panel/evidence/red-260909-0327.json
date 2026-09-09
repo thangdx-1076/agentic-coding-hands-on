@@ -1,0 +1,41 @@
+{
+  "phase": "phase-01-e2e-red-notifications",
+  "testPolicy": "e2e-red-first",
+  "timestamp": "2026-09-09T03:27:00+07:00",
+  "redTestFiles": [
+    "tests/e2e/notifications.spec.ts",
+    "tests/e2e/notifications-emitters.spec.ts"
+  ],
+  "redCommand": "pnpm test:e2e tests/e2e/notifications.spec.ts tests/e2e/notifications-emitters.spec.ts",
+  "redExitCode": 1,
+  "redFailure": "TC-006: expect(locator).toBeVisible() failed\n    Locator: locator('[role=\"dialog\"]').getByRole('button', { name: /Đánh dấu đọc tất cả/ })\n    Expected: visible\n    Error: element(s) not found\n    at tests/e2e/notifications.spec.ts:122:36",
+  "redEvidence": "plans/260909-0239-notifications-panel/evidence/red-260909-0327.log",
+  "tally": {
+    "failed": 16,
+    "passed": 3,
+    "skipped": 1
+  },
+  "redReasonBreakdown": {
+    "screen_assertion": 2,
+    "missing_table_PGRST205": 14,
+    "note": "Chỉ 2 cái đỏ vì assertion của màn có tư cách làm bằng chứng RED. 14 cái đỏ vì bảng public.notifications chưa tồn tại — ĐÚNG ở giai đoạn này, và phase 02/03 phải kiểm chúng ĐỔI lý do đỏ sang assertion, không chỉ kiểm chúng xanh."
+  },
+  "passingAreRegressionGuards": {
+    "TC-001": "chuông không render cho khách chưa đăng nhập — đúng hôm nay (site-header.tsx:95)",
+    "TC-008": "không có nút 'Xem thêm' khi rỗng — đúng hôm nay",
+    "TC-003": "badge ẩn khi 0 — đúng hôm nay (badge chưa từng render)"
+  },
+  "orchestratorFixes": [
+    "TC-001 bản tester assert chuông PHẢI HIỆN với khách chưa đăng nhập — ngược FR-001. Viết lại.",
+    "notifications.spec.ts:187 thiếu await ở contextB.newPage() — TC-002 sẽ đỏ vì TypeError chứ không phải RLS.",
+    "TC-020 bản tester gọi /api/notifications/mark-read (route handler KHÔNG có trong kế hoạch) và assert 'ok || status===404' — xanh CHÍNH VÌ route không tồn tại; lại chỉ gọi 1 lần nên không so sánh được hai trường hợp. Viết lại: đánh thẳng PostgREST bằng JWT của A trên id của B và một uuid không tồn tại, assert cùng status + cùng body + đều rỗng, cộng kiểm bằng service role rằng dòng của B vẫn is_read=false.",
+    "Thêm helper readNotificationAsService() — đọc bằng JWT của A luôn rỗng nên không phân biệt được 'bị chặn' với 'đã sửa rồi bị ẩn'."
+  ],
+  "rejectedFirstAttempt": {
+    "reason": "test giả",
+    "detail": "TC-020 và TC-021 có 0 câu await expect nên xanh; 14 khối try/catch mang comment 'Expected to fail in phase 1' nuốt assertion; TC-010 dùng .catch(() => {}) và không hề tạo kudo nào."
+  },
+  "outOfScope": {
+    "TC-F007-014": "cần admin moderation + cột trạng thái trên public.kudos — chưa tồn tại"
+  }
+}

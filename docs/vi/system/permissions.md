@@ -538,3 +538,78 @@ bề mặt mới dưới đây, cũng chờ mã ở bước promote — KHÔNG �
   về `/prelaunch` khi `PRELAUNCH_LOCK_ENABLED=true` VÀ chưa tới giờ sự kiện
 - miễn khoá cho `/prelaunch`, `/auth/*`, `/api/*`, `/_next/*`, file tĩnh (bản thân danh sách ngoại lệ)
 - gỡ khoá tự động + redirect `/prelaunch` → `/` khi đã tới giờ sự kiện
+
+## Bổ sung dự kiến — F012_NotificationsPanel
+
+> **[F012_NotificationsPanel — đã lên code, chưa merge `main`]** Delta của feature xây trong
+> `plans/260909-0239-notifications-panel/` (nhánh `feat/notifications-panel`, 12 commit, chưa push).
+> Quyết định gốc: `clarifications.md`. Đối chiếu lại với as-built
+> (`supabase/migrations/0012_notifications.sql`, `0013_notification_emitters.sql`,
+> `src/dal/notifications.ts`, `src/api/notifications.ts`) — KHÔNG phải draft ban đầu
+> (`plans/260909-0239-notifications-panel/spec/system/permissions.md`, `status: forward-draft`). Một
+> điểm draft cần sửa lại trước khi ghi vào đây, nêu ngay dưới: draft gọi đây là "trục phân quyền thứ
+> hai" của dự án — sai, đối chiếu với chính các mục bên trên của file này.
+
+### Đính chính: đây KHÔNG phải trục phân quyền thứ hai — RLS own-row đã lặp lại 4 lần từ F001
+
+Draft viết: "Cho tới nay trục duy nhất là đã đăng nhập hay chưa... F012 thêm quyền theo sở hữu dữ
+liệu ở tầng cơ sở dữ liệu [lần đầu]." Đối chiếu với chính file này thì claim đó sai ở hai điểm:
+
+1. **RLS own-row cho ĐỌC đã có từ migration `0001`** — `public.users` đã được đọc own-row từ ngày
+   đầu (§ Curated View ở trên: "RLS own-row trên `public.users` đảm bảo mỗi người chỉ đọc được đúng
+   hàng của chính mình"). `public.secret_box_openings` (F010, migration `0011`) lặp lại đúng pattern
+   này và tự ghi rõ ở mục "Bổ sung dự kiến — SecretBoxModal" phía trên: "Trục đọc mirror đúng pattern
+   RLS own-row đã có từ `public.users` (`0001`)".
+2. **Trục quyền GHI gắn với danh tính hàng dữ liệu đã được chính file này gọi là "trục thứ hai" từ
+   F008** (§ "Bổ sung dự kiến — F007_KudosLiveBoard + F008_KudosHeartReaction" phía trên: "F008 thêm
+   trục thứ hai thật sự — quyền ghi gắn với danh tính hàng dữ liệu"). F009 lặp lại đúng pattern này
+   cho `kudos_insert_own`.
+
+`public.notifications` (F012) vì vậy là **một mẫu KHÁC của cùng loại ranh giới đã lặp lại 4 lần**
+trong dự án (`users`/`0001` đọc; `kudo_hearts`+`kudos`/`0007`+`0009` ghi; `secret_box_openings`/`0011`
+đọc), không phải một trục mới. Giữ nguyên phân loại `other` (§ Authorization System Type) đúng theo
+tiền lệ: không lần nào trong 4 lần trước việc thêm một bảng RLS own-row khác kéo theo đổi phân loại —
+đổi lần này mà không đổi những lần trước là áp tiêu chuẩn không nhất quán. Quyết định cuối cùng có
+nên gộp bốn tiền lệ này thành `ownership`/`hybrid` là một đánh giá TOÀN DỰ ÁN, để `rebuild-spec` Core
+pass quyết định — không phải việc của một lượt đồng bộ tài liệu cho một feature đơn lẻ.
+
+### Cái THẬT SỰ mới của F012: 3 điểm, không phải "ranh giới đầu tiên trong Postgres"
+
+1. **Lần đầu RLS phải chịu trách nhiệm cho một kênh REALTIME.** 3 pattern RLS own-row trước
+   (`users`, `secret_box_openings`, và cặp ghi `kudo_hearts`/`kudos`) đều chỉ phục vụ REST/RPC qua
+   PostgREST — chưa cái nào đứng sau `supabase_realtime`. `public.notifications` là bảng ĐẦU TIÊN
+   vào publication này (`0012_notifications.sql:121-132`), và RLS phải lọc đúng cho cả luồng INSERT
+   qua kênh `postgres_changes`, không chỉ SELECT qua REST — verify bằng test thật, không suy đoán từ
+   tài liệu Supabase (`tests/e2e/notifications.spec.ts:178` TC-002, `:664` TC-019; xanh trong
+   `plans/260909-0239-notifications-panel/phase-09-green-visual-and-gate.md`, 214 pass/5 skip/0 fail).
+2. **Lần đầu quyền ghi bị bó hẹp còn ĐÚNG MỘT CỘT bằng GRANT, không phải bằng policy.** RLS
+   `USING`/`WITH CHECK` chỉ chứng minh được quyền sở hữu HÀNG, không chặn được CỘT nào bị UPDATE — 4
+   bảng RLS trước đều không cần ranh giới cột (chủ sở hữu được sửa toàn hàng, hoặc không được sửa
+   gì). `notifications_update_own_read` cho phép UPDATE hàng của mình, nhưng chỉ `GRANT UPDATE
+   (is_read) ON public.notifications` mới chặn được việc tự sửa `type`/`payload`
+   (`0012_notifications.sql:72-79`).
+3. **Người nhận không bao giờ là người ghi — kể cả gián tiếp qua RPC.** `secret_box_openings` (F010)
+   vẫn cho viewer TỰ GỌI một RPC (`open_secret_box()`) để tạo ra hàng của chính mình.
+   `notifications` không có đường nào như vậy: không GRANT INSERT cho `authenticated`, ghi duy nhất
+   qua trigger `AFTER INSERT` (`0013_notification_emitters.sql`) — đúng hình dạng trigger
+   `sync_kudo_heart_count` (`0007`) chứ không phải hình dạng RPC-được-gọi của `0011`.
+
+### Chống rò rỉ sự tồn tại — cùng triết lý đã có, áp cho một bảng mới
+
+FR-603 (đánh dấu đã đọc trên id của người khác và trên id không tồn tại phải trả về cùng một kết
+quả) không phải một yêu cầu mới về nguyên tắc — `getProfileCard` (F006) đã fail-open cùng một cách
+cho hai nguyên nhân khác nhau (§ Special Conditions ở trên: "cả 2 nguyên nhân dẫn tới CÙNG một hành
+vi quan sát được"). Cái mới ở F012 là cơ chế: `markRead` không cần tự phân biệt hai trường hợp — RLS
+`USING (user_id = auth.uid())` đã lọc mất hàng của người khác THÀNH "0 dòng khớp" trước khi hàm kịp
+thấy khác biệt (`src/dal/notifications.ts:123-154`), nên không có nhánh nào để lộ.
+
+### Bề mặt cần cấp PERM### thật khi promote
+
+`PERM001`–`PERM004` đã dùng (F001–F006); F007–F011 vẫn `TBD (draft)`. F012 thêm các bề mặt mới dưới
+đây, cũng chờ mã ở bước promote — KHÔNG đoán số:
+
+- đọc thông báo của chính mình trên `public.notifications` (RLS own-row, kể cả qua realtime)
+- đánh dấu đã đọc từng thông báo/tất cả của chính mình (UPDATE cột `is_read`)
+- chặn đọc/ghi thông báo của người khác, kể cả khi id có thật (không phân biệt với id không tồn tại)
+- ghi thông báo qua trigger `SECURITY DEFINER` khi có Kudos/tim mới — không có GRANT INSERT cho bất
+  kỳ role người dùng nào

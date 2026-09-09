@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 4 route xác nhận PUBLIC không route-guard cho chính nó (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard, `/prelaunch` F011_CountdownPrelaunchPage — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, nhánh `feat/countdown-prelaunch-page` chưa merge `main` — cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI route trang kể cả 3 guard active và cả `/`, `/awards`, `/standards` khi bật, xem mục `/prelaunch`) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 4 route xác nhận PUBLIC không route-guard cho chính nó (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard, `/prelaunch` F011_CountdownPrelaunchPage — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, nhánh `feat/countdown-prelaunch-page` chưa merge `main` — cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI route trang kể cả 3 guard active và cả `/`, `/awards`, `/standards` khi bật, xem mục `/prelaunch`) + 1 trục ĐỌC own-row mới qua RLS + Realtime, không gắn với route nào (F012_NotificationsPanel, 2026-09-09, nhánh `feat/notifications-panel` chưa merge `main` — bảng `public.notifications`, xem mục cuối) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -447,6 +447,79 @@ bật · miễn khoá cho 4 ngoại lệ kỹ thuật · gỡ khoá tự động
 - src/domain/prelaunch-lock.ts (`planProxy`, `isPrelaunchLockEnabled`)
 - src/proxy.ts (nhánh khoá mở rộng, chạy trước predicate auth cũ)
 
+---
+
+## `public.notifications` — trục ĐỌC own-row mới qua RLS + Realtime, không gắn route nào (F012_NotificationsPanel, 2026-09-09, chưa cấp mã PERM### riêng)
+
+Khác mọi mục trên: đây KHÔNG phải một route-guard và không nằm trên bất kỳ route nào — chuông +
+popup thông báo là một header component cross-cutting render trên 4 route ĐÃ CÓ (`/`, `/awards`,
+`/profile`, `/kudos`), mỗi route trong 4 route đó giữ nguyên phân loại route-guard hiện tại của nó
+(không đổi gì ở PERM001-004 hay ở mục `/kudos`/`/profile` phía trên). Ranh giới của F012 nằm hoàn
+toàn trong Postgres, trên một bảng mới.
+
+**Không phải trục phân quyền thứ hai của dự án** (đính chính so với draft gốc của feature —
+`docs/vi/system/permissions.md § Bổ sung dự kiến — F012_NotificationsPanel` có bản đầy đủ): RLS
+own-row cho ĐỌC đã có từ `public.users` (migration `0001`) và lặp lại ở `public.secret_box_openings`
+(F010, `0011`); trục GHI gắn với danh tính hàng dữ liệu đã được chính tài liệu này gọi là "trục thứ
+hai" từ F008 (mục `/kudos` phía trên). `public.notifications` là lần lặp lại thứ 5 của cùng một loại
+ranh giới RLS own-row, không phải một trục mới — phân loại `other` (§ Authorization System Type
+trong `permissions.md`) giữ nguyên.
+
+**Cái thật sự mới**: (1) bảng ĐẦU TIÊN của dự án vào publication `supabase_realtime` — RLS phải lọc
+đúng cho cả luồng `postgres_changes` INSERT, không chỉ SELECT qua REST; (2) quyền ghi bị bó hẹp còn
+ĐÚNG MỘT CỘT bằng `GRANT UPDATE (is_read)`, không phải chỉ bằng RLS policy (Postgres row-security
+không chặn được theo cột); (3) không có GRANT INSERT nào cho `authenticated` — ghi duy nhất qua
+trigger `SECURITY DEFINER`, người nhận không bao giờ là người ghi kể cả gián tiếp qua RPC (khác
+`open_secret_box()` của F010, nơi viewer tự gọi RPC để tạo hàng của chính mình).
+
+| Chủ thể | Đọc thông báo của mình (SELECT + realtime) | Đánh dấu đã đọc (UPDATE `is_read`) | Ghi thông báo mới (INSERT) |
+|---|---|---|---|
+| Anonymous | ✗ — không có session, RLS chặn, không có chuông trên UI | ✗ | ✗ |
+| Authenticated, đúng chủ hàng (`user_id = auth.uid()`) | ✓ — cả REST lẫn kênh realtime | ✓ — chỉ cột `is_read`, không sửa được `type`/`payload` | ✗ — không ai được `GRANT INSERT`, kể cả chủ hàng |
+| Authenticated, KHÔNG phải chủ hàng | ✗ — RLS lọc mất hàng, "0 dòng khớp" giống hệt id không tồn tại (FR-603, chống rò rỉ sự tồn tại) | ✗ — cùng lý do | ✗ |
+| *(hệ thống)* trigger `SECURITY DEFINER` khi có Kudos/tim mới | N/A | N/A | ✓ — đường ghi DUY NHẤT, chạy trong cùng transaction với sự kiện sinh ra nó |
+
+Hai điều enforce Ở TẦNG DỮ LIỆU, không phải UI hay application code:
+- **Own-row cho cả SELECT lẫn UPDATE**: `notifications_select_own`/`notifications_update_own_read`,
+  `USING (user_id = auth.uid())` (`0012_notifications.sql:66-79`) — áp dụng cho cả REST và Realtime
+  (Realtime đánh giá lại đúng policy này cho mỗi thay đổi, verify bằng test thật:
+  `tests/e2e/notifications.spec.ts:178` TC-002, `:664` TC-019).
+- **Cột được UPDATE bị giới hạn bằng GRANT, không phải policy**: `GRANT UPDATE (is_read) ON
+  public.notifications TO authenticated` (`0012_notifications.sql:79`) — không có cách nào sửa
+  `type`/`payload` của chính hàng mình qua REST.
+- **Không GRANT INSERT/DELETE cho bất kỳ role người dùng nào** — ghi duy nhất qua 2 trigger
+  `SECURITY DEFINER`, `AFTER INSERT ON public.kudos`/`public.kudo_hearts`
+  (`0013_notification_emitters.sql`), cùng hình dạng `sync_kudo_heart_count` (`0007`).
+
+**Fail-open cho ĐỌC (badge), fail-closed cho GHI (mark-read)**: `getUnreadCount` fail-open trả `0`
+khi Supabase lỗi (`src/dal/notifications.ts:49-68`) — badge hỏng không được sập header. `markRead`/
+`markAllRead` fail-closed — lỗi hoặc 0 dòng khớp đều trả `{ok:false}`/`{updated:0}`, không suy đoán
+kết quả (`src/dal/notifications.ts:123-184`).
+
+Không cấp `PERM###` mới ở đây (cùng tiền lệ `/kudos`/`/prelaunch` — mã chính thức chờ `rebuild-spec`
+Core pass kế tiếp quyết định). Bốn bề mặt đang chờ mã: đọc own-row (kể cả realtime) · đánh dấu đã
+đọc own-row (cột `is_read`) · chặn đọc/ghi thông báo của người khác (không phân biệt với id không
+tồn tại) · ghi qua trigger `SECURITY DEFINER` khi có Kudos/tim mới. Xem
+`docs/vi/system/permissions.md § Bổ sung dự kiến — F012_NotificationsPanel` cho chi tiết đầy đủ.
+
+### Related Routes
+- Không có — cross-cutting header component, không phải một route hay Server Action có path riêng.
+  Đọc/ghi đi qua DAL (`src/dal/notifications.ts`) + Server Action `markReadAction`/`markAllReadAction`
+  (`src/app/_actions/notifications.ts`), gọi từ bất kỳ trang nào đang render `SiteHeader`.
+
+### Related Screens
+- SCR003_HomeScreen, SCR004_Awards, SCR006_Profile, SCR007_KudosLiveBoard — 4 screen ĐÃ CÓ, mỗi cái
+  render chuông qua `SiteHeader` (F012_NotificationsPanel không tạo SCR### mới)
+
+### Related Modules
+- supabase/migrations/0012_notifications.sql (bảng + RLS + GRANT cột + dedupe index + publication)
+- supabase/migrations/0013_notification_emitters.sql (2 trigger `SECURITY DEFINER`)
+- src/dal/notifications.ts, src/dal/notifications-query.ts, src/dal/notifications-client.ts
+- src/app/_actions/notifications.ts (`markReadAction`, `markAllReadAction`)
+- src/api/notifications.ts (đọc + `subscribeToNotifications`, browser)
+
+---
+
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
@@ -461,7 +534,7 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 
 ## Summary
 
-- **Total Permission Items**: 4 (PERM001 nay superseded — không tính vào surface đang hoạt động, nhưng vẫn giữ trong tổng số vì mã chưa bị xoá; `/profile` PROTECTED join cơ chế PERM003 — chưa cấp mã riêng, không cộng thêm vào tổng số)
+- **Total Permission Items**: 4 (PERM001 nay superseded — không tính vào surface đang hoạt động, nhưng vẫn giữ trong tổng số vì mã chưa bị xoá; `/profile` PROTECTED join cơ chế PERM003 — chưa cấp mã riêng, không cộng thêm vào tổng số; trục ĐỌC own-row mới của F012 (`public.notifications`) cũng chưa cấp mã riêng, không cộng thêm vào tổng số — cùng quy ước F007-F011)
 - **By Type**: route-guard: 4 (1 superseded; `/profile` gia nhập PERM003, chưa có mã riêng), screen-permission: 0 (1 chưa cấp mã — xem mục cuối), action-permission: 0, data-permission: 0, role-based: 0, resource-ownership: 0, field-permission: 0, api-scope: 0, feature-flag: 0, experiment: 0, env-gate: 0, locale-gate: 0
 
 ---
@@ -469,9 +542,9 @@ pass kế tiếp, sau khi `/admin` tồn tại và người review xác nhận p
 ## Cross-Reference Validation
 
 - [x] All PERM### codes are unique
-- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008, F009, F010, F011 không tạo PERM### mới — F007/F008/F009/F010 mở trục phân quyền GHI mới, F011 mở trục khoá site-wide mới, đều chờ core pass cấp mã)
-- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/prelaunch`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages)
-- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose, SCR009_CountdownPrelaunch tồn tại trong screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó)
+- [x] All PERM### codes are referenced in FeatureList.md (PERM001-004 → F001; xem `feature-list.md` § F001, F003; F004, F005, F006, F007, F008, F009, F010, F011, F012 không tạo PERM### mới — F007/F008/F009/F010 mở trục phân quyền GHI mới, F011 mở trục khoá site-wide mới, F012 mở trục ĐỌC own-row + Realtime mới, đều chờ core pass cấp mã)
+- [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md; `/`, `/awards`, `/kudos`, `/login`, `/prelaunch`, `/profile`, `/standards`, `/todo` khớp bảng Frontend Routes/Pages; F012 không có route riêng — cross-cutting header component trên `/`, `/awards`, `/kudos`, `/profile`)
+- [x] All related screen references are valid (SCR001_LoginScreen, SCR002_TodoScreen, SCR003_HomeScreen, SCR004_Awards, SCR005_Standards, SCR006_Profile, SCR007_KudosLiveBoard, SCR008_KudosCompose, SCR009_CountdownPrelaunch tồn tại trong screen-list.md; PERM004 không target screen nào — lý do nêu ở mục đó; F012 tham chiếu SCR003/SCR004/SCR006/SCR007, không tạo SCR### mới)
 - [x] All related module references are valid
 - [x] No orphaned permission references
 

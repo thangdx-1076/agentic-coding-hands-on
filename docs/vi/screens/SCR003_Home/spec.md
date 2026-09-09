@@ -77,7 +77,7 @@ luồng cuộn) (`data/preview.png`, 1512×4480).
 | E04 | Sun* Kudos (nav) | link | — | Enabled | Always | Điều hướng `/kudos` | static | raw | — | N/A |
 | E05 | Language selector | button | — | "VN" | Always | Mở menu VN/EN (F002, tái dùng — không re-spec ở đây) | static | raw | — | N/A |
 | E06 | Đăng nhập (link, khách) | link | — | Enabled | Conditional (Anonymous) | Điều hướng `/login` | computed | raw | — | N/A |
-| E07 | Bell (thông báo) | button | — | Enabled | Conditional (Authenticated) | Mở panel rỗng | computed | raw | — | N/A |
+| E07 | Bell (thông báo) | button | — | Enabled | Conditional (Authenticated) | Mở panel danh sách thông báo thật (F012_NotificationsPanel) | computed | badge số, cap `9+` | ẩn badge khi 0; nội dung panel rỗng chỉ khi thật sự 0 thông báo | N/A |
 | E08 | Account menu button | button | — | Enabled | Conditional (Authenticated) | Mở menu Hồ sơ/Đăng xuất/Trang quản trị | computed | raw | — | binding: `role` |
 | E09 | Hero title "ROOT FURTHER" | display field | — | — | Always | — | static | raw | — | N/A |
 | E10 | "Coming soon" label | display field | — | — | Conditional (chưa tới mốc) | — | computed | raw | dash | N/A |
@@ -101,7 +101,7 @@ collapse to one row" — 6 thẻ giống cấu trúc, chỉ khác nội dung (ti
 | Action | Element | Trigger | Condition | Result on this screen | Source |
 |--------|---------|---------|-----------|------------------------|--------|
 | Mở menu tài khoản | E08 | click / Enter / Space | đã đăng nhập | `[role="menu"]` mở | `components/home/account-menu.tsx` |
-| Mở panel thông báo | E07 | click | đã đăng nhập | `[role="dialog"]` mở, rỗng | `components/home/notification-bell.tsx` |
+| Mở panel thông báo | E07 | click | đã đăng nhập | `[role="dialog"]` mở, nạp trang đầu (10 mục mới nhất, keyset) lần mở đầu tiên — không còn cố định rỗng (F012_NotificationsPanel) | `src/app/_components/notification-bell.tsx` |
 | Mở menu widget | E19 | click / Enter / Space | luôn khả dụng | `[role="menu"]` 2 mục mở | `components/home/widget-button.tsx` |
 | Cuộn lên đầu | E01, E02 | click khi đang active | `pathname === href` | cuộn mượt lên đầu, không tải lại | `components/home/nav-link.tsx` |
 
@@ -122,7 +122,8 @@ collapse to one row" — 6 thẻ giống cấu trúc, chỉ khác nội dung (ti
 
 | State | Trigger | Visual Behavior | User Action Available | Source |
 |-------|---------|----------------|-----------------------|--------|
-| empty (bell panel) | click bell, 0 thông báo | "Bạn chưa có thông báo" | đóng panel | `components/home/notification-bell.tsx` |
+| empty (bell panel) | click bell, 0 thông báo (thật sự — không còn cố định trước F012) | "Bạn chưa có thông báo" | đóng panel | `src/app/_components/notifications/notification-panel.tsx` |
+| loaded (bell panel) | click bell, ≥1 thông báo | Danh sách item (icon + message + thời gian tương đối + chấm đỏ nếu chưa đọc), nút "Xem thêm" nếu còn trang sau (F012_NotificationsPanel) | đánh dấu đã đọc 1 mục / tất cả; "Xem thêm" nối trang kế | `src/app/_components/notifications/notification-panel.tsx` |
 | error (đọc role) | Supabase lỗi/không có row | fail-open `role: "member"`, không hiển thị lỗi cho user | — | `lib/auth/get-current-user-role.ts` |
 | success (đếm ngược về 0) | `nowMs >= targetMs` | 3 ô giữ `00/00/00`, ẩn "Coming soon" | — | `hooks/use-countdown.ts` |
 

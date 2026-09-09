@@ -94,14 +94,23 @@
       "admin": "Admin Dashboard",
       "logout": "Sign out"
     },
-    "notifications": {
-      "empty": "No notifications yet"
-    },
     "widget": {
       "label": "Quick actions",
       "standardsItem": "Rules",
       "writeKudosItem": "Write KUDOS",
       "cancelLabel": "Cancel"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "loadMore": "Load more",
+    "empty": "No notifications yet",
+    "types": {
+      "kudos_received": "**{senderName}** sent you a Kudos",
+      "heart_received": "**{actorName}** gave a heart to your Kudos",
+      "secret_box_available": "You have a new Secret Box, open it now!",
+      "kudos_hidden": "Your Kudos was hidden for violating the <link>Community Standards ↗</link>"
     }
   },
   "awards": {

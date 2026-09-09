@@ -1270,3 +1270,200 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
   yên qua 2 lượt full suite.
 - Citation trong 5 file docs trỏ sai sau khi di chuyển file; đã quét lại, mọi `path:line` trong F011
   specs + system docs đều resolve.
+
+## 260909-0254 — f012-notifications-panel (blueprint)
+
+### Tôi cần làm
+
+- [ ] (không có — blueprint tự chốt hết, không quyết định nào chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- Panel thông báo giữ `role="dialog"`, KHÔNG mở rộng `useMenuKeyboardNav`. Lý do: `menu` của ARIA
+  đòi con đồng nhất `menuitem` mà panel có heading + 2 nút + danh sách; hook lại có 3 consumer nên
+  đổi chữ ký sẽ thành một phase prereq kèm hồi quy 3 màn. Chi tiết: phase-08 § Key Insights 1.
+- `unreadCount` thành field **bắt buộc** của `SiteViewer` thay vì prop rời của `SiteHeader`. 4 màn
+  đã truyền `viewer` sẵn ⇒ 0 file màn phải sửa, chỉ 2 nơi sản xuất viewer. TypeScript thay cho
+  layout chung: quên bơm ở một trang là lỗi biên dịch. Giá phải trả: ~13 literal trong story/test.
+- **Không dùng `t.rich`** (lệch technical-spec § 6). Repo không có `useTranslations` client và
+  không có `NextIntlClientProvider`; template mang marker `<link>…</link>`, hàm thuần
+  `splitLinkTemplate` cắt ra, component render `<Link href={ROUTES.STANDARDS}>`. Đổi lại: có unit
+  test trong project `node`, không thêm pattern mới, không đẩy messages xuống client.
+- Migration tách 2 file: `0012_notifications.sql` (schema/RLS/realtime) + `0013_notification_emitters.sql`
+  (2 trigger). Để phase emitter chạy song song với phase DAL và rollback riêng từng nửa.
+- Đọc danh sách + realtime đi qua Supabase client phía trình duyệt (`src/api/notifications.ts`,
+  tiền lệ `src/api/auth.ts`); ghi vẫn đi server action. RLS là ranh giới, và TC-002 kiểm đúng
+  đường đó.
+- Tạo `src/domain/notifications/` — lần đầu có luật dùng chung cho cả `src/dal` (server-only) lẫn
+  `src/api` (browser); browser không import ngược qua `server-only` được nên không thể để ở `dal`.
+
+### Nợ lại
+
+- Emitter cho `kudos_hidden` và `secret_box_available`: ship enum + renderer, không phát. Chờ admin
+  moderation và một định nghĩa "suất box mới" dạng sự kiện. TC-F007-014 out-of-scope.
+- `src/app/(protected)/profile/page.tsx` vẫn lặp logic của `getViewer()` thay vì gọi nó. Phase 07
+  chỉ vá thêm `unreadCount`, cố ý không refactor để khỏi trộn hai thay đổi vào một PR.
+
+## 260909-0850 — f012-notifications-panel (phase 04: domain + DAL + action)
+
+### Tôi cần làm
+
+- [ ] (không có — quyết định dưới đây không chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- **Bỏ `src/domain/notifications/message.ts`** (`formatNotificationMessage` +
+  `splitLinkTemplate`) mà phase-04-domain-dal-actions.md liệt kê — phase 06 đã chạy trước và
+  commit `913ec73` với `src/utils/split-link-template.ts` (đầy đủ hơn: nhiều marker, marker hỏng
+  không throw, có test), đúng quyết định "Không dùng t.rich" đã ghi ở blueprint 260909-0254.
+  Giữ cả hai sẽ tạo 2 nguồn xử lý `<link>…</link>` khác hình dạng (`{type,value}[]` thật vs
+  `{text,link?}[]` của tôi) — trùng lặp, vi phạm DRY. `formatNotificationMessage` (thay
+  `{token}` thủ công) cũng thừa: templates dùng cú pháp `{senderName}`/`{actorName}` là ICU
+  chuẩn của next-intl, `t()` phía renderer tự nội suy, không cần lớp thay thế bằng regex ở
+  domain. `parseNotificationPayload` (types.ts) vẫn giữ — đó là hàng thật renderer cần để có
+  `values` truyền vào `t()`.
+- `vitest.config.ts`: **không sửa** — glob coverage `src/domain/**/*.ts`, `src/utils/**/*.ts`,
+  `src/dal/**/*.ts`, `src/app/**/_actions/**/*.ts` đã có sẵn từ trước, tất cả 6 file phase 04 lọt
+  bảng coverage 100% mà không cần thêm glob nào (khác giả định "cần thêm" ở phase-04 Key
+  Insight 7 — giả định đó đã lỗi thời so với `vitest.config.ts` hiện tại).
+
+### Nợ lại
+
+- (không có mới — nợ `kudos_hidden`/`secret_box_available` không emitter đã ghi ở blueprint)
+- Không gom 4 điểm render `SiteHeader` về một layout chung — refactor riêng, ngoài phạm vi.
+
+## 260909-0854 — F012-notifications-panel-phase07-wire-unread-count
+
+### Tôi cần làm
+- (không có)
+
+### Decisions
+- Mở rộng phạm vi ra ngoài "File ownership" của phase-07 (`plans/260909-0239-notifications-panel/phase-07-wire-unread-count-and-copy.md`): phase file giả định "cả 4 màn đã truyền `viewer` xuống `SiteHeader` ⇒ 0 file màn nào phải sửa", nhưng thực tế 4 `*-screen.tsx` (`home-screen.tsx`, `awards-screen.tsx`, `kudos-screen.tsx`, `profile-screen.tsx`) có RIÊNG một prop `unreadCount?: number` (mặc định `0`) độc lập với `viewer`, và 4 `*-client.tsx` tương ứng hardcode `unreadCount={0}` khi gọi màn hình. Xoá `SiteHeaderProps.unreadCount` mà không dọn 2 lớp này thì hoặc vỡ biên dịch (excess prop) hoặc để lại một prop "ma" — chuông vẫn hiển thị `0` như cũ, đúng cái bug phase này sinh ra để sửa. Đã sửa thêm 8 file đó (bỏ hẳn prop `unreadCount` khỏi `*ScreenProps`, bỏ `unreadCount={0}` khỏi `*-client.tsx`) + 2 story (`home-screen.stories.tsx`, `awards-screen.stories.tsx`) đang set prop đó. Không phải quyết định thiết kế mới — là hệ quả cơ học bắt buộc của đúng thay đổi kiểu `SiteViewer`/`SiteHeaderProps` mà phase-07 đã chốt, không có phase nào khác (05, 08) nhận sở hữu 8 file này.
+- Vị trí `get-notifications-copy.ts` đặt ở `src/app/_utils/` (khớp phase file + tiền lệ `get-viewer.ts` cùng thư mục, cùng lý do: consumer nằm ở nhiều nhóm route khác nhau) — khác với glob `src/app/_shared/get-notifications-copy.ts` ghi trong message giao việc (có vẻ gõ nhầm `_utils`→`_shared`). Chọn theo skill `nextjs-route-colocation-architecture` (helper có I/O bất đối xứng đặt `_utils/`) + tiền lệ repo, không theo message.
+- `NotificationsCopy["types"]` giữ nguyên template thô (`.raw()`), không gọi `t()`/`t.rich()` — interpolation `{senderName}`/`{actorName}` và tag `<link>` của `kudos_hidden` để phase 08 (panel item, theo từng thông báo) tự xử lý.
+
+### Nợ lại
+- `(protected)/profile/page.tsx` tự dựng `viewer`/role/unreadCount bằng tay thay vì gọi `getViewer()` — trùng logic có sẵn, giữ nguyên theo đúng phạm vi phase-07 (đã ghi trong doc comment tại chỗ).
+
+## 260909-0854 — f012-notifications-panel (phase 05: browser api + realtime + hook)
+
+### Tôi cần làm
+
+- [ ] (không có — quyết định dưới đây không chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- **Đặt ở `src/api/notifications.ts`, không phải `src/dal/notifications-browser.ts`** — message
+  giao việc ghi `## File ownership` là `src/dal/notifications-browser*.ts`, nhưng chính message đó
+  cũng liệt `src/dal/notifications*.ts` vào mục "KHÔNG ĐƯỢC CHẠM (đã xong)" — hai dòng ấy mâu
+  thuẫn nhau, và `src/dal/notifications-query.ts` mở đầu bằng `import "server-only"` nên bất cứ
+  thứ gì import nó (hoặc nằm cùng cây `src/dal`) đều không dùng được từ code trình duyệt. Theo
+  đúng `phase-05-browser-api-and-hook.md` (hợp đồng chi tiết, khớp tiền lệ `src/api/auth.ts`, và
+  đã được chốt sẵn ở blueprint `plans/action-items.md` mục 260909-08xx trước đó) + luật "khớp
+  pattern có sẵn trong repo" của CLAUDE.md.
+- **Tách `use-notifications-realtime.ts`** (43 dòng) khỏi `use-notifications.ts` — đúng gợi ý
+  trong Todo list của phase 05 để giữ dưới 200 dòng/file. `openRef` (đọc `open` mới nhất mà không
+  bắt hiệu ứng phải subscribe lại) sống trong file phụ này.
+- **`toNotificationRow` bị nhân bản** giữa `src/dal/notifications-query.ts` (server) và
+  `src/api/notifications.ts` (browser) — cố ý, không phải sót DRY: file server mở bằng
+  `import "server-only"`, browser bundle không bao giờ được phép chạm tới nó.
+- **`setOpen`/`loadMore`/`markRead`/`markAllRead` là hàm thường, không phải `useEffect`** — để né
+  `react-hooks/set-state-in-effect` (ESLint React Compiler) mà không phải giả vờ tách state dẫn
+  xuất; chỉ có 2 `useEffect` thật trong toàn bộ hook (đồng bộ `initialUnreadCount` dùng pattern
+  "adjust state during render" của react.dev, và subscribe realtime trong file phụ).
+- Sửa comment ban đầu `// Never \`count - 1\` here` → đổi chữ vì nó tự khớp gate
+  `grep -nE "unreadCount\s*(-|\+)|count\s*-\s*1"` mà Success Criteria của chính phase 05 dùng để
+  kiểm — gate match cả comment, không riêng code (đã từng gặp lỗi tương tự ở phase khác).
+
+### Nợ lại
+
+- (không có mới)
+
+## 260909-0936 — phase-08-panel-ui-and-badge
+
+### Tôi cần làm
+
+- [ ] Visual QA 4 icon `icon-notification-{kudos,heart,box,eye-off}.tsx` trước khi ship — phiên
+  này không có quyền truy cập MCP MoMorph nên không tải được path vector thật từ frame `589:9132`;
+  4 icon dựng bằng glyph chuẩn (star/heart/gift-box/eye-slash), hình dạng hợp lý về ngữ nghĩa
+  nhưng CHƯA đối chiếu pixel-perfect với Figma.
+- [ ] Cân nhắc thread `userId` thật qua `SiteViewer` (như `/kudos` đã làm với `viewerId`) thay vì
+  cách tạm ở dưới, khi có phase riêng cho việc này.
+
+### Decisions
+
+- **`NotificationBell` tự resolve `userId` qua `supabase.auth.getUser()` (client-side), không
+  thread `viewerId` qua `SiteViewer`** — `useNotifications` (phase 05, không được sửa) đòi
+  `userId: string` để scope kênh realtime; `SiteViewer` (`_shared/site-chrome.ts`) chỉ có
+  `email/isAdmin/unreadCount`, không có id thật. Thread đúng chuẩn `/kudos`'s `viewerId` sẽ phải
+  sửa `site-chrome.ts` + `get-viewer.ts` + `profile/page.tsx` + `site-header.tsx` — 4 file ngoài
+  phạm vi sở hữu của phase này. Chọn phương án 0 file ngoài phạm vi (chỉ `auth.getUser()` nội bộ
+  trong `notification-bell.tsx`), đúng luật "ít file thay đổi nhất". An toàn: giá trị tạm `""`
+  trước khi id thật resolve chỉ khiến kênh realtime không khớp gì (vô hại, không phải biên an
+  ninh — RLS mới là biên thật), rồi tự subscribe lại đúng kênh khi id thật về.
+- **Sửa 1 lệnh gọi `<NotificationBell>` trong `site-header.tsx`** (đổi `emptyStateText` → `copy`)
+  dù file này không nằm trong "File ownership" — đây là điểm tích hợp duy nhất, bắt buộc phải sửa
+  để component mới compile được (props đổi hình dạng theo đúng kiến trúc phase-08.md đã vẽ), và
+  `site-header.tsx` không nằm trong danh sách "KHÔNG ĐƯỢC CHẠM".
+- **Panel dùng `aria-labelledby` trỏ vào `<h2>` thật, không dùng `aria-label` trùng text** — đúng
+  APG dialog pattern hơn bản cũ (panel rỗng dùng `aria-label`), và bây giờ panel có heading thật
+  nên không cần trùng lặp text.
+- **`error` và "trống thật" (0 mục, đã tải xong) dùng chung UI `copy.empty`** — copy contract
+  (`site-chrome.ts`) không có string lỗi riêng; thêm 1 cái sẽ phải sửa `messages/*.json` (nằm
+  trong "KHÔNG ĐƯỢC CHẠM"). Chấp nhận thông điệp hơi lệch ngữ nghĩa lúc lỗi mạng, đổi lấy 0 file
+  ngoài phạm vi.
+- **4 icon `icon-notification-*.tsx` đặt ở `_components/icons/` (top-level), không phải
+  `_components/notifications/icons/`** — theo đúng "File ownership" trong message giao việc
+  (glob `src/app/_components/icons/icon-notification-*.tsx`), ưu tiên hơn bản nháp trong
+  `phase-08-panel-ui-and-badge.md`'s "Related Code Files" (ghi `notifications/icons/`). Cũng nhất
+  quán với việc `notification-bell.tsx` bản thân nó đã là component dùng chung toàn site (không
+  thuộc riêng 1 route segment) như `icon-bell.tsx`/`icon-user.tsx` cùng thư mục.
+
+### Nợ lại
+
+- Emitter `kudos_hidden`/`secret_box_available` — đã ghi ở entry trước (clarifications.md), không
+  đổi.
+- 4 icon notification là glyph tạm (xem "Tôi cần làm" ở trên).
+- `error` state trong panel dùng chung text với "trống" — cần string lỗi riêng nếu UX muốn phân
+  biệt, việc đó đụng `messages/*.json` (ngoài phạm vi phase này).
+
+## 260909-1040 — f012-notifications-panel
+
+### Tôi cần làm
+
+- [ ] Quyết định business: bao giờ làm **admin moderation** (ẩn/hiện kudo)? Đó là điều kiện để
+      `kudos_hidden` có emitter thật và để TC-F007-014 hết out-of-scope.
+      Hiện `public.kudos` không có cột trạng thái nào.
+- [ ] Quyết định business: "có suất Secret Box mới" có được coi là một **sự kiện** không? Hiện nó
+      là giá trị dẫn xuất `floor(sum(heart_count)/5)` trong `open_secret_box()`. Muốn phát
+      `secret_box_available` thì phải định nghĩa mốc "đã báo tới suất thứ N" — một invariant mới.
+- [ ] Review + merge PR #23.
+
+### Decisions
+
+- `heart_received` gửi cho **`kudos.sender_id`** (người viết kudo), không phải người nhận kudo.
+  Căn cứ: `open_secret_box()` (migration 0011) ghi công tim cho sender. Hai định nghĩa lệch nhau
+  sẽ khiến hệ thống ghi công cho một người và báo cho người khác.
+- `payload.senderName` chụp **null** khi người gửi chưa có `full_name` (9/21 user thật). Trigger
+  không bịa tên; fallback "Sunner" ở tầng render, đúng quy ước `kudos-card-person.tsx:96`.
+- Panel giữ `role="dialog"`, KHÔNG mở rộng `useMenuKeyboardNav`. `menu` của ARIA đòi con đồng nhất
+  `menuitem` mà panel có heading + 2 nút + danh sách; hook lại có 3 consumer khác.
+- `unreadCount` là field **bắt buộc** của `SiteViewer` chứ không phải prop của `SiteHeader`.
+  Quên bơm ở một trang → lỗi biên dịch, thay vì im lặng bằng 0 như trước.
+- Namespace i18n `notifications.*` mở ở **cấp cao**, dời `home.notifications.empty` sang đó.
+  Không nhét cây template 4 loại dưới `home` để mọi trang khỏi phải load namespace `home`.
+- Không dùng `t.rich` — repo không có `NextIntlClientProvider`.
+- Emitter là **SQL trigger**, không phải ghi ở server action: `create-kudo` insert 1 dòng không
+  transaction, thêm lần ghi thứ hai ở tầng app là mở cửa sổ ghi-một-nửa.
+
+### Nợ lại
+
+- **`NotificationBell` tự gọi `auth.getUser()` phía client** thay vì luồn `viewerId` qua
+  `SiteViewer`. Thêm 1 round-trip trên mọi trang có header, và để lại cửa sổ ngắn sau khi tải
+  trang mà thông báo đến sẽ bị bỏ qua (lần tải sau server count sửa lại). Sửa đúng cách là luồn
+  `viewerId` xuống — đụng `site-chrome.ts`, `get-viewer.ts`, `profile/page.tsx`, `site-header.tsx`.
+- **`/profile` vẫn tự dựng viewer** thay vì dùng `getViewer()` — nợ có từ trước F012, reviewer
+  nhắc lại (finding Low).
+- **Icon thông báo là thiết kế riêng.** Frame `6-1LRz3vqr` không có ảnh/node tree/asset trong
+  MoMorph nên không có gì để đối chiếu pixel. Nếu sau này design bổ sung frame thật thì cần QA lại.
+- **`kudos-compose` C23 vẫn flake ở full suite** (xanh khi chạy riêng) — nợ cũ, không phải của F012.
