@@ -1,0 +1,372 @@
+
+> agentic-coding-hands-on@0.9.0 test:e2e /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on
+> playwright test tests/e2e/notifications.spec.ts tests/e2e/notifications-emitters.spec.ts
+
+
+Running 20 tests using 4 workers
+
+[cleanup] delete notifications for 91784945-ddb1-4d1d-a852-34a82cf3bdf3 returned 404
+[cleanup] delete notifications for fa339cf8-3bad-42a1-b362-2c7518920640 returned 404
+[cleanup] delete notifications for 3f055e61-fdc4-4404-9a08-69ebd981796a returned 404
+[cleanup] delete notifications for f2f07f45-7579-4063-acf6-57964a4c70e9 returned 404
+[cleanup] delete notifications for 9e58f4ad-4415-43af-81f3-4e5c09a55b90 returned 404
+[cleanup] delete notifications for 96a8d9fa-3e1a-4f5c-a511-0632e5188ecb returned 404
+[cleanup] delete notifications for f8fd124b-75ff-4696-a79c-636299e105ed returned 404
+  ✘   3 [chromium] › tests/e2e/notifications-emitters.spec.ts:161:7 › Notification Emitters › TC-011: self-kudo does not emit notification @auth @local-db (3.1s)
+  ✘   2 [chromium] › tests/e2e/notifications-emitters.spec.ts:196:7 › Notification Emitters › TC-012: anonymous kudo shows only nickname in payload @auth @local-db (3.2s)
+  ✘   4 [chromium] › tests/e2e/notifications-emitters.spec.ts:258:7 › Notification Emitters › TC-013: heart add/remove/re-add dedupes to 1 notification @auth @local-db (3.2s)
+  ✘   1 [chromium] › tests/e2e/notifications-emitters.spec.ts:104:7 › Notification Emitters › TC-010: sending kudos emits kudos_received notification @auth @local-db (3.2s)
+  ✓   7 [chromium] › tests/e2e/notifications.spec.ts:73:7 › Notifications Panel › TC-001: no-session → bell not visible, no dialog @auth @local-db (513ms)
+[cleanup] delete notifications for 6a05921a-077c-4daf-8797-8d23a7e7bc56 returned 404
+[cleanup] delete notifications for 030aa556-7593-48db-9f32-a897837529b0 returned 404
+[cleanup] delete notifications for 97a068aa-2c97-43ea-829a-dcbc4c5f668c returned 404
+[cleanup] delete notifications for 36db666d-f725-4568-93d6-a66aed535463 returned 404
+  ✓   8 [chromium] › tests/e2e/notifications.spec.ts:128:7 › Notifications Panel › TC-008: empty state when 0 notifications @auth @local-db (1.4s)
+  ✘   9 [chromium] › tests/e2e/notifications.spec.ts:161:7 › Notifications Panel › TC-002: RLS blocks cross-user reads + realtime @auth @local-db (912ms)
+  ✘   5 [chromium] › tests/e2e/notifications-emitters.spec.ts:321:7 › Notification Emitters › TC-021: failed notification emit does not break the original action @auth @local-db (1.4s)
+  ✓  10 [chromium] › tests/e2e/notifications.spec.ts:221:7 › Notifications Panel › TC-003: badge hidden when unreadCount = 0 @auth @local-db (910ms)
+[cleanup] delete notifications for ead5551d-04ad-49ac-bb23-d2444508937e returned 404
+[cleanup] delete notifications for 408a2ac7-113a-4c83-8919-560eebf257f5 returned 404
+[cleanup] delete notifications for f74f20a4-b374-4380-bbd8-9d4269d73a22 returned 404
+  ✘  13 [chromium] › tests/e2e/notifications.spec.ts:340:7 › Notifications Panel › TC-007: 4 notification types render correctly @auth @local-db (521ms)
+  ✘  11 [chromium] › tests/e2e/notifications.spec.ts:261:7 › Notifications Panel › TC-004: badge shows '3' when unreadCount = 3 @auth @local-db (566ms)
+  ✘  12 [chromium] › tests/e2e/notifications.spec.ts:303:7 › Notifications Panel › TC-005: badge caps at '9+' when unreadCount >= 10 @auth @local-db (590ms)
+[cleanup] delete notifications for 2cd8ecc3-a690-40a5-ac9f-4c3e256f6063 returned 404
+[cleanup] delete notifications for 4a991789-f238-4db5-8b85-51224ee7da11 returned 404
+[cleanup] delete notifications for 04e68c09-3e41-4f76-b1fc-031701bd1758 returned 404
+  ✘  14 [chromium] › tests/e2e/notifications.spec.ts:480:7 › Notifications Panel › TC-016/017: mark notification as read persists after reload @auth @local-db (852ms)
+  ✘  16 [chromium] › tests/e2e/notifications.spec.ts:397:7 › Notifications Panel › TC-009: language change applies retroactively to old notifications @auth @local-db (866ms)
+  ✘  15 [chromium] › tests/e2e/notifications.spec.ts:439:7 › Notifications Panel › TC-015: kudos_hidden links to /standards (not /community-standards) @auth @local-db (888ms)
+[cleanup] delete notifications for 244e8e5c-cb10-4c2c-aa19-270a79b372bb returned 404
+[cleanup] delete notifications for 80cd4fca-0c28-4bb2-808a-51631868d25e returned 404
+[cleanup] delete notifications for ddf45440-835d-4a62-898f-a11d44306fe3 returned 404
+  ✘  18 [chromium] › tests/e2e/notifications.spec.ts:635:7 › Notifications Panel › TC-020: markRead — id của người khác và id không tồn tại cho CÙNG một kết quả @auth @local-db (627ms)
+  -  20 [chromium] › tests/e2e/notifications.spec.ts:712:8 › Notifications Panel › TC-014: admin moderation — hide/unhide/re-hide kudos @auth @local-db
+  ✘  19 [chromium] › tests/e2e/notifications.spec.ts:534:7 › Notifications Panel › TC-018: pagination shows 10 items + 'Xem thêm' button @auth @local-db (491ms)
+[cleanup] delete notifications for 7998efc9-153c-4160-94aa-6e0180a57452 returned 404
+[cleanup] delete notifications for e98dd140-43bb-4994-b2fb-c20bdca8b0f0 returned 404
+  ✘  17 [chromium] › tests/e2e/notifications.spec.ts:592:7 › Notifications Panel › TC-019: badge updates realtime when new notification arrives @auth @local-db (881ms)
+  ✘   6 [chromium] › tests/e2e/notifications.spec.ts:88:7 › Notifications Panel › TC-006: panel opens with title and mark-all-read button @auth @local-db (6.3s)
+
+
+  1) [chromium] › tests/e2e/notifications-emitters.spec.ts:104:7 › Notification Emitters › TC-010: sending kudos emits kudos_received notification @auth @local-db 
+
+    Error: Failed to query notifications: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+      64 |   if (!response.ok) {
+      65 |     const error = await response.text();
+    > 66 |     throw new Error(
+         |           ^
+      67 |       `Failed to query notifications: ${response.status} ${response.statusText}\n${error}`,
+      68 |     );
+      69 |   }
+        at queryNotifications (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:66:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:142:22
+
+    Error Context: test-results/notifications-emitters-Not-be478-kudos-received-notification-chromium/error-context.md
+
+  2) [chromium] › tests/e2e/notifications-emitters.spec.ts:161:7 › Notification Emitters › TC-011: self-kudo does not emit notification @auth @local-db 
+
+    Error: Failed to query notifications: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+      64 |   if (!response.ok) {
+      65 |     const error = await response.text();
+    > 66 |     throw new Error(
+         |           ^
+      67 |       `Failed to query notifications: ${response.status} ${response.statusText}\n${error}`,
+      68 |     );
+      69 |   }
+        at queryNotifications (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:66:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:184:22
+
+    Error Context: test-results/notifications-emitters-Not-e95a4--does-not-emit-notification-chromium/error-context.md
+
+  3) [chromium] › tests/e2e/notifications-emitters.spec.ts:196:7 › Notification Emitters › TC-012: anonymous kudo shows only nickname in payload @auth @local-db 
+
+    Error: Failed to query notifications: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+      64 |   if (!response.ok) {
+      65 |     const error = await response.text();
+    > 66 |     throw new Error(
+         |           ^
+      67 |       `Failed to query notifications: ${response.status} ${response.statusText}\n${error}`,
+      68 |     );
+      69 |   }
+        at queryNotifications (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:66:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:233:22
+
+    Error Context: test-results/notifications-emitters-Not-ed63f-ws-only-nickname-in-payload-chromium/error-context.md
+
+  4) [chromium] › tests/e2e/notifications-emitters.spec.ts:258:7 › Notification Emitters › TC-013: heart add/remove/re-add dedupes to 1 notification @auth @local-db 
+
+    Error: Failed to query notifications: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+      64 |   if (!response.ok) {
+      65 |     const error = await response.text();
+    > 66 |     throw new Error(
+         |           ^
+      67 |       `Failed to query notifications: ${response.status} ${response.statusText}\n${error}`,
+      68 |     );
+      69 |   }
+        at queryNotifications (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:66:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:295:20
+
+    Error Context: test-results/notifications-emitters-Not-a085c-d-dedupes-to-1-notification-chromium/error-context.md
+
+  5) [chromium] › tests/e2e/notifications-emitters.spec.ts:321:7 › Notification Emitters › TC-021: failed notification emit does not break the original action @auth @local-db 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0
+    Received:   0
+
+      373 |           const kudos = (await response.json()) as Array<{ id: string }>;
+      374 |           // Original action (create kudo) should succeed even if emit fails
+    > 375 |           expect(kudos.length).toBeGreaterThan(0);
+          |                                ^
+      376 |         }
+      377 |       }
+      378 |     } finally {
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications-emitters.spec.ts:375:32
+
+    Error Context: test-results/notifications-emitters-Not-14ef9-t-break-the-original-action-chromium/error-context.md
+
+  6) [chromium] › tests/e2e/notifications.spec.ts:88:7 › Notifications Panel › TC-006: panel opens with title and mark-all-read button @auth @local-db 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[role="dialog"]').getByRole('button', { name: /Đánh dấu đọc tất cả/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('[role="dialog"]').getByRole('button', { name: /Đánh dấu đọc tất cả/ })
+
+
+      120 |         name: /Đánh dấu đọc tất cả/,
+      121 |       });
+    > 122 |       await expect(markAllReadBtn).toBeVisible();
+          |                                    ^
+      123 |     } finally {
+      124 |       await deleteTestUser(session.user_id);
+      125 |     }
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:122:36
+
+    Error Context: test-results/notifications-Notification-45cdc-le-and-mark-all-read-button-chromium/error-context.md
+
+  7) [chromium] › tests/e2e/notifications.spec.ts:161:7 › Notifications Panel › TC-002: RLS blocks cross-user reads + realtime @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:193:7
+
+    Error Context: test-results/notifications-Notification-02e61-s-cross-user-reads-realtime-chromium/error-context.md
+
+  8) [chromium] › tests/e2e/notifications.spec.ts:261:7 › Notifications Panel › TC-004: badge shows '3' when unreadCount = 3 @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:278:7
+
+    Error Context: test-results/notifications-Notification-d6ef8--shows-3-when-unreadCount-3-chromium/error-context.md
+
+  9) [chromium] › tests/e2e/notifications.spec.ts:303:7 › Notifications Panel › TC-005: badge caps at '9+' when unreadCount >= 10 @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:321:9
+
+    Error Context: test-results/notifications-Notification-2d0a1-ps-at-9-when-unreadCount-10-chromium/error-context.md
+
+  10) [chromium] › tests/e2e/notifications.spec.ts:340:7 › Notifications Panel › TC-007: 4 notification types render correctly @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:357:7
+
+    Error Context: test-results/notifications-Notification-6d169-tion-types-render-correctly-chromium/error-context.md
+
+  11) [chromium] › tests/e2e/notifications.spec.ts:397:7 › Notifications Panel › TC-009: language change applies retroactively to old notifications @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:414:7
+
+    Error Context: test-results/notifications-Notification-4ea05-tively-to-old-notifications-chromium/error-context.md
+
+  12) [chromium] › tests/e2e/notifications.spec.ts:439:7 › Notifications Panel › TC-015: kudos_hidden links to /standards (not /community-standards) @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:456:7
+
+    Error Context: test-results/notifications-Notification-6df33-ds-not-community-standards--chromium/error-context.md
+
+  13) [chromium] › tests/e2e/notifications.spec.ts:480:7 › Notifications Panel › TC-016/017: mark notification as read persists after reload @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:497:7
+
+    Error Context: test-results/notifications-Notification-5df4e--read-persists-after-reload-chromium/error-context.md
+
+  14) [chromium] › tests/e2e/notifications.spec.ts:534:7 › Notifications Panel › TC-018: pagination shows 10 items + 'Xem thêm' button @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:552:9
+
+    Error Context: test-results/notifications-Notification-424af-ws-10-items-Xem-thêm-button-chromium/error-context.md
+
+  15) [chromium] › tests/e2e/notifications.spec.ts:592:7 › Notifications Panel › TC-019: badge updates realtime when new notification arrives @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:617:7
+
+    Error Context: test-results/notifications-Notification-143eb-en-new-notification-arrives-chromium/error-context.md
+
+  16) [chromium] › tests/e2e/notifications.spec.ts:635:7 › Notifications Panel › TC-020: markRead — id của người khác và id không tồn tại cho CÙNG một kết quả @auth @local-db 
+
+    Error: Failed to seed notification: 404 Not Found
+    {"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.notifications' in the schema cache"}
+
+       at helpers/seed-notifications.ts:40
+
+      38 |   if (!response.ok) {
+      39 |     const error = await response.text();
+    > 40 |     throw new Error(
+         |           ^
+      41 |       `Failed to seed notification: ${response.status} ${response.statusText}\n${error}`,
+      42 |     );
+      43 |   }
+        at seedNotification (/Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/helpers/seed-notifications.ts:40:11)
+        at /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on/tests/e2e/notifications.spec.ts:664:25
+
+    Error Context: test-results/notifications-Notification-e93ea-ồn-tại-cho-CÙNG-một-kết-quả-chromium/error-context.md
+
+  16 failed
+    [chromium] › tests/e2e/notifications-emitters.spec.ts:104:7 › Notification Emitters › TC-010: sending kudos emits kudos_received notification @auth @local-db 
+    [chromium] › tests/e2e/notifications-emitters.spec.ts:161:7 › Notification Emitters › TC-011: self-kudo does not emit notification @auth @local-db 
+    [chromium] › tests/e2e/notifications-emitters.spec.ts:196:7 › Notification Emitters › TC-012: anonymous kudo shows only nickname in payload @auth @local-db 
+    [chromium] › tests/e2e/notifications-emitters.spec.ts:258:7 › Notification Emitters › TC-013: heart add/remove/re-add dedupes to 1 notification @auth @local-db 
+    [chromium] › tests/e2e/notifications-emitters.spec.ts:321:7 › Notification Emitters › TC-021: failed notification emit does not break the original action @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:88:7 › Notifications Panel › TC-006: panel opens with title and mark-all-read button @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:161:7 › Notifications Panel › TC-002: RLS blocks cross-user reads + realtime @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:261:7 › Notifications Panel › TC-004: badge shows '3' when unreadCount = 3 @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:303:7 › Notifications Panel › TC-005: badge caps at '9+' when unreadCount >= 10 @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:340:7 › Notifications Panel › TC-007: 4 notification types render correctly @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:397:7 › Notifications Panel › TC-009: language change applies retroactively to old notifications @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:439:7 › Notifications Panel › TC-015: kudos_hidden links to /standards (not /community-standards) @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:480:7 › Notifications Panel › TC-016/017: mark notification as read persists after reload @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:534:7 › Notifications Panel › TC-018: pagination shows 10 items + 'Xem thêm' button @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:592:7 › Notifications Panel › TC-019: badge updates realtime when new notification arrives @auth @local-db 
+    [chromium] › tests/e2e/notifications.spec.ts:635:7 › Notifications Panel › TC-020: markRead — id của người khác và id không tồn tại cho CÙNG một kết quả @auth @local-db 
+  1 skipped
+  3 passed (15.3s)
+ ELIFECYCLE  Command failed with exit code 1.
