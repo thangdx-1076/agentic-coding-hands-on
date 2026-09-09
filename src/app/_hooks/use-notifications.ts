@@ -155,8 +155,8 @@ export function useNotifications({
         // Transport failure only — the action fails closed server-side.
       })
       .finally(() => {
-        // Never `count - 1` here (FR-204) — the server count is refetched,
-        // not derived.
+        // FR-204: the server count is refetched here, never decremented
+        // by client arithmetic.
         refetchCount();
       });
   }

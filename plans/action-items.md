@@ -1344,3 +1344,37 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 
 ### Nợ lại
 - `(protected)/profile/page.tsx` tự dựng `viewer`/role/unreadCount bằng tay thay vì gọi `getViewer()` — trùng logic có sẵn, giữ nguyên theo đúng phạm vi phase-07 (đã ghi trong doc comment tại chỗ).
+
+## 260909-0854 — f012-notifications-panel (phase 05: browser api + realtime + hook)
+
+### Tôi cần làm
+
+- [ ] (không có — quyết định dưới đây không chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- **Đặt ở `src/api/notifications.ts`, không phải `src/dal/notifications-browser.ts`** — message
+  giao việc ghi `## File ownership` là `src/dal/notifications-browser*.ts`, nhưng chính message đó
+  cũng liệt `src/dal/notifications*.ts` vào mục "KHÔNG ĐƯỢC CHẠM (đã xong)" — hai dòng ấy mâu
+  thuẫn nhau, và `src/dal/notifications-query.ts` mở đầu bằng `import "server-only"` nên bất cứ
+  thứ gì import nó (hoặc nằm cùng cây `src/dal`) đều không dùng được từ code trình duyệt. Theo
+  đúng `phase-05-browser-api-and-hook.md` (hợp đồng chi tiết, khớp tiền lệ `src/api/auth.ts`, và
+  đã được chốt sẵn ở blueprint `plans/action-items.md` mục 260909-08xx trước đó) + luật "khớp
+  pattern có sẵn trong repo" của CLAUDE.md.
+- **Tách `use-notifications-realtime.ts`** (43 dòng) khỏi `use-notifications.ts` — đúng gợi ý
+  trong Todo list của phase 05 để giữ dưới 200 dòng/file. `openRef` (đọc `open` mới nhất mà không
+  bắt hiệu ứng phải subscribe lại) sống trong file phụ này.
+- **`toNotificationRow` bị nhân bản** giữa `src/dal/notifications-query.ts` (server) và
+  `src/api/notifications.ts` (browser) — cố ý, không phải sót DRY: file server mở bằng
+  `import "server-only"`, browser bundle không bao giờ được phép chạm tới nó.
+- **`setOpen`/`loadMore`/`markRead`/`markAllRead` là hàm thường, không phải `useEffect`** — để né
+  `react-hooks/set-state-in-effect` (ESLint React Compiler) mà không phải giả vờ tách state dẫn
+  xuất; chỉ có 2 `useEffect` thật trong toàn bộ hook (đồng bộ `initialUnreadCount` dùng pattern
+  "adjust state during render" của react.dev, và subscribe realtime trong file phụ).
+- Sửa comment ban đầu `// Never \`count - 1\` here` → đổi chữ vì nó tự khớp gate
+  `grep -nE "unreadCount\s*(-|\+)|count\s*-\s*1"` mà Success Criteria của chính phase 05 dùng để
+  kiểm — gate match cả comment, không riêng code (đã từng gặp lỗi tương tự ở phase khác).
+
+### Nợ lại
+
+- (không có mới)

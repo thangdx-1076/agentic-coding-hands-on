@@ -209,9 +209,12 @@ describe("useNotifications", () => {
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
 
-  it("markRead: action ok → đánh dấu isRead tại chỗ, gọi lại fetchUnreadCount thay vì tự trừ", async () => {
+  it("markRead: action ok → đánh dấu ĐÚNG 1 item isRead tại chỗ, gọi lại fetchUnreadCount thay vì tự trừ", async () => {
     vi.mocked(listNotifications).mockResolvedValue({
-      items: [makeRow("n-1", { isRead: false })],
+      items: [
+        makeRow("n-1", { isRead: false }),
+        makeRow("n-2", { isRead: false }),
+      ],
       nextCursor: null,
     });
     vi.mocked(markReadAction).mockResolvedValue({ ok: true });
@@ -224,13 +227,16 @@ describe("useNotifications", () => {
     act(() => {
       result.current.setOpen(true);
     });
-    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    await waitFor(() => expect(result.current.items).toHaveLength(2));
 
     act(() => {
       result.current.markRead("n-1");
     });
 
     await waitFor(() => expect(result.current.items[0]?.isRead).toBe(true));
+    // n-2 không được đánh dấu — chứng minh nhánh "không khớp id" của map giữ
+    // nguyên item.
+    expect(result.current.items[1]?.isRead).toBe(false);
     await waitFor(() => expect(result.current.unreadCount).toBe(2));
     expect(fetchUnreadCount).toHaveBeenCalledOnce();
 
