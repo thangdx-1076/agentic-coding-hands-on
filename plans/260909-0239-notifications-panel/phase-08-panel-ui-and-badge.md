@@ -1,11 +1,12 @@
 ---
 title: "Phase 8 — panel UI, badge số 9+, role=dialog"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 3h
 owner: momorph-ui-implementer
 testPolicy: e2e-red-first
+result: notification-bell.tsx + notifications/ (panel + item + icons); badge số/9+; role=dialog; story + play xanh
 ---
 
 # Phase 8 — panel UI + badge
@@ -104,14 +105,14 @@ src/app/_components/notifications/**
 
 ## Todo List
 
-- [ ] badge số + cap `9+`
-- [ ] panel tách file, mỗi file < 200 dòng
-- [ ] 4 icon theo loại
-- [ ] item = button, không điều hướng
-- [ ] link `/standards` render từ marker
-- [ ] empty không có "Xem thêm"
-- [ ] 4 story + play giữ `role="dialog"`
-- [ ] `use-menu-keyboard-nav.ts` không nằm trong diff
+- [x] badge số + cap `9+` (0 → no badge; 3 → "3"; 12 → "9+")
+- [x] panel tách file, mỗi file < 200 dòng (panel + item + 4 icon)
+- [x] 4 icon theo loại (kudos, heart, box, eye-off)
+- [x] item = button, không điều hướng (mark-read on click)
+- [x] link `/standards` render từ marker `splitLinkTemplate` (không `/community-standards`)
+- [x] empty không có "Xem thêm"
+- [x] 4 story + play giữ `role="dialog"` (assert role=dialog vẫn có)
+- [x] `use-menu-keyboard-nav.ts` không nằm trong diff (drift gate passed)
 
 ## Success Criteria
 

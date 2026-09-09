@@ -1,10 +1,11 @@
 ---
 title: "Phase 3 — Migration 0013: 2 emitter trigger SECURITY DEFINER"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 owner: implementer
+result: 2 trigger AFTER INSERT (kudos + hearts), self-send guard, ẩn danh bảo vệ, EXCEPTION thứ tự đúng
 ---
 
 # Phase 3 — Migration `0013` (emitter)
@@ -91,11 +92,13 @@ supabase/migrations/0013_notification_emitters.sql
 
 ## Todo List
 
-- [ ] `emit_kudos_received` + guard tự gửi + payload ẩn danh
-- [ ] `emit_heart_received` + thứ tự nhánh EXCEPTION đúng
-- [ ] 2 trigger AFTER INSERT, không có DELETE
-- [ ] COMMENT ON FUNCTION nêu lý do
-- [ ] `migration up` sạch
+- [x] `emit_kudos_received` + guard tự gửi + payload ẩn danh
+- [x] `emit_heart_received` + thứ tự nhánh EXCEPTION đúng (unique_violation trước OTHERS)
+- [x] 2 trigger AFTER INSERT, không có DELETE
+- [x] COMMENT ON FUNCTION nêu lý do
+- [x] `migration up` sạch
+
+**Phát sinh ngoài kế hoạch (phần backend):** trigger `emit_heart_received()` ban đầu subscribe realtime 2 lần với `userId` rỗng, gây lỗi logic (commit `3782cd1` fix). Thêm `globalTeardown` để cascade delete notifications khi user seed bị xoá (commit `08fad89`).
 
 ## Success Criteria
 

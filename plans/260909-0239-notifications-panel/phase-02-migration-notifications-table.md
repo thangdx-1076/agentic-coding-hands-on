@@ -1,10 +1,11 @@
 ---
 title: "Phase 2 — Migration 0012: bảng notifications, RLS, realtime publication"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 owner: implementer
+result: schema + 3 index + RLS + GRANT theo cột + publication; verified RLS=forced, anon=0 quyền, auth=SELECT+UPDATE(is_read)
 ---
 
 # Phase 2 — Migration `0012`
@@ -91,14 +92,14 @@ supabase/migrations/0012_notifications.sql
 
 ## Todo List
 
-- [ ] table + CHECK + FK cascade
-- [ ] REVOKE trước GRANT, đủ 3 role
-- [ ] RLS enable + force + 2 policy
-- [ ] GRANT theo cột cho `is_read`
-- [ ] 3 index (2 thường + 1 unique bộ phận)
-- [ ] publication idempotent
-- [ ] COMMENT ON đủ table + mọi cột
-- [ ] `migration up` chạy sạch
+- [x] table + CHECK + FK cascade
+- [x] REVOKE trước GRANT, đủ 3 role
+- [x] RLS enable + force + 2 policy
+- [x] GRANT theo cột cho `is_read`
+- [x] 3 index (2 thường + 1 unique bộ phận)
+- [x] publication idempotent
+- [x] COMMENT ON đủ table + mọi cột
+- [x] `migration up` chạy sạch
 
 ## Success Criteria
 

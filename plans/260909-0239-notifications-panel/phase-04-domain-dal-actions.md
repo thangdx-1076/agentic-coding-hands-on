@@ -1,10 +1,11 @@
 ---
 title: "Phase 4 — domain/notifications + DAL server-only + server action"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 3h
 owner: implementer
+result: domain types + cursor; DAL 2 file + client interface; server actions markRead/markAllRead; 100% coverage. LỆCH: `message.ts` KHÔNG được tạo ở pha này — nó trùng với `splitLinkTemplate` mà phase 06 vừa land, nên phần dựng câu dời sang `src/utils/notification-message.ts` do phase 08 tạo (commit 9d5abe5). Pha 04 chỉ giữ `parseNotificationPayload` trong `types.ts`.
 ---
 
 # Phase 4 — domain + DAL + action
@@ -111,12 +112,14 @@ vitest.config.ts
 
 ## Todo List
 
-- [ ] domain types + cursor + message (+ test)
-- [ ] relative-time (+ test)
-- [ ] DAL 2 file + test stub client
-- [ ] server action, không revalidate, re-derive session
-- [ ] coverage allowlist có file mới
-- [ ] lint/typecheck xanh
+- [x] domain types + cursor + message (+ test)
+- [x] relative-time (+ test)
+- [x] DAL 2 file + test stub client
+- [x] server action, không revalidate, re-derive session
+- [x] coverage allowlist có file mới
+- [x] lint/typecheck xanh
+
+**Lệch so với kế hoạch:** Phase 05 không dùng `src/dal/notifications-browser*.ts` như blueprint ghi; thay vào đó là `src/api/notifications.ts` (như `src/api/auth.ts`) vì `src/dal/notifications-query.ts` có `import "server-only"` nên client bundle không import được. Chuyển đường đọc browser sang `src/api/` từ đầu là cách tiếp cận đúng (RLS xác nhận ở phase 05/09).
 
 ## Success Criteria
 

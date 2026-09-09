@@ -1,10 +1,11 @@
 ---
 title: "Phase 6 — namespace i18n notifications.* (vi/en)"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 0.5h
 owner: implementer
+result: messages/vi.json + en.json (notifications scope); parity test xanh; dời home.notifications.empty; giữ home.header.notificationsLabel
 ---
 
 # Phase 6 — i18n `notifications.*`
@@ -86,10 +87,12 @@ messages/en.json
 
 ## Todo List
 
-- [ ] khối `notifications` ở vi
-- [ ] gương en, cùng thứ tự khoá
-- [ ] dời `home.notifications.empty`, giữ `home.header.notificationsLabel`
-- [ ] parity test xanh
+- [x] khối `notifications` ở vi (title, markAllRead, loadMore, empty, types{4})
+- [x] gương en, cùng thứ tự khoá (không dùng t.rich — repo không có NextIntlClientProvider)
+- [x] dời `home.notifications.empty`, giữ `home.header.notificationsLabel`
+- [x] parity test xanh
+
+**Chú thích kế hoạch:** Phase 06 ghi "không dùng `t.rich`" — lệch có chủ ý so với technical-spec. Blueprint đề nghị ICU message ở server; thực tế là message template lưu i18n, dựng ở client bằng `formatNotificationMessage` (phase 04) với hàm thuần `splitLinkTemplate`. Không thêm pattern mới, không đẩy messages xuống client bundle vô ích.
 
 ## Success Criteria
 

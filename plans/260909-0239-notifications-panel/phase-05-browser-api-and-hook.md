@@ -1,10 +1,11 @@
 ---
 title: "Phase 5 — src/api/notifications.ts + realtime + use-notifications hook"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 2h
 owner: implementer
+result: src/api/notifications.ts (list + count + realtime subscribe); use-notifications hook; RLS tôn trọng verified TC-002
 ---
 
 # Phase 5 — browser api + realtime + hook
@@ -95,11 +96,13 @@ src/app/_hooks/use-notifications.ts (+ .test.ts)
 
 ## Todo List
 
-- [ ] `src/api/notifications.ts` 3 hàm
-- [ ] hook + test jsdom
-- [ ] cleanup channel có test
-- [ ] không có phép cộng/trừ nào lên `unreadCount`
-- [ ] file < 200 dòng (tách `use-notifications-realtime.ts` nếu vượt)
+- [x] `src/api/notifications.ts` 3 hàm (list + count + subscribe)
+- [x] hook + test jsdom
+- [x] cleanup channel có test
+- [x] không có phép cộng/trừ nào lên `unreadCount` (grep gate passed)
+- [x] file < 200 dòng (không cần tách)
+
+**Lệch so với kế hoạch:** Path từ blueprint là `src/dal/notifications-browser*.ts`; thực tế là `src/api/notifications.ts`. Lý do: `src/dal/notifications-query.ts` có `import "server-only"` nên client không thể import. Sau phase 04, rõ ràng tầng browser cần đường riêng → `src/api/` là chỗ đúng (quy luật repo: `src/api/*` = browser client code, `src/dal/*` = server-only).
 
 ## Success Criteria
 

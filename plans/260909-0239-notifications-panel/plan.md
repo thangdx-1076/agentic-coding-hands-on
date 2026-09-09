@@ -1,12 +1,13 @@
 ---
 title: "F012 — Notifications panel (Tất cả thông báo)"
 description: "Bảng notifications + RLS + 2 emitter trigger, panel neo vào chuông header, badge số realtime, message dựng client từ template i18n."
-status: pending
+status: completed
 priority: P1
 effort: 16.5h
 branch: feat/notifications-panel
 tags: [notifications, supabase, rls, realtime, i18n, e2e-red-first]
 created: 2026-09-09
+completed: 2026-09-09
 work_type: feature
 testPolicy: e2e-red-first
 evidence: plans/260909-0239-notifications-panel/evidence/

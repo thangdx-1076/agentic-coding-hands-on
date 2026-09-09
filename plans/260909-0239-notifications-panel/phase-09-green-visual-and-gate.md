@@ -1,10 +1,11 @@
 ---
 title: "Phase 9 — GREEN, visual validation, gate toàn bộ"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 owner: tester
+result: E2E GREEN exit 0, 214 pass / 5 skip / 0 fail; 6 gate commands xanh (lint/format/unit/build/typecheck/storybook); visual 4 states QA ✓
 ---
 
 # Phase 9 — GREEN + visual + gate
@@ -65,11 +66,16 @@ plans/260909-0239-notifications-panel/evidence/**
 
 ## Todo List
 
-- [ ] e2e GREEN cùng lệnh RED
-- [ ] evidence GREEN
-- [ ] 4 ảnh đối chiếu MoMorph
-- [ ] 6 lệnh gate xanh
-- [ ] action-items ghi nợ
+- [x] e2e GREEN cùng lệnh RED (pnpm test:e2e tests/e2e/notifications.spec.ts + notifications-emitters.spec.ts)
+- [x] evidence GREEN (evidence/green-*.json đã ghi)
+- [x] 4 ảnh đối chiếu MoMorph (trống, 3 mục, 10 mục + Xem thêm, kudos_hidden với link)
+- [x] 6 lệnh gate xanh (lint + format + unit + build + typecheck + storybook)
+- [x] action-items ghi nợ (emitter kudos_hidden/secret_box_available, TC-014, profile/getViewer refactor)
+
+**Out-of-scope có chủ ý (ghi vào action-items):**
+- TC-F007-014 (admin moderation) — test.skip với lý do
+- Emitter cho `kudos_hidden` + `secret_box_available` — không có nguồn sự kiện trong repo; enum + renderer đủ cho v1
+- `profile/page.tsx` chưa refactor sang `getViewer()` — ghi nợ, đợi PR riêng
 
 ## Success Criteria
 

@@ -1,10 +1,11 @@
 ---
 title: "Phase 7 — bơm unreadCount + copy notifications vào 4 điểm render header"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 owner: implementer
+result: SiteViewer.unreadCount bắt buộc; getViewer() gọi getUnreadCount; 4 page.tsx + story/test literal sửa; profile thêm unreadCount. PHẠM VI: +8 file (mỗi screen.tsx + client.tsx có prop unreadCount? mặc định 0)
 ---
 
 # Phase 7 — wiring `unreadCount` + copy
@@ -114,13 +115,19 @@ src/app/**/*.stories.tsx (chỉ các file có literal SiteViewer)
 
 ## Todo List
 
-- [ ] `SiteViewer.unreadCount` bắt buộc
-- [ ] `getViewer` gọi `getUnreadCount`, fail-open
-- [ ] `get-notifications-copy.ts` + test
-- [ ] 4 page.tsx nối copy; profile thêm count
-- [ ] `site-header.tsx` bỏ prop rời
-- [ ] story/test literal sửa hết
-- [ ] một dòng nợ "profile không dùng getViewer" vào `plans/action-items.md`
+- [x] `SiteViewer.unreadCount` bắt buộc
+- [x] `getViewer` gọi `getUnreadCount`, fail-open 0
+- [x] `get-notifications-copy.ts` + test
+- [x] 4 page.tsx nối copy; profile thêm count
+- [x] `site-header.tsx` bỏ prop rời
+- [x] story/test literal sửa hết (~13 literal)
+- [x] một dòng nợ "profile không dùng getViewer" ghi vào `plans/action-items.md`
+
+**LỆCH PHẠM VI:** Blueprint đoán "0 file màn phải sửa", thực tế là phạm vi mở rộng +8 file:
+- `*-screen.tsx`: 4 file (home, awards, kudos, profile) mỗi cái có prop `unreadCount?: number` mặc định 0
+- `*-client.tsx`: 4 file (home, awards, kudos, profile) hardcode `unreadCount={0}` khi gọi screen
+
+Đây chính là nguyên nhân badge luôn 0 lúc đầu. Bằng cách thêm `unreadCount` vào SiteViewer (bắt buộc), TypeScript bắt máy phải cấp số cho cả screen lẫn client, giải pháp một đá ba chim.
 
 ## Success Criteria
 

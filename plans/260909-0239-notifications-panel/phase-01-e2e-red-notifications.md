@@ -1,10 +1,11 @@
 ---
 title: "Phase 1 — E2E RED screen-level cho panel thông báo"
 feature: F012
-status: pending
+status: completed
 priority: P1
 effort: 2h
 owner: tester
+result: E2E RED gate: 20 test + 1 skip (TC-014), fail trên TC-006 assertion như dự kiến
 ---
 
 # Phase 1 — E2E RED
@@ -99,11 +100,11 @@ plans/260909-0239-notifications-panel/evidence/**
 
 ## Todo List
 
-- [ ] `notifications.spec.ts` + bản đồ TC
-- [ ] helper seed/cleanup
-- [ ] chạy → exit code khác 0
-- [ ] `redFailure` trích assertion TC-006, không trích lỗi seed
-- [ ] ghi evidence
+- [x] `notifications.spec.ts` + bản đồ TC (2 file, `notifications-emitters.spec.ts` để tách TC-010..013, 021)
+- [x] helper seed/cleanup (`tests/e2e/helpers/seed-notifications.ts`)
+- [x] chạy → exit code khác 0 (RED đúng)
+- [x] `redFailure` trích assertion TC-006, không trích lỗi seed
+- [x] ghi evidence (`evidence/red-*.json` đã ghi)
 
 ## Success Criteria
 
