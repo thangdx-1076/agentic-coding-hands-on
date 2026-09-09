@@ -1426,3 +1426,44 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - 4 icon notification là glyph tạm (xem "Tôi cần làm" ở trên).
 - `error` state trong panel dùng chung text với "trống" — cần string lỗi riêng nếu UX muốn phân
   biệt, việc đó đụng `messages/*.json` (ngoài phạm vi phase này).
+
+## 260909-1040 — f012-notifications-panel
+
+### Tôi cần làm
+
+- [ ] Quyết định business: bao giờ làm **admin moderation** (ẩn/hiện kudo)? Đó là điều kiện để
+      `kudos_hidden` có emitter thật và để TC-F007-014 hết out-of-scope.
+      Hiện `public.kudos` không có cột trạng thái nào.
+- [ ] Quyết định business: "có suất Secret Box mới" có được coi là một **sự kiện** không? Hiện nó
+      là giá trị dẫn xuất `floor(sum(heart_count)/5)` trong `open_secret_box()`. Muốn phát
+      `secret_box_available` thì phải định nghĩa mốc "đã báo tới suất thứ N" — một invariant mới.
+- [ ] Review + merge PR #23.
+
+### Decisions
+
+- `heart_received` gửi cho **`kudos.sender_id`** (người viết kudo), không phải người nhận kudo.
+  Căn cứ: `open_secret_box()` (migration 0011) ghi công tim cho sender. Hai định nghĩa lệch nhau
+  sẽ khiến hệ thống ghi công cho một người và báo cho người khác.
+- `payload.senderName` chụp **null** khi người gửi chưa có `full_name` (9/21 user thật). Trigger
+  không bịa tên; fallback "Sunner" ở tầng render, đúng quy ước `kudos-card-person.tsx:96`.
+- Panel giữ `role="dialog"`, KHÔNG mở rộng `useMenuKeyboardNav`. `menu` của ARIA đòi con đồng nhất
+  `menuitem` mà panel có heading + 2 nút + danh sách; hook lại có 3 consumer khác.
+- `unreadCount` là field **bắt buộc** của `SiteViewer` chứ không phải prop của `SiteHeader`.
+  Quên bơm ở một trang → lỗi biên dịch, thay vì im lặng bằng 0 như trước.
+- Namespace i18n `notifications.*` mở ở **cấp cao**, dời `home.notifications.empty` sang đó.
+  Không nhét cây template 4 loại dưới `home` để mọi trang khỏi phải load namespace `home`.
+- Không dùng `t.rich` — repo không có `NextIntlClientProvider`.
+- Emitter là **SQL trigger**, không phải ghi ở server action: `create-kudo` insert 1 dòng không
+  transaction, thêm lần ghi thứ hai ở tầng app là mở cửa sổ ghi-một-nửa.
+
+### Nợ lại
+
+- **`NotificationBell` tự gọi `auth.getUser()` phía client** thay vì luồn `viewerId` qua
+  `SiteViewer`. Thêm 1 round-trip trên mọi trang có header, và để lại cửa sổ ngắn sau khi tải
+  trang mà thông báo đến sẽ bị bỏ qua (lần tải sau server count sửa lại). Sửa đúng cách là luồn
+  `viewerId` xuống — đụng `site-chrome.ts`, `get-viewer.ts`, `profile/page.tsx`, `site-header.tsx`.
+- **`/profile` vẫn tự dựng viewer** thay vì dùng `getViewer()` — nợ có từ trước F012, reviewer
+  nhắc lại (finding Low).
+- **Icon thông báo là thiết kế riêng.** Frame `6-1LRz3vqr` không có ảnh/node tree/asset trong
+  MoMorph nên không có gì để đối chiếu pixel. Nếu sau này design bổ sung frame thật thì cần QA lại.
+- **`kudos-compose` C23 vẫn flake ở full suite** (xanh khi chạy riêng) — nợ cũ, không phải của F012.
