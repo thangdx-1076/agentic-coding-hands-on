@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, userEvent, within } from "storybook/test";
 
+import { defaultSiteChromeCopy } from "../_shared/site-chrome";
+
 import { NotificationBell } from "./notification-bell";
 
 const meta = {
   component: NotificationBell,
   args: {
     label: "Thông báo",
-    emptyStateText: "Bạn chưa có thông báo",
+    copy: defaultSiteChromeCopy.notifications,
   },
   decorators: [
     (Story) => (
@@ -38,9 +40,8 @@ export const NoUnread: Story = {
 };
 
 /**
- * Có thông báo chưa đọc — badge đỏ hiện ở góc trên-phải icon chuông.
- * `unreadCount` INFERRED cho story minh hoạ; nguồn dữ liệu thật chưa có
- * (clarifications.md § Header, ghi nợ).
+ * Có thông báo chưa đọc — badge số hiện ở góc trên-phải icon chuông
+ * (phase-08: dot → số, FR-002/TC-004).
  */
 export const WithUnread: Story = {
   args: {
@@ -49,8 +50,20 @@ export const WithUnread: Story = {
 };
 
 /**
+ * Badge cap "9+" khi vượt quá 9 thông báo chưa đọc (TC-005).
+ */
+export const WithUnreadCapped: Story = {
+  args: {
+    unreadCount: 12,
+  },
+};
+
+/**
  * Trạng thái panel đang mở — mở bằng `play` (click thật) rồi assert
- * `role="dialog"` chứa nội dung empty-state.
+ * `role="dialog"`. Không có backend thật trong Storybook nên
+ * `useNotifications`'s fetch fail → panel rơi vào cùng nhánh hiển thị với
+ * trạng thái trống thật (`notification-panel.tsx`'s `showEmptyState`),
+ * nên nội dung vẫn là `copy.empty`.
  */
 export const Open: Story = {
   args: {

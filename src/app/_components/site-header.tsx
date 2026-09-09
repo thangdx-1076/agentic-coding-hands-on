@@ -84,7 +84,7 @@ export function SiteHeader({
             <NotificationBell
               label={copy.header.notificationsLabel}
               unreadCount={viewer.unreadCount}
-              emptyStateText={copy.notifications.empty}
+              copy={copy.notifications}
             />
             {/* mm:I2167:9091;186:1597 */}
             <AccountMenu

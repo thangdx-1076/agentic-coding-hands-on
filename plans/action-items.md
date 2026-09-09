@@ -1378,3 +1378,51 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - (không có mới)
+
+## 260909-0936 — phase-08-panel-ui-and-badge
+
+### Tôi cần làm
+
+- [ ] Visual QA 4 icon `icon-notification-{kudos,heart,box,eye-off}.tsx` trước khi ship — phiên
+  này không có quyền truy cập MCP MoMorph nên không tải được path vector thật từ frame `589:9132`;
+  4 icon dựng bằng glyph chuẩn (star/heart/gift-box/eye-slash), hình dạng hợp lý về ngữ nghĩa
+  nhưng CHƯA đối chiếu pixel-perfect với Figma.
+- [ ] Cân nhắc thread `userId` thật qua `SiteViewer` (như `/kudos` đã làm với `viewerId`) thay vì
+  cách tạm ở dưới, khi có phase riêng cho việc này.
+
+### Decisions
+
+- **`NotificationBell` tự resolve `userId` qua `supabase.auth.getUser()` (client-side), không
+  thread `viewerId` qua `SiteViewer`** — `useNotifications` (phase 05, không được sửa) đòi
+  `userId: string` để scope kênh realtime; `SiteViewer` (`_shared/site-chrome.ts`) chỉ có
+  `email/isAdmin/unreadCount`, không có id thật. Thread đúng chuẩn `/kudos`'s `viewerId` sẽ phải
+  sửa `site-chrome.ts` + `get-viewer.ts` + `profile/page.tsx` + `site-header.tsx` — 4 file ngoài
+  phạm vi sở hữu của phase này. Chọn phương án 0 file ngoài phạm vi (chỉ `auth.getUser()` nội bộ
+  trong `notification-bell.tsx`), đúng luật "ít file thay đổi nhất". An toàn: giá trị tạm `""`
+  trước khi id thật resolve chỉ khiến kênh realtime không khớp gì (vô hại, không phải biên an
+  ninh — RLS mới là biên thật), rồi tự subscribe lại đúng kênh khi id thật về.
+- **Sửa 1 lệnh gọi `<NotificationBell>` trong `site-header.tsx`** (đổi `emptyStateText` → `copy`)
+  dù file này không nằm trong "File ownership" — đây là điểm tích hợp duy nhất, bắt buộc phải sửa
+  để component mới compile được (props đổi hình dạng theo đúng kiến trúc phase-08.md đã vẽ), và
+  `site-header.tsx` không nằm trong danh sách "KHÔNG ĐƯỢC CHẠM".
+- **Panel dùng `aria-labelledby` trỏ vào `<h2>` thật, không dùng `aria-label` trùng text** — đúng
+  APG dialog pattern hơn bản cũ (panel rỗng dùng `aria-label`), và bây giờ panel có heading thật
+  nên không cần trùng lặp text.
+- **`error` và "trống thật" (0 mục, đã tải xong) dùng chung UI `copy.empty`** — copy contract
+  (`site-chrome.ts`) không có string lỗi riêng; thêm 1 cái sẽ phải sửa `messages/*.json` (nằm
+  trong "KHÔNG ĐƯỢC CHẠM"). Chấp nhận thông điệp hơi lệch ngữ nghĩa lúc lỗi mạng, đổi lấy 0 file
+  ngoài phạm vi.
+- **4 icon `icon-notification-*.tsx` đặt ở `_components/icons/` (top-level), không phải
+  `_components/notifications/icons/`** — theo đúng "File ownership" trong message giao việc
+  (glob `src/app/_components/icons/icon-notification-*.tsx`), ưu tiên hơn bản nháp trong
+  `phase-08-panel-ui-and-badge.md`'s "Related Code Files" (ghi `notifications/icons/`). Cũng nhất
+  quán với việc `notification-bell.tsx` bản thân nó đã là component dùng chung toàn site (không
+  thuộc riêng 1 route segment) như `icon-bell.tsx`/`icon-user.tsx` cùng thư mục.
+
+### Nợ lại
+
+- Emitter `kudos_hidden`/`secret_box_available` — đã ghi ở entry trước (clarifications.md), không
+  đổi.
+- 4 icon notification là glyph tạm (xem "Tôi cần làm" ở trên).
+- `error` state trong panel dùng chung text với "trống" — cần string lỗi riêng nếu UX muốn phân
+  biệt, việc đó đụng `messages/*.json` (ngoài phạm vi phase này).
