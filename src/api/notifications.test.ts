@@ -112,7 +112,10 @@ describe("listNotifications", () => {
   it("cursor hợp lệ → gọi .or() với filter keyset đúng", async () => {
     const select = stubList({ data: [], error: null });
     const cursor = Buffer.from(
-      JSON.stringify({ createdAt: "2026-09-01T00:00:00Z", id: "n-9" }),
+      JSON.stringify({
+        createdAt: "2026-09-01T00:00:00Z",
+        id: "99999999-8888-4777-8666-555555555555",
+      }),
     ).toString("base64url");
 
     await listNotifications(cursor);
@@ -121,7 +124,7 @@ describe("listNotifications", () => {
       or: ReturnType<typeof vi.fn>;
     };
     expect(builder.or).toHaveBeenCalledExactlyOnceWith(
-      "created_at.lt.2026-09-01T00:00:00Z,and(created_at.eq.2026-09-01T00:00:00Z,id.lt.n-9)",
+      "created_at.lt.2026-09-01T00:00:00Z,and(created_at.eq.2026-09-01T00:00:00Z,id.lt.99999999-8888-4777-8666-555555555555)",
     );
   });
 

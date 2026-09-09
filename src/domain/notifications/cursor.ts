@@ -43,8 +43,8 @@ export function decodeCursor(
     if (
       typeof parsed === "object" &&
       parsed !== null &&
-      typeof (parsed as Record<string, unknown>).createdAt === "string" &&
-      typeof (parsed as Record<string, unknown>).id === "string"
+      isTimestamp((parsed as Record<string, unknown>).createdAt) &&
+      isUuid((parsed as Record<string, unknown>).id)
     ) {
       return parsed as NotificationCursor;
     }
@@ -53,6 +53,35 @@ export function decodeCursor(
   } catch {
     return null;
   }
+}
+
+/**
+ * Cả hai giá trị được nội suy THẲNG vào chuỗi filter PostgREST
+ * (`src/api/notifications.ts` và `src/dal/notifications.ts`: `created_at.lt.
+ * ${createdAt},and(...)`), nơi `,` và `)` là ký tự cấu trúc. Chỉ kiểm
+ * `typeof === "string"` là chưa giữ đúng lời hứa ở docblock trên: một cursor
+ * bị sửa tay có thể phá nhóm `and(...)` và làm sai chính truy vấn của người
+ * gọi. RLS vẫn chặn việc đọc dữ liệu người khác — đây là lỗi đúng-đắn của
+ * truy vấn, không phải lỗ hổng phân quyền.
+ *
+ * Hình dạng, không phải nội dung: `createdAt` phải parse được thành ngày,
+ * `id` phải là UUID. Cả hai đều loại sạch ký tự cấu trúc.
+ */
+function isTimestamp(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[\d:.TZ+-]{10,35}$/.test(value) &&
+    !Number.isNaN(Date.parse(value))
+  );
+}
+
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  );
 }
 
 function toBase64Url(base64: string): string {

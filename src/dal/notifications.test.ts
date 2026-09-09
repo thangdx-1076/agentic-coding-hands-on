@@ -218,14 +218,14 @@ describe("listNotifications", () => {
   it("có cursor hợp lệ → build filter .or() theo keyset (created_at, id)", async () => {
     const cursor = encodeCursor({
       createdAt: "2026-09-01T00:00:00.000Z",
-      id: "n0",
+      id: "00000000-1111-4222-8333-444444444444",
     });
     const { client, calls } = stubSelectClient({ data: [] });
 
     await listNotifications(client, "user-1", cursor);
 
     expect(calls.or).toEqual([
-      "created_at.lt.2026-09-01T00:00:00.000Z,and(created_at.eq.2026-09-01T00:00:00.000Z,id.lt.n0)",
+      "created_at.lt.2026-09-01T00:00:00.000Z,and(created_at.eq.2026-09-01T00:00:00.000Z,id.lt.00000000-1111-4222-8333-444444444444)",
     ]);
   });
 
