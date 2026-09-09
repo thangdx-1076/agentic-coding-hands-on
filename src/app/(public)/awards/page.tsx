@@ -44,11 +44,12 @@ export default async function AwardsPage() {
   const t = await getTranslations("awards");
   const tHome = await getTranslations("home");
   const tLogin = await getTranslations("login");
+  const tNotifications = await getTranslations("notifications");
 
   const supabase = await createClient();
   const awards = await getAwards(toAwardsClient(supabase), locale);
 
-  const copy = buildCopy(t, tHome, tLogin, locale);
+  const copy = buildCopy(t, tHome, tLogin, tNotifications, locale);
 
   return (
     <AwardsClient
@@ -80,6 +81,7 @@ function buildCopy(
   t: Translator,
   tHome: Translator,
   tLogin: Translator,
+  tNotifications: Translator,
   locale: AppLocale,
 ): AwardsCopy {
   return {
@@ -118,7 +120,9 @@ function buildCopy(
       logout: tHome("account.logout"),
     },
     notifications: {
-      empty: tHome("notifications.empty"),
+      // Own top-level namespace, not `home.*` (clarifications.md § Ngôn
+      // ngữ hiển thị).
+      empty: tNotifications("empty"),
     },
     caption: t("caption"),
     heading: t("heading"),

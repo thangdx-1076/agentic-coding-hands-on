@@ -67,7 +67,8 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
   const locale = normalizeLocale(rawLocale);
   const tHome = await getTranslations("home");
   const tKudos = await getTranslations("kudos");
-  const copy = buildKudosCopy(tHome, tKudos, locale);
+  const tNotifications = await getTranslations("notifications");
+  const copy = buildKudosCopy(tHome, tKudos, tNotifications, locale);
 
   const supabase = await createClient();
   const [board, stats] = await Promise.all([

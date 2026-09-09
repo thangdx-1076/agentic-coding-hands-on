@@ -34,6 +34,7 @@ export default async function HomePage() {
   const locale = normalizeLocale(rawLocale);
   const t = await getTranslations("home");
   const tLogin = await getTranslations("login");
+  const tNotifications = await getTranslations("notifications");
 
   // `messages/*.json` `home.awards.items` carries only `{ title,
   // description }` (translated content) — `slug`/`image` are stable,
@@ -118,7 +119,10 @@ export default async function HomePage() {
       logout: t("account.logout"),
     },
     notifications: {
-      empty: t("notifications.empty"),
+      // `notifications.*` is its own top-level namespace, not `home.*`
+      // (clarifications.md § Ngôn ngữ hiển thị) — every page borrowing the
+      // header/bell chrome reads its empty-state copy from there.
+      empty: tNotifications("empty"),
     },
     widget: {
       label: t("widget.label"),

@@ -105,8 +105,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const tHome = await getTranslations("home");
   const tProfile = await getTranslations("profile");
   const tLogin = await getTranslations("login");
+  const tNotifications = await getTranslations("notifications");
 
-  const copy = buildProfileCopy(tHome, tProfile, tLogin, locale);
+  const copy = buildProfileCopy(tHome, tProfile, tLogin, tNotifications, locale);
 
   return (
     <ProfileClient

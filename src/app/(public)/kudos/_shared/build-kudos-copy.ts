@@ -66,6 +66,7 @@ export type KudosPageCopy = SiteChromeCopy & {
 export function buildKudosCopy(
   tHome: Translator,
   tKudos: Translator,
+  tNotifications: Translator,
   locale: AppLocale,
 ): KudosPageCopy {
   return {
@@ -105,7 +106,9 @@ export function buildKudosCopy(
       logout: tHome("account.logout"),
     },
     notifications: {
-      empty: tHome("notifications.empty"),
+      // Own top-level namespace, not `home.*` (clarifications.md § Ngôn
+      // ngữ hiển thị).
+      empty: tNotifications("empty"),
     },
     banner: {
       title: tKudos("banner.title"),

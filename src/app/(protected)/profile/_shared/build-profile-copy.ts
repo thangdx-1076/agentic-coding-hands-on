@@ -33,6 +33,7 @@ export function buildProfileCopy(
   tHome: Translator,
   tProfile: Translator,
   tLogin: Translator,
+  tNotifications: Translator,
   locale: AppLocale,
 ): ProfileCopy {
   return {
@@ -67,7 +68,9 @@ export function buildProfileCopy(
       logout: tHome("account.logout"),
     },
     notifications: {
-      empty: tHome("notifications.empty"),
+      // Own top-level namespace, not `home.*` (clarifications.md § Ngôn
+      // ngữ hiển thị).
+      empty: tNotifications("empty"),
     },
     hero: {
       fallbackName: tProfile("hero.fallbackName"),
