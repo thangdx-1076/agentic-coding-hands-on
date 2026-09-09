@@ -1270,3 +1270,64 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
   yên qua 2 lượt full suite.
 - Citation trong 5 file docs trỏ sai sau khi di chuyển file; đã quét lại, mọi `path:line` trong F011
   specs + system docs đều resolve.
+
+## 260909-0254 — f012-notifications-panel (blueprint)
+
+### Tôi cần làm
+
+- [ ] (không có — blueprint tự chốt hết, không quyết định nào chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- Panel thông báo giữ `role="dialog"`, KHÔNG mở rộng `useMenuKeyboardNav`. Lý do: `menu` của ARIA
+  đòi con đồng nhất `menuitem` mà panel có heading + 2 nút + danh sách; hook lại có 3 consumer nên
+  đổi chữ ký sẽ thành một phase prereq kèm hồi quy 3 màn. Chi tiết: phase-08 § Key Insights 1.
+- `unreadCount` thành field **bắt buộc** của `SiteViewer` thay vì prop rời của `SiteHeader`. 4 màn
+  đã truyền `viewer` sẵn ⇒ 0 file màn phải sửa, chỉ 2 nơi sản xuất viewer. TypeScript thay cho
+  layout chung: quên bơm ở một trang là lỗi biên dịch. Giá phải trả: ~13 literal trong story/test.
+- **Không dùng `t.rich`** (lệch technical-spec § 6). Repo không có `useTranslations` client và
+  không có `NextIntlClientProvider`; template mang marker `<link>…</link>`, hàm thuần
+  `splitLinkTemplate` cắt ra, component render `<Link href={ROUTES.STANDARDS}>`. Đổi lại: có unit
+  test trong project `node`, không thêm pattern mới, không đẩy messages xuống client.
+- Migration tách 2 file: `0012_notifications.sql` (schema/RLS/realtime) + `0013_notification_emitters.sql`
+  (2 trigger). Để phase emitter chạy song song với phase DAL và rollback riêng từng nửa.
+- Đọc danh sách + realtime đi qua Supabase client phía trình duyệt (`src/api/notifications.ts`,
+  tiền lệ `src/api/auth.ts`); ghi vẫn đi server action. RLS là ranh giới, và TC-002 kiểm đúng
+  đường đó.
+- Tạo `src/domain/notifications/` — lần đầu có luật dùng chung cho cả `src/dal` (server-only) lẫn
+  `src/api` (browser); browser không import ngược qua `server-only` được nên không thể để ở `dal`.
+
+### Nợ lại
+
+- Emitter cho `kudos_hidden` và `secret_box_available`: ship enum + renderer, không phát. Chờ admin
+  moderation và một định nghĩa "suất box mới" dạng sự kiện. TC-F007-014 out-of-scope.
+- `src/app/(protected)/profile/page.tsx` vẫn lặp logic của `getViewer()` thay vì gọi nó. Phase 07
+  chỉ vá thêm `unreadCount`, cố ý không refactor để khỏi trộn hai thay đổi vào một PR.
+
+## 260909-0850 — f012-notifications-panel (phase 04: domain + DAL + action)
+
+### Tôi cần làm
+
+- [ ] (không có — quyết định dưới đây không chạm ngưỡng mất dữ liệu/tốn tiền/lộ secret)
+
+### Decisions
+
+- **Bỏ `src/domain/notifications/message.ts`** (`formatNotificationMessage` +
+  `splitLinkTemplate`) mà phase-04-domain-dal-actions.md liệt kê — phase 06 đã chạy trước và
+  commit `913ec73` với `src/utils/split-link-template.ts` (đầy đủ hơn: nhiều marker, marker hỏng
+  không throw, có test), đúng quyết định "Không dùng t.rich" đã ghi ở blueprint 260909-0254.
+  Giữ cả hai sẽ tạo 2 nguồn xử lý `<link>…</link>` khác hình dạng (`{type,value}[]` thật vs
+  `{text,link?}[]` của tôi) — trùng lặp, vi phạm DRY. `formatNotificationMessage` (thay
+  `{token}` thủ công) cũng thừa: templates dùng cú pháp `{senderName}`/`{actorName}` là ICU
+  chuẩn của next-intl, `t()` phía renderer tự nội suy, không cần lớp thay thế bằng regex ở
+  domain. `parseNotificationPayload` (types.ts) vẫn giữ — đó là hàng thật renderer cần để có
+  `values` truyền vào `t()`.
+- `vitest.config.ts`: **không sửa** — glob coverage `src/domain/**/*.ts`, `src/utils/**/*.ts`,
+  `src/dal/**/*.ts`, `src/app/**/_actions/**/*.ts` đã có sẵn từ trước, tất cả 6 file phase 04 lọt
+  bảng coverage 100% mà không cần thêm glob nào (khác giả định "cần thêm" ở phase-04 Key
+  Insight 7 — giả định đó đã lỗi thời so với `vitest.config.ts` hiện tại).
+
+### Nợ lại
+
+- (không có mới — nợ `kudos_hidden`/`secret_box_available` không emitter đã ghi ở blueprint)
+- Không gom 4 điểm render `SiteHeader` về một layout chung — refactor riêng, ngoài phạm vi.

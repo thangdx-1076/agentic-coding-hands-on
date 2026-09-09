@@ -13,8 +13,7 @@
  */
 
 export type LinkTemplateSegment =
-  | { type: "text"; value: string }
-  | { type: "link"; value: string };
+  { type: "text"; value: string } | { type: "link"; value: string };
 
 const LINK_MARKER_PATTERN = /<link>(.*?)<\/link>/g;
 
@@ -37,7 +36,10 @@ export function splitLinkTemplate(template: string): LinkTemplateSegment[] {
   let match: RegExpExecArray | null;
   while ((match = LINK_MARKER_PATTERN.exec(template)) !== null) {
     if (match.index > lastIndex) {
-      segments.push({ type: "text", value: template.slice(lastIndex, match.index) });
+      segments.push({
+        type: "text",
+        value: template.slice(lastIndex, match.index),
+      });
     }
     segments.push({ type: "link", value: match[1] });
     lastIndex = match.index + match[0].length;
