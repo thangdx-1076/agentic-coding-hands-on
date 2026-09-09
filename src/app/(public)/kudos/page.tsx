@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
 import { getViewer } from "../../_utils/get-viewer";
+import { getNotificationsCopy } from "../../_utils/get-notifications-copy";
 
 import { toggleKudoHeart } from "./_actions/toggle-kudo-heart";
 import { loadMoreKudos } from "./_actions/load-more-kudos";
@@ -67,8 +68,8 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
   const locale = normalizeLocale(rawLocale);
   const tHome = await getTranslations("home");
   const tKudos = await getTranslations("kudos");
-  const tNotifications = await getTranslations("notifications");
-  const copy = buildKudosCopy(tHome, tKudos, tNotifications, locale);
+  const notificationsCopy = await getNotificationsCopy();
+  const copy = buildKudosCopy(tHome, tKudos, notificationsCopy, locale);
 
   const supabase = await createClient();
   const [board, stats] = await Promise.all([

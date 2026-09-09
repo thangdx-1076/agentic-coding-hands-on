@@ -29,7 +29,6 @@ export type HomeScreenProps = {
    * wrapping live state around the same `CountdownTiles` used here.
    */
   countdown?: ReactNode;
-  unreadCount?: number;
   onSelectLocale?: (locale: "vi" | "en") => void;
   logoutAction?: () => void | Promise<void>;
 };
@@ -53,7 +52,6 @@ export function HomeScreen({
   locale = "vi",
   viewer = null,
   countdown,
-  unreadCount = 0,
   onSelectLocale,
   logoutAction,
 }: HomeScreenProps) {
@@ -86,7 +84,6 @@ export function HomeScreen({
         copy={copy}
         languageLabel={languageLabel}
         viewer={viewer}
-        unreadCount={unreadCount}
         onSelectLocale={onSelectLocale}
         logoutAction={logoutAction}
       />

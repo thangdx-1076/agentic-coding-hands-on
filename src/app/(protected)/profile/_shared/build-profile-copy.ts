@@ -1,5 +1,7 @@
 import type { getTranslations } from "next-intl/server";
 
+import type { SiteChromeCopy } from "../../../_shared/site-chrome";
+
 import {
   STATISTICS_ROWS,
   type ProfileCopy,
@@ -33,7 +35,7 @@ export function buildProfileCopy(
   tHome: Translator,
   tProfile: Translator,
   tLogin: Translator,
-  tNotifications: Translator,
+  notifications: SiteChromeCopy["notifications"],
   locale: AppLocale,
 ): ProfileCopy {
   return {
@@ -67,11 +69,7 @@ export function buildProfileCopy(
       admin: tHome("account.admin"),
       logout: tHome("account.logout"),
     },
-    notifications: {
-      // Own top-level namespace, not `home.*` (clarifications.md § Ngôn
-      // ngữ hiển thị).
-      empty: tNotifications("empty"),
-    },
+    notifications,
     hero: {
       fallbackName: tProfile("hero.fallbackName"),
     },

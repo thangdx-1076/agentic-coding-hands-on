@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
+import { getNotificationsCopy } from "../../_utils/get-notifications-copy";
 
 import { ProfileClient } from "./_components/profile-client";
 import { buildProfileCopy } from "./_shared/build-profile-copy";
@@ -13,6 +14,8 @@ import { getProfileCard } from "@/dal/profile-cards";
 import { toProfileCardsClient } from "@/dal/profile-cards-client";
 import { getUserRole } from "@/dal/users";
 import { toUsersRoleClient } from "@/dal/users-role-client";
+import { getUnreadCount } from "@/dal/notifications";
+import { toNotificationsClient } from "@/dal/notifications-client";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/constants/routes";
 import { normalizeLocale } from "@/lib/i18n/locale";
@@ -98,20 +101,29 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   // Header/account-menu role read — same helper `getViewer()` uses for
   // `/`/`/awards`, kept consistent here so an admin's own header never
   // loses the "Trang quản trị" link just because `/profile` is protected.
+  // `unreadCount` mirrors the same `getUnreadCount` read `getViewer()` does
+  // (phase-07) — `/profile` builds its own `SiteViewer` by hand instead of
+  // calling `getViewer()` (pre-existing duplication, tracked as debt in
+  // `plans/action-items.md` rather than refactored here to keep this PR's
+  // diff scoped to notifications).
   const role = await getUserRole(toUsersRoleClient(supabase), viewer.id);
+  const unreadCount = await getUnreadCount(
+    toNotificationsClient(supabase),
+    viewer.id,
+  );
 
   const rawLocale = await getLocale();
   const locale = normalizeLocale(rawLocale);
   const tHome = await getTranslations("home");
   const tProfile = await getTranslations("profile");
   const tLogin = await getTranslations("login");
-  const tNotifications = await getTranslations("notifications");
+  const notificationsCopy = await getNotificationsCopy();
 
   const copy = buildProfileCopy(
     tHome,
     tProfile,
     tLogin,
-    tNotifications,
+    notificationsCopy,
     locale,
   );
 
@@ -120,7 +132,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       copy={copy}
       profile={profile}
       isSelf={isSelf}
-      viewer={{ email: viewer.email ?? "", isAdmin: role === "admin" }}
+      viewer={{
+        email: viewer.email ?? "",
+        isAdmin: role === "admin",
+        unreadCount,
+      }}
       locale={locale}
       logoutAction={logoutAction}
     />

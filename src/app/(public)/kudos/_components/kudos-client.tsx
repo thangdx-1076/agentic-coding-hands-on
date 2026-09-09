@@ -153,7 +153,6 @@ export function KudosClient({
       copy={copy}
       viewer={viewer}
       locale={locale}
-      unreadCount={0}
       onSelectLocale={handleSelectLocale}
       logoutAction={logoutAction}
       highlightItems={highlightItems}

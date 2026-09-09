@@ -40,7 +40,6 @@ export function AwardsClient({
       copy={copy}
       locale={locale}
       viewer={viewer}
-      unreadCount={0}
       onSelectLocale={handleSelectLocale}
       logoutAction={logoutAction}
     />

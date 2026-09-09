@@ -1331,3 +1331,16 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 
 - (không có mới — nợ `kudos_hidden`/`secret_box_available` không emitter đã ghi ở blueprint)
 - Không gom 4 điểm render `SiteHeader` về một layout chung — refactor riêng, ngoài phạm vi.
+
+## 260909-0854 — F012-notifications-panel-phase07-wire-unread-count
+
+### Tôi cần làm
+- (không có)
+
+### Decisions
+- Mở rộng phạm vi ra ngoài "File ownership" của phase-07 (`plans/260909-0239-notifications-panel/phase-07-wire-unread-count-and-copy.md`): phase file giả định "cả 4 màn đã truyền `viewer` xuống `SiteHeader` ⇒ 0 file màn nào phải sửa", nhưng thực tế 4 `*-screen.tsx` (`home-screen.tsx`, `awards-screen.tsx`, `kudos-screen.tsx`, `profile-screen.tsx`) có RIÊNG một prop `unreadCount?: number` (mặc định `0`) độc lập với `viewer`, và 4 `*-client.tsx` tương ứng hardcode `unreadCount={0}` khi gọi màn hình. Xoá `SiteHeaderProps.unreadCount` mà không dọn 2 lớp này thì hoặc vỡ biên dịch (excess prop) hoặc để lại một prop "ma" — chuông vẫn hiển thị `0` như cũ, đúng cái bug phase này sinh ra để sửa. Đã sửa thêm 8 file đó (bỏ hẳn prop `unreadCount` khỏi `*ScreenProps`, bỏ `unreadCount={0}` khỏi `*-client.tsx`) + 2 story (`home-screen.stories.tsx`, `awards-screen.stories.tsx`) đang set prop đó. Không phải quyết định thiết kế mới — là hệ quả cơ học bắt buộc của đúng thay đổi kiểu `SiteViewer`/`SiteHeaderProps` mà phase-07 đã chốt, không có phase nào khác (05, 08) nhận sở hữu 8 file này.
+- Vị trí `get-notifications-copy.ts` đặt ở `src/app/_utils/` (khớp phase file + tiền lệ `get-viewer.ts` cùng thư mục, cùng lý do: consumer nằm ở nhiều nhóm route khác nhau) — khác với glob `src/app/_shared/get-notifications-copy.ts` ghi trong message giao việc (có vẻ gõ nhầm `_utils`→`_shared`). Chọn theo skill `nextjs-route-colocation-architecture` (helper có I/O bất đối xứng đặt `_utils/`) + tiền lệ repo, không theo message.
+- `NotificationsCopy["types"]` giữ nguyên template thô (`.raw()`), không gọi `t()`/`t.rich()` — interpolation `{senderName}`/`{actorName}` và tag `<link>` của `kudos_hidden` để phase 08 (panel item, theo từng thông báo) tự xử lý.
+
+### Nợ lại
+- `(protected)/profile/page.tsx` tự dựng `viewer`/role/unreadCount bằng tay thay vì gọi `getViewer()` — trùng logic có sẵn, giữ nguyên theo đúng phạm vi phase-07 (đã ghi trong doc comment tại chỗ).

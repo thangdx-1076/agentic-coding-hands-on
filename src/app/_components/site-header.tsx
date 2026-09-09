@@ -15,20 +15,25 @@ export type SiteHeaderProps = {
   copy: SiteChromeCopy;
   languageLabel: "VN" | "EN";
   viewer?: SiteViewer | null;
-  unreadCount?: number;
   onSelectLocale?: (locale: "vi" | "en") => void;
   logoutAction?: () => void | Promise<void>;
 };
 
 /**
  * Sticky top navigation bar for the Homepage screen (mm:2167:9091,
- * mms_A1_Header). Presentational only — Track B supplies the real `viewer`,
- * `unreadCount`, and server actions.
+ * mms_A1_Header). Presentational only — Track B supplies the real `viewer`
+ * and server actions.
  *
  * Anonymous visitors (`viewer` falsy) get a `/login` link in the account
  * slot and NO notification bell — exactly one
  * `button[aria-haspopup="menu"]` renders inside `<header>` in that state
  * (`LanguageSelector`'s own button), per clarifications.md § Header.
+ *
+ * `unreadCount` reads off `viewer.unreadCount` (phase-07) rather than its
+ * own prop — `SiteViewer.unreadCount` is a REQUIRED field
+ * (`_shared/site-chrome.ts`), so there is no default-to-`0` branch left
+ * here to silently hide a page that forgot to wire it; that omission is now
+ * a compile error at the 2 places a `SiteViewer` is built.
  *
  * Below 768px nav links wrap onto a second row under the logo while the
  * right-side controls stay put — the pixel-perfect baseline only; the full
@@ -38,7 +43,6 @@ export function SiteHeader({
   copy,
   languageLabel,
   viewer,
-  unreadCount = 0,
   onSelectLocale,
   logoutAction,
 }: SiteHeaderProps) {
@@ -79,7 +83,7 @@ export function SiteHeader({
             {/* mm:I2167:9091;186:2101 */}
             <NotificationBell
               label={copy.header.notificationsLabel}
-              unreadCount={unreadCount}
+              unreadCount={viewer.unreadCount}
               emptyStateText={copy.notifications.empty}
             />
             {/* mm:I2167:9091;186:1597 */}

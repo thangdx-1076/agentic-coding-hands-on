@@ -14,7 +14,11 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const viewer = { email: "sunner@sun-asterisk.com", isAdmin: false };
+const viewer = {
+  email: "sunner@sun-asterisk.com",
+  isAdmin: false,
+  unreadCount: 0,
+};
 
 const selfProfile = {
   id: "11111111-1111-1111-1111-111111111111",

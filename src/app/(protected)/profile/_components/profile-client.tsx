@@ -46,7 +46,6 @@ export function ProfileClient({
       isSelf={isSelf}
       viewer={viewer}
       locale={locale}
-      unreadCount={0}
       onSelectLocale={handleSelectLocale}
       logoutAction={logoutAction}
     />

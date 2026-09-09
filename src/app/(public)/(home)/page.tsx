@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { logoutAction } from "../../_actions/logout";
 import { getViewer } from "../../_utils/get-viewer";
+import { getNotificationsCopy } from "../../_utils/get-notifications-copy";
 
 import { HomeClient } from "./_components/home-client";
 import { defaultHomeCopy, type HomeCopy } from "./_shared/home-copy";
@@ -34,7 +35,7 @@ export default async function HomePage() {
   const locale = normalizeLocale(rawLocale);
   const t = await getTranslations("home");
   const tLogin = await getTranslations("login");
-  const tNotifications = await getTranslations("notifications");
+  const notificationsCopy = await getNotificationsCopy();
 
   // `messages/*.json` `home.awards.items` carries only `{ title,
   // description }` (translated content) — `slug`/`image` are stable,
@@ -118,12 +119,7 @@ export default async function HomePage() {
       admin: t("account.admin"),
       logout: t("account.logout"),
     },
-    notifications: {
-      // `notifications.*` is its own top-level namespace, not `home.*`
-      // (clarifications.md § Ngôn ngữ hiển thị) — every page borrowing the
-      // header/bell chrome reads its empty-state copy from there.
-      empty: tNotifications("empty"),
-    },
+    notifications: notificationsCopy,
     widget: {
       label: t("widget.label"),
       standardsItem: t("widget.standardsItem"),
