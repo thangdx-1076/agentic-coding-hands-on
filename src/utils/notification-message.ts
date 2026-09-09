@@ -100,13 +100,35 @@ export function formatNotificationMessage(
 ): NotificationMessageSegment[] {
   const template = templates[row.type];
   const nameSlot = resolveTemplateName(row);
-  const resolved = nameSlot
-    ? template.replace(nameSlot.placeholder, nameSlot.name ?? FALLBACK_NAME)
-    : template;
+  const name = nameSlot ? (nameSlot.name ?? FALLBACK_NAME) : null;
 
-  return splitLinkTemplate(resolved).flatMap((segment) =>
+  // Tách marker TRƯỚC rồi mới thay tên. Thứ tự này là chủ đích, không phải
+  // ngẫu nhiên: `senderName` của kudo ẩn danh là free text do NGƯỜI GỬI
+  // chọn, và nó hiển thị trong thông báo của NGƯỜI KHÁC. Thay trước rồi tách
+  // sau thì một biệt danh như `**quản trị viên**` hay
+  // `<link>Tiêu chuẩn cộng đồng</link>` sẽ biến thành chữ đậm thật hoặc một
+  // nhãn link thật trong giao diện của người nhận.
+  //
+  // Không phải XSS — React vẫn escape, và `href` của link là hằng số
+  // `/standards`. Nhưng nó cho người gửi giả mạo định dạng trong thông báo
+  // của người khác, và cách chặn rẻ nhất là để marker CHỈ có thể đến từ
+  // chuỗi i18n của chính chúng ta.
+  const segments = splitLinkTemplate(template).flatMap((segment) =>
     segment.type === "link"
       ? [{ type: "link" as const, value: segment.value }]
       : splitBoldSegments(segment.value),
+  );
+
+  if (!nameSlot || name === null) {
+    return segments;
+  }
+
+  return segments.map((segment) =>
+    segment.value.includes(nameSlot.placeholder)
+      ? {
+          ...segment,
+          value: segment.value.split(nameSlot.placeholder).join(name),
+        }
+      : segment,
   );
 }

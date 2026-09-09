@@ -75,6 +75,27 @@ describe("formatNotificationMessage", () => {
     ]);
   });
 
+  it("biệt danh chứa marker KHÔNG được biến thành định dạng thật", () => {
+    // `senderName` của kudo ẩn danh là free text do NGƯỜI GỬI chọn và hiển
+    // thị trong thông báo của NGƯỜI KHÁC. Nếu thay tên trước rồi mới tách
+    // marker, một biệt danh như dưới đây sẽ tạo ra chữ đậm thật và một nhãn
+    // link thật trong giao diện của người nhận.
+    const evil = "**Ban tổ chức** <link>Tiêu chuẩn cộng đồng</link>";
+    const segments = formatNotificationMessage(
+      TEMPLATES,
+      makeRow({ payload: { kudosId: "k1", senderName: evil } }),
+    );
+
+    // Đúng một segment bold (từ template), và nó chứa nguyên văn biệt danh.
+    const bold = segments.filter((s) => s.type === "bold");
+    expect(bold).toHaveLength(1);
+    expect(bold[0].value).toBe(evil);
+
+    // Biệt danh KHÔNG được đẻ ra segment link nào — template kudos_received
+    // không có `<link>`, nên mọi link ở đây đều là do người dùng chèn.
+    expect(segments.filter((s) => s.type === "link")).toHaveLength(0);
+  });
+
   it("secret_box_available không có placeholder → giữ nguyên template, không có segment bold", () => {
     const row = makeRow({
       type: "secret_box_available",
