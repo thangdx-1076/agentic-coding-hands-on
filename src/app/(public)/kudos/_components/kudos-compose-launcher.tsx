@@ -91,6 +91,7 @@ export function KudosComposeLauncher({
     addHashtag,
     removeHashtag,
     limitReached,
+    limitRejected,
     addImages,
     removeImage,
     imageError,
@@ -164,6 +165,7 @@ export function KudosComposeLauncher({
           onAddHashtag={addHashtag}
           onRemoveHashtag={removeHashtag}
           hashtagLimitReached={limitReached}
+          hashtagLimitRejected={limitRejected}
           onAddImages={addImages}
           onRemoveImage={removeImage}
           onToggleAnonymous={toggleAnonymous}

@@ -11,6 +11,12 @@ import { addHashtagToList, intakeImageFiles } from "./kudos-compose-form-rules";
 export type KudosComposeHashtags = {
   hashtags: string[];
   limitReached: boolean;
+  /** True only while the CURRENT chip count reflects a rejected add — set
+   * when `addHashtagToList` refuses a 6th chip, cleared the moment an add
+   * succeeds or a chip is removed. Drives `maxMessage`
+   * (`kudos-hashtag-field.tsx`); do not confuse with `limitReached`, which
+   * is true at exactly 5 chips and never implies a message (ID-16/17). */
+  limitRejected: boolean;
   /** The picker's own transient search text — NOT one of the 1..5 chips
    * (`E.2`). Kept here (not in the picker's presentational component) so
    * `reset()` below can actually reach it; a component-local `useState`
@@ -34,10 +40,13 @@ export type KudosComposeHashtags = {
  * lives in the pure `addHashtagToList` (`kudos-compose-form-rules.ts`);
  * this hook is just the `useState` around it.
  *
- * `limitReached` is DERIVED — `hashtags.length >= MAX_HASHTAG_CHIPS` — per
- * `kudos-hashtag-field.tsx`'s own contract (ID-16/17/C14): it is true as
- * soon as the 5th chip exists, not just as a side effect of ATTEMPTING a
- * 6th add. `addHashtagToList` still independently blocks that 6th add.
+ * `limitReached` is DERIVED — `hashtags.length >= MAX_HASHTAG_CHIPS` — and
+ * stays true at exactly 5 chips for `aria-disabled`/picker-affordance
+ * purposes only. `limitRejected` is separate STATE, true only while a 6th
+ * add attempt was actually refused (ID-16/17/C14): 5 chips alone is a
+ * success state and must show no message; the message appears only once a
+ * 6th add is rejected, and disappears again the moment an add succeeds or
+ * a chip is removed.
  *
  * `hashtagsRef` mirrors `hashtags` and is updated SYNCHRONOUSLY inside
  * every setter (never in a `useEffect`) so two `addHashtag` calls in the
@@ -48,6 +57,7 @@ export type KudosComposeHashtags = {
  */
 export function useKudosComposeHashtags(): KudosComposeHashtags {
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [limitRejected, setLimitRejected] = useState(false);
   const [query, setQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const hashtagsRef = useRef(hashtags);
@@ -62,6 +72,9 @@ export function useKudosComposeHashtags(): KudosComposeHashtags {
     if (result.hashtags !== hashtagsRef.current) {
       hashtagsRef.current = result.hashtags;
       setHashtags(result.hashtags);
+      setLimitRejected(false);
+    } else if (result.limitReached) {
+      setLimitRejected(true);
     }
   }
 
@@ -69,11 +82,13 @@ export function useKudosComposeHashtags(): KudosComposeHashtags {
     const next = hashtagsRef.current.filter((existing) => existing !== tag);
     hashtagsRef.current = next;
     setHashtags(next);
+    setLimitRejected(false);
   }
 
   function reset(): void {
     hashtagsRef.current = [];
     setHashtags([]);
+    setLimitRejected(false);
     setQuery("");
     setPickerOpen(false);
   }
@@ -81,6 +96,7 @@ export function useKudosComposeHashtags(): KudosComposeHashtags {
   return {
     hashtags,
     limitReached,
+    limitRejected,
     query,
     setQuery,
     pickerOpen,

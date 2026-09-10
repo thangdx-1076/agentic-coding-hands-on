@@ -28,6 +28,7 @@ export type KudosComposeBodyProps = {
   onAddHashtag: (tag: string) => void;
   onRemoveHashtag: (tag: string) => void;
   hashtagLimitReached: boolean;
+  hashtagLimitRejected: boolean;
   onAddImages: (files: FileList | File[]) => void;
   onRemoveImage: (id: string) => void;
   onToggleAnonymous: () => void;
@@ -59,6 +60,7 @@ export function KudosComposeBody({
   onAddHashtag,
   onRemoveHashtag,
   hashtagLimitReached,
+  hashtagLimitRejected,
   onAddImages,
   onRemoveImage,
   onToggleAnonymous,
@@ -82,6 +84,7 @@ export function KudosComposeBody({
         onAdd={onAddHashtag}
         onRemove={onRemoveHashtag}
         limitReached={hashtagLimitReached}
+        limitRejected={hashtagLimitRejected}
         error={errors.hashtags ?? null}
         label={copy.hashtagLabel}
         addLabel={copy.hashtagAdd}

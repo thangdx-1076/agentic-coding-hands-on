@@ -56,7 +56,7 @@ describe("useKudosComposeHashtags", () => {
     unmount();
   });
 
-  it("đủ 5 chip (CHƯA thử thêm cái thứ 6) → limitReached đã true ngay (ID-16/17, hashtags.length >= 5)", () => {
+  it("đủ 5 chip (CHƯA thử thêm cái thứ 6) → limitReached true nhưng limitRejected vẫn false, KHÔNG hiện message sớm (ID-16/17)", () => {
     const { result, unmount } = renderHook(() => useKudosComposeHashtags());
 
     act(() => {
@@ -67,10 +67,11 @@ describe("useKudosComposeHashtags", () => {
 
     expect(result.current.hashtags).toHaveLength(5);
     expect(result.current.limitReached).toBe(true);
+    expect(result.current.limitRejected).toBe(false);
     unmount();
   });
 
-  it("thêm chip thứ 6 → bị chặn, limitReached=true (C14)", () => {
+  it("thêm chip thứ 6 → bị chặn, limitRejected=true, hashtags vẫn 5 (C14)", () => {
     const { result, unmount } = renderHook(() => useKudosComposeHashtags());
 
     act(() => {
@@ -78,16 +79,38 @@ describe("useKudosComposeHashtags", () => {
         result.current.addHashtag(tag),
       );
     });
+    expect(result.current.limitRejected).toBe(false);
+
     act(() => {
       result.current.addHashtag("F");
     });
 
     expect(result.current.hashtags).toEqual(["A", "B", "C", "D", "E"]);
     expect(result.current.limitReached).toBe(true);
+    expect(result.current.limitRejected).toBe(true);
     unmount();
   });
 
-  it("removeHashtag xoá limitReached đang bật", () => {
+  it("thêm tag trùng khi đã bị chặn → limitRejected giữ nguyên (không phải nguồn reset)", () => {
+    const { result, unmount } = renderHook(() => useKudosComposeHashtags());
+
+    act(() => {
+      ["A", "B", "C", "D", "E"].forEach((tag) =>
+        result.current.addHashtag(tag),
+      );
+      result.current.addHashtag("F");
+    });
+    expect(result.current.limitRejected).toBe(true);
+
+    act(() => {
+      result.current.addHashtag("A");
+    });
+    expect(result.current.hashtags).toEqual(["A", "B", "C", "D", "E"]);
+    expect(result.current.limitRejected).toBe(true);
+    unmount();
+  });
+
+  it("removeHashtag xoá limitReached đang bật, limitRejected về false", () => {
     const { result, unmount } = renderHook(() => useKudosComposeHashtags());
 
     act(() => {
@@ -97,26 +120,34 @@ describe("useKudosComposeHashtags", () => {
       result.current.addHashtag("F");
     });
     expect(result.current.limitReached).toBe(true);
+    expect(result.current.limitRejected).toBe(true);
 
     act(() => {
       result.current.removeHashtag("A");
     });
     expect(result.current.limitReached).toBe(false);
+    expect(result.current.limitRejected).toBe(false);
     unmount();
   });
 
-  it("reset() đưa về rỗng và tắt limitReached", () => {
+  it("reset() đưa về rỗng và tắt limitReached/limitRejected", () => {
     const { result, unmount } = renderHook(() => useKudosComposeHashtags());
 
     act(() => {
-      result.current.addHashtag("A");
+      ["A", "B", "C", "D", "E"].forEach((tag) =>
+        result.current.addHashtag(tag),
+      );
+      result.current.addHashtag("F");
     });
+    expect(result.current.limitRejected).toBe(true);
+
     act(() => {
       result.current.reset();
     });
 
     expect(result.current.hashtags).toEqual([]);
     expect(result.current.limitReached).toBe(false);
+    expect(result.current.limitRejected).toBe(false);
     unmount();
   });
 

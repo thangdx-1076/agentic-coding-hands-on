@@ -170,6 +170,7 @@ export function useKudosComposeForm({
     addHashtag: hashtags.addHashtag,
     removeHashtag: hashtags.removeHashtag,
     limitReached: hashtags.limitReached,
+    limitRejected: hashtags.limitRejected,
     hashtagQuery: hashtags.query,
     setHashtagQuery: hashtags.setQuery,
     hashtagPickerOpen: hashtags.pickerOpen,

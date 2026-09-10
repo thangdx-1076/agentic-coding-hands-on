@@ -10,6 +10,12 @@ export type KudosHashtagPickerProps = {
   /** Currently-added tags — marks which suggestion rows render the "đã
    * chọn" (selected) state. */
   hashtags: string[];
+  /** `hashtags.length >= 5` (phase-07 hook, via `kudos-hashtag-field.tsx`).
+   * When true, every row that is NOT already selected is disabled and does
+   * not respond to click — an already-selected row stays clickable so the
+   * user can still unselect it (`momorph/specs-p9zO-c4a4x.csv` rows
+   * A.1/B.1/C.1/D). */
+  limitReached: boolean;
   query: string;
   onQueryChange: (value: string) => void;
   onAdd: (tag: string) => void;
@@ -65,6 +71,7 @@ export type KudosHashtagPickerProps = {
 export function KudosHashtagPicker({
   suggestions,
   hashtags,
+  limitReached,
   query,
   onQueryChange,
   onAdd,
@@ -97,7 +104,12 @@ export function KudosHashtagPicker({
     }
   }
 
-  function handleOptionClick(tag: string, isSelected: boolean) {
+  function handleOptionClick(
+    tag: string,
+    isSelected: boolean,
+    disabled: boolean,
+  ) {
+    if (disabled) return;
     if (isSelected) {
       onRemove(tag);
     } else {
@@ -123,6 +135,7 @@ export function KudosHashtagPicker({
       <div role="listbox" aria-label={label} className="flex w-full flex-col">
         {suggestions.map((tag) => {
           const isSelected = hashtags.includes(tag);
+          const disabled = !isSelected && limitReached;
           return (
             // mm:1002:13185 (đã chọn) / mm:1002:13104 (chưa chọn)
             <button
@@ -131,9 +144,11 @@ export function KudosHashtagPicker({
               role="option"
               data-testid="kudos-hashtag-option"
               aria-selected={isSelected}
-              onClick={() => handleOptionClick(tag, isSelected)}
+              disabled={disabled}
+              aria-disabled={disabled}
+              onClick={() => handleOptionClick(tag, isSelected, disabled)}
               onKeyDown={handleOptionKeyDown}
-              className={`flex h-10 w-full shrink-0 items-center gap-0.5 rounded-sm px-4 text-left font-montserrat text-base font-bold tracking-[0.15px] text-white outline-none ${isSelected ? "bg-login-button/20" : "hover:bg-white/5"}`}
+              className={`flex h-10 w-full shrink-0 items-center gap-0.5 rounded-sm px-4 text-left font-montserrat text-base font-bold tracking-[0.15px] text-white outline-none ${isSelected ? "bg-login-button/20" : disabled ? "cursor-not-allowed opacity-40" : "hover:bg-white/5"}`}
             >
               <span className="flex-1 truncate">#{tag}</span>
               {isSelected ? (
