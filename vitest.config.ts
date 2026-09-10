@@ -108,7 +108,25 @@ export default defineConfig({
         "src/app/**/actions.ts",
         "src/app/**/route.ts",
       ],
-      exclude: ["**/*.test.ts", "**/*.d.ts"],
+      // `src/dal/kudos-card-model.ts` holds ONLY `export type` declarations —
+      // it compiles to zero runtime statements, so v8 reports it as 0/0 and
+      // the 100% gate below reads that as a failure. There is no test that
+      // could raise it: a type has nothing to execute. This is NOT the
+      // "maintained exclude list" the note above warns against — that warning
+      // is about hiding untested CODE, and there is no code here to hide.
+      //
+      // Named as one exact path on purpose, not a `*-model.ts` pattern: the
+      // moment this file grows a const, a guard or a mapper it must fall back
+      // into the denominator like `src/domain/notifications/types.ts` does
+      // (that file looks type-only too, but ships `NOTIFICATION_TYPES` and
+      // `isNotificationType`, and so sits at a real 100%). A pattern would
+      // silently keep excusing it.
+      //
+      // Why the file exists at all: `KudosPerson`/`KudosCard` were split out
+      // of `kudos.ts` in phase 03 for the repo's 200-line-per-file rule
+      // (`kudos.ts` had reached 206). Folding them back would put it at ~227,
+      // so the split stays and this entry documents its one side effect.
+      exclude: ["**/*.test.ts", "**/*.d.ts", "src/dal/kudos-card-model.ts"],
       // A real gate, not a printed number: below 100% the process exits
       // non-zero and CI fails. Turned on only AFTER the suite already reached
       // 100% -- a threshold switched on early just blocks everyone until
