@@ -1,0 +1,26 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "input hero search không còn readonly và nhận được chữ gõ vào",
+    "đã đăng nhập: gõ tên Sunner ra dropdown kết quả, chọn một kết quả mở đúng /profile?id=<uuid>",
+    "chưa đăng nhập: hiện gợi ý đăng nhập thay vì báo không tìm thấy",
+    "không phá contract e2e đang có của /kudos"
+  ],
+  "regressionChecked": [
+    "C03 compose pill (readonly, placeholder, icon) — still passes, file untouched",
+    "C05/C06 spotlight Sunner search (maxlength 100, disabled submit) — still passes, file untouched",
+    "C10 document order — asserts on kudos-compose-pill, not the hero pill, unaffected and passing",
+    "C28/C29 name/avatar click → /profile navigation and anonymous → /login — unaffected, still passing",
+    "profile_cards RLS boundary via searchSunners re-deriving auth.getUser() server-side, independent of client isSignedIn prop",
+    "/profile parseProfileId 5-branch gate (self/reject/canonical/other) — untouched, still first line of defense on ?id=",
+    "useSunnerSuggest stale-response guard (sequence ref + isMountedRef) — untouched, exercised for real (not mocked) in the new hook's tests",
+    "E2E TC-ID collision check across tests/e2e/*.spec.ts for C30/C31/C32 — none found"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": []
+}

@@ -1,0 +1,37 @@
+{
+  "task": "Ô \"Tìm kiếm profile Sunner\" trên /kudos render readOnly và không có handler nên gõ vào mất chữ, không mở được profile Sunner khác — nối nó vào searchSunners và /profile?id=",
+  "mode": "auto",
+  "acceptanceCriteria": [
+    "input hero search không còn readonly và nhận được chữ gõ vào",
+    "đã đăng nhập: gõ tên Sunner ra dropdown kết quả, chọn một kết quả mở đúng /profile?id=<uuid>",
+    "chưa đăng nhập: hiện gợi ý đăng nhập thay vì báo không tìm thấy",
+    "không phá contract e2e đang có của /kudos"
+  ],
+  "touchpoints": [
+    "src/app/(public)/kudos/_hooks/use-hero-profile-search.ts",
+    "src/app/(public)/kudos/_hooks/use-hero-profile-search.test.ts",
+    "src/app/(public)/kudos/_components/kudos-hero-search-pill.tsx",
+    "src/app/(public)/kudos/_components/kudos-hero-profile-search.tsx",
+    "src/app/(public)/kudos/_components/kudos-hero-search-pill.stories.tsx",
+    "src/app/(public)/kudos/_components/kudos-keyvisual-band.tsx",
+    "src/app/(public)/kudos/_shared/build-kudos-copy.ts",
+    "messages/vi.json",
+    "messages/en.json",
+    "tests/e2e/kudos.spec.ts"
+  ],
+  "blastRadius": [
+    "/kudos KV band (compose pill + hero search cùng hàng)",
+    "/profile?id= cho Sunner khác",
+    "Server Action searchSunners dùng chung với combobox người nhận",
+    "gate coverage 100% cho src/app/**/_hooks/**"
+  ],
+  "contracts": [
+    "pnpm run test:unit:coverage (threshold 100)",
+    "pnpm run test:e2e tests/e2e/kudos.spec.ts",
+    "pnpm run typecheck",
+    "npx eslint . --max-warnings 0",
+    "npx prettier --check .",
+    "pnpm run build",
+    "pnpm run build-storybook"
+  ]
+}

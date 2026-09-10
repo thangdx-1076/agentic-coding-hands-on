@@ -1,0 +1,53 @@
+{
+  "commands": [
+    {
+      "command": "pnpm run typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "npx eslint . --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "lint at CI strictness — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "npx prettier --check .",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "format check — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm run test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "unit suite + 100% coverage gate — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm run test:e2e tests/e2e/kudos.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "kudos DOM contract incl. C30/C31/C32 — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm run build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "next production build — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "command": "pnpm run build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "storybook build — exit 0",
+      "ts": "1970-01-01T00:00:00.000Z"
+    }
+  ]
+}

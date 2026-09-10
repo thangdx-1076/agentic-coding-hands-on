@@ -1467,3 +1467,27 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - **Icon thông báo là thiết kế riêng.** Frame `6-1LRz3vqr` không có ảnh/node tree/asset trong
   MoMorph nên không có gì để đối chiếu pixel. Nếu sau này design bổ sung frame thật thì cần QA lại.
 - **`kudos-compose` C23 vẫn flake ở full suite** (xanh khi chạy riêng) — nợ cũ, không phải của F012.
+
+## 260910-1728 — hero-sunner-profile-search
+
+### Tôi cần làm
+
+- [ ] Review + commit/PR: work tree đang có bản fix chưa commit (10 file sửa, 3 file mới). Không tự commit vì không được yêu cầu, và branch hiện tại là `main`.
+- [ ] Quyết màu/kích thước dropdown hero search nếu MoMorph ra frame thật cho nó — hiện mượn nguyên `KudosSunnerOptions` (panel kem của dialog Viết Kudo).
+- [ ] `messages/en.json` vẫn để placeholder tiếng Việt cho ô này (có sẵn từ trước) — cần bản EN thì phải chốt copy.
+
+### Decisions
+
+- Nhận diện bug: chỉ có 3 ô search trong app; ô duy nhất mang nhãn "Tìm kiếm profile Sunner" (`kudos-hero-search-pill.tsx`) render `readOnly` không handler → đó là cái user nói "chưa hoạt động đúng". Spotlight search và combobox người nhận đều đang chạy đúng.
+- Không dựng lớp search mới: nối pill vào Server Action `searchSunners` + hook `useSunnerSuggest` + dropdown `KudosSunnerOptions` đã có. Một nguồn dữ liệu duy nhất cho cả 2 surface.
+- Tách state ra `_hooks/use-hero-profile-search.ts` + wrapper `kudos-hero-profile-search.tsx`, giữ pill presentational — theo đúng khuôn `kudos-compose-launcher.tsx`, và để story của pill vẫn render được mà không cần Server Action.
+- Cap query 128 ký tự (bằng `MAX_QUERY_LENGTH` của Server Action) thay vì 100 như Spotlight — để giá trị input, `maxLength` và query gửi đi khớp nhau.
+- Khách chưa đăng nhập: không gọi action, hiện `signInHint` thay vì "không tìm thấy" (`profile_cards` chỉ `GRANT SELECT TO authenticated`, nói không tìm thấy là nói sai về dữ liệu). `isSignedIn` chỉ là tiện lợi phía client; cổng thật vẫn là `auth.getUser()` trong action.
+- Enter mở kết quả đầu tiên; `Escape` đóng dropdown; KHÔNG dùng `onBlur` để đóng vì blur bắn khi `mousedown` lên row và row bị unmount trước khi `click` kịp chạy.
+- RED chứng minh bằng cách revert 2 file source về HEAD rồi chạy C30/C31: fail đúng lý do (`<input readonly>`), không phải fail vì selector mới.
+
+### Nợ lại
+
+- `docs/vi/generated/**` chưa phản ánh FR-214/BR-016/US009 (lớp generated chờ `rebuild-spec`) — cùng món nợ đã ghi ở các session trước.
+- `use-hero-profile-search.test.ts` dài 233 dòng, vượt mốc 200 — theo tiền lệ repo (test hook khác 360–450 dòng) thì mốc này áp cho file source, không phải file test.
+- doc-writer phát hiện drift có sẵn từ trước: `F007/technical-spec.md` A1–A7 và § 5.4 vẫn ghi "planned"/"chưa có code" dù frontmatter là `status: implemented` và code đã có. Ngoài scope lần fix này; ứng viên cho một lượt `rebuild-spec`.
