@@ -1,0 +1,103 @@
+{
+  "commands": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit clean on the settled tree",
+      "ts": "2026-09-10T15:44:00Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint clean at the CI-strict setting (CI uses --max-warnings 0, plain `pnpm lint` locally does not)",
+      "ts": "2026-09-10T15:44:20Z"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "prettier --check clean repo-wide; .playwright-mcp/ absent so no captured artifacts trip it",
+      "ts": "2026-09-10T15:44:40Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "848 passed / 87 files (session baseline was 808 / 83)",
+      "ts": "2026-09-10T15:44:19Z"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "production build clean; 10 routes plus the proxy middleware",
+      "ts": "2026-09-10T16:02:00Z"
+    },
+    {
+      "command": "pnpm build-storybook",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "storybook build completed; CI gates this and it is rarely run locally",
+      "ts": "2026-09-10T16:04:00Z"
+    },
+    {
+      "command": "pnpm test:e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "run 1 of 3 — 232 passed / 4 skipped / 0 failed (1.6m). Full suite including @auth and @local-db, which CI excludes; local Supabase saa-app up",
+      "ts": "2026-09-10T16:00:00Z"
+    },
+    {
+      "command": "pnpm test:e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "run 2 of 3 — 232 passed / 4 skipped / 0 failed (1.1m). Repeated deliberately: the two failures fixed this stage were order-dependent, so one green run proves nothing",
+      "ts": "2026-09-10T16:02:00Z"
+    },
+    {
+      "command": "pnpm test:e2e",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "run 3 of 3 — 232 passed / 4 skipped / 0 failed (1.2m). Three consecutive identical results across a fullyParallel suite sharing one database",
+      "ts": "2026-09-10T16:04:00Z"
+    },
+    {
+      "command": "pnpm test:e2e:lock",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "5 passed — the prelaunch lock-ON gate (PL0..PL4) on its own config/server, proving /, /login and /kudos redirect to /prelaunch. This behaviour had no executable test at any level before this session",
+      "ts": "2026-09-10T16:06:00Z"
+    },
+    {
+      "command": "pnpm test:e2e tests/e2e/kudos.spec.ts tests/e2e/kudos-compose.spec.ts",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "61 passed — the exact two-file combination that reproduced the cross-file interference (was 59 passed / 2 failed on [C26] and [C34])",
+      "ts": "2026-09-10T15:57:00Z"
+    }
+  ],
+  "regressionsFound": [
+    {
+      "what": "[C26] and [C34] failed in the full suite while passing when kudos.spec.ts ran alone",
+      "cause": "sendKudo (added by phase 03) searched \"Test\" and clicked recipientOptions.first(); kudos-compose.spec.ts concurrently creates and deletes transient test users that also match, so .first() could select a user deleted mid-submit and the dialog never closed",
+      "fix": "pinned the recipient to the seeded \"Huỳnh Dương Xuân\" (supabase/migrations/0008_kudos_demo_seed.sql:75) with toHaveCount(1) so it fails loudly if the seed is absent"
+    },
+    {
+      "what": "[C14] failed in the full suite while passing alone",
+      "cause": "it read data-value off the FIRST hashtag filter option, but phase 01 made that list a DB-derived distinct set over the whole corpus, so a concurrently created kudo changed both its membership and its order",
+      "fix": "pinned to the seeded \"Dedicated\" tag with toHaveCount(1), keeping every existing assertion about URL param, carousel, feed and counter"
+    },
+    {
+      "what": "[C23] failed on the second full run after the first two fixes landed",
+      "cause": "four tests in kudos-compose.spec.ts (C23-C26) all created a kudo titled \"Award\" with content \"Good work\" and then asserted on feedCards.first(); they were only accidentally green because they validated each other's cards, and phase 03's sendKudo exposed it",
+      "fix": "each of the four now uses its own unique content and locates its own card via feedCards.filter({hasText}) plus toHaveCount(1) — a strictly stronger assertion than \"the newest card contains Award\". No config change: fullyParallel stays on, no retries, no serial mode, no skips"
+    }
+  ],
+  "notes": [
+    "Every number here was measured by the orchestrator on a settled tree. Counts reported by phase agents while five phases were editing concurrently were discarded: they fought over port 3000, and several tests were deliberately RED awaiting a later phase.",
+    "4 skipped are the 3 Supabase-outage tests (skipped because local Supabase is UP; they run only in CI) plus the intentional out-of-scope TC-014 placeholder. The 5th skip in the session baseline was [C26], which now executes.",
+    "Not verified by any automated test: pixel fidelity against Figma. The MoMorph spec CSV has 23 columns and none carry colour, font or spacing, so UI verdicts rest on node values and computed styles, not screenshot diffing."
+  ]
+}

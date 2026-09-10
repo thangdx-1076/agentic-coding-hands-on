@@ -1,0 +1,7 @@
+[
+  {
+    "command": "pnpm test:e2e tests/e2e/kudos-compose.spec.ts -g \"\\[C20\\]\"",
+    "exitCode": 1,
+    "summary": "RED: C20 test with 7 new border-color assertions fails at first assertion (recipient field) with expected rgb(255, 138, 128) but received rgb(153, 140, 95) — correct failure reason, no setup/selector/timeout issues"
+  }
+]
