@@ -34,7 +34,7 @@ test.describe("Homepage SAA", () => {
       page,
     }) => {
       await page.goto("/");
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
       // Verify page loaded successfully
       const h1 = page.locator("h1");
       await expect(h1).toContainText("ROOT FURTHER");
@@ -47,6 +47,10 @@ test.describe("Homepage SAA", () => {
       const box = await logo.boundingBox();
       expect(box).toBeTruthy();
       expect(box!.y).toBeLessThan(100); // Top of page
+      // Spec A1.1 / TC ID-8: logo box is 64x60. Round to dodge sub-pixel
+      // noise from transforms; not hovered here, so no hover-scale drift.
+      expect(Math.round(box!.width)).toBe(64);
+      expect(Math.round(box!.height)).toBe(60);
     });
 
     test("[TC ID-9] Navigation link 'About SAA 2025' active state", async ({
@@ -111,6 +115,24 @@ test.describe("Homepage SAA", () => {
         .locator("[role=timer]")
         .getByText(/^\d{2,}$/);
       await expect(countdownValues).toHaveCount(3);
+
+      // [TC ID-12 ext] Each unit is 1 [data-testid='tile-digit'] box PER
+      // CHARACTER (min 2, no cap) inside the [data-testid='tile-digits']
+      // wrapper — not a single merged text node. Verified generically by
+      // wrapper string length so it holds for both a 2-digit unit
+      // (HOURS/MINUTES) and DAYS, which is 5 digits under the fixed
+      // EVENT_START_AT=2099-12-31 e2e env (pad2 never clamps days).
+      const tiles = page.locator("[data-testid='tile']");
+      for (let i = 0; i < 3; i++) {
+        const digitsWrapper = tiles
+          .nth(i)
+          .locator("[data-testid='tile-digits']");
+        const wrapperText = (await digitsWrapper.textContent())?.trim() ?? "";
+        const digitBoxes = digitsWrapper.locator("[data-testid='tile-digit']");
+
+        await expect(digitBoxes).toHaveCount(wrapperText.length);
+        expect(wrapperText.length).toBeGreaterThanOrEqual(2);
+      }
     });
 
     test("[TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes", async ({
@@ -256,6 +278,17 @@ test.describe("Homepage SAA", () => {
       for (const row of rows) {
         expect(row.length).toBeLessThanOrEqual(2);
       }
+    });
+
+    test("[TC C1] Awards section renders the description line under the heading", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await expect(
+        page.locator(
+          "text=Các hạng mục sẽ được trao giải theo TOP những người xuất sắc nhất.",
+        ),
+      ).toBeVisible();
     });
 
     test("[TC ID-47, ID-48, ID-49, ID-50] Award cards link to /awards with proper slugs", async ({
@@ -449,7 +482,7 @@ test.describe("Homepage SAA", () => {
       await headerLogo.click();
 
       // Should be on homepage
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
 
       // Should be scrolled to top
       const scrollY = await page.evaluate(() => window.scrollY);
@@ -460,13 +493,42 @@ test.describe("Homepage SAA", () => {
       page,
     }) => {
       await page.goto("/");
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       const aboutLink = page
         .locator('header a[href="/"]')
         .filter({ hasText: "About SAA 2025" });
       await aboutLink.click();
 
       // Should stay on homepage
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
+
+      // Should be scrolled back to top, like TC ID-2's logo click
+      const scrollY = await page.evaluate(() => window.scrollY);
+      expect(scrollY).toBeLessThan(50);
+    });
+
+    test("[TC ID-21] Clicking 'Awards Information' in header navigates to /awards", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      const awardsLink = page
+        .locator("header")
+        .locator('a[href="/awards"]')
+        .filter({ hasText: "Awards Information" });
+      await awardsLink.click();
+      await expect(page).toHaveURL(/\/awards/);
+    });
+
+    test("[TC ID-22] Clicking 'Sun* Kudos' in header navigates to /kudos", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      const kudosLink = page
+        .locator("header")
+        .locator('a[href="/kudos"]')
+        .filter({ hasText: "Sun* Kudos" });
+      await kudosLink.click();
+      await expect(page).toHaveURL(/\/kudos/);
     });
   });
 
@@ -694,7 +756,7 @@ test.describe("Homepage SAA", () => {
 
       // Should redirect to homepage
       await page.waitForURL("/", { timeout: 5000 });
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
     });
   });
 });

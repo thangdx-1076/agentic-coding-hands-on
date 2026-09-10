@@ -15,7 +15,7 @@
   "home": {
     "nav": {
       "about": "About SAA 2025",
-      "awardsInfo": "Award Information",
+      "awardsInfo": "Awards Information",
       "kudos": "Sun* Kudos"
     },
     "header": {
@@ -53,6 +53,7 @@
     "awards": {
       "caption": "Sun* annual awards 2025",
       "heading": "Awards System",
+      "description": "Each award category will go to the TOP most outstanding individuals.",
       "items": [
         {
           "title": "Top Talent",

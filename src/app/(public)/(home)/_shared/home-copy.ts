@@ -53,6 +53,7 @@ export type HomeCopy = SiteChromeCopy & {
   awards: {
     caption: string;
     heading: string;
+    description: string;
     items: AwardItem[];
   };
   widget: {
@@ -95,6 +96,8 @@ export const defaultHomeCopy: HomeCopy = {
   awards: {
     caption: "Sun* annual awards 2025",
     heading: "Hệ thống giải thưởng",
+    description:
+      "Các hạng mục sẽ được trao giải theo TOP những người xuất sắc nhất.",
     items: [
       {
         slug: "top-talent",

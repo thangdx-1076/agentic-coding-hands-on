@@ -54,16 +54,16 @@ export function SiteHeader({
         {/* mm:I2167:9091;178:1033 */}
         <LogoLink
           ariaLabel={copy.header.logoAlt}
-          className="flex h-12 w-[52px] shrink-0 items-center"
+          className="flex h-15 w-16 shrink-0 items-center"
         >
           {/* mm:I2167:9091;178:1033;178:1030 */}
           <Image
             src="/home/Logo.png"
             alt={copy.header.logoAlt}
-            width={52}
-            height={48}
+            width={64}
+            height={60}
             preload
-            className="h-12 w-[52px] object-contain"
+            className="h-15 w-16 object-contain"
           />
         </LogoLink>
         {/* mm:I2167:9091;178:653 */}

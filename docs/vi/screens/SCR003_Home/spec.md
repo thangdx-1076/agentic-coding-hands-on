@@ -22,7 +22,7 @@ tới các trang liên quan.
 (Authenticated admin)
 **Entry Conditions:** Không có điều kiện nào — public, không guard (xem `technical-spec.md` § 4.4
 Bin 3, action A0).
-**Exit Conditions:** Người dùng rời trang qua 1 trong các link điều hướng (Award Information,
+**Exit Conditions:** Người dùng rời trang qua 1 trong các link điều hướng (Awards Information,
 Sun* Kudos, Tiêu chuẩn chung, Hồ sơ, Trang quản trị, Đăng nhập) hoặc đăng xuất (về `/login`); ở
 lại trang cũng là một trạng thái "done" hợp lệ — không có hành động bắt buộc nào.
 
@@ -73,7 +73,7 @@ luồng cuộn) (`data/preview.png`, 1512×4480).
 |----|---------|------|----------|---------|------------|--------|--------|--------|-----------------|-----------|
 | E01 | Logo | image/link | — | — | Always | Về `/`, cuộn lên đầu nếu đang active | static | raw | — | binding: `home.logo` |
 | E02 | About SAA 2025 (nav) | link | — | Enabled | Always | Cuộn lên đầu nếu active, khác thì điều hướng `/` | static | raw | — | N/A |
-| E03 | Award Information (nav) | link | — | Enabled | Always | Điều hướng `/awards` | static | raw | — | N/A |
+| E03 | Awards Information (nav) | link | — | Enabled | Always | Điều hướng `/awards` | static | raw | — | N/A |
 | E04 | Sun* Kudos (nav) | link | — | Enabled | Always | Điều hướng `/kudos` | static | raw | — | N/A |
 | E05 | Language selector | button | — | "VN" | Always | Mở menu VN/EN (F002, tái dùng — không re-spec ở đây) | static | raw | — | N/A |
 | E06 | Đăng nhập (link, khách) | link | — | Enabled | Conditional (Anonymous) | Điều hướng `/login` | computed | raw | — | N/A |
@@ -160,7 +160,7 @@ N/A — không có form nhập liệu nào trên màn hình này (thuần hiển
 
 | Action | Element | Condition | Destination | Result | Source |
 |--------|---------|-----------|-------------|--------|--------|
-| Click "Award Information" | E03 | — | `/awards` | redirect | `src/app/_components/site-header.tsx` |
+| Click "Awards Information" | E03 | — | `/awards` | redirect | `src/app/_components/site-header.tsx` |
 | Click "Sun* Kudos" | E04 | — | `/kudos` | redirect | `src/app/_components/site-header.tsx` |
 | Click thẻ giải thưởng | E16 | — | `/awards#<slug>` | redirect | `src/app/(public)/(home)/_components/award-card.tsx` |
 | Click "Chi tiết" (Kudos) | E17 | — | `/kudos` | redirect | |
