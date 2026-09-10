@@ -30,6 +30,7 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 | **A5** | `CopyKudosLink` (client-only, planned, không BE) | — *(click, clipboard)* | FR-401, US006 | — *(read-only)* | § 3.1 |
 | **A6** | `KudosProfileLink` (planned — Link tới `/profile?id=`, gate tái dùng `(protected)/layout.tsx`) | `GET` `/profile?id=` *(đích đã có sẵn, F006_ProfilePage)* | FR-402, FR-601, BR-013, US008 | — *(read-only)* | § 3.1 |
 | **A7** | `KudosHeartDisplay` (render-only, planned) | — *(không HTTP — bấm tim thuộc F008)* | FR-205, FR-602, BR-014 | — *(read-only)* | § 3.1 |
+| **A8** | `KudosHeroProfileSearch` (client, implemented) | — *(gõ tên/chọn kết quả, điều hướng qua `router.push`, không phải HTTP path riêng)* | FR-214, BR-016, US009 | — *(read-only)* | § 3.1 |
 
 ## 3. Actions
 
@@ -155,6 +156,44 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 **Result** · read-only — không ghi DB, không có handler bấm trong F007.
 **Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5` và `feature-list.md § F008`.
 
+#### A8 · Tìm & mở hồ sơ Sunner từ ô tìm kiếm khối keyvisual
+— *(gõ tên, chọn kết quả)* → `` `KudosHeroProfileSearch` `` *(implemented)*
+`FR-214` · `SCR007_KudosLiveBoard` · `BR-016` · `US009`
+
+**Who** · Bất kỳ khách truy cập nào đang xem khối keyvisual `/kudos`; kết quả tìm thật chỉ trả về
+cho Sunner đã đăng nhập *(gate A0 cho việc xem trang; giới hạn ai THẤY kết quả nằm ở BR-016, không
+phải một route-guard).*
+**FE** · `KudosHeroProfileSearch` (`src/app/(public)/kudos/_components/kudos-hero-profile-search.tsx`)
+là lớp có state — mirror `kudos-compose-launcher.tsx` — gọi hook `useHeroProfileSearch`
+(`src/app/(public)/kudos/_hooks/use-hero-profile-search.ts`); pill trình bày thuần là
+`KudosHeroSearchPill` (`src/app/(public)/kudos/_components/kudos-hero-search-pill.tsx`), gắn cạnh
+`KudosComposeLauncher` trong `KudosKeyvisualBand`
+(`src/app/(public)/kudos/_components/kudos-keyvisual-band.tsx:46-49`). Trước bản sửa lỗi này, input
+render `readOnly` không gắn handler nào — gõ vào ô này không có tác dụng gì, không mở được hồ sơ
+Sunner nào từ đây.
+**Request** · không có HTTP path riêng — tái dùng thẳng Server Action `searchSunners`
+(`src/app/(public)/kudos/_actions/search-sunners.ts`) mà F009_KudosCompose đã dựng cho ô nhận Kudo,
+đọc qua `src/dal/sunner-search.ts` (view `public.profile_cards`, `GRANT SELECT TO authenticated`,
+migration `0005`).
+**BE** · Không handler mới của F007; `useHeroProfileSearch` bọc `useSunnerSuggest`
+(`src/app/(public)/kudos/_hooks/use-sunner-suggest.ts` — debounce 250ms, tối thiểu 1 ký tự) và chỉ
+bật tìm kiếm khi `isSignedIn` — `profile_cards` vốn không trả dữ liệu cho `anon` nên việc chặn ở
+FE chỉ tránh 1 round-trip vô ích, không phải một gate bảo mật mới.
+**Rule**
+- **BR-016 — Ô tìm giới hạn 128 ký tự (`HERO_SEARCH_MAX_LENGTH`); chỉ tìm kiếm khi đã đăng nhập, người ẩn danh thấy gợi ý đăng nhập thay vì "không tìm thấy".** *(Bin 1 — chỉ dùng ở A8)*
+**Result** · read-only — không ghi DB. Chọn 1 kết quả gọi
+`router.push("/profile?id=" + encodeURIComponent(option.id))`; `Escape` đóng dropdown và giữ
+nguyên chữ đã gõ; `Enter` mở kết quả đầu tiên nếu có.
+**Source:** `src/app/(public)/kudos/_hooks/use-hero-profile-search.ts`,
+`src/app/(public)/kudos/_components/kudos-hero-profile-search.tsx`,
+`src/app/(public)/kudos/_components/kudos-hero-search-pill.tsx`,
+`src/app/(public)/kudos/_components/kudos-keyvisual-band.tsx:46-49`; hành vi khoá tại
+`tests/e2e/kudos.spec.ts` C30-C32.
+
+<!-- Không cần diagram: đọc/điều hướng client-side, không ghi bảng nào. -->
+
+---
+
 ### 3.2 Edge cases
 
 | Action | Scenario | Behavior |
@@ -168,6 +207,8 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 | A4 | Carousel đang ở slide 1 hoặc slide 5 | Nút lùi (slide 1) hoặc nút tiến (slide 5) tương ứng bị disable |
 | A6 | Người chưa đăng nhập bấm avatar/tên | Chuyển hướng `/login` qua gate có sẵn của `/profile` — không phải code mới của F007 |
 | A6 · A7 | Người chưa đăng nhập bấm "Xem chi tiết" hoặc nút tim | Cả 2 đều không có đích/handler thật trong phạm vi F007 — "Xem chi tiết" không điều hướng đi đâu, nút tim chỉ hiển thị disabled (xem § 5.3) |
+| A8 | Người chưa đăng nhập gõ vào ô tìm hồ sơ Sunner ở khối keyvisual | Dropdown hiện gợi ý đăng nhập (`heroSearch.signInHint`), không gọi `searchSunners` với kết quả thật |
+| A8 | Nhập ký tự thứ 129 vào ô tìm hồ sơ Sunner | Ký tự bị chặn ngay tại input (`maxLength=128`), không có thông báo lỗi hiển thị |
 
 ## 4. Shared Foundation
 
@@ -184,6 +225,9 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 | `KudosFeed` | Danh sách ALL KUDOS + infinite scroll sentinel | A2 | `src/app/(public)/kudos/_components/kudos-feed.tsx` *(planned)* |
 | `KudosCard` | Thẻ Kudos dùng chung (Highlight + feed) — thông tin gửi/nhận, nội dung, hashtag, ảnh, tim, Copy Link | A1, A2, A5, A6, A7 | `src/app/(public)/kudos/_components/kudos-card.tsx` *(planned)* |
 | `KudosSidebar` | 5 chỉ số cá nhân + 2 leaderboard | A1 | `src/app/(public)/kudos/_components/kudos-sidebar.tsx` *(planned)* |
+| `KudosKeyvisualBand` | Banner + pill soạn Kudo + pill tìm hồ sơ Sunner, overlay trên keyvisual | A1, A8 | `src/app/(public)/kudos/_components/kudos-keyvisual-band.tsx` |
+| `KudosHeroProfileSearch` / `KudosHeroSearchPill` | Ô tìm hồ sơ Sunner (state + trình bày) — chọn 1 kết quả điều hướng `/profile?id=` | A8 | `src/app/(public)/kudos/_components/kudos-hero-profile-search.tsx`, `kudos-hero-search-pill.tsx` |
+| `useHeroProfileSearch` | Bọc `useSunnerSuggest`, giới hạn 128 ký tự, chỉ bật khi `isSignedIn` | A8 | `src/app/(public)/kudos/_hooks/use-hero-profile-search.ts` |
 | `KudosCopy` / `defaultKudosCopy` | Content contract cho leaf riêng `/kudos`, chrome dùng chung `SiteChromeCopy` | A1 | `src/app/(public)/kudos/_shared/kudos-copy.ts` *(planned)* |
 | `getKudosBoard` | Đọc `public.kudos_cards` + `public.kudos` (count), lọc theo hashtag/department, fail-open rỗng | A1, A2 | `src/dal/kudos.ts` *(planned)* |
 | `toKudosClient` | Shim thu hẹp kiểu client Supabase cho `getKudosBoard` (mirror `toAwardsClient`) | A1, A2 | `src/dal/kudos-client.ts` *(planned)* |
@@ -355,6 +399,7 @@ N/A — no technical configuration beyond framework defaults.
 - **SC-004** *(A3)* Ô tìm Sunner chặn ký tự thứ 101, nút tìm disable khi rỗng (covers FR-209, BR-010)
 - **SC-005** *(A2)* Cuộn tới cuối feed hiện có tự tải thêm kudo (covers FR-210)
 - **SC-006** *(A6)* Người chưa đăng nhập bấm avatar/tên bị chuyển hướng `/login` (covers FR-601, BR-013)
+- **SC-007** *(A8)* Ô tìm hồ sơ Sunner ở khối keyvisual nhận input thật (không `readOnly`), chặn ký tự thứ 129; đã đăng nhập chọn 1 kết quả mở đúng `/profile?id=`, ẩn danh thấy gợi ý đăng nhập (covers FR-214, BR-016 — `tests/e2e/kudos.spec.ts` C30-C32)
 
 #### US001_ViewKudosLiveBoard *(A1)*
 
@@ -380,6 +425,15 @@ và render đầy đủ banner/carousel/Spotlight/feed/sidebar (rút gọn theo 
 **Acceptance Scenarios:**
 1. **Given** feed còn dữ liệu, **When** sentinel cuối danh sách vào viewport, **Then** trang tiếp theo được nối vào cuối danh sách hiện có.
 2. **Given** feed đã hết dữ liệu, **When** sentinel vào viewport lần nữa, **Then** không có request nào được gửi thêm.
+
+#### US009_SearchAndOpenSunnerProfileFromHero *(A8)*
+
+**Independent Test:** Đăng nhập, gõ tên một Sunner đã seed vào ô tìm ở khối keyvisual, bấm kết quả
+— assert URL thành `/profile?id=<uuid>` và `h1` của đúng Sunner đó render.
+
+**Acceptance Scenarios:**
+1. **Given** đã đăng nhập, **When** gõ tên một đồng nghiệp và bấm 1 kết quả gợi ý, **Then** trang hồ sơ của người đó mở ra.
+2. **Given** chưa đăng nhập, **When** gõ vào ô tìm, **Then** dropdown hiện gợi ý đăng nhập thay vì kết quả hoặc "không tìm thấy".
 
 ### 5.2 Assumptions
 

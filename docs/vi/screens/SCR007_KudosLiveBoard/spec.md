@@ -68,7 +68,7 @@ feed trở xuống chia hai cột: feed bên trái, sidebar bên phải cuộn �
 | Region ID | Name | Position | Scrollable | Key Components |
 |-----------|------|----------|------------|-----------------|
 | R1 | Header dùng chung | sticky top | no | `SiteHeader` (biến thể anonymous hoặc đã đăng nhập) |
-| R2 | Banner + ô nhập | top của `<main>` | trong dòng chảy trang | `KudosBanner`, `KudosComposePill` |
+| R2 | Banner + ô nhập | top của `<main>` | trong dòng chảy trang | `KudosBanner`, `KudosComposePill`, `KudosHeroSearchPill` |
 | R3 | Bộ lọc | dưới banner | trong dòng chảy trang | `KudosFilterBar`, `KudosFilterMenu` × 2 |
 | R4 | Carousel HIGHLIGHT | dưới bộ lọc | trượt ngang (client state) | `KudosHighlightCarousel`, `KudosCarouselNav`, `KudosSlideCounter`, `KudosCard` × 5 |
 | R5 | Spotlight | dưới carousel | trong dòng chảy trang | `KudosSpotlight`, `KudosSpotlightScatter`, `KudosSunnerSearch` |
@@ -98,6 +98,7 @@ feed trở xuống chia hai cột: feed bên trái, sidebar bên phải cuộn �
 | E16 | Sidebar — 5 chỉ số cá nhân + nút "Mở quà" | card (group) | — | `0` cho người đã đăng nhập | Chỉ khi đã đăng nhập (ẩn HẲN khi ẩn danh) | nút "Mở quà" luôn `disabled` | thống kê cá nhân đọc theo viewer | raw | — | FR-211, US007, D001; 5 dòng: Kudos nhận được, Kudos đã gửi, tim nhận được, Secret Box đã mở, Secret Box chưa mở |
 | E17 | 2 bảng xếp hạng | list (group) | — | — | Always (kể cả ẩn danh — dữ liệu công khai) | — | chưa có nguồn ở lượt này | raw | `Chưa có dữ liệu` (mỗi bảng độc lập) | FR-211, FR-213, BR-012; "SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT", "SUNNER NHẬN QUÀ MỚI NHẤT" |
 | E18 | `SiteFooter` | footer | — | — | Always | — | injected | raw | — | dùng chung `/`, `/awards`, `/profile` |
+| E19 | Ô tìm hồ sơ Sunner (KV band) + dropdown kết quả | text input + listbox | no | rỗng | Always | gõ → tìm (chỉ khi đã đăng nhập); Enter/click 1 kết quả → `router.push("/profile?id=")`; `Escape` đóng dropdown, giữ chữ đã gõ | `searchSunners` qua `profile_cards` (F009), 250ms debounce | `maxLength=128`, placeholder `Tìm kiếm profile Sunner` | ẩn danh: gợi ý đăng nhập; đã đăng nhập không khớp: `Không tìm thấy Sunner phù hợp` | FR-214, BR-016, US009; sibling của E03 trên cùng dòng KV band |
 
 E06/E08 và E14/E08 gộp thẻ lặp lại thành một dòng theo note template "repetitive groups collapse
 to one row" — `KudosCard` là cùng một component, chỉ khác `maxLines` (3 ở Highlight, 5 ở feed,
@@ -117,6 +118,7 @@ BR-005).
 | Cuộn tới cuối feed | E14 | `IntersectionObserver` trên sentinel | còn dữ liệu chưa tải | gọi `loadMoreKudos(cursor)`, nối trang kế vào cuối danh sách | FR-210 |
 | Bấm "Copy Link" | E10 | click | luôn khả dụng | URL kudo vào clipboard + toast `Link copied — ready to share!` | FR-401 |
 | Bấm avatar hoặc tên (thẻ hoặc leaderboard) | E08, E17 | click | luôn khả dụng | `<Link href="/profile?id={uuid}">` — đã đăng nhập: mở hồ sơ; ẩn danh: gate của `/profile` redirect `/login` | FR-402, FR-601, BR-013 |
+| Gõ tên vào ô tìm hồ sơ Sunner (KV band) rồi chọn 1 kết quả | E19 | gõ / Enter / click kết quả | đã đăng nhập | tìm theo tên, `router.push("/profile?id=")` mở hồ sơ; ẩn danh: dropdown chỉ hiện gợi ý đăng nhập | FR-214, BR-016, US009 |
 | Bấm nút tim | E09 | click | CHỈ khi đã đăng nhập và không phải kudo của chính mình | `toggleKudoHeart` — hành vi thuộc F008, F007 chỉ hiển thị | FR-602, BR-014 |
 | Bấm "Xem chi tiết" | E11 | click | luôn khả dụng | KHÔNG điều hướng — frame đích chưa tồn tại | `clarifications.md` § Quyết định |
 | Bấm "Mở quà" | E16 | click | luôn `disabled` | không hiệu ứng — chưa có bảng quà nào | `clarifications.md` (dialog `J3-4YFIpMM` chưa build) |
@@ -172,9 +174,12 @@ trang dùng server render + revalidate (`clarifications.md`).
 |-------|------|---------------|--------|
 | Ô tìm Sunner (E13) | tối đa 100 ký tự — ký tự thứ 101 bị chặn ngay tại input (`maxLength=100`) | KHÔNG có thông báo lỗi — design không vẽ chuỗi nào, không bịa thêm | BR-010, `clarifications.md` § Chưa giải quyết |
 | Ô tìm Sunner (E13) | không cho tìm khi rỗng | KHÔNG có required message — nút tìm ở trạng thái `disabled` | BR-010, D002 |
+| Ô tìm hồ sơ Sunner KV band (E19) | tối đa 128 ký tự — ký tự thứ 129 bị chặn ngay tại input (`maxLength=128`) | KHÔNG có thông báo lỗi — ô nhập tự chặn, không hiện chuỗi báo lỗi nào | BR-016 |
+| Ô tìm hồ sơ Sunner KV band (E19) | ẩn danh gõ vào ô | dropdown hiện `Đăng nhập để tìm profile Sunner` thay vì kết quả hoặc "không tìm thấy" | BR-016 |
 
-Không có form nhập liệu nào khác trên màn này — ô nhập pill (E03) chỉ render, chưa nhận input
-trong phạm vi F007.
+Ô nhập pill soạn Kudo (E03) chỉ render, chưa nhận input trong phạm vi F007. Ô tìm hồ sơ Sunner
+(E19), sibling ngay cạnh E03 trên cùng dòng KV band, LÀ input thật kể từ bản sửa lỗi này (trước đó
+cũng render `readOnly` không handler).
 
 ## 7. Conditional UI
 
@@ -227,6 +232,7 @@ capture ở 3 viewport (1440/768/375) khi Delivery — không suy diễn thêm b
 |--------|---------|-----------|-------------|--------|--------|
 | Bấm avatar/tên người gửi, người nhận, hoặc mục leaderboard | E08, E17 | đã đăng nhập | `/profile?id={uuid}` | mở hồ sơ Sunner (F006) | FR-402 |
 | Bấm avatar/tên | E08, E17 | chưa đăng nhập | `/login` | redirect từ `(protected)/layout.tsx` của `/profile` — gate CÓ SẴN, không phải code mới của F007 | FR-601, BR-013 |
+| Bấm 1 kết quả trong ô tìm hồ sơ Sunner (KV band) | E19 | đã đăng nhập | `/profile?id={uuid}` | mở hồ sơ Sunner được chọn | FR-214, BR-016 |
 | Bấm "Đăng nhập" / "Đăng xuất" ở header | E01 | tuỳ trạng thái | `/login` | dùng chung `SiteHeader` | — |
 | Bấm "Xem chi tiết" | E11 | — | KHÔNG có đích | không điều hướng — frame `onDIohs2bS` chưa tồn tại | `clarifications.md` |
 
