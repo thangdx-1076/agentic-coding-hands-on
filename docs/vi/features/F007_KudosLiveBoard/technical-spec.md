@@ -10,26 +10,28 @@ fcode: F007
 
 ## 1. Technical Overview
 
-`/kudos` (planned, `src/app/(public)/kudos/`) là một Server Component đọc toàn bộ board Kudos
-trong một request qua DAL mới `src/dal/kudos.ts`, cùng nhóm route `(public)` với `/`, `/awards`,
+`/kudos` (`src/app/(public)/kudos/page.tsx`) là một Server Component đọc toàn bộ board Kudos
+trong một request qua DAL `src/dal/kudos.ts`, cùng nhóm route `(public)` với `/`, `/awards`,
 `/standards` — không qua route-guard nào. Mọi tương tác (lọc, lật carousel, tìm Sunner, cuộn thêm
 feed, copy link, mở hồ sơ) chạy client-side trên dữ liệu đã tải hoặc qua một Server Action đọc
 thêm trang tiếp theo; không action nào ghi vào cơ sở dữ liệu — toàn bộ F007 là read-only, bấm/thu
 hồi trái tim là điểm nối sang `F008_KudosHeartReaction`. Chỉ 1 capability (`CAP-01`), 8 action,
 không action nào cần diagram (không action nào ghi ≥2 bảng, không action nào là background/async).
+**Cập nhật:** đã implement — mọi nhãn `(planned)` bên dưới đã thay bằng `path:line` thật, theo
+đúng quy ước F009_KudosCompose đã áp dụng.
 
 ## 2. Action Index
 
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
 | **A0** | *cross-cutting — belongs to no single action* | — | FR-102, BR-015 | — | § 4.4 |
-| **A1** | `KudosPage` (Server Component, planned) | `GET` `/kudos` | FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-205, FR-206, FR-207, FR-208, FR-211, FR-212, FR-213, BR-001, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-011, BR-012, US001, US003, US007 | — *(read-only)* | § 3.1 |
-| **A2** | `loadMoreKudos` (Server Action, planned) | — *(gọi từ client khi cuộn hết trang hiện có, không phải HTTP path riêng)* | FR-210, BR-005, BR-006, BR-007, BR-008, US005 | — *(read-only)* | § 3.1 |
-| **A3** | `KudosSpotlightSearch` (client-only, planned, không BE) | — *(gõ/click icon, không HTTP)* | FR-209, BR-010, US004 | — *(read-only)* | § 3.1 |
-| **A4** | `KudosHighlightCarouselNav` (client-only, planned, không BE) | — *(click, không HTTP)* | FR-204, BR-002, SM-001, US002 | — *(read-only)* | § 3.1 |
-| **A5** | `CopyKudosLink` (client-only, planned, không BE) | — *(click, clipboard)* | FR-401, US006 | — *(read-only)* | § 3.1 |
-| **A6** | `KudosProfileLink` (planned — Link tới `/profile?id=`, gate tái dùng `(protected)/layout.tsx`) | `GET` `/profile?id=` *(đích đã có sẵn, F006_ProfilePage)* | FR-402, FR-601, BR-013, US008 | — *(read-only)* | § 3.1 |
-| **A7** | `KudosHeartDisplay` (render-only, planned) | — *(không HTTP — bấm tim thuộc F008)* | FR-205, FR-602, BR-014 | — *(read-only)* | § 3.1 |
+| **A1** | `KudosPage` (Server Component) | `GET` `/kudos` | FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-205, FR-206, FR-207, FR-208, FR-211, FR-212, FR-213, BR-001, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-011, BR-012, US001, US003, US007 | — *(read-only)* | § 3.1 |
+| **A2** | `loadMoreKudos` (Server Action) | — *(gọi từ client khi cuộn hết trang hiện có, không phải HTTP path riêng)* | FR-210, BR-005, BR-006, BR-007, BR-008, US005 | — *(read-only)* | § 3.1 |
+| **A3** | `KudosSpotlightSearch` (client-only, không BE) | — *(gõ/click icon, không HTTP)* | FR-209, BR-010, US004 | — *(read-only)* | § 3.1 |
+| **A4** | `KudosHighlightCarouselNav` (client-only, không BE) | — *(click, không HTTP)* | FR-204, BR-002, SM-001, US002 | — *(read-only)* | § 3.1 |
+| **A5** | `CopyKudosLink` (client-only, không BE) | — *(click, clipboard)* | FR-401, US006 | — *(read-only)* | § 3.1 |
+| **A6** | `KudosProfileLink` (Link tới `/profile?id=`, gate tái dùng `(protected)/layout.tsx`) | `GET` `/profile?id=` *(đích đã có sẵn, F006_ProfilePage)* | FR-402, FR-601, BR-013, US008 | — *(read-only)* | § 3.1 |
+| **A7** | `KudosHeartDisplay` (render-only) | — *(không HTTP — bấm tim thuộc F008)* | FR-205, FR-602, BR-014 | — *(read-only)* | § 3.1 |
 | **A8** | `KudosHeroProfileSearch` (client, implemented) | — *(gõ tên/chọn kết quả, điều hướng qua `router.push`, không phải HTTP path riêng)* | FR-214, BR-016, US009 | — *(read-only)* | § 3.1 |
 
 ## 3. Actions
@@ -37,13 +39,13 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 ### 3.1 CAP-01 — Xem, lọc & lan toả bảng Kudos trực tiếp
 
 #### A1 · Render trang `/kudos` (đọc toàn bộ board: banner, carousel, Spotlight, feed trang đầu, sidebar)
-`GET` `/kudos` → `` `KudosPage` `` *(planned)*
+`GET` `/kudos` → `` `KudosPage` ``
 `FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-205` `FR-206` `FR-207` `FR-208` `FR-211` `FR-212` `FR-213` · `SCR007_KudosLiveBoard` · `US001` `US003` `US007`
 
 **Who** · Bất kỳ khách truy cập nào — Anonymous hoặc Authenticated, không qua guard nào *(gate A0 — § 4.4)*.
-**FE** · `src/app/(public)/kudos/page.tsx` *(planned)* đọc `searchParams.hashtag`/`searchParams.department`, dựng `copy` (`_shared/kudos-copy.ts` — chrome dùng chung namespace `home`, leaf riêng namespace `kudos`), giao cho `KudosClient` → `KudosScreen` *(planned)* render: banner ghi nhận (`FR-201`, chỉ đọc), ô nhập A.1 (`FR-002`/`FR-202` — chỉ render, KHÔNG mở dialog Viết Kudo trong phạm vi F007), `KudosFilterBar` (`FR-206`/`FR-207` — dropdown Hashtag/Phòng ban lấy danh sách distinct từ DB; click 1 hashtag trên thẻ set lại filter), carousel Highlight 5 thẻ (`FR-203`), Spotlight tổng "N KUDOS" + scatter tĩnh (`FR-208`), feed ALL KUDOS trang đầu, sidebar 5 chỉ số + 2 leaderboard (`FR-211`). Khi không có kudo nào, carousel và feed cùng hiện thông báo rỗng (`FR-212`); khi 1 leaderboard rỗng, chỉ leaderboard đó hiện thông báo rỗng riêng (`FR-213`). `FR-101` được thoả đơn giản bởi việc `GET /kudos` resolve `200` thay vì 404.
+**FE** · `src/app/(public)/kudos/page.tsx:56` đọc `searchParams.hashtag`/`searchParams.department`, dựng `copy` (`_shared/build-kudos-copy.ts:78`, `_shared/kudos-copy.ts:31` — chrome dùng chung namespace `home`, leaf riêng namespace `kudos`), giao cho `KudosClient` (`_components/kudos-client.tsx:60`) → `KudosScreen` (`_components/kudos-screen.tsx:80`) render: banner ghi nhận (`FR-201`, chỉ đọc), ô nhập A.1 (`FR-002`/`FR-202` — chỉ render, KHÔNG mở dialog Viết Kudo trong phạm vi F007), `KudosFilterBar` (`_components/kudos-filter-bar.tsx:17` — dropdown Hashtag/Phòng ban lấy danh sách distinct từ DB; click 1 hashtag trên thẻ set lại filter), carousel Highlight 5 thẻ (`FR-203`), Spotlight tổng "N KUDOS" + scatter tĩnh (`FR-208`), feed ALL KUDOS trang đầu, sidebar 5 chỉ số + 2 leaderboard (`FR-211`). Khi không có kudo nào, carousel và feed cùng hiện thông báo rỗng (`FR-212`); khi 1 leaderboard rỗng, chỉ leaderboard đó hiện thông báo rỗng riêng (`FR-213`). `FR-101` được thoả đơn giản bởi việc `GET /kudos` resolve `200` thay vì 404.
 **Request** · query `hashtag` *(string, optional)*, `department` *(string, optional)* — không tham số nào bắt buộc.
-**BE** · `` `getKudosBoard(toKudosClient(supabase), { hashtag, department })` `` *(planned, `src/dal/kudos.ts`)* — 1 lần đọc view `public.kudos_cards` (lọc theo `hashtag`/`department` nếu có), sắp `heart_count` giảm dần lấy 5 dòng đầu cho carousel, `COUNT(*)` trên `public.kudos` cho tổng Spotlight, trang đầu (giới hạn cursor) cho feed, cộng 1 lần đọc thống kê cá nhân (chỉ khi đã đăng nhập — xem D001, `functional-spec.md § 3`) và 2 leaderboard.
+**BE** · `` `getKudosBoard(toKudosClient(supabase), { hashtag, department })` `` (`src/dal/kudos.ts:95`, shim `src/dal/kudos-client.ts:57`) — 1 lần đọc view `public.kudos_cards` (lọc theo `hashtag`/`department` nếu có), sắp `heart_count` giảm dần lấy 5 dòng đầu cho carousel, `COUNT(*)` trên `public.kudos` cho tổng Spotlight, trang đầu (giới hạn cursor) cho feed, cộng 1 lần đọc thống kê cá nhân (chỉ khi đã đăng nhập — xem D001, `functional-spec.md § 3`, qua `src/dal/kudos-stats.ts:112`) và 2 leaderboard.
 **Rule**
 - **BR-001 — Carousel Highlight luôn lấy đúng 5 kudo có `heart_count` cao nhất tại thời điểm tải trang.** *(Bin 1 — chỉ dùng ở A1)*
 - **BR-003 — Chọn filter Hashtag/Phòng ban lọc lại đồng thời carousel Highlight và feed ALL KUDOS, đưa carousel về slide 1.** *(Bin 1 — chỉ dùng ở A1)*
@@ -56,86 +58,86 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 - **BR-011 — Không có kudo nào → carousel và feed cùng hiện "Hiện tại chưa có Kudos nào.".** *(Bin 1 — chỉ dùng ở A1)*
 - **BR-012 — 1 leaderboard chưa có dữ liệu → chỉ leaderboard đó hiện "Chưa có dữ liệu".** *(Bin 1 — chỉ dùng ở A1)*
 **Result** · read-only — không ghi DB. Props xuống `KudosScreen`: `highlight: KudosCard[5]`, `feed: { items: KudosCard[], nextCursor }`, `spotlightTotal: number`, `spotlightNames: string[]`, `sidebarStats | null` (null khi anonymous, D001), `leaderboards`.
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md §§ 2, 4, 5` và `clarifications.md`.
+**Source:** `src/app/(public)/kudos/page.tsx:56`, `src/dal/kudos.ts:95`; hành vi khoá tại `tests/e2e/kudos.spec.ts`.
 
 <!-- Không cần diagram: đọc 1 lần, không ghi bảng nào, không phải background/async. -->
 
 ---
 
 #### A2 · Tải thêm kudo khi cuộn hết feed (infinite scroll)
-— *(gọi từ client khi cuộn hết trang hiện có)* → `` `loadMoreKudos` `` *(planned Server Action)*
+— *(gọi từ client khi cuộn hết trang hiện có)* → `` `loadMoreKudos` `` *(Server Action)*
 `FR-210` · `SCR007_KudosLiveBoard` · `US005`
 
 **Who** · Bất kỳ khách truy cập nào đang xem `/kudos` *(gate A0)*.
-**FE** · `KudosFeed` *(planned)* theo dõi vị trí cuộn (`IntersectionObserver` trên sentinel cuối danh sách, cùng kỹ thuật scroll-spy đã dùng ở `AwardCategoryNav`), gọi Server Action khi sentinel vào viewport.
+**FE** · `KudosFeed` (`_components/kudos-feed.tsx:66`) theo dõi vị trí cuộn qua hook `use-infinite-feed.ts` (`IntersectionObserver` trên sentinel cuối danh sách, `_components/kudos-feed-sentinel.tsx`, cùng kỹ thuật scroll-spy đã dùng ở `AwardCategoryNav`), gọi Server Action khi sentinel vào viewport.
 **Request** · `cursor` *(string, từ `nextCursor` của trang trước)*.
-**BE** · `` `getKudosBoard` `` *(cùng DAL với A1, planned)* đọc trang tiếp theo của `public.kudos_cards`, sắp `created_at` giảm dần.
+**BE** · `` `loadMoreKudos` `` (`src/app/(public)/kudos/_actions/load-more-kudos.ts:43`) gọi cùng DAL `getKudosBoard` với A1 (`src/dal/kudos.ts:95`) đọc trang tiếp theo của `public.kudos_cards`, sắp `created_at` giảm dần.
 **Rule**
 - **BR-005 — nội dung cắt dòng (`maxLines=5` cho feed).** *(§ 4.4 — cùng rule A1 dùng)*
 - **BR-006 — hashtag tối đa 5/dòng.** *(§ 4.4)*
 - **BR-007 — ảnh tối đa 5/thẻ.** *(§ 4.4)*
 - **BR-008 — hoa thị tính từ tổng kudo đã nhận.** *(§ 4.4)*
 **Result** · read-only — không ghi DB. Nối thêm `items` vào danh sách hiện có; hết dữ liệu thì ngừng gọi thêm, không hiện thông báo lỗi (khác trạng thái rỗng của BR-011 — đây là "đã tải hết", một trạng thái bình thường của phân trang).
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md §§ 4, 5`.
+**Source:** `src/app/(public)/kudos/_actions/load-more-kudos.ts:43`, `src/app/(public)/kudos/_hooks/use-infinite-feed.ts`.
 
 ---
 
 #### A3 · Tìm Sunner trong Spotlight
-— *(gõ/click icon tìm, không HTTP)* → `` `KudosSpotlightSearch` `` *(planned, client-only)*
+— *(gõ/click icon tìm, không HTTP)* → `` `KudosSpotlightSearch` `` *(client-only)*
 `FR-209` · `SCR007_KudosLiveBoard` · `US004`
 
 **Who** · Bất kỳ khách truy cập nào đang xem Spotlight *(gate A0)*.
-**FE** · `KudosSpotlight` *(planned)* giữ `query` (`useState`, client-local); Enter hoặc click icon lọc/làm nổi bật đúng (các) tên khớp trong scatter tĩnh đã tải sẵn — không round-trip server (D002, `functional-spec.md § 3`).
+**FE** · `KudosSpotlight` (`_components/kudos-spotlight.tsx:103`) giữ `query` qua hook `useSpotlightSearch` (`_hooks/use-spotlight-search.ts:29`, `useState`, client-local); Enter hoặc click icon lọc/làm nổi bật đúng (các) tên khớp trong scatter tĩnh đã tải sẵn — không round-trip server (D002, `functional-spec.md § 3`).
 **Request** · không có (client-only).
 **BE** · không có.
 **Rule**
 - **BR-010 — Ô tìm nhận tối đa 100 ký tự (`maxLength=100`, chặn ký tự thứ 101); nút tìm disable khi ô rỗng.** *(Bin 1 — chỉ dùng ở A3)*
 **Result** · read-only — không ghi DB, không điều hướng trang.
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5` và `clarifications.md § Chưa giải quyết`.
+**Source:** `src/app/(public)/kudos/_components/kudos-spotlight.tsx:103`, `src/app/(public)/kudos/_hooks/use-spotlight-search.ts:29`.
 
 ---
 
 #### A4 · Lật carousel Highlight Kudos
-— *(click mũi tên, không HTTP)* → `` `KudosHighlightCarouselNav` `` *(planned, client-only)*
+— *(click mũi tên, không HTTP)* → `` `KudosHighlightCarouselNav` `` *(client-only)*
 `FR-204` · `SCR007_KudosLiveBoard` · `SM-001` · `US002`
 
 **Who** · Bất kỳ khách truy cập nào đang xem carousel *(gate A0)*.
-**FE** · `KudosHighlightCarousel` *(planned)* giữ `activeIndex` (`useState`, client-local — `SM-001`, vị trí trượt hiện tại, xem § 4.3); 2 cặp nút (cạnh thẻ và cạnh số trang "x/5") cùng gọi 1 handler tiến/lùi.
+**FE** · `KudosHighlightCarousel` (`_components/kudos-highlight-carousel.tsx:51`) giữ `activeIndex` qua hook `useCarouselIndex` (`_hooks/use-carousel-index.ts:27`, client-local — `SM-001`, vị trí trượt hiện tại, xem § 4.3); 2 cặp nút (`KudosCarouselNav`, `_components/kudos-carousel-nav.tsx:56`, đặt ở cạnh thẻ và cạnh số trang "x/5") cùng gọi 1 handler tiến/lùi.
 **Request** · không có (client-only).
 **BE** · không có.
 **Rule**
 - **BR-002 — Nút lùi disable ở slide 1, nút tiến disable ở slide 5; cả 2 vị trí nút dùng chung 1 state.** *(Bin 1 — chỉ dùng ở A4)*
 **Result** · read-only — không ghi DB. Đổi `activeIndex`, đổi thẻ nổi bật ở giữa + 2 bên mờ, cập nhật số trang "x/5".
 **State** · `SM-001`: `{Slide_n}` → `{Slide_n±1}` *(§ 4.3)*
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5`.
+**Source:** `src/app/(public)/kudos/_components/kudos-highlight-carousel.tsx:51`, `src/app/(public)/kudos/_hooks/use-carousel-index.ts:27`, `src/app/(public)/kudos/_components/kudos-carousel-nav.tsx:56`.
 
 ---
 
 #### A5 · Copy link 1 kudo
-— *(click, clipboard)* → `` `CopyKudosLink` `` *(planned, client-only)*
+— *(click, clipboard)* → `` `CopyKudosLink` `` *(client-only)*
 `FR-401` · `SCR007_KudosLiveBoard` · `US006`
 
 **Who** · Bất kỳ khách truy cập nào đang xem 1 thẻ Kudos *(gate A0)*.
-**FE** · `KudosCard` *(planned)* nút "Copy Link" gọi `navigator.clipboard.writeText(url)` rồi hiện toast.
+**FE** · `KudosCard` (`_components/kudos-card.tsx:44`) nút "Copy Link" (`KudosCardActions`, `_components/kudos-card-actions.tsx:36`) gọi `onCopyLink`, thực thi thật ở `handleCopyLink` trong `KudosClient` (`_components/kudos-client.tsx:103-108`) — `navigator.clipboard.writeText(url)` rồi hiện toast.
 **Request** · không có.
 **BE** · không có.
 **Result** · read-only — không ghi DB. URL kudo được sao chép vào clipboard; toast "Link copied — ready to share!" hiện ngay, tự ẩn sau vài giây.
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 4`.
+**Source:** `src/app/(public)/kudos/_components/kudos-client.tsx:103-108`, `src/app/(public)/kudos/_components/kudos-card-actions.tsx:36`.
 
 ---
 
 #### A6 · Mở hồ sơ người gửi/nhận/leaderboard
-`GET` `/profile?id=` *(đích đã tồn tại — F006_ProfilePage)* → `` `KudosProfileLink` `` *(planned)*
+`GET` `/profile?id=` *(đích đã tồn tại — F006_ProfilePage)* → `` `KudosProfileLink` ``
 `FR-402` `FR-601` · `SCR007_KudosLiveBoard` · `US008`
 
 **Who** · Bất kỳ khách truy cập nào bấm avatar/tên trên thẻ Kudos hoặc leaderboard.
-**FE** · `KudosCard`/`KudosSidebar` *(planned)* render `<Link href="/profile?id={uuid}">` bọc avatar và tên — không tự viết logic redirect, không dựng gate riêng.
+**FE** · `KudosCard`'s người-gửi/người-nhận (`_components/kudos-card-person.tsx:99-100`) và `KudosSidebar`'s leaderboard (`_components/kudos-leaderboard.tsx:69-70`) đều render `<Link href={`${ROUTES.PROFILE}?id=...`}>` bọc avatar và tên — không tự viết logic redirect, không dựng gate riêng.
 **Request** · param `id` *(uuid của Sunner được click)*.
 **BE** · không có handler mới — request đi thẳng tới route `/profile` đã có (F006), qua `(protected)/layout.tsx` (gate AUTHORITATIVE hiện có).
 **Rule**
 - **BR-013 — Người chưa đăng nhập bấm avatar/tên bị chuyển hướng sang đăng nhập; xem chính `/kudos` không bị chặn.** *(Bin 1 — chỉ dùng ở A6 — cơ chế redirect TÁI SỬ DỤNG nguyên vẹn gate `(protected)/layout.tsx` của F006, không xây gate mới trong F007)*
 **Result** · read-only trong phạm vi F007 — không ghi DB. Điều hướng thành công tới `/profile?id=...` khi đã đăng nhập; điều hướng `/login` khi chưa đăng nhập (hành vi của gate đã có, không phải code mới của F007).
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5` và `permissions.md`.
+**Source:** `src/app/(public)/kudos/_components/kudos-card-person.tsx:99-100`, `src/app/(public)/kudos/_components/kudos-leaderboard.tsx:69-70`.
 
 <!-- Nút "Xem chi tiết" (B.3/C.3.5) KHÔNG có action riêng ở đây: đích của nó (trang chi tiết kudo,
      frame `onDIohs2bS`) chưa tồn tại — nút render nhưng không điều hướng đi đâu trong phạm vi
@@ -144,17 +146,17 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 ---
 
 #### A7 · Hiển thị trạng thái trái tim trên thẻ Kudos
-— *(render-only, không HTTP — bấm tim thuộc F008)* → `` `KudosHeartDisplay` `` *(planned)*
+— *(render-only, không HTTP — bấm tim thuộc F008)* → `` `KudosHeartDisplay` ``
 `FR-205` `FR-602` · `SCR007_KudosLiveBoard`
 
 **Who** · Bất kỳ khách truy cập nào đang xem 1 thẻ Kudos.
-**FE** · `KudosCard` *(planned)* render icon tim + `heart_count` đọc từ `public.kudos.heart_count` (denormalized, do F008 cập nhật khi thả/thu hồi tim). Với người chưa đăng nhập, nút render `disabled` kèm `title` mời đăng nhập; KHÔNG gắn handler click nào trong phạm vi F007.
+**FE** · `KudosHeartButton` (`_components/kudos-heart-button.tsx:43`) render icon tim + `heart_count` đọc từ `public.kudos.heart_count` (denormalized, do F008 cập nhật khi thả/thu hồi tim). Với người chưa đăng nhập, nút render `disabled` kèm `title` mời đăng nhập; F007 tự thân KHÔNG gắn handler click nào — logic bấm/thu hồi thật sống ở `use-kudos-hearts.ts` (F008).
 **Request** · không có.
-**BE** · không có — F007 chỉ đọc `heart_count`, không có action nào ghi lại trường này (thuộc F008_KudosHeartReaction).
+**BE** · không có — F007 chỉ đọc `heart_count`, không có action nào ghi lại trường này (thuộc F008_KudosHeartReaction — `src/dal/kudo-hearts.ts:46`, `_actions/toggle-kudo-heart.ts`).
 **Rule**
 - **BR-014 — Nút tim luôn hiển thị số tim hiện tại; người chưa đăng nhập thấy nút disabled kèm gợi ý đăng nhập — hành vi bấm tim khi đã đăng nhập là điểm nối sang F008, không phải quy tắc của F007.** *(Bin 1 — chỉ dùng ở A7)*
 **Result** · read-only — không ghi DB, không có handler bấm trong F007.
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5` và `feature-list.md § F008`.
+**Source:** `src/app/(public)/kudos/_components/kudos-heart-button.tsx:43`; ghi thật thuộc `src/dal/kudo-hearts.ts` (F008_KudosHeartReaction, `feature-list.md § F008`).
 
 #### A8 · Tìm & mở hồ sơ Sunner từ ô tìm kiếm khối keyvisual
 — *(gõ tên, chọn kết quả)* → `` `KudosHeroProfileSearch` `` *(implemented)*
@@ -216,21 +218,21 @@ nguyên chữ đã gõ; `Enter` mở kết quả đầu tiên nếu có.
 
 | Component | Responsibility | Used in | File |
 |---|---|---|---|
-| `KudosPage` (Server Component) | Entry point `/kudos`, đọc searchParams + gọi DAL + dựng copy | A1 | `src/app/(public)/kudos/page.tsx` *(planned)* |
-| `KudosClient` | Client boundary — nối handler xuống `KudosScreen` (mirror `awards-client.tsx`) | A1-A7 | `src/app/(public)/kudos/_components/kudos-client.tsx` *(planned)* |
-| `KudosScreen` | Presentational root — banner, filter bar, carousel, Spotlight, feed, sidebar | A1 | `src/app/(public)/kudos/_components/kudos-screen.tsx` *(planned)* |
-| `KudosFilterBar` | Dropdown Hashtag + Phòng ban | A1 | `src/app/(public)/kudos/_components/kudos-filter-bar.tsx` *(planned)* |
-| `KudosHighlightCarousel` | Carousel 5 thẻ + 2 cặp nút điều hướng + pagination "x/5" | A4 | `src/app/(public)/kudos/_components/kudos-highlight-carousel.tsx` *(planned)* |
-| `KudosSpotlight` | Tổng "N KUDOS" + scatter tĩnh tên + ô tìm Sunner | A3 | `src/app/(public)/kudos/_components/kudos-spotlight.tsx` *(planned)* |
-| `KudosFeed` | Danh sách ALL KUDOS + infinite scroll sentinel | A2 | `src/app/(public)/kudos/_components/kudos-feed.tsx` *(planned)* |
-| `KudosCard` | Thẻ Kudos dùng chung (Highlight + feed) — thông tin gửi/nhận, nội dung, hashtag, ảnh, tim, Copy Link | A1, A2, A5, A6, A7 | `src/app/(public)/kudos/_components/kudos-card.tsx` *(planned)* |
-| `KudosSidebar` | 5 chỉ số cá nhân + 2 leaderboard | A1 | `src/app/(public)/kudos/_components/kudos-sidebar.tsx` *(planned)* |
+| `KudosPage` (Server Component) | Entry point `/kudos`, đọc searchParams + gọi DAL + dựng copy | A1 | `src/app/(public)/kudos/page.tsx:56` |
+| `KudosClient` | Client boundary — nối handler xuống `KudosScreen` (mirror `awards-client.tsx`) | A1-A7 | `src/app/(public)/kudos/_components/kudos-client.tsx:60` |
+| `KudosScreen` | Presentational root — banner, filter bar, carousel, Spotlight, feed, sidebar | A1 | `src/app/(public)/kudos/_components/kudos-screen.tsx:80` |
+| `KudosFilterBar` | Dropdown Hashtag + Phòng ban | A1 | `src/app/(public)/kudos/_components/kudos-filter-bar.tsx:17` |
+| `KudosHighlightCarousel` | Carousel 5 thẻ + 2 cặp nút điều hướng + pagination "x/5" | A4 | `src/app/(public)/kudos/_components/kudos-highlight-carousel.tsx:51` |
+| `KudosSpotlight` | Tổng "N KUDOS" + scatter tĩnh tên + ô tìm Sunner | A3 | `src/app/(public)/kudos/_components/kudos-spotlight.tsx:103` |
+| `KudosFeed` | Danh sách ALL KUDOS + infinite scroll sentinel | A2 | `src/app/(public)/kudos/_components/kudos-feed.tsx:66` |
+| `KudosCard` | Thẻ Kudos dùng chung (Highlight + feed) — thông tin gửi/nhận, nội dung, hashtag, ảnh, tim, Copy Link | A1, A2, A5, A6, A7 | `src/app/(public)/kudos/_components/kudos-card.tsx:44` |
+| `KudosSidebar` | 5 chỉ số cá nhân + 2 leaderboard | A1 | `src/app/(public)/kudos/_components/kudos-sidebar.tsx:32` |
 | `KudosKeyvisualBand` | Banner + pill soạn Kudo + pill tìm hồ sơ Sunner, overlay trên keyvisual | A1, A8 | `src/app/(public)/kudos/_components/kudos-keyvisual-band.tsx` |
 | `KudosHeroProfileSearch` / `KudosHeroSearchPill` | Ô tìm hồ sơ Sunner (state + trình bày) — chọn 1 kết quả điều hướng `/profile?id=` | A8 | `src/app/(public)/kudos/_components/kudos-hero-profile-search.tsx`, `kudos-hero-search-pill.tsx` |
 | `useHeroProfileSearch` | Bọc `useSunnerSuggest`, giới hạn 128 ký tự, chỉ bật khi `isSignedIn` | A8 | `src/app/(public)/kudos/_hooks/use-hero-profile-search.ts` |
-| `KudosCopy` / `defaultKudosCopy` | Content contract cho leaf riêng `/kudos`, chrome dùng chung `SiteChromeCopy` | A1 | `src/app/(public)/kudos/_shared/kudos-copy.ts` *(planned)* |
-| `getKudosBoard` | Đọc `public.kudos_cards` + `public.kudos` (count), lọc theo hashtag/department, fail-open rỗng | A1, A2 | `src/dal/kudos.ts` *(planned)* |
-| `toKudosClient` | Shim thu hẹp kiểu client Supabase cho `getKudosBoard` (mirror `toAwardsClient`) | A1, A2 | `src/dal/kudos-client.ts` *(planned)* |
+| `KudosCopy` / `defaultKudosCopy` | Content contract cho leaf riêng `/kudos`, chrome dùng chung `SiteChromeCopy` | A1 | `src/app/(public)/kudos/_shared/kudos-copy.ts:31` |
+| `getKudosBoard` | Đọc `public.kudos_cards` + `public.kudos` (count), lọc theo hashtag/department, fail-open rỗng | A1, A2 | `src/dal/kudos.ts:95` |
+| `toKudosClient` | Shim thu hẹp kiểu client Supabase cho `getKudosBoard` (mirror `toAwardsClient`) | A1, A2 | `src/dal/kudos-client.ts:57` |
 
 ### 4.2 Data Model
 
@@ -257,7 +259,7 @@ erDiagram
 | `Kudo` | `kudos` | Nguồn duy nhất cho carousel Highlight, feed ALL KUDOS, tổng Spotlight, sidebar | A1, A2 |
 | `KudoCard` | `kudos_cards` (view, join `kudos` + `users` × 2) | Hình chiếu đọc sẵn cho thẻ Kudos — gộp tên/avatar/phòng ban/số hoa thị của cả người gửi và người nhận, tránh N+1 query | A1, A2 |
 
-**Migration dự kiến (`0006_kudos.sql`, planned — chưa tạo):**
+**Migration đã áp dụng (`supabase/migrations/0006_kudos.sql`):**
 
 ```sql
 CREATE TABLE public.kudos (
@@ -321,7 +323,7 @@ N/A — no discriminator fields in Key Entities.
 ### Vị trí trượt hiện tại của carousel Highlight Kudos (SM-001)
 **kind:** ui
 **Linked FR:** FR-204
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `functional-spec.md § 5`.
+**Source:** `src/app/(public)/kudos/_hooks/use-carousel-index.ts:27`.
 
 ```mermaid
 stateDiagram-v2
@@ -344,25 +346,22 @@ sống trong Result rung của A4 (§ 3.1) — không lặp lại ở đây.
 #### Bin 2 — used by ≥2 named actions
 
 **BR-005 — Nội dung lời cảm ơn cắt ở dòng thứ 3 (thẻ Highlight) hoặc dòng thứ 5 (thẻ ALL KUDOS), phần dư hiện "...".**
-Used in: **A1** · **A2**. Cả 2 hành động cùng dùng chung component thẻ Kudos (`kudos-card.tsx`) —
-chỉ khác `maxLines` theo khu vực hiển thị (Highlight = 3, ALL KUDOS = 5).
-**Source:** TBD (draft)
-```text
-maxLines = isHighlight ? 3 : 5
-truncated = clampLines(content, maxLines) + (isTruncated ? "..." : "")
-```
+Used in: **A1** · **A2**. Cả 2 hành động cùng dùng chung component thẻ Kudos (`kudos-card.tsx:44`) —
+chỉ khác `maxLines` theo khu vực hiển thị (Highlight = 3, ALL KUDOS = 5), cắt dòng thật ở
+`kudo-markdown-text.tsx:25`.
+**Source:** `src/app/(public)/kudos/_components/kudos-card.tsx:38`, `src/app/(public)/kudos/_components/kudo-markdown-text.tsx:25`.
 
 **BR-006 — Hashtag hiển thị tối đa 5 tag trên 1 dòng, quá dòng hiện "...".**
 Used in: **A1** · **A2**. Cùng component thẻ Kudos dùng chung.
-**Source:** TBD (draft)
+**Source:** `src/app/(public)/kudos/_components/kudos-hashtag-list.tsx:10` (`MAX_HASHTAGS = 5`).
 
 **BR-007 — Ảnh đính kèm hiển thị tối đa 5 ảnh mỗi thẻ, căn lề trái.**
 Used in: **A1** · **A2**. Cùng component thẻ Kudos dùng chung.
-**Source:** TBD (draft)
+**Source:** `src/app/(public)/kudos/_components/kudos-image-strip.tsx:17` (`MAX_IMAGES`, `slice(0, MAX_IMAGES)`).
 
 **BR-008 — Số hoa thị người gửi/nhận tính từ tổng kudo họ đã NHẬN: 10→1, 20→2, 50→3.**
 Used in: **A1** · **A2**. Giá trị đọc từ cột đếm sẵn (`sender_kudos_received`/`receiver_kudos_received`) của view `kudos_cards`.
-**Source:** TBD (draft)
+**Source:** `src/app/(public)/kudos/_utils/star-tier.ts:26`.
 ```text
 tier = receivedCount >= 50 ? 3 : receivedCount >= 20 ? 2 : receivedCount >= 10 ? 1 : 0
 ```
@@ -373,8 +372,8 @@ tier = receivedCount >= 50 ? 3 : receivedCount >= 20 ? 2 : receivedCount >= 10 ?
 Không middleware/guard nào chặn route `/kudos` trong `proxy.ts` hay một layout `(protected)` —
 route nằm trong nhóm `(public)`, cùng cơ chế với `/`, `/awards`, `/standards`. Áp dụng cho **mọi
 action trong § 3**, không riêng action nào.
-**Source:** TBD (draft) — chưa có code; hành vi đã chốt tại `clarifications.md` § "Q: `/kudos` là
-public hay protected?".
+**Source:** `src/proxy.ts:19` (`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` — `/kudos` không
+có mặt); hành vi đã chốt tại `clarifications.md` § "Q: `/kudos` là public hay protected?".
 
 ### 4.5 Algorithms & Integrations
 
@@ -447,14 +446,15 @@ và render đầy đủ banner/carousel/Spotlight/feed/sidebar (rút gọn theo 
 2. **Khả năng mở rộng tìm kiếm Spotlight** *(A3)*: chưa xác nhận ngưỡng số Sunner mà tìm kiếm client-side còn chấp nhận được trước khi cần chuyển server-side.
 3. **4 test case F007 không thể thoả** *(ghi nhận theo yêu cầu spec, không phải câu hỏi kỹ thuật cần đọc thêm code)*:
    - `ca8f60b3-3e33-4623-8349-dbb96ebaee82` (Check business logic / Form submission / Save Kudos to database) — cần "Kudos submission dialog" đang mở; A.1 trong F007 chỉ render ô nhập, KHÔNG mở dialog Viết Kudo (frame `ihQ26W78P2` chưa build). Cùng lý do, TC `f183a3e4-249b-4db2-9380-131408583c10` (Required check trên input trong dialog) cũng không thoả.
-   - `43b54c29-1ff5-4f51-b500-e3d8f42d07b5` (Check business logic / Open box / Button opens Secret Box dialog) — dialog Secret Box (frame `J3-4YFIpMM` + 8 state) chưa build.
+   - `43b54c29-1ff5-4f51-b500-e3d8f42d07b5` (Check business logic / Open box / Button opens Secret Box dialog) — TC này nằm ngoài phạm vi F007: dialog Secret Box từ đó đã được build như một feature riêng (`F010_SecretBoxModal`, `src/app/(public)/kudos/_components/secret-box-dialog.tsx`, migration `0011_secret_box.sql`), không thuộc F007.
    - `31693bb7-b22e-4874-9dae-378b2dcd1f9b` (Check navigation path / Kudos detail navigation) — trang chi tiết kudo (frame `onDIohs2bS`) chưa build. Cùng lý do, TC `8c0d1781-6605-44e7-97ec-5661c19d7ccc` (nút "Xem chi tiết") cũng không thoả.
    - `31936b72-9c0f-4e01-b022-cd8e22a18677` (Check business logic / Like on special day / Admin configuration, 2 hearts) — không có màn admin cấu hình "ngày đặc biệt", không bảng config nào tồn tại để dựng precondition của TC này (YAGNI, tiền lệ F005 — xem `clarifications.md`).
 
 ### 5.4 Source References
 
-No source code written yet — see `functional-spec.md § 7 User Stories` for planned behavior; the
-planned file layout is listed in `## 4.1 Components` above.
+Đã implement — file layout thật liệt kê tại `## 4.1 Components` ở trên; entry point
+`src/app/(public)/kudos/page.tsx:56`, DAL `src/dal/kudos.ts:95`, migration
+`supabase/migrations/0006_kudos.sql`. Hành vi khoá tại `tests/e2e/kudos.spec.ts`.
 
 #### Data Flow
 

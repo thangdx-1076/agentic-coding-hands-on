@@ -22,7 +22,7 @@ component reuse. § 5 verification + nguồn.
 
 Trang công khai mới `/awards` (`src/app/(public)/awards/page.tsx`) — 1 Server Component đọc 6
 hạng mục giải từ bảng mới `public.awards` qua DAL (mirror `src/dal/users.ts`), cộng session/role
-đọc chung với F003 (`getViewer()`, hoisted lên `src/app/(public)/_utils/get-viewer.ts` — xem §
+đọc chung với F003 (`getViewer()`, hoisted lên `src/app/_utils/get-viewer.ts` — xem §
 4.1), cộng 1 client hook (`useAwardCategoryNav`) cho nav trái (click-scroll + scroll-spy). Không
 action nào ghi DB — toàn bộ read-only. `KudosSection`/`SiteHeader`/`SiteFooter` (đã có ở F003)
 được PROMOTE từ `(home)/_components/` lên `(public)/_components/` để dùng chung 2 route — xem §
@@ -69,7 +69,7 @@ footer, account, notifications) đọc lại từ khoá `home.*` — không nhâ
 - **BR-005 — `prizeValues` là `{amount, note}[]`; render mỗi phần tử thành 1 dòng giá trị.**
 **Result** · read-only — không ghi DB. Props xuống `AwardsScreen`: `awards: Award[]`, `copy`
 (chrome tĩnh), `viewer`, `locale`.
-**Source:** `src/app/(public)/awards/page.tsx` → `src/app/(public)/_utils/get-viewer.ts` →
+**Source:** `src/app/(public)/awards/page.tsx` → `src/app/_utils/get-viewer.ts` →
 `src/dal/awards.ts`
 
 ---
@@ -110,7 +110,7 @@ bằng `jsdom` không cần `IntersectionObserver` thật); hook owns `useState<
 |---|---|---|
 | A1 | Supabase lỗi hoặc `awards` rỗng cho locale hiện tại | `getAwards` trả `[]`; `AwardsScreen` render `AwardsEmptyState`, không throw, không 500 |
 | A2 | `prefers-reduced-motion: reduce` (TC ID-9 biến thể) | Cuộn tức thời, active vẫn cập nhật đúng |
-| A1 (link Kudos) | `/kudos` chưa tồn tại (TC ID-12/ID-14) | Link vẫn render `href="/kudos"`, điều hướng thật trả 404 — E2E chỉ assert `href` |
+| A1 (link Kudos) | RISK-01 **resolved (route)** — `/kudos` đã live kể từ F007_KudosLiveBoard (TC ID-12/ID-14 cần rerun) | Link render `href="/kudos"`, điều hướng thật nay tới SCR007_KudosLiveBoard — E2E hiện chỉ assert `href` |
 
 ## 4. Shared Foundation
 
@@ -128,10 +128,10 @@ bằng `jsdom` không cần `IntersectionObserver` thật); hook owns `useState<
 | `pickActiveSlug` | Hàm thuần chọn slug active từ `SpyEntry[]` | A2 | `src/app/(public)/awards/_utils/scroll-spy.ts` | shipped |
 | `AwardsCopy` / `defaultAwardsCopy` | Content contract cho `/awards`, mở rộng `SiteChromeCopy` dùng chung với F003 | A1 | `src/app/(public)/awards/_shared/awards-copy.ts` | shipped |
 | `IconTarget`/`IconDiamond`/`IconLicense` | 3 icon 24px (nav/tiêu đề, số lượng, giá trị) | A1, A2 | `src/app/(public)/awards/_components/icons/icon-{target,diamond,license}.tsx` | shipped, mirror `(home)/_components/icons/icon-*.tsx` |
-| `getViewer` | Đọc session + role dùng chung — hoisted khỏi `(home)/page.tsx` vì `/awards` cần đúng lời đọc này | A1 | `src/app/(public)/_utils/get-viewer.ts` | **promoted** (mới ở feature này) |
-| `HomeHeader` → **`SiteHeader`** (đã đổi tên lúc promote) | Header dùng chung — role-aware bell/account | A1 | `src/app/(public)/_components/site-header.tsx` | promoted (F004 lúc phát triển; nay dùng chung F003+F004) |
-| `HomeFooter` → **`SiteFooter`** | Footer dùng chung | A1 | `src/app/(public)/_components/site-footer.tsx` | promoted |
-| `KudosSection` | Khối Sun* Kudos — cùng component instance Figma, không sửa nội dung | A1 | `src/app/(public)/_components/kudos-section.tsx` | promoted |
+| `getViewer` | Đọc session + role dùng chung — hoisted khỏi `(home)/page.tsx` vì `/awards` cần đúng lời đọc này | A1 | `src/app/_utils/get-viewer.ts` | **promoted** (mới ở feature này) |
+| `HomeHeader` → **`SiteHeader`** (đã đổi tên lúc promote) | Header dùng chung — role-aware bell/account | A1 | `src/app/_components/site-header.tsx` | promoted (F004 lúc phát triển; nay dùng chung F003+F004) |
+| `HomeFooter` → **`SiteFooter`** | Footer dùng chung | A1 | `src/app/_components/site-footer.tsx` | promoted |
+| `KudosSection` | Khối Sun* Kudos — cùng component instance Figma, không sửa nội dung | A1 | `src/app/_components/kudos-section.tsx` | promoted |
 | `getAwards` | Đọc `public.awards` theo locale, fail-open `[]` | A1 | `src/dal/awards.ts` | shipped |
 | `toAwardsClient` | Shim thu hẹp kiểu client Supabase cho `getAwards` | A1 | `src/dal/awards-client.ts` | shipped |
 
@@ -361,7 +361,7 @@ function tường minh thay vì `as unknown as`.
 | Action | Order | Symbol | Path | Purpose |
 |---|---|---|---|---|
 | A1 | 1 | `AwardsPage` | `src/app/(public)/awards/page.tsx` | Entry point `/awards` |
-| A1 | 2 | `getViewer` | `src/app/(public)/_utils/get-viewer.ts` | Session + role, dùng chung F003/F004 |
+| A1 | 2 | `getViewer` | `src/app/_utils/get-viewer.ts` | Session + role, dùng chung F003/F004 |
 | A1 | 3 | `getAwards`, `toAwardsClient` | `src/dal/awards.ts`, `src/dal/awards-client.ts` | Đọc bảng `awards`, fail-open |
 | A1 | 4 | `AwardsClient`, `AwardsScreen`, `AwardSection`, `AwardsEmptyState` | `_components/awards-client.tsx`, `_components/awards-screen.tsx`, `_components/award-section.tsx`, `_components/awards-empty-state.tsx` | Client boundary + render 6 section/Kudos/empty-state |
 | A2 | 5 | `AwardCategoryNav`, `useAwardCategoryNav`, `pickActiveSlug` | `_components/award-category-nav.tsx`, `_hooks/use-award-category-nav.ts`, `_utils/scroll-spy.ts` | Nav click-scroll + scroll-spy |

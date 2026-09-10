@@ -44,7 +44,7 @@ graph TD
     SCR007 -->|Click pill 'Viết Kudo', chưa đăng nhập| SCR001
 ```
 
-> `/` không còn là fallback redirect — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`. Từ 2026-09-07 đợt 3 (F007_KudosLiveBoard + F008_KudosHeartReaction): `/kudos` (SCR007_KudosLiveBoard) cũng PUBLIC, không guard, dùng chung `SiteHeader`/`SiteFooter` với SCR003/SCR004/SCR006 — tới được bằng URL trực tiếp, bằng link "Sun Kudos" trên `SiteHeader` (hiện diện trên mọi trang dùng `SiteHeader`: SCR003, SCR004, SCR006), nút "Chi tiết" của khối `KudosSection` (SCR003, SCR004 — SCR006 KHÔNG có khối này), `WidgetButton` (chỉ trên SCR003), hoặc nút "Viết KUDOS" trên SCR005 (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng). Khác mọi screen PUBLIC trước đó: đây là route đầu tiên có đường GHI vào DB (thả tim, `toggleKudoHeart`) — chi tiết ở § Guard Logic và `permissions-matrix.md`. Từ 2026-09-08 (F009_KudosCompose): `/kudos` có thêm SCR008_KudosCompose — dialog `<dialog>` phủ lên trang, mở từ pill "Viết Kudo" khi đã đăng nhập (chưa đăng nhập thì điều hướng `/login` thay vì mở dialog); đây là đường INSERT đầu tiên vào `public.kudos` (trước đó chỉ có `kudo_hearts` được ghi) — chi tiết ở § Screen Access Paths và `permissions-matrix.md`.
+> `/` không còn là fallback redirect — `src/app/(public)/(home)/page.tsx` nay TỰ RENDER SCR003_HomeScreen cho mọi actor (PERM001_RootRouteGuard đã superseded, xem `permissions-matrix.md`). SCR002_TodoScreen chỉ còn tới được bằng truy cập URL `/todo` trực tiếp khi đã đăng nhập — không còn đường điều hướng tự động nào (proxy/OAuth thành công/root fallback) đưa tới đó nữa. Từ 2026-09-06 (F004_AwardSystemPage): `/awards` (SCR004_Awards) cũng PUBLIC, không guard — tới được bằng URL trực tiếp hoặc từ 6 link trên SCR003_HomeScreen (CTA "ABOUT AWARDS" + 6 thẻ giải thưởng, trước đây trỏ tới route chưa tồn tại). Từ 2026-09-07 (F005_StandardsRulesPage): `/standards` (SCR005_Standards) cũng PUBLIC, không guard, và KHÔNG có header/footer nào (khác SCR003/SCR004) — tới được bằng URL trực tiếp hoặc link "Tiêu chuẩn chung" ở footer của bất kỳ trang nào; nút "Đóng" thoát bằng `router.back()` khi có lịch sử điều hướng, hoặc `push("/")` khi direct-load (không có lịch sử trong tab). Từ 2026-09-07 đợt 2 (F006_ProfilePage): `/profile` (SCR006_Profile) là route PROTECTED mới — gác bởi ĐÚNG `(protected)/layout.tsx` mà SCR002_TodoScreen dùng (danh sách `PROTECTED_ROUTES` mở rộng, không phải gate riêng); tới được bằng click "Hồ sơ" trong menu tài khoản của SCR003/SCR004, hoặc URL trực tiếp (`?id={uuid}` cho hồ sơ người khác) khi đã đăng nhập — chưa đăng nhập thì redirect `/login` giống hệt `/todo`. Từ 2026-09-07 đợt 3 (F007_KudosLiveBoard + F008_KudosHeartReaction): `/kudos` (SCR007_KudosLiveBoard) cũng PUBLIC, không guard, dùng chung `SiteHeader`/`SiteFooter` với SCR003/SCR004/SCR006 — tới được bằng URL trực tiếp, bằng link "Sun Kudos" trên `SiteHeader` (hiện diện trên mọi trang dùng `SiteHeader`: SCR003, SCR004, SCR006), nút "Chi tiết" của khối `KudosSection` (SCR003, SCR004 — SCR006 KHÔNG có khối này), `WidgetButton` (chỉ trên SCR003), hoặc nút "Viết KUDOS" trên SCR005 (route duy nhất không dùng `SiteHeader` nhưng vẫn có 1 link riêng). Khác mọi screen PUBLIC trước đó: đây là route đầu tiên có đường GHI vào DB (thả tim, `toggleKudoHeart`) — chi tiết ở § Guard Logic và `permissions-matrix.md`. Từ 2026-09-08 (F009_KudosCompose): `/kudos` có thêm SCR008_KudosCompose — dialog `<dialog>` phủ lên trang, mở từ pill "Viết Kudo" khi đã đăng nhập (chưa đăng nhập thì điều hướng `/login` thay vì mở dialog); đây là đường INSERT đầu tiên vào `public.kudos` (trước đó chỉ có `kudo_hearts` được ghi) — chi tiết ở § Screen Access Paths và `permissions-matrix.md`.
 
 ## Feature Entry Points
 
@@ -162,7 +162,7 @@ graph TD
 - Đến SCR003_HomeScreen: OAuth Google thành công → ROUTE001 exchange session thành công → `safeNextPath` (mặc định `/`, đổi từ `/todo`)
 
 **Decision Points**:
-- `getAuthenticatedUser()` (fail OPEN, `app/login/page.tsx:73-83`): nếu đã có `user` → redirect `/` ngay trước khi render (đổi từ `/todo`); lỗi Supabase (catch) → coi như chưa đăng nhập, vẫn render `/login`
+- `getCurrentUser()` (fail OPEN, `src/app/(public)/login/page.tsx:34-37`): nếu đã có `user` → redirect `/` ngay trước khi render (đổi từ `/todo`); lỗi Supabase (catch, nuốt trong `src/dal/auth.ts`) → coi như chưa đăng nhập, vẫn render `/login`
 
 ---
 
@@ -175,13 +175,13 @@ graph TD
 
 **Exit Points**:
 - Đến SCR001_LoginScreen: click link "Đăng nhập" ở góc phải header (chỉ hiện khi ẩn danh)
-- Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction` — tái dùng nguyên trạng từ `app/todo/actions.ts`, luôn redirect dù `signOut()` thành công hay lỗi)
+- Đến SCR001_LoginScreen: click "Đăng xuất" trong menu tài khoản (`logoutAction` — nay SHARED tại `src/app/_actions/logout.ts`, dùng chung bởi todo/profile/home/awards/kudos, không còn riêng `/todo`; luôn redirect dù `signOut()` thành công hay lỗi)
 - Đến SCR007_KudosLiveBoard: click link "Sun Kudos" ở `SiteHeader`, nút "Chi tiết" khối `KudosSection`, hoặc `WidgetButton` (3 điểm vào riêng biệt, cùng đích — F007_KudosLiveBoard, mới từ 2026-09-07; trước đây gộp vào "route chưa tồn tại" bên dưới)
 - Đến SCR006_Profile: click "Hồ sơ" trong menu tài khoản (sửa lại từ ghi chú cũ — `/profile` đã có SCR006 từ F006_ProfilePage, không còn là "route chưa tồn tại")
 - (Ngoài phạm vi phân tích) 1 link tới route chưa tồn tại: `/admin` — không phải SCR### nào trong tài liệu này (mục menu "Trang quản trị", chỉ hiện khi `role === "admin"`)
 
 **Decision Points**:
-- Không có guard chặn truy cập (`app/page.tsx` không redirect ai) — `getUser()`/`getUserRole()` chỉ đọc để cá nhân hoá header (bell + menu tài khoản + role, hoặc link đăng nhập), không quyết định có được xem trang hay không (PERM001_RootRouteGuard superseded, xem `permissions-matrix.md`)
+- Không có guard chặn truy cập (`src/app/(public)/(home)/page.tsx` không redirect ai) — `getViewer()` (`src/app/_utils/get-viewer.ts`, bọc `getCurrentUser`/`getUserRole`) chỉ đọc để cá nhân hoá header (bell + menu tài khoản + role, hoặc link đăng nhập), không quyết định có được xem trang hay không (PERM001_RootRouteGuard superseded, xem `permissions-matrix.md`)
 
 ---
 
@@ -276,7 +276,7 @@ graph TD
 - Đến SCR001_LoginScreen: guard `getUser()` phát hiện không có session hợp lệ
 
 **Decision Points**:
-- `getUser()` (fail CLOSED, `app/todo/page.tsx:21-28`): `!user` → redirect `/login` ngay trước khi render
+- `getCurrentUser()` (fail CLOSED qua `src/app/(protected)/layout.tsx:22-26`, hoisted khỏi `todo/page.tsx`): `!user` → redirect `/login` ngay trước khi render
 
 ---
 
@@ -347,7 +347,7 @@ graph LR
 
 ## Guard Logic
 
-### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*`, `/profile` (`/`, `/awards`, `/standards` vẫn khớp matcher, không còn redirect; `/kudos` KHÔNG khớp matcher — xem ghi chú bên dưới)
+### GUARD-001 — Optimistic auth redirect (proxy layer) trên `/login`, `/todo/:path*`, `/profile` (`/`, `/awards`, `/standards` vẫn khớp matcher, không còn redirect; `/kudos` khớp matcher nhưng đi nhánh `pass` zero-I/O — xem ghi chú bên dưới)
 **trigger:** `proxy` (Next 16, tên cũ `middleware`)
 **source:** `proxy.ts` (`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]`)
 **logic:**
@@ -359,11 +359,20 @@ else → pass-through
 ```
 **failure path:** lỗi gọi Supabase (`getUserOrNull` catch) → coi như `user = null`, không 500 toàn site
 
-**Cập nhật 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction)**: `/kudos` KHÔNG được thêm
-vào `matcher` (`proxy.ts:139` không đổi) — route này nằm HOÀN TOÀN ngoài `proxy`, khác `/`/`/awards`/
-`/standards` (vẫn khớp matcher để refresh cookie dù không redirect) và khác `/profile` (protected
-thật). Hệ quả: không có refresh session cookie hay chuẩn hoá `NEXT_LOCALE` nào chạy riêng cho
-`/kudos` — trang tự đọc session qua `getCurrentUser()`/`getViewer()` trong `page.tsx`. Guard GHI của
+**Cập nhật 2026-09-09 (F011_CountdownPrelaunchPage — thay thế ghi chú 2026-09-07)**: `matcher`
+(`src/proxy.ts:188`) nay là negative lookahead
+`/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)` — khớp gần như MỌI route, `/kudos`
+nằm trong đó. Ghi chú cũ ("`/kudos` nằm hoàn toàn ngoài `proxy`") viết khi matcher còn là whitelist
+6 route và đã SAI kể từ lần widening này.
+
+Nhưng hệ quả thực tế thì không đổi: `planProxy` (`src/domain/prelaunch-lock.ts`) trả
+`{ kind: "pass" }` cho `/kudos` — `isLegacyProxyRoute` chỉ nhận đúng 6 route cũ (`/`, `/login`,
+`/todo`, `/awards`, `/standards`, `/profile`), phần còn lại đi nhánh `pass` với ZERO I/O, trả
+`NextResponse.next()` trước khi `normalizeLocaleCookie` hay `getUserOrNull` kịp chạy (BR-005). Vậy
+`/kudos` ĐI QUA `proxy()` nhưng không tốn round-trip Supabase nào, và vẫn không có refresh session
+cookie hay chuẩn hoá `NEXT_LOCALE` riêng cho nó — trang tự đọc session qua
+`getCurrentUser()`/`getViewer()` trong `page.tsx`. Khác biệt so với ghi chú cũ là ở CƠ CHẾ (matcher
+bỏ qua ⟶ matcher khớp rồi `pass`), không ở kết quả. Guard GHI của
 F008 (chặn người gửi tự thả tim, chặn thả tim lần 2) không nằm ở lớp này — nó nằm ở RLS Postgres,
 xem `permissions-matrix.md`.
 
@@ -385,38 +394,38 @@ quyết định self/other/404/canonical, xem § Screen Transitions SCR006_Profi
 
 ### GUARD-002 — Authoritative already-authenticated check trên `/login` (fail OPEN)
 **trigger:** Server Component render (trước khi trả JSX)
-**source:** `app/login/page.tsx:31-34,73-83`
+**source:** `src/app/(public)/login/page.tsx:34-37` (gọi `getCurrentUser()` — try/catch nội bộ nằm trong `src/dal/auth.ts:17-26`)
 **logic:**
 ```pseudo
-try { user = await supabase.auth.getUser() } catch { user = null }
+user = await getCurrentUser()  // try/catch nội bộ, fail-open về null
 if (user) → redirect / (đổi từ /todo)
 ```
 **failure path:** lỗi Supabase → `user = null` → vẫn render `/login` (fail OPEN, khác `/todo`)
 
 ---
 
-### GUARD-003 — Authoritative auth guard trên `/todo` (fail CLOSED)
-**trigger:** Server Component render
-**source:** `app/todo/page.tsx:21-28`
+### GUARD-003 — Authoritative auth guard trên `/todo` (fail CLOSED, dùng chung `(protected)/layout.tsx` với `/profile` — xem GUARD-005)
+**trigger:** Server Component render, TRƯỚC `todo/page.tsx`
+**source:** `src/app/(protected)/layout.tsx:22-26` (hoisted khỏi `todo/page.tsx` — route colocation refactor)
 **logic:**
 ```pseudo
-user = await supabase.auth.getUser()
+user = await getCurrentUser()
 if (!user) → redirect /login
 ```
-**failure path:** không có session hợp lệ (kể cả lỗi gọi Supabase) → redirect `/login`
+**failure path:** `getCurrentUser()` nuốt lỗi Supabase thành `null` nội bộ (`src/dal/auth.ts`) → outcome vẫn redirect `/login`, hiệu quả tương đương fail-closed
 
 ---
 
 ### GUARD-004 — Root `/` fallback authoritative redirect — **SUPERSEDED, không còn hoạt động**
-**trigger:** ~~Server Component render (route không tự render UI)~~ — `app/page.tsx` nay TỰ RENDER SCR003_HomeScreen, không còn redirect nào
-**source:** `app/page.tsx` (đã viết lại hoàn toàn — không còn logic guard này; xem `PERM001_RootRouteGuard` trong `permissions-matrix.md`)
+**trigger:** ~~Server Component render (route không tự render UI)~~ — `src/app/(public)/(home)/page.tsx` nay TỰ RENDER SCR003_HomeScreen, không còn redirect nào
+**source:** `src/app/(public)/(home)/page.tsx` (đã viết lại hoàn toàn — không còn logic guard này; xem `PERM001_RootRouteGuard` trong `permissions-matrix.md`)
 **logic (cũ, không còn đúng — giữ lại để tham chiếu lịch sử):**
 ```pseudo
 # TRƯỚC (superseded):
 user = await supabase.auth.getUser()
 redirect(user ? "/todo" : "/login")
 ```
-**Hiện tại:** `app/page.tsx` gọi `getUser()`/`getUserRole()` chỉ để cá nhân hoá header (SCR003_HomeScreen), KHÔNG redirect ai. Chi tiết đầy đủ: `docs/vi/system/permissions.md`, `generated/permissions-matrix.md § PERM001`.
+**Hiện tại:** `src/app/(public)/(home)/page.tsx` gọi `getViewer()` (`src/app/_utils/get-viewer.ts`, bọc `getCurrentUser`/`getUserRole`) chỉ để cá nhân hoá header (SCR003_HomeScreen), KHÔNG redirect ai. Chi tiết đầy đủ: `docs/vi/system/permissions.md`, `generated/permissions-matrix.md § PERM001`.
 **failure path:** (N/A — guard đã retired)
 
 ---
@@ -433,7 +442,7 @@ redirect(user ? "/todo" : "/login")
 
 **Failure mode:** bất kỳ giá trị `error` non-empty nào (kể cả mảng do Next.js parse `?error=` lặp lại) đều bật CÙNG một thông báo cố định — giá trị thô không bao giờ được render (an toàn XSS nhưng không mô tả chi tiết lỗi thật).
 
-> Ghi chú (ngoài phạm vi SCR, không tự render UI): `ROUTE001 GET /auth/callback?next={path}` — param `next` phục hồi đích redirect sau đăng nhập qua `safeNextPath()` (`lib/supabase/next-path.ts`); giá trị không hợp lệ/không an toàn (không bắt đầu bằng đúng 1 `/`, chứa `://`, `//`, hoặc control-char/line-separator thô hay percent-encoded) sẽ fallback về `/` (đổi từ `/todo`).
+> Ghi chú (ngoài phạm vi SCR, không tự render UI): `ROUTE001 GET /auth/callback?next={path}` — param `next` phục hồi đích redirect sau đăng nhập qua `safeNextPath()` (`src/utils/url/next-path.ts`); giá trị không hợp lệ/không an toàn (không bắt đầu bằng đúng 1 `/`, chứa `://`, `//`, hoặc control-char/line-separator thô hay percent-encoded) sẽ fallback về `/` (đổi từ `/todo`).
 
 ---
 
@@ -461,10 +470,10 @@ redirect(user ? "/todo" : "/login")
 Framework-agnostic identifier patterns for locating the above constructs.
 
 ### Guard Logic
-Function/method definitions tied to a route: `beforeEnter|canActivate|middleware|loader|before_action|authenticate|authorize` — check if called from a router config or route registration. Trong repo này: `proxy()` export trong `proxy.ts` (Next 16 proxy convention) + guard nội tuyến (`getAuthenticatedUser`/`getUser`) ở đầu mỗi Server Component `page.tsx`.
+Function/method definitions tied to a route: `beforeEnter|canActivate|middleware|loader|before_action|authenticate|authorize` — check if called from a router config or route registration. Trong repo này: `proxy()` export trong `proxy.ts` (Next 16 proxy convention) + `getCurrentUser()` (`src/dal/auth.ts`) gọi từ đầu mỗi Server Component `page.tsx` (`/login`) hoặc từ `(protected)/layout.tsx` (`/todo`, `/profile`).
 
 ### Deep-Link State Restoration
-URL param reads at component mount synced to state: `useSearchParams|useQuery|router\.query|URLSearchParams|params\[|$route\.query` — trong repo này là `searchParams` Promise prop của Server Component (`app/login/page.tsx`) và `new URL(request.url).searchParams` trong Route Handler (`app/auth/callback/route.ts`), không phải hook client-side.
+URL param reads at component mount synced to state: `useSearchParams|useQuery|router\.query|URLSearchParams|params\[|$route\.query` — trong repo này là `searchParams` Promise prop của Server Component (`src/app/(public)/login/page.tsx`) và `new URL(request.url).searchParams` trong Route Handler (`src/app/auth/callback/route.ts`), không phải hook client-side.
 
 ### Unsaved-Changes Protection
 `beforeunload|onbeforeunload|usePrompt|useBeforeUnload|leaveGuard|isDirty|formState\.isDirty|data-turbo-confirm` — không tìm thấy pattern nào trong repo.

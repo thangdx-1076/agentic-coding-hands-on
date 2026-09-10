@@ -1491,3 +1491,27 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - `docs/vi/generated/**` chưa phản ánh FR-214/BR-016/US009 (lớp generated chờ `rebuild-spec`) — cùng món nợ đã ghi ở các session trước.
 - `use-hero-profile-search.test.ts` dài 233 dòng, vượt mốc 200 — theo tiền lệ repo (test hook khác 360–450 dòng) thì mốc này áp cho file source, không phải file test.
 - doc-writer phát hiện drift có sẵn từ trước: `F007/technical-spec.md` A1–A7 và § 5.4 vẫn ghi "planned"/"chưa có code" dù frontmatter là `status: implemented` và code đã có. Ngoài scope lần fix này; ứng viên cho một lượt `rebuild-spec`.
+
+## 260910-1901 — docs-sync-readme-and-spec-layer
+
+### Tôi cần làm
+
+- [ ] **Link admin chết** — `src/app/_components/account-menu.tsx:94` render `href="/admin"` cho `role='admin'` nhưng không có route `/admin` nào trong `src/app/**`, `ROUTES` cũng không có `ADMIN`. Mọi admin bấm vào đều 404. Quyết: dựng route hay ẩn item? (Plan `plans/260909-0204-admin-route-guard/` là scaffold rỗng, chưa từng chạy.)
+- [ ] **`promote-to-admin.ts` trỏ sai repo** — `tests/e2e/helpers/promote-to-admin.ts:14-16` mặc định `cwd` sang checkout `saa-app` anh em (`~/Desktop/Claude-and-mormoph/saa-app`), trong khi Supabase nay nằm trong chính repo này. Hoặc set `SAA_APP_DIR`, hoặc sửa default về repo root.
+- [ ] Review + commit: 20+ file docs sửa, 3 file mới (F010/F011/F012 README). Branch `fix/kudos-hero-profile-search`.
+
+### Decisions
+
+- Work-type = `deliverable` (bảo trì docs, không phải feature) → bỏ qua Stage 1.5, không cấp `F###` mới. Docs sync không sinh feature.
+- README viết lại toàn bộ thay vì vá từng mục: 5/9 route thiếu, 10/13 migration thiếu, tiêu đề còn là "Login". Vá lẻ sẽ để lại cấu trúc cũ sai.
+- Chia 4 lượt `doc-writer` với file ownership rời nhau thay vì 1 lượt lớn — tránh 2 agent ghi cùng file, và mỗi lượt gọn context.
+- Kiểm chứng bằng cách test **sự tồn tại của path** (trích mọi `src/**` citation rồi `[ -e ]`), không tranh luận regex. Bắt được 4 path chết mà cả 2 audit đều báo "clean".
+- `[NEEDS_VERIFY]` mà agent để lại trong `permissions-matrix.md` được giải quyết tại chỗ, không ship marker: `getCurrentUser()` (`src/dal/auth.ts:17-27`) fail-OPEN về `null`, `(protected)/layout.tsx` mới là chỗ biến `null` thành redirect → outcome mức route vẫn fail-CLOSED. Viết rõ cả 2 bước để không ai đọc nhầm.
+- Giữ nguyên mọi claim "`/admin` chưa tồn tại" — đúng sự thật, và chính nó giải thích vì sao link kia 404.
+- `docs/README.md` để làm con trỏ mỏng sang `docs/vi/README.md` thay vì index đầy đủ: generator per-lang thật sự **xoá** file root, viết index đầy đủ ở đó sẽ bị xoá ở lần `rebuild-spec` kế tiếp.
+
+### Nợ lại
+
+- Audit chỉ **spot-check** F004–F012 và SCR004–SCR009 (1–2 citation mỗi file), không line-diff. Đúng chỗ đó lọt 3 nhóm lỗi thật (F004 `get-viewer` sai path, SCR004/SCR005 bảo `/kudos` 404, F007 49 nhãn `planned`) — tất cả đã sửa, nhưng mức tin cậy cho phần còn lại của các file đó vẫn thấp hơn phần đã soi kỹ. Muốn chắc thì chạy `audit-doc-parity` (blind-regen) một lượt.
+- `docs/vi/generated/**` vẫn là lớp chép tay, chưa chạy `rebuild-spec` thật. Nhiều mã `PERM###` còn "TBD (draft)" chờ Core pass cấp — đã ghi rõ trong doc, không phải lỗi.
+- Lúc sửa path hàng loạt bằng `perl -pi`, danh sách file quét trúng 3 file `docs/vi/generated/` mà một agent đang ghi. Đã kiểm: không có thay thế nào xảy ra ở 3 file đó, không mất gì — nhưng đó là va chạm ownership lẽ ra không nên có.

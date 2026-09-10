@@ -74,19 +74,19 @@ Aggregating multiple source files into a single BL item violates Rule C1 and wil
 ## BL001_SupabaseBrowserClient
 
 **Type**: integration
-**Trigger**: Client component cần Supabase Auth phía trình duyệt — điểm gọi duy nhất hiện có: `signInWithGoogle` (`lib/auth/sign-in-with-google.ts:44`), gọi từ `useLoginActions.handleLoginClick` (`hooks/use-login-actions.ts:42-57`), ngay trước `supabase.auth.signInWithOAuth(...)`
+**Trigger**: Client component cần Supabase Auth phía trình duyệt — điểm gọi duy nhất hiện có: `signInWithGoogle` (`src/api/auth.ts:45`), gọi từ `useLoginActions.handleLoginClick` (`src/app/(public)/login/_hooks/use-login-actions.ts:46-49`), ngay trước `supabase.auth.signInWithOAuth(...)`
 **File Schema**: N/A — not a file-exchange type
-**Source File**: lib/supabase/client.ts
+**Source File**: src/lib/supabase/client.ts
 **Source Symbol**: createClient
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory function bọc `createBrowserClient` từ `@supabase/ssr` — client SDK Supabase Auth phía trình duyệt, đọc `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (assertion `!` cố ý: thiếu biến môi trường phải fail loud). **Intent matched**: integration — external API/service client (Supabase Auth/DB SDK). **No-row reason**: stack Next.js App Router không có dòng nào trong bảng `bl-source-patterns.md`; analog gần nhất (NestJS "external SDK injection clients") là pattern Mode B theo decorator, không khớp cấu trúc factory function thuần này. **Observed pattern**: export `createClient()` bọc `createBrowserClient`, được gọi duy nhất tại `lib/auth/sign-in-with-google.ts:44`.
+`[SIGNAL_INFERRED]` Factory function bọc `createBrowserClient` từ `@supabase/ssr` — client SDK Supabase Auth phía trình duyệt, đọc `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (assertion `!` cố ý: thiếu biến môi trường phải fail loud). **Intent matched**: integration — external API/service client (Supabase Auth/DB SDK). **No-row reason**: stack Next.js App Router không có dòng nào trong bảng `bl-source-patterns.md`; analog gần nhất (NestJS "external SDK injection clients") là pattern Mode B theo decorator, không khớp cấu trúc factory function thuần này. **Observed pattern**: export `createClient()` bọc `createBrowserClient`, được gọi duy nhất tại `src/api/auth.ts:45`.
 
 ### Related Modules
 
-- lib/auth/sign-in-with-google.ts (`signInWithGoogle`)
-- hooks/use-login-actions.ts (`useLoginActions.handleLoginClick`, caller)
+- src/api/auth.ts (`signInWithGoogle`)
+- src/app/(public)/login/_hooks/use-login-actions.ts (`useLoginActions.handleLoginClick`, caller)
 
 ### Related Routes
 
@@ -103,19 +103,17 @@ _(none — instance chỉ dùng để gọi `signInWithOAuth`, không có dòng 
 **Type**: integration
 **Trigger**: Server Component / Server Action / Route Handler bất kỳ cần Supabase Auth phía server, mỗi request (Next 16 `cookies()` async nên factory cũng async)
 **File Schema**: N/A — not a file-exchange type
-**Source File**: lib/supabase/server.ts
+**Source File**: src/lib/supabase/server.ts
 **Source Symbol**: createClient
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory async bọc `createServerClient` từ `@supabase/ssr`, cookie-store-backed; `setAll` bọc try/catch vì cookie store của Server Component là read-only (session refresh thật sự nằm ở `proxy.ts`, không phải bug bị nuốt lỗi). **Intent matched**: integration — external API/service client (Supabase Auth SDK cho Server Components/Actions/Route Handlers). **No-row reason**: giống BL001 — Next.js App Router không có dòng trong bảng, analog NestJS không khớp cấu trúc factory thuần. **Observed pattern**: export `async createClient()` được gọi độc lập tại 8 nơi: `app/login/page.tsx:75` (guard fail-open), `app/todo/page.tsx:21` (guard fail-closed + đọc email), `app/page.tsx:11` (fallback redirect), `app/todo/actions.ts:15` (`logoutAction` gọi `signOut()`), `app/auth/callback/route.ts:32` (`exchangeCodeForSession`), cộng (F007/F008, 2026-09-07) `src/app/(public)/kudos/page.tsx:72` (đọc board + stats, `/kudos` KHÔNG có guard nào gọi trước), `src/app/(public)/kudos/_actions/toggle-kudo-heart.ts:44` (fail-closed — tự `getUser()` bên trong, ghi/xoá `kudo_hearts`), và `src/app/(public)/kudos/_actions/load-more-kudos.ts:53` (fail-open — đọc lại `getKudosBoard`, không ghi).
+`[SIGNAL_INFERRED]` Factory async bọc `createServerClient` từ `@supabase/ssr`, cookie-store-backed; `setAll` bọc try/catch vì cookie store của Server Component là read-only (session refresh thật sự nằm ở `proxy.ts`, không phải bug bị nuốt lỗi). **Intent matched**: integration — external API/service client (Supabase Auth SDK cho Server Components/Actions/Route Handlers). **No-row reason**: giống BL001 — Next.js App Router không có dòng trong bảng, analog NestJS không khớp cấu trúc factory thuần. **Observed pattern**: export `async createClient()` được gọi độc lập tại 6 nơi (đổi từ 8 — route-colocation refactor gộp 3 lời gọi trực tiếp cũ trong `page.tsx` thành 1 qua DAL): `src/dal/auth.ts:18` bên trong `getCurrentUser` — dùng chung bởi guard fail-open AUTHORITATIVE của `/login` (`src/app/(public)/login/page.tsx:34`), đọc email tại `/todo` (`src/app/(protected)/todo/page.tsx:22`), và guard fail-closed AUTHORITATIVE của `/todo`+`/profile` tại `src/app/(protected)/layout.tsx:22` (route gốc `/` không còn fallback-redirect nào — PERM001_RootRouteGuard SUPERSEDED, xem `permissions-matrix.md`); `src/app/_actions/logout.ts:17` (`logoutAction`, shared — gọi `signOut()`), `src/app/auth/callback/route.ts:33` (`exchangeCodeForSession`), cộng (F007/F008, 2026-09-07) `src/app/(public)/kudos/page.tsx:72` (đọc board + stats, `/kudos` KHÔNG có guard nào gọi trước), `src/app/(public)/kudos/_actions/toggle-kudo-heart.ts:44` (fail-closed — tự `getUser()` bên trong, ghi/xoá `kudo_hearts`), và `src/app/(public)/kudos/_actions/load-more-kudos.ts:53` (fail-open — đọc lại `getKudosBoard`, không ghi).
 
 ### Related Modules
 
-- app/login/page.tsx (guard `getAuthenticatedUser`)
-- app/todo/page.tsx (guard + đọc `user.email`)
-- app/page.tsx (fallback redirect)
-- app/todo/actions.ts (`logoutAction`)
+- src/dal/auth.ts (`getCurrentUser` — guard `/login`, đọc email `/todo`, guard `(protected)/layout.tsx`)
+- src/app/_actions/logout.ts (`logoutAction`, shared — dùng chung bởi todo/profile/home/awards/kudos)
 - src/app/(public)/kudos/page.tsx (đọc board + stats, F007_KudosLiveBoard, 2026-09-07)
 - src/app/(public)/kudos/_actions/toggle-kudo-heart.ts (`toggleKudoHeart`, fail-closed, F008_KudosHeartReaction)
 - src/app/(public)/kudos/_actions/load-more-kudos.ts (`loadMoreKudos`, fail-open, F007_KudosLiveBoard)
@@ -135,16 +133,16 @@ _(none — instance chỉ dùng để gọi `signInWithOAuth`, không có dòng 
 **Type**: integration
 **Trigger**: `proxy.ts` (lớp proxy/middleware Next 16), CHỈ khi request rơi vào nhánh `auth` của `planProxy` — tức 1 trong 6 route whitelist cũ (`/`, `/login`, `/todo/:path*`, `/awards`, `/standards`, `/profile`) VÀ không bị nhánh khoá prelaunch redirect trước (F011_CountdownPrelaunchPage, 2026-09-08). `config.matcher` bản thân nó (negative lookahead, khớp gần hết mọi route từ F011) không còn là điều kiện đủ — xem `docs/vi/generated/route-list.md § Middleware / Proxy Guard Layer`.
 **File Schema**: N/A — not a file-exchange type
-**Source File**: lib/supabase/proxy-client.ts
+**Source File**: src/lib/supabase/proxy-client.ts
 **Source Symbol**: createProxyClient
 
 ### Description
 
-`[SIGNAL_INFERRED]` Factory bọc `createServerClient`, ghi cookie đồng thời lên cả `request` (để phần còn lại của cùng pass thấy giá trị đã refresh) lẫn `response` (để browser thực sự nhận cookie session mới/xoay vòng) — pattern proxy chuẩn của `@supabase/ssr`. **Intent matched**: integration — external API/service client (Supabase Auth SDK cho tầng proxy). **No-row reason**: giống BL001/BL002 — không có dòng Next.js App Router trong bảng. **Observed pattern**: export `createProxyClient(request, response)`, gọi duy nhất tại `proxy.ts:141` bên trong `getUserOrNull()` — chỉ dùng để existence-check `user` quyết định redirect optimistic trước khi trang render. Nhánh khoá prelaunch (`planProxy`, chạy trước) không bao giờ gọi hàm này — quyết định khoá là thuần string-compare + tính ngày, zero I/O.
+`[SIGNAL_INFERRED]` Factory bọc `createServerClient`, ghi cookie đồng thời lên cả `request` (để phần còn lại của cùng pass thấy giá trị đã refresh) lẫn `response` (để browser thực sự nhận cookie session mới/xoay vòng) — pattern proxy chuẩn của `@supabase/ssr`. **Intent matched**: integration — external API/service client (Supabase Auth SDK cho tầng proxy). **No-row reason**: giống BL001/BL002 — không có dòng Next.js App Router trong bảng. **Observed pattern**: export `createProxyClient(request, response)`, gọi duy nhất tại `src/proxy.ts:132` bên trong `getUserOrNull()` — chỉ dùng để existence-check `user` quyết định redirect optimistic trước khi trang render. Nhánh khoá prelaunch (`planProxy`, chạy trước) không bao giờ gọi hàm này — quyết định khoá là thuần string-compare + tính ngày, zero I/O.
 
 ### Related Modules
 
-- proxy.ts (`getUserOrNull`)
+- src/proxy.ts (`getUserOrNull`)
 
 ### Related Routes
 
@@ -166,8 +164,8 @@ _(none — áp dụng theo path matcher của proxy, không phải 1 route cụ 
 ## Cross-Reference Validation
 
 - [x] All BL### codes are unique
-- [ ] All BL### codes are referenced in UserStories.md (type=system) — user-stories.md chưa tồn tại ở wave này
-- [ ] All BL### codes are referenced in FeatureList.md — feature-list.md chưa tồn tại ở wave này (Wave 5)
+- [x] All BL### codes are referenced in UserStories.md (type=system) — user-stories.md tồn tại; BL001-003 không nằm trong phạm vi US001-003 (US hiện tại chỉ phủ F001/F002), không phải thiếu sót
+- [x] All BL### codes are referenced in FeatureList.md — feature-list.md tồn tại (12 feature); F004-F012 không thêm BL### mới do logic RPC/trigger tương ứng chạy ở tầng Postgres (ngoài phạm vi BL### client-side của tài liệu này), xem feature-list.md dòng 354
 - [x] All related route references are valid (ROUTE001 tồn tại trong route-list.md)
 - [x] All related data model references are valid (MODEL002 tồn tại trong data-model.md)
 - [x] No orphaned behavior logic references
@@ -208,4 +206,14 @@ Document client-side patterns found in the codebase.
 
 **Extraction signature:** persistent connection to server — `new WebSocket(...)`, `new EventSource(...)`, `useWebSocket`, `subscribe(channel)`, SSE `listen` handler, reconnect logic
 
-`N/A — no realtime patterns detected.`
+Có — Supabase Realtime channel, F012_NotificationsPanel (2026-09-09). `subscribeToNotifications(userId, onInsert)`
+(`src/api/notifications.ts:154-176`) mở `supabase.channel(\`notifications:${userId}\`).on("postgres_changes", {event:"INSERT", schema:"public", table:"notifications", filter:\`user_id=eq.${userId}\`}, ...).subscribe()`,
+trả về hàm unsubscribe caller PHẢI gọi khi unmount (channel không tự đóng). `filter` chỉ giảm nhiễu —
+KHÔNG phải biên giới bảo mật; RLS (`notifications_select_own`, `0012_notifications.sql`) mới là thứ
+thật sự chặn đọc chéo user, kể cả qua Realtime. Bảng `notifications` được thêm vào publication
+`supabase_realtime` ở migration `0012` (`ALTER PUBLICATION supabase_realtime ADD TABLE`) — bảng ĐẦU
+TIÊN của repo nằm trong publication này.
+
+**Related Modules**:
+- src/api/notifications.ts (`subscribeToNotifications`)
+- src/app/_hooks/use-notifications-realtime.ts:42 (`useNotificationsRealtime` — consumer duy nhất, subscribe 1 lần/`userId` cho vòng đời cả `NotificationBell`, độc lập với `open`)

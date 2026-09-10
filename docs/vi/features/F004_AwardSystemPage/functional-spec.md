@@ -21,9 +21,10 @@ ID-14 không thoả được**, xem § 4 Requirements và `docs/vi/system/permis
 
 ## 1. Overview
 
-**Problem:** SAA 2025 hiện chỉ quảng bá 6 hạng mục giải thưởng bằng thẻ tóm tắt trên trang chủ
-(`/`, F003); không có trang riêng nào trình bày đầy đủ mô tả, số lượng và giá trị từng giải, và
-6 link `/awards#<slug>` trên trang chủ + footer hiện trỏ tới một route chưa tồn tại (404).
+**Problem:** Trước khi F004 landing, SAA 2025 chỉ quảng bá 6 hạng mục giải thưởng bằng thẻ tóm tắt
+trên trang chủ (`/`, F003); không có trang riêng nào trình bày đầy đủ mô tả, số lượng và giá trị
+từng giải, và 6 link `/awards#<slug>` trên trang chủ + footer khi đó trỏ tới một route chưa tồn
+tại (404).
 **Solution:** Một trang công khai `/awards` trình bày đầy đủ 6 hạng mục giải (Top Talent, Top
 Project, Top Project Leader, Best Manager, Signature 2025 - Creator, MVP) với nav danh mục bên
 trái (click-scroll + scroll-spy), và một khối quảng bá Sun* Kudos ở cuối trang.
@@ -112,8 +113,8 @@ nhận mỗi thẻ có tiêu đề + mô tả + số lượng + giá trị riên
   2025 hiển thị 2 dòng giá trị (cá nhân + tập thể). *(TC ID-6, ID-7)*
 - **FR-205** Khối Sun* Kudos hiển thị `<h2>Sun* Kudos</h2>`, nhãn "Phong trào ghi nhận", mô tả,
   và link "Chi tiết" `href="/kudos"` — tái dùng nguyên `KudosSection` đã có ở F003 (cùng
-  component instance Figma). *(TC ID-8; TC ID-12/ID-14 không thoả — `/kudos` chưa tồn tại,
-  xem § 11 Risks)*
+  component instance Figma). *(TC ID-8; TC ID-12/ID-14 đánh dấu "chưa thoả" theo giả
+  định `/kudos` chưa tồn tại — route nay đã live (F007_KudosLiveBoard), cần rerun; xem § 11 Risks)*
 - **FR-206** Trang không phát sinh lỗi JavaScript nào khi tải và khi tương tác nav.
   *(TC ID-13)*
 
@@ -134,15 +135,14 @@ nhận mỗi thẻ có tiêu đề + mô tả + số lượng + giá trị riên
 
 | Screen Name | SCR### | What User Sees | What User Can Do |
 |-------------|--------|-----------------|-------------------|
-| Hệ thống giải thưởng SAA 2025 | SCR004_Awards | Header, h1+caption, nav trái 6 mục, 6 section giải (ảnh+mô tả+số lượng+giá trị), khối Sun* Kudos, footer | Điều hướng nội-trang qua nav trái (click hoặc cuộn tay); mở link Kudos (dẫn tới `/kudos`, hiện 404) |
+| Hệ thống giải thưởng SAA 2025 | SCR004_Awards | Header, h1+caption, nav trái 6 mục, 6 section giải (ảnh+mô tả+số lượng+giá trị), khối Sun* Kudos, footer | Điều hướng nội-trang qua nav trái (click hoặc cuộn tay); mở link Kudos (dẫn tới `/kudos`) |
 
 ### User Journey
 
 1. Khách vào `/awards` (trực tiếp, từ CTA "ABOUT AWARDS" ở `/`, hoặc từ thẻ giải trên `/`),
    thấy ngay h1 + nav trái + section đầu tiên, không cần đăng nhập.
 2. Khách click 1 mục nav hoặc tự cuộn — trang cuộn tới đúng section, nav cập nhật active theo.
-3. Khách cuộn tới cuối trang, thấy khối Sun* Kudos, click "Chi tiết" (dẫn `/kudos`, hiện 404 cho
-   tới khi trang đó được xây ở phiên khác).
+3. Khách cuộn tới cuối trang, thấy khối Sun* Kudos, click "Chi tiết" (dẫn `/kudos`).
 
 ## 7. User Stories
 
@@ -211,7 +211,7 @@ nav-shell/footer vẫn hiện, vùng nội dung hiện empty-state, không có l
 |----------|--------------|----------------------|
 | Supabase lỗi hoặc bảng `awards` rỗng cho locale hiện tại | DAL fail-open trả `[]`; trang render `AwardsEmptyState` trong khung, không 6 section giả | "Hiện chưa có thông tin giải thưởng." (`messages/*.json` `awards.empty`) |
 | `prefers-reduced-motion: reduce` | Cuộn tức thời thay vì mượt khi click nav | "None — silent handling" |
-| Click "Chi tiết" ở khối Kudos | Điều hướng `/kudos` — route chưa tồn tại | "Not found" (trang lỗi mặc định của Next.js, TC ID-12/ID-14 ghi nợ) |
+| Click "Chi tiết" ở khối Kudos | Điều hướng `/kudos` — route đã tồn tại (F007_KudosLiveBoard) | Mở `/kudos` bình thường; TC ID-12/ID-14 cần QA xác nhận lại trên route thật thay vì giả định 404 |
 
 ## 10. Edge Behaviours to Verify
 
@@ -225,7 +225,7 @@ nav-shell/footer vẫn hiện, vùng nội dung hiện empty-state, không có l
 
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
-| RISK-01 | risk | `/kudos` chưa được implement | Nút "Chi tiết" của khối Kudos 404 cho tới khi trang đó được xây; TC ID-12/ID-14 chưa thoả cho tới lúc đó | confirmed |
+| RISK-01 | risk | `/kudos` (F007_KudosLiveBoard) đã implement từ phiên khác — nút "Chi tiết" của khối Kudos không còn 404 | TC ID-12/ID-14 được đánh dấu "chưa thoả" dựa trên giả định route chưa tồn tại; cần QA chạy lại trên `/kudos` thật để xác nhận | resolved (route), TC cần rerun |
 | RISK-02 | risk | Bảng `public.awards` chỉ seed `locale='vi'` — chưa có bản `en` | Khách chọn ngôn ngữ EN vẫn thấy nội dung 6 giải bằng tiếng Việt (chrome tĩnh vẫn dịch đúng qua next-intl) | confirmed |
 | RISK-03 | risk | MoMorph TC ID-1 (kỳ vọng redirect `/login` khi chưa đăng nhập) bị supersede bởi quyết định kiến trúc "SAA event/award marketing content is public" (`permissions.md`, 2026-09-06) | Cần spec owner xác nhận lại chính thức TC ID-1 đã supersede, chưa chỉ là quyết định kỹ thuật đơn phương | pending sign-off |
 
@@ -235,7 +235,7 @@ nav-shell/footer vẫn hiện, vùng nội dung hiện empty-state, không có l
 |------------|------|-----------------------------|----------|
 | F003_Homepage | feature | Tái dùng `KudosSection`, `SiteHeader`/`SiteFooter`, asset ring `Award_BG.png` + PNG tên giải, và pattern DAL/fail-open | `docs/vi/features/F003_Homepage/technical-spec.md` |
 | Supabase `saa-app`, bảng mới `public.awards` | external-service | Nguồn sự thật nội dung 6 giải, đọc server-side | technical-spec.md § 4.3 |
-| `/kudos` (chưa implement) | feature | Đích của nút "Chi tiết" khối Kudos | RISK-01 |
+| `/kudos` (F007_KudosLiveBoard, đã implement) | feature | Đích của nút "Chi tiết" khối Kudos | RISK-01 |
 
 ## 13. Configuration
 

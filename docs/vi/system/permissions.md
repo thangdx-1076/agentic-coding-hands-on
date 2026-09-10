@@ -15,7 +15,7 @@ không còn là forward-draft. Mọi dòng gốc phía trên giữ nguyên 100%.
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-07 (cập nhật sau khi F006_ProfilePage `/profile` lên code thật — xem `plans/260907-1224-profile-page/clarifications.md`; đồng thời vá khoảng lệch có trước F006: `/standards` đã lên code PUBLIC từ F005_StandardsRulesPage nhưng file này chưa từng phản ánh điều đó)
-**Analysis Scope**: `/`, `/awards`, `/standards` (cả ba PUBLIC, không route-guard), `/login`, `/todo`, `/profile` (route-guard, nhóm `(protected)`, mới từ F006_ProfilePage), `/auth/callback` — toàn bộ authorization surface của app. 2 route Homepage liên kết còn lại (`/kudos`, `/admin`) CHƯA tồn tại, ngoài phạm vi phân tích quyền vì chưa có code.
+**Analysis Scope**: `/`, `/awards`, `/standards`, `/kudos` (cả bốn PUBLIC, không route-guard), `/login`, `/todo`, `/profile` (route-guard, nhóm `(protected)`, mới từ F006_ProfilePage), `/auth/callback` — toàn bộ authorization surface của app. Route Homepage liên kết còn lại (`/admin`) CHƯA tồn tại, ngoài phạm vi phân tích quyền vì chưa có code (menu "Trang quản trị" vẫn render `href="/admin"` cho `role="admin"` — dead link 404, xem `src/app/_components/account-menu.tsx:90-100`).
 
 > **Curated, plain-language view.** This document is for PM, BA, and client audiences who
 > need to understand access without reading raw codes. The raw PERM### matrix lives at
@@ -48,7 +48,7 @@ Vẫn chọn `other`, nhưng lý do đã thay đổi một phần kể từ F003
 - **Người dùng chưa đăng nhập (anonymous)** giờ xem được `/` — trang chủ SAA 2025 công khai, không còn bị chuyển hướng (khác trước: `/` từng redirect thẳng sang `/login`). Header hiển thị nút "Đăng nhập" (link `/login`) ở góc phải thay vì bell/menu tài khoản. `/todo` vẫn bị chặn như cũ — mọi cố gắng vào `/todo` vẫn chuyển hướng ngay về `/login`.
 - **Người dùng chưa đăng nhập (anonymous)** cũng xem được `/awards` (F004_AwardSystemPage) — trang chi tiết 6 hạng mục giải thưởng mà `/` chỉ tóm tắt qua thẻ. Cùng một PUBLIC-by-design như `/`, không redirect nào, không phân biệt vai trò.
 - **Người dùng đã đăng nhập bằng Google, vai trò `member`** xem được `/` và `/todo` như nhau; menu tài khoản trên `/` có "Hồ sơ", "Đăng xuất" — KHÔNG có "Trang quản trị".
-- **Người dùng đã đăng nhập, vai trò `admin`** có thêm mục "Trang quản trị" (`/admin`) trong menu tài khoản — mục này hiện dẫn tới một route CHƯA implement (404 cho tới khi được xây), không phải một lỗi phân quyền.
+- **Người dùng đã đăng nhập, vai trò `admin`** có thêm mục "Trang quản trị" (`/admin`) trong menu tài khoản — mục này hiện dẫn tới một route CHƯA implement (404 cho tới khi được xây), không phải một lỗi phân quyền. **Dead link đã xác nhận trong code:** `src/app/_components/account-menu.tsx:90-100` render `href="/admin"` vô điều kiện khi `isAdmin` — không có kiểm tra route tồn tại; `/admin` không có trong `src/app/**` và `ROUTES` (`src/constants/routes.ts`) không có entry `ADMIN`, nên bấm mục này 404 thật cho mọi admin cho tới khi route được xây.
 - **Người đã đăng nhập** không thể quay lại xem `/login` — tự động chuyển hướng, nhưng đích đã đổi: sang `/` (trước đây là `/todo`). Ngược lại, người đã đăng nhập VẪN xem được `/` bình thường — khác hành vi cũ (trước đây `/` cũng redirect người đã đăng nhập, sang `/todo`).
 - **Không ai** — dù đã đăng nhập hay chưa, dù vai trò gì — có thể xem hoặc chỉnh sửa quyền/thông tin của một tài khoản khác qua `public.users` trực tiếp. RLS own-row trên `public.users` đảm bảo mỗi người chỉ đọc được đúng hàng của chính mình qua bảng đó; không có API nào trong app trả `email`/`role` của người khác.
 - **Người dùng đã đăng nhập** (bất kỳ vai trò nào) xem được `/profile` — hồ sơ của chính mình
@@ -124,7 +124,7 @@ chế mới.
 - **Bất đối xứng fail-open/fail-closed giữa `/login` và `/todo`** — không đổi so với trước: `/login` fail mở (Supabase lỗi vẫn hiện form, coi như chưa đăng nhập), `/todo` fail đóng (Supabase lỗi thì không có đường nào lộ nội dung bảo vệ).
 - **Chống mở-redirect (`safeNextPath`) ở `/auth/callback`** — cơ chế không đổi (same-origin, root-relative-only; chặn `//`, `/\`, `://`, control/line-separator char thô hoặc percent-encoded); chỉ đổi GIÁ TRỊ mặc định khi `?next=` thiếu hoặc không hợp lệ: từ `/todo` sang `/` (khớp đích đăng nhập mặc định mới).
 - **Nhãn vai trò (`role`) đọc fail-open về `member`** (`src/dal/users.ts`, hàm `getUserRole`) — nếu PostgREST lỗi, timeout, hoặc không có row cho user, hệ thống coi như `member` thay vì chặn trang hoặc hiện lỗi. Rationale: đây là một NHÃN hiển thị (ẩn/hiện một mục menu), không phải một cổng bảo vệ tài nguyên — chặn cả trang chủ chỉ vì không đọc được `role` sẽ tệ hơn nhiều so với việc một admin thấy tạm thời thiếu mục "Trang quản trị" trong một request lỗi thoáng qua. Cùng triết lý với `/login` fail-open ở trên: ưu tiên không khoá người dùng ngoài ý muốn hơn là phòng thủ tuyệt đối cho một chi tiết hiển thị.
-- **2 route đích được Homepage liên kết chưa tồn tại**: `/kudos`, `/admin` — tất cả trả 404 cho tới khi từng screen được implement (mỗi cái là một MoMorph screen riêng, việc của các phiên sau; `/awards` đã ra khỏi danh sách này kể từ F004_AwardSystemPage, `/standards` kể từ F005_StandardsRulesPage, `/profile` kể từ F006_ProfilePage — 3 route này nay đều có code thật). Đây KHÔNG phải khoảng trống phân quyền — không có route nghĩa là không có gì để phân quyền; ghi nợ tại `clarifications.md § Unresolved` (TC ID-59). Nút "Chi tiết" của khối Kudos trên `/`, `/awards`, `/standards`, `/profile` cùng trỏ `/kudos`, cùng 404 tạm thời — không phải khoảng trống phân quyền mới. Khi `/admin` được xây, cần quyết định RIÊNG có nên thêm route-guard theo `role` hay không (hiện KHÔNG có — mục menu chỉ ẩn/hiện, chưa gác route) — ngoài phạm vi phiên làm việc này.
+- **1 route đích được Homepage liên kết chưa tồn tại**: `/admin` — trả 404 cho tới khi được implement (`/awards` đã ra khỏi danh sách này kể từ F004_AwardSystemPage, `/standards` kể từ F005_StandardsRulesPage, `/profile` kể từ F006_ProfilePage, `/kudos` kể từ F007_KudosLiveBoard — 4 route này nay đều có code thật). Đây KHÔNG phải khoảng trống phân quyền — không có route nghĩa là không có gì để phân quyền; ghi nợ tại `clarifications.md § Unresolved` (TC ID-59). Nút "Chi tiết" của khối Kudos trên `/`, `/awards`, `/standards`, `/profile` cùng trỏ `/kudos` — route này nay đã live (F007_KudosLiveBoard), không còn 404. Khi `/admin` được xây, cần quyết định RIÊNG có nên thêm route-guard theo `role` hay không (hiện KHÔNG có — mục menu chỉ ẩn/hiện, chưa gác route) — ngoài phạm vi phiên làm việc này.
 - **Fail-open cho việc đọc hồ sơ, không phải cho quyền truy cập (F006):** `getProfileCard`
   (`src/dal/profile-cards.ts`) fail-open trả `null` khi Supabase lỗi HOẶC khi không có hàng khớp
   `id` — cả 2 nguyên nhân dẫn tới CÙNG một hành vi quan sát được (`notFound()`, trang "Not
@@ -151,9 +151,8 @@ chế mới.
 
 ### `/kudos` là route CÔNG KHAI
 
-`/kudos` rời khỏi danh sách "route đích chưa tồn tại" ở mục trên (`/admin` vẫn ở lại). Nó vào
-cùng nhóm với `/`, `/awards`, `/standards`: **không route-guard**, người chưa đăng nhập đọc được
-toàn bộ nội dung.
+`/kudos` đã được gộp vào Analysis Scope ở đầu file cùng nhóm `/`, `/awards`, `/standards`:
+**không route-guard**, người chưa đăng nhập đọc được toàn bộ nội dung.
 
 Căn cứ không phải suy đoán mà là chính test case của màn: precondition của TC
 `Check access condition / Authentication required` ghi nguyên văn *"User is unauthenticated but

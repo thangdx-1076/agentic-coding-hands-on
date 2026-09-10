@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-05
-**Analysis Scope**: route-view (Next.js 16 App Router) — 2 screens (`/login`, `/todo`), 3 interaction points thực có trong code
+**Analysis Scope**: route-view (Next.js 16 App Router) — US001-US003 phủ đúng 2 trong 9 screen hiện có (`/login`, `/todo`), 3 interaction points thực có trong code; F003-F012 chưa có US### chính thức (TBD, xem `feature-list.md`)
 
 **Code Format**: All US codes MUST follow `US###_NameSlug` format (e.g., US001_Login, US002_ViewDashboard)
 
@@ -12,15 +12,15 @@
 
 **Note**: Feature mapping is managed in FeatureList.md only. This document contains user stories without direct feature references. UI US require Screen mapping; system/bg-job US do not.
 
-**Honest scope note**: App demo 2 màn hình — chưa có tính năng todo thật (`/todo` là placeholder). Cả 3 US dưới đây khớp đúng 3 interaction point thực có trong code (không có bg-job/hook/observer nào lộ ra ngoài cho người dùng thao tác trực tiếp — 3 BL### trong `behavior-logic.md` đều là integration client factory được gọi TỪ BÊN TRONG các US này, không phải điểm vào riêng). Redirect tự động của guard (`proxy.ts`, `getUser()`/`getAuthenticatedUser()`) KHÔNG được tách thành US riêng — đây là "passive routing", bị loại tường minh khỏi vocabulary "Navigation actions" của IPE Step 1; hành vi này đã có trong `permissions-matrix.md` (PERM001-004) và `screen-flow.md` (Guard Logic).
+**Honest scope note**: App demo 2 màn hình — chưa có tính năng todo thật (`/todo` là placeholder). Cả 3 US dưới đây khớp đúng 3 interaction point thực có trong code (không có bg-job/hook/observer nào lộ ra ngoài cho người dùng thao tác trực tiếp — 3 BL### trong `behavior-logic.md` đều là integration client factory được gọi TỪ BÊN TRONG các US này, không phải điểm vào riêng). Redirect tự động của guard (`proxy.ts`, `getUser()`/`getCurrentUser()`) KHÔNG được tách thành US riêng — đây là "passive routing", bị loại tường minh khỏi vocabulary "Navigation actions" của IPE Step 1; hành vi này đã có trong `permissions-matrix.md` (PERM001-004) và `screen-flow.md` (Guard Logic).
 
 ## Interaction Inventory
 
 | Screen | Element | Type | Action | Endpoint |
 |--------|---------|------|--------|---------|
-| SCR001_LoginScreen | LanguageSelector dropdown | secondary-action | Chọn vi/en, gọi Server Action ghi cookie `NEXT_LOCALE` | Server Action `setLocale(locale)` — `app/actions/locale.ts` |
+| SCR001_LoginScreen | LanguageSelector dropdown | secondary-action | Chọn vi/en, gọi Server Action ghi cookie `NEXT_LOCALE` | Server Action `setLocale(locale)` — `src/app/_actions/set-locale.ts` |
 | SCR001_LoginScreen | GoogleLoginButton | primary-action | Khởi tạo Supabase OAuth, điều hướng Google consent rồi PKCE callback | `signInWithOAuth` (client) → GET `/auth/callback` (ROUTE001) |
-| SCR002_TodoScreen | Logout form/button | primary-action | Submit Server Action, `signOut()` best-effort rồi luôn redirect `/login` | Server Action `logoutAction()` — `app/todo/actions.ts` |
+| SCR002_TodoScreen | Logout form/button | primary-action | Submit Server Action, `signOut()` best-effort rồi luôn redirect `/login` | Server Action `logoutAction()` — `src/app/_actions/logout.ts` (shared, dùng chung 5+ trang) |
 
 ## User Story Index
 
@@ -51,7 +51,7 @@ Là khách truy cập màn hình đăng nhập (Anonymous), tôi muốn chuyển
 
 ### Technical Notes
 
-- **Endpoint**: Server Action `setLocale(locale)` — `app/actions/locale.ts`
+- **Endpoint**: Server Action `setLocale(locale)` — `src/app/_actions/set-locale.ts`
 - **Data Required**: MODEL001_AppLocale
 - **Dependencies**: `proxy.ts` (cookie normalize), next-intl
 
@@ -134,7 +134,7 @@ Là người dùng đã đăng nhập (Authenticated) trên màn hình Todo, tô
 
 ### Technical Notes
 
-- **Endpoint**: Server Action `logoutAction()` — `app/todo/actions.ts`
+- **Endpoint**: Server Action `logoutAction()` — `src/app/_actions/logout.ts` (shared, không riêng `/todo`)
 - **Data Required**: — (best-effort `signOut()`, không đọc lại data sau đó)
 - **Dependencies**: BL002_SupabaseServerClient, PERM003_TodoRouteGuard
 
@@ -177,6 +177,6 @@ Là người dùng đã đăng nhập (Authenticated) trên màn hình Todo, tô
 - [x] All US### codes are unique (US001-US003, contiguous)
 - [x] All acceptance criteria are testable
 - [x] All technical notes are complete
-- [ ] All US### codes are referenced in FeatureList.md — feature-list.md chưa tồn tại ở wave này (Wave 5, chạy sau)
+- [x] All US### codes are referenced in FeatureList.md — feature-list.md tồn tại, tham chiếu đủ US001 (F002), US002 (F001), US003 (F001) ở Summary line 351
 - [x] All `ui` US### mapped to SCR### (parent SCR tồn tại trong screen-list.md; app không có REG###)
 - [x] All system US### have at least one BL### mapped — N/A, không có US type=system trong tài liệu này

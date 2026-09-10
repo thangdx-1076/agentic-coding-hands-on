@@ -1,0 +1,41 @@
+{
+  "repository_url": "https://github.com/thangdx-1076/agentic-coding-hands-on",
+  "repository_name": "agentic-coding-hands-on",
+  "project_path": null,
+  "branch": "docs/sync-readme-and-spec-layer",
+  "commit_hash": "3a6504c7131e89c1f4967481822b01afeeea28cc",
+  "commit_message": "Merge pull request #25 from thangdx-1076/fix/kudos-hero-profile-search\n\nfix(kudos): ô \"Tìm kiếm profile Sunner\" ở KV band thành search thật, mở được profile Sunner khác",
+  "author_email": "75593781+thangdx-1076@users.noreply.github.com",
+  "author_name": "Dang Xuan Thang",
+  "pr_number": 25,
+  "score": 100,
+  "total_violations": 0,
+  "error_count": 0,
+  "warning_count": 0,
+  "info_count": 0,
+  "lines_of_code": 30,
+  "files_analyzed": 1,
+  "sunlint_version": "1.3.56",
+  "analysis_duration_ms": 2513,
+  "scoring_mode": "pr",
+  "violations": [],
+  "metadata": {
+    "generated_at": "2026-09-10T12:17:44.640Z",
+    "tool": "SunLint",
+    "version": "1.3.56",
+    "analysis_duration_ms": 2513,
+    "scoring_mode": "pr"
+  },
+  "quality": {
+    "score": 100,
+    "grade": "A+",
+    "metrics": {
+      "errors": 0,
+      "warnings": 0,
+      "infos": 0,
+      "rulesChecked": 66,
+      "linesOfCode": 30,
+      "violationsPerKLOC": 0
+    }
+  }
+}

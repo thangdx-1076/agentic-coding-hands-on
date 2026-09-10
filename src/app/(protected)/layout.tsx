@@ -5,7 +5,7 @@ import { ROUTES } from "@/constants/routes";
 
 /**
  * Single authoritative session gate for every route under `(protected)`
- * (currently `/todo` only). Runs a REAL GoTrue session read via
+ * (`/todo` and `/profile`). Runs a REAL GoTrue session read via
  * `src/dal/auth.ts`'s `getCurrentUser()` — never a cookie read — and
  * redirects to `/login` when no user is present, before any child page
  * renders. `src/proxy.ts`'s matcher stays an optimistic pre-check only;

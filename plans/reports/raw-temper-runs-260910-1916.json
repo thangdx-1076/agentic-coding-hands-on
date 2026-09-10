@@ -1,0 +1,17 @@
+[
+  {
+    "command": "pnpm test:unit",
+    "exitCode": 0,
+    "summary": "83 test files, 808 tests all passed, no failures or skipped"
+  },
+  {
+    "command": "pnpm lint --max-warnings 0",
+    "exitCode": 0,
+    "summary": "ESLint check passed with no warnings or errors"
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "summary": "Prettier format check passed, all files properly formatted"
+  }
+]
