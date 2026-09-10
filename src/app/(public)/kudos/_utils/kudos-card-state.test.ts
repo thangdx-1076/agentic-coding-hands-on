@@ -10,7 +10,10 @@ import type { KudosCard as KudosCardModel } from "@/dal/kudos";
 
 const VIEWER_ID = "viewer-1";
 
-function makeCard(senderId: string): KudosCardModel {
+function makeCard(
+  senderId: string | null,
+  { isOwn = false }: { isOwn?: boolean | null } = {},
+): KudosCardModel {
   const person = {
     id: senderId,
     fullName: "Sender",
@@ -27,6 +30,7 @@ function makeCard(senderId: string): KudosCardModel {
     createdAt: "2026-09-07T00:00:00Z",
     sender: person,
     receiver: { ...person, id: "receiver-1" },
+    isOwn,
   };
 }
 
@@ -38,6 +42,7 @@ function makeContext(
     heartedIds: new Set<string>(),
     overrides: {},
     signInTitle: "Đăng nhập để thả tim",
+    pendingIds: new Set<string>(),
     ...overrides,
   };
 }
@@ -55,11 +60,44 @@ describe("deriveKudosCardState", () => {
   });
 
   it("kudo do chính mình gửi → khoá tim, KHÔNG có title (C26)", () => {
-    const state = deriveKudosCardState(makeCard(VIEWER_ID), makeContext());
+    const state = deriveKudosCardState(
+      makeCard(VIEWER_ID, { isOwn: true }),
+      makeContext(),
+    );
 
     expect(state.isOwnKudo).toBe(true);
     expect(state.heartDisabled).toBe(true);
     expect(state.heartTitle).toBeUndefined();
+  });
+
+  it("kudo ẩn danh do CHÍNH MÌNH gửi (sender.id null, is_own server trả true) → khoá tim (BR-005, C31)", () => {
+    const state = deriveKudosCardState(
+      makeCard(null, { isOwn: true }),
+      makeContext(),
+    );
+
+    expect(state.isOwnKudo).toBe(true);
+    expect(state.heartDisabled).toBe(true);
+    expect(state.heartTitle).toBeUndefined();
+  });
+
+  it("kudo ẩn danh của NGƯỜI KHÁC (sender.id null, is_own false) → tim vẫn mở", () => {
+    const state = deriveKudosCardState(
+      makeCard(null, { isOwn: false }),
+      makeContext(),
+    );
+
+    expect(state.isOwnKudo).toBe(false);
+    expect(state.heartDisabled).toBe(false);
+  });
+
+  it("is_own NULL (viewer ẩn danh) → không tự nhận là chủ kudo", () => {
+    const state = deriveKudosCardState(
+      makeCard("someone-else", { isOwn: null }),
+      makeContext({ viewerId: null }),
+    );
+
+    expect(state.isOwnKudo).toBe(false);
   });
 
   it("kudo của người khác, đã đăng nhập → tim mở, không title", () => {
@@ -68,6 +106,16 @@ describe("deriveKudosCardState", () => {
     expect(state.heartDisabled).toBe(false);
     expect(state.heartTitle).toBeUndefined();
     expect(state.isOwnKudo).toBe(false);
+  });
+
+  it("toggle đang chờ (pendingIds có id) → khoá tim dù đã đăng nhập, không phải chủ (BR-004)", () => {
+    const card = makeCard("someone-else");
+    const state = deriveKudosCardState(
+      card,
+      makeContext({ pendingIds: new Set([card.id]) }),
+    );
+
+    expect(state.heartDisabled).toBe(true);
   });
 
   it("id nằm trong heartedIds (server xác thực) → hearted true, count giữ nguyên", () => {

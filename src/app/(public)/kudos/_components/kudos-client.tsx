@@ -58,8 +58,7 @@ export type KudosClientProps = {
  * (owned here as a plain array) — feed cards live inside `KudosFeed`'s own
  * `useInfiniteFeed` state (phase 06/11), whose `getCardState` can override
  * `hearted`/`heartDisabled` but not `heartCount`, so a feed toggle updates
- * the icon now and the count on the next page load.
- */
+ * the icon now, the count on the next page load. */
 export function KudosClient({
   copy,
   viewer,
@@ -77,7 +76,7 @@ export function KudosClient({
 }: KudosClientProps) {
   const { handleSelectLocale } = useSelectLocale();
   const { toastMessage, showToast } = useKudosToast();
-  const { heartOverrides, toggleHeart } = useKudosHearts(
+  const { heartOverrides, pendingIds, toggleHeart } = useKudosHearts(
     viewerId,
     toggleKudoHeartAction,
   );
@@ -101,6 +100,7 @@ export function KudosClient({
       heartedIds: heartedSet,
       overrides: heartOverrides,
       signInTitle: copy.card.signInToHeart,
+      pendingIds,
     });
   }
 

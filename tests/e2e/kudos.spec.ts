@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 import {
   createTestSession,
@@ -28,6 +28,56 @@ function loadEnv() {
   }
 }
 loadEnv();
+
+/**
+ * Drives the "Viết Kudo" compose dialog (F009) end-to-end from `/kudos`:
+ * search a real seeded recipient ("Test" always matches the seeded "Visual
+ * Tester" Sunner, same query `kudos-compose.spec.ts`'s C23/C24 already
+ * rely on), fill title/content, optionally tick anonymous with a display
+ * name, submit, and wait for the dialog to close. Used by C26/C34 (both
+ * need a REAL kudo the signed-in test user sent, not a seed fixture) — not
+ * exported, since only this file's `@auth` describe block calls it.
+ */
+async function sendKudo(
+  page: Page,
+  options: { content: string; anonymousName?: string },
+): Promise<void> {
+  await page.goto("/kudos");
+  await page.locator("[data-testid=kudos-compose-pill]").click();
+
+  const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+
+  const recipientInput = dialog.locator("[data-testid=kudos-recipient-input]");
+  await recipientInput.fill("Test");
+  const recipientOptions = dialog.locator(
+    "[data-testid=kudos-recipient-option]",
+  );
+  await expect(recipientOptions.first()).toBeVisible();
+  await recipientOptions.first().click();
+
+  await dialog.locator("[data-testid=kudos-title-input]").fill("E2E");
+  await dialog
+    .locator("[data-testid=kudos-content-textarea]")
+    .fill(options.content);
+
+  // `hashtags` is one of the 5 required fields (REQUIRED_DRAFT_FIELDS) —
+  // Submit stays `aria-disabled` without at least one, same as C23/C24.
+  await dialog.locator("[data-testid=kudos-hashtag-add]").click();
+  const picker = dialog.locator("[data-testid=kudos-hashtag-picker]");
+  const hashtagInput = picker.locator("input").first();
+  await hashtagInput.fill("TeamWork");
+  await hashtagInput.press("Enter");
+
+  if (options.anonymousName) {
+    await dialog.locator("[data-testid=kudos-anonymous-checkbox]").click();
+    await dialog
+      .locator("[data-testid=kudos-anonymous-name-input]")
+      .fill(options.anonymousName);
+  }
+
+  await dialog.locator("[data-testid=kudos-compose-submit]").click();
+  await expect(dialog).not.toHaveAttribute("open", "");
+}
 
 /**
  * DOM Contract — Kudos Live Board Page (`/kudos`)
@@ -70,6 +120,7 @@ loadEnv();
  * | C31 | *(CI-safe)* | Ẩn danh gõ vào ô hero → `[data-testid=kudos-hero-search-options]` hiện gợi ý đăng nhập, **không** phải "không tìm thấy" | — | FR-402, SEC_004 |
  * | C32 | `@auth` | Đã đăng nhập: gõ tên Sunner → `[data-testid=kudos-hero-search-option]` hiện, bấm 1 kết quả → URL tới `/profile?id=<uuid>` | TC[00], TC[35] | FR-402, US008 |
  * | C33 | `@local-db` | Seed 1 dòng `secret_box_openings` cho Sunner có sẵn → board thứ 2 (gift) chứa tên Sunner đó và **không** hiện `Chưa có dữ liệu` | US010, TC `6b1e2359`, `0952e2f0` | FR-219, BR-020 |
+ * | C34 | `@local-db` | Kudo ẩn danh do CHÍNH MÌNH gửi (qua dialog Viết Kudo) → nút tim của thẻ đó `disabled` dù `sender_id` bị mask NULL (BR-005, `is_own`) | — | F008 FR-205, BR-005 |
  * ========================================================
  *
  * OUT OF SCOPE (deferred to frame Figma chưa tồn tại, clarifications § § Out-of-Scope):
@@ -795,30 +846,58 @@ test.describe(
         .toBe(initialCount);
     });
 
-    test.fixme(
+    test(
       "[C26] Own kudo: heart button disabled",
       { tag: "@local-db" },
       async ({ page }) => {
         // C26: Kudo do chính mình gửi → nút tim `disabled`
-        // FIXME: Unsatisfiable in this release — Compose Kudo dialog not implemented.
-        // RLS rule proven at DB level (evidence/rls-verification.md): SET ROLE authenticated
-        // + auth.uid() = sender → "new row violates row-level security policy".
-        // This e2e test cannot run without a way to create a kudo as the test user.
-        // Marked fixme() not skip() — the rule is real and working, just not testable yet.
-        await page.goto("/kudos");
+        // Compose Kudo dialog now ships (F009) — send a non-anonymous kudo
+        // to a seeded Sunner first, so a real "self" card exists on the
+        // board (`kudos-card.tsx`'s `data-sender-id="self"`, driven by
+        // `isOwnKudo`, which this repo's compose flow already renders
+        // correctly for a non-anonymous kudo today). RLS itself is proven
+        // at the DB level (evidence/rls-verification.md): SET ROLE
+        // authenticated + auth.uid() = sender → "new row violates row-level
+        // security policy" — this e2e test exercises the UI mirror of that
+        // rule, not the rule itself.
+        await sendKudo(page, { content: `C26 self kudo ${Date.now()}` });
 
-        // Find a kudo sent by self
         const ownKudos = page.locator(
-          '[data-testid=kudos-card][data-sender-id="self"]',
+          '[data-testid=kudos-feed] [data-testid=kudos-card][data-sender-id="self"]',
         );
-        const count = await ownKudos.count();
-
-        // At least one own kudo should exist (will work once Compose dialog is built)
-        expect(count).toBeGreaterThan(0);
+        await expect(ownKudos.first()).toBeVisible();
 
         const heart = ownKudos
           .first()
           .locator("[data-testid=kudos-card-heart]");
+        await expect(heart).toBeDisabled();
+      },
+    );
+
+    test(
+      "[C34] Anonymous kudo from self: heart button disabled (BR-005)",
+      { tag: "@local-db" },
+      async ({ page }) => {
+        // C34: `sender_id` is masked NULL for an anonymous kudo (0009), so
+        // the OLD `card.sender.id === viewerId` comparison could never see
+        // "this is mine" — the button rendered enabled, then Postgres's own
+        // `kudo_hearts_insert_own` policy (0007) rejected the write. `0016`
+        // adds a server-computed `is_own` boolean to `kudos_cards` so the UI
+        // can disable the button honestly, even when the sender is hidden
+        // from everyone else.
+        const uniqueContent = `C34 anon self kudo ${Date.now()}`;
+        await sendKudo(page, {
+          content: uniqueContent,
+          anonymousName: "Một Sunner ẩn danh",
+        });
+
+        const feedCards = page.locator(
+          "[data-testid=kudos-feed] [data-testid=kudos-card]",
+        );
+        const newCard = feedCards.filter({ hasText: uniqueContent }).first();
+        await expect(newCard).toBeVisible();
+
+        const heart = newCard.locator("[data-testid=kudos-card-heart]");
         await expect(heart).toBeDisabled();
       },
     );

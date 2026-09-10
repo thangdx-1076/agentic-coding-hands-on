@@ -16,28 +16,42 @@ export type KudosCardState = {
 };
 
 /** Everything outside the card itself that decides its heart state — one
- * value per render of `KudosClient`, shared by every card it resolves. */
+ * value per render of `KudosClient`, shared by every card it resolves.
+ * `pendingIds` is UI-only client state (BR-004) — never a second lock,
+ * `UNIQUE(kudo_id, user_id)` (migration `0007`) stays the real one. */
 export type KudosHeartContext = {
   viewerId: string | null;
   heartedIds: Set<string>;
   overrides: Record<string, HeartOverride>;
   signInTitle: string;
+  pendingIds: Set<string>;
 };
 
 /** Server-verified `viewerId`/`heartedIds` (F008 FR-602/BR-002) plus any
  * local toggle override, resolved onto one card — anonymous → disabled
- * with a sign-in title (C22); own kudo → disabled, no title (C26). Used
- * for both the initial page and pages `loadMoreKudos` appends later. */
+ * with a sign-in title (C22); own kudo → disabled, no title (C26/C34); a
+ * toggle in flight for this kudo → disabled too, until the server answers
+ * (BR-004). "Own kudo" reads the server-computed `card.isOwn` (migration
+ * `0016`'s `is_own`), never a `card.sender.id === viewerId` comparison —
+ * that comparison is always false for an anonymous kudo's own sender,
+ * since `sender.id` is masked `null` there (BR-005). Used for both the
+ * initial page and pages `loadMoreKudos` appends later. */
 export function deriveKudosCardState(
   card: KudosCardModel,
-  { viewerId, heartedIds, overrides, signInTitle }: KudosHeartContext,
+  {
+    viewerId,
+    heartedIds,
+    overrides,
+    signInTitle,
+    pendingIds,
+  }: KudosHeartContext,
 ): KudosCardState {
   const override = overrides[card.id];
-  const isOwnKudo = viewerId !== null && card.sender.id === viewerId;
+  const isOwnKudo = card.isOwn === true;
   return {
     hearted: override?.hearted ?? heartedIds.has(card.id),
     heartCount: override?.heartCount ?? card.heartCount,
-    heartDisabled: viewerId === null || isOwnKudo,
+    heartDisabled: viewerId === null || isOwnKudo || pendingIds.has(card.id),
     heartTitle: viewerId === null ? signInTitle : undefined,
     isOwnKudo,
   };
