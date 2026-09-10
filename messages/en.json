@@ -211,11 +211,11 @@
   },
   "kudos": {
     "banner": {
-      "title": "Hệ thống ghi nhận và cảm ơn",
+      "title": "Recognition and Appreciation System",
       "logoAlt": "SAA 2025 KUDOS"
     },
     "compose": {
-      "placeholder": "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
+      "placeholder": "Who would you like to send thanks and recognition to today?",
       "ariaLabel": "Write Kudos"
     },
     "composeModal": {
@@ -271,8 +271,8 @@
       }
     },
     "heroSearch": {
-      "placeholder": "Tìm kiếm profile Sunner",
-      "ariaLabel": "Tìm kiếm profile Sunner",
+      "placeholder": "Search Sunner profiles",
+      "ariaLabel": "Search Sunner profiles",
       "loading": "Searching…",
       "empty": "No matching Sunner found",
       "signInHint": "Sign in to search Sunner profiles"
@@ -290,13 +290,13 @@
       "eyebrow": "Sun* Annual Awards 2025",
       "heading": "SPOTLIGHT BOARD",
       "totalSuffix": "KUDOS",
-      "searchPlaceholder": "Tìm kiếm",
+      "searchPlaceholder": "Search",
       "searchSubmit": "Search"
     },
     "feed": {
       "eyebrow": "Sun* Annual Awards 2025",
       "heading": "ALL KUDOS",
-      "empty": "Hiện tại chưa có Kudos nào.",
+      "empty": "No Kudos yet.",
       "detail": "View details",
       "copyLink": "Copy Link",
       "copiedToast": "Link copied — ready to share!",
@@ -313,7 +313,7 @@
       "openGiftDisabledTitle": "This feature is under development",
       "rankBoard": "10 SUNNERS WITH THE NEWEST RANK-UP",
       "giftBoard": "10 SUNNERS WHO JUST RECEIVED GIFTS",
-      "emptyBoard": "Chưa có dữ liệu"
+      "emptyBoard": "No data yet"
     },
     "secretBox": {
       "titleUnopened": "DISCOVER YOUR SECRET BOX",
