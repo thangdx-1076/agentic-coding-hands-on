@@ -14,12 +14,19 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** Full name renders directly — no fallback needed. */
+/** Full name renders directly — no fallback needed.
+ *
+ * `avatarUrl` points at a LOCAL asset out of `staticDirs: ["../public"]`
+ * rather than a third-party placeholder service: the component renders it
+ * through `next/image`, which rejects any host absent from
+ * `src/configs/image-remote-patterns.ts` — and that allowlist deliberately
+ * covers only Supabase Storage and the Google avatar CDN, never a story
+ * fixture's host. */
 export const WithFullName: Story = {
   args: {
     profile: {
       fullName: "Huỳnh Dương Xuân Nhật",
-      avatarUrl: "https://i.pravatar.cc/400",
+      avatarUrl: "/kudos/avatar-receiver.png",
     },
     copy: sampleProfileCopy.hero,
   },

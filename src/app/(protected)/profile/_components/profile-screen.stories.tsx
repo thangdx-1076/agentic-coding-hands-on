@@ -20,16 +20,22 @@ const viewer = {
   unreadCount: 0,
 };
 
+/** Both fixtures point `avatarUrl` at LOCAL assets out of
+ * `staticDirs: ["../public"]` rather than a third-party placeholder
+ * service: `ProfileHero` renders it through `next/image`, which rejects
+ * any host absent from `src/configs/image-remote-patterns.ts` — and that
+ * allowlist deliberately covers only Supabase Storage and the Google
+ * avatar CDN, never a story fixture's host. */
 const selfProfile = {
   id: "11111111-1111-1111-1111-111111111111",
   fullName: "Huỳnh Dương Xuân Nhật",
-  avatarUrl: "https://i.pravatar.cc/400",
+  avatarUrl: "/kudos/avatar-sender.png",
 };
 
 const otherProfile = {
   id: "22222222-2222-2222-2222-222222222222",
   fullName: "Nguyễn Văn A",
-  avatarUrl: "https://i.pravatar.cc/401",
+  avatarUrl: "/kudos/avatar-receiver.png",
 };
 
 /** Own profile — statistics card (5 rows × `0`) + "Mở Secret Box" disabled;
