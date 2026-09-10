@@ -11,6 +11,7 @@ import {
 } from "../_hooks/use-kudos-hearts";
 import { useKudosToast } from "../_hooks/use-kudos-toast";
 import type { KudosPageCopy } from "../_shared/build-kudos-copy";
+import { buildKudosSidebarProps } from "../_shared/build-kudos-sidebar-props";
 import {
   deriveKudosCardState,
   type KudosCardState,
@@ -18,6 +19,7 @@ import {
 
 import { KudosScreen } from "./kudos-screen";
 import type { KudosHighlightCarouselItem } from "./kudos-highlight-carousel";
+import type { KudosLeaderboardItemData } from "./kudos-leaderboard";
 import type { KudosStats } from "./kudos-stat-list";
 
 import type { KudosBoard, KudosCard as KudosCardModel } from "@/dal/kudos";
@@ -36,6 +38,7 @@ export type KudosClientProps = {
   hashtag: string | null;
   department: string | null;
   stats: KudosStats | null;
+  giftRecipients: KudosLeaderboardItemData[];
   logoutAction: () => void | Promise<void>;
   toggleKudoHeartAction: (kudoId: string) => Promise<ToggleHeartResult>;
   loadMoreKudosAction: (input: {
@@ -67,6 +70,7 @@ export function KudosClient({
   hashtag,
   department,
   stats,
+  giftRecipients,
   logoutAction,
   toggleKudoHeartAction,
   loadMoreKudosAction,
@@ -184,9 +188,7 @@ export function KudosClient({
       onToggleHeart={toggleHeart}
       onSelectHashtag={selectHashtag}
       onCopyLink={handleCopyLink}
-      stats={stats}
-      rankUps={[]}
-      giftRecipients={[]}
+      {...buildKudosSidebarProps(stats, giftRecipients)}
       toastMessage={toastMessage}
       compose={{
         isSignedIn: viewerId !== null,

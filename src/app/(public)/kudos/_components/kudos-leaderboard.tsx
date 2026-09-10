@@ -11,9 +11,10 @@ import { ROUTES } from "@/constants/routes";
  * description text (`2940:13488`) with no distinct frame — same
  * avatar+name+description row shape applies, so one component covers both
  * (`kudos-sidebar.tsx` renders it twice with different title/items).
- * Both start empty in production: neither a rank-tracking nor a gift
- * ledger exists yet (FR-213/BR-012/C08) — `Chưa có dữ liệu` is the honest
- * result, not a stand-in for missing work.
+ * `emptyLabel` still applies to both: `rankUps` has no rank-tracking source
+ * yet (stays `[]` by design), while `giftRecipients` renders real Secret
+ * Box openers (F007 FR-219/BR-020) once any exist — `Chưa có dữ liệu` is
+ * only ever the honest "0 rows" result, not a stand-in for missing work.
  */
 export type KudosLeaderboardItemData = {
   id: string;

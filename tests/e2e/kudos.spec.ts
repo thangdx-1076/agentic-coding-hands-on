@@ -8,7 +8,11 @@ import {
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
-import { deleteTestUser } from "./helpers/service-role";
+import {
+  deleteTestUser,
+  getServiceRoleKey,
+  getSupabaseUrl,
+} from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -65,6 +69,7 @@ loadEnv();
  * | C30 | *(CI-safe)* | `[data-testid=kudos-hero-search-input]` **không** `readonly`, nhận được chữ gõ vào, `maxlength="128"` | — | FR-402 |
  * | C31 | *(CI-safe)* | Ẩn danh gõ vào ô hero → `[data-testid=kudos-hero-search-options]` hiện gợi ý đăng nhập, **không** phải "không tìm thấy" | — | FR-402, SEC_004 |
  * | C32 | `@auth` | Đã đăng nhập: gõ tên Sunner → `[data-testid=kudos-hero-search-option]` hiện, bấm 1 kết quả → URL tới `/profile?id=<uuid>` | TC[00], TC[35] | FR-402, US008 |
+ * | C33 | `@local-db` | Seed 1 dòng `secret_box_openings` cho Sunner có sẵn → board thứ 2 (gift) chứa tên Sunner đó và **không** hiện `Chưa có dữ liệu` | US010, TC `6b1e2359`, `0952e2f0` | FR-219, BR-020 |
  * ========================================================
  *
  * OUT OF SCOPE (deferred to frame Figma chưa tồn tại, clarifications § § Out-of-Scope):
@@ -637,6 +642,60 @@ test.describe(
 
       // Detail button should be disabled (feature deferred)
       await expect(detailBtn).toBeDisabled();
+    });
+
+    test("[C33] Gift leaderboard shows a Sunner who just opened a Secret Box", async ({
+      page,
+    }) => {
+      // C33: seed 1 secret_box_openings row for an existing seed Sunner →
+      // the SECOND kudos-leaderboard (gift board, kudos-sidebar.tsx) must
+      // show their name and drop the "Chưa có dữ liệu" empty state.
+      // Not `test.skip`: a missing service-role key means this assertion
+      // can never be proven either way, so it must fail loudly, same
+      // posture `deleteTestUser` takes for cleanup failures.
+      const serviceRoleKey = getServiceRoleKey();
+      expect(
+        serviceRoleKey,
+        "no local Supabase service-role key (env or `supabase status`) — cannot seed secret_box_openings",
+      ).toBeTruthy();
+
+      const supabaseUrl = getSupabaseUrl();
+      const headers = {
+        apikey: serviceRoleKey as string,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      };
+      // Đỗ hoàng Hiệp — 0008_kudos_demo_seed.sql seed id 1, never signs in,
+      // so this row cannot collide with anything a login-based test touches.
+      const seedUserId = "a0000000-0000-4000-8000-000000000001";
+      const seedUserName = "Đỗ hoàng Hiệp";
+
+      const insertResponse = await fetch(
+        `${supabaseUrl}/rest/v1/secret_box_openings`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ user_id: seedUserId, badge_key: "stay-gold" }),
+        },
+      );
+      expect(insertResponse.ok).toBe(true);
+      const [insertedRow] = (await insertResponse.json()) as { id: string }[];
+
+      try {
+        await page.goto("/kudos");
+
+        const giftBoard = page
+          .locator("[data-testid=kudos-leaderboard]")
+          .nth(1);
+        await expect(giftBoard).toContainText(seedUserName);
+        await expect(giftBoard).not.toContainText("Chưa có dữ liệu");
+      } finally {
+        await fetch(
+          `${supabaseUrl}/rest/v1/secret_box_openings?id=eq.${insertedRow.id}`,
+          { method: "DELETE", headers },
+        );
+      }
     });
   },
 );
