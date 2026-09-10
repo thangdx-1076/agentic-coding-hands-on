@@ -172,7 +172,7 @@ test.describe("Login Screen", () => {
       page,
     }) => {
       await page.goto("/");
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
       // Verify homepage content is visible
       const h1 = page.locator("h1");
       await expect(h1).toContainText("ROOT FURTHER");
@@ -684,7 +684,7 @@ test.describe("Login Screen", () => {
       await page.goto("/login");
       // Should redirect to / (homepage) since user is authenticated
       await page.waitForURL("/", { timeout: 5000 });
-      expect(page.url()).toContain("/");
+      expect(new URL(page.url()).pathname).toBe("/");
     });
 
     test("[TC e76aa170] /todo shows user email and logout button", async ({

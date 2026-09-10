@@ -25,7 +25,7 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
 | **A0** | *cross-cutting — belongs to no single action* | — | `FR-601` | — | § 4.4 |
-| **A1** | `PrelaunchPage` (Server Component) | `GET` `/prelaunch` | `FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-401, BR-004, US001` | — *(read-only)* | § 3.1 |
+| **A1** | `PrelaunchPage` (Server Component) | `GET` `/prelaunch` | `FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-401, BR-004, US001` | — *(read-only)* | § 3.1 |
 | **A2** | `proxy` (edge guard, mở rộng) | `*` mọi route khớp matcher, trừ ngoại lệ | `FR-102, FR-103, BR-001, BR-002, BR-003, BR-005, DEC-001, US002` | — *(read-only)* | § 3.2 |
 
 ## 3. Actions
@@ -34,15 +34,20 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 
 #### A1 · Hiển thị đếm ngược trên nền sự kiện
 `GET` `/prelaunch` → `` `PrelaunchPage` (Server Component) ``
-`FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-204` `FR-205` `FR-206` `FR-401` · `US001` · `SCR009_CountdownPrelaunch`
+`FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-204` `FR-205` `FR-206` `FR-207` `FR-208` `FR-401` · `US001` · `SCR009_CountdownPrelaunch`
 
 **Who** · Bất kỳ ai, đã đăng nhập hay chưa — không gate nào *(gate A0 — § 4.4, `FR-601`)*.
-**FE** · `PrelaunchPage` render nền full-bleed + lớp phủ tối tĩnh, tiêu đề i18n `prelaunch.title`, và `CountdownTiles` (tái dùng `src/app/(public)/_components/countdown-tiles.tsx`) qua `useCountdown` (tái dùng `src/app/(public)/_hooks/use-countdown.ts`) — tick 1s phía client, seed từ `initialNowMs` server (cùng pattern trang chủ, hydration khớp SSR).
+**FE** · `PrelaunchPage` render nền full-bleed + lớp phủ tối tĩnh, tiêu đề i18n `prelaunch.title`, và `CountdownTiles` (tái dùng `src/app/(public)/_components/countdown-tiles.tsx`, dùng chung với F003_Homepage) qua `useCountdown` (tái dùng `src/app/(public)/_hooks/use-countdown.ts`) — tick 1s phía client, seed từ `initialNowMs` server (cùng pattern trang chủ, hydration khớp SSR). Mỗi đơn vị render qua `DigitBoxes` (`countdown-tiles.tsx:60-77`) — split chuỗi zero-pad thành 1 `DigitBox` (`:26-46`) MỖI KÝ TỰ, tối thiểu 2 hộp, không cap (FR-207): days ≥ 100 tự thêm hộp thứ 3, không cần layout riêng.
+
+**REVISION (2026-09-10):** FR-207 (2 hộp LED/đơn vị) đã implement trong cùng phiên — trước đây
+`DigitBox` gộp cả chuỗi 2 ký tự vào 1 hộp; nay `DigitBoxes` split theo ký tự. Font "Digital
+Numbers" (FR-208) VẪN fallback `monospace` (`countdown-tiles.tsx:36`) — chờ D002/F003-D003, xem
+RISK-02 ở `functional-spec.md § 11`.
 **Request** · không tham số — đọc `EVENT_START_AT` phía server tại render time.
 **BE** · `resolveTargetIso()` (cùng pattern `(home)/page.tsx`) đọc `process.env.EVENT_START_AT`, validate qua `parseTargetDate` (tái dùng `src/utils/countdown.ts`); thiếu/hỏng → `null`, không throw (`FR-002`).
 **Rule** · Không có nhánh hiển thị khác nhau theo actor — nội dung giống nhau cho mọi visitor; xem A2 cho nhánh quyết định điều hướng.
 **Result** · Read-only, không ghi DB. `remaining()`/`pad2()` tính days/hours/minutes zero-pad — **BR-004 — Giá trị ÂM clamp về `00`; `pad2()` chỉ pad LÊN, không cắt bớt, nên days ≥ 100 hiển thị đủ `120` chứ không clamp.** Hàm thuần, không I/O, đã có unit test 100% coverage.
-**Source:** TBD (draft)
+**Source:** `src/app/(public)/prelaunch/page.tsx:24-77` → `src/utils/countdown.ts:15-52` → `src/app/(public)/_hooks/use-countdown.ts:36-72` → `src/app/(public)/_components/countdown-tiles.tsx:26-77`
 
 <!-- No diagram: read-only, single render path, below threshold. -->
 
@@ -63,15 +68,15 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 | DEC | subtype | Condition | What the user sees | Source |
 |---|---|---|---|---|
 | **DEC-001** | flow | `PRELAUNCH_LOCK_ENABLED === "true"` AND `!reached` AND pathname ∉ exempt list | redirect sang `/prelaunch`, giữ nguyên đích gốc không lộ ra URL | `src/domain/prelaunch-lock.ts:94-120` |
-| — | — | pathname === `/prelaunch` AND (`reached` OR cờ tắt) | redirect `/` | TBD (draft) |
-| — | — | mọi trường hợp khác | pass through | TBD (draft) |
+| — | — | pathname === `/prelaunch` AND (`reached` OR cờ tắt) | redirect `/` | `src/domain/prelaunch-lock.ts:101-105` |
+| — | — | mọi trường hợp khác | pass through | `src/domain/prelaunch-lock.ts:107-119` |
 
 - **BR-001 — Khoá chỉ kích hoạt khi cờ bật VÀ đếm ngược chưa về 0.** Mặc định TẮT — khoá riêng theo đếm ngược sẽ redirect toàn bộ 135 e2e test hiện có (`playwright.config.ts`/`.env.local` đều đặt `EVENT_START_AT` ở tương lai).
 - **BR-002 — Miễn khoá: `/prelaunch`, `/auth/*`, `/api/*`, `/_next/*`, file tĩnh có phần mở rộng.** `/auth/*` miễn vì khoá sẽ hỏng OAuth callback; `/api/*` là route handler, không phải trang; `/_next/*`/file tĩnh loại ở `config.matcher`.
 - **BR-003 — Khi đếm ngược đã về 0, khoá gỡ hoàn toàn dù cờ còn bật; vào `/prelaunch` lúc này bị đưa về `/`.**
 - **BR-005 — Mở matcher không được kéo theo Supabase overreach.** `proxy()` chạy nhánh khoá TRƯỚC, không I/O. Route không thuộc whitelist cũ (`/`, `/login`, `/todo/*`, `/awards`, `/standards`, `/profile`) thì `return NextResponse.next()` ngay, KHÔNG gọi `getUserOrNull`. Hành vi của 6 route cũ giữ nguyên tuyệt đối. Thiếu ràng buộc này thì mọi route gánh thêm một round-trip `getUser()` — đúng cái "proxy overreach" comment trong `src/proxy.ts` ghi là đã loại bỏ.
 **Result** · Read-only — không ghi DB, không đổi cookie ngoài cookie session/locale mà `proxy` hiện có đã ghi.
-**Source:** TBD (draft)
+**Source:** `src/domain/prelaunch-lock.ts:14-120` → `src/proxy.ts:45-80`
 
 <!-- No diagram: bảng DEC ở trên đã đủ thể hiện các nhánh; single decision path, below threshold. -->
 
@@ -81,6 +86,7 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 |---|---|---|
 | A1 | `EVENT_START_AT` thiếu hoặc không parse được | 3 ô hiện `00`, không throw (`BR-004`, `FR-002`) |
 | A1 | Đếm ngược về đúng 0 trong khi trang đang mở | 3 ô chuyển `00` tại chỗ, không cần reload (client tick, không phải server) |
+| A1 | days ≥ 100 (hộp thứ 3 xuất hiện) | `DigitBoxes` render thêm 1 `DigitBox` — một hộp/ký tự, không cap ở 2 (FR-207) |
 | A2 | `PRELAUNCH_LOCK_ENABLED` tắt | Không route nào bị khoá, kể cả `/prelaunch` render bình thường |
 | A2 | Gõ thẳng URL một route bị khoá, không qua link | Vẫn redirect `/prelaunch` — gate ở tầng request, không phải chỉ ẩn link |
 | A2 | Vào `/prelaunch` sau khi đã tới giờ, cờ vẫn bật | Redirect `/` |
@@ -92,7 +98,7 @@ Màn `/prelaunch` (Server Component, PUBLIC) hiển thị đếm ngược tới 
 | Component | Responsibility | Used in | File |
 |---|---|---|---|
 | `PrelaunchPage` | Server Component render màn Countdown Prelaunch | A1 | `src/app/(public)/prelaunch/page.tsx` *(mới)* |
-| `CountdownTiles` | 3 ô LED digit + label, tái dùng từ trang chủ | A1 | `src/app/(public)/_components/countdown-tiles.tsx` *(nâng 1 rung từ `(home)/_components/`)* |
+| `CountdownTiles`/`DigitBoxes`/`DigitBox` | 3 ô LED, mỗi ô N hộp/ký tự (min 2, FR-207) + label, dùng chung với F003_Homepage | A1 | `src/app/(public)/_components/countdown-tiles.tsx` |
 | `useCountdown` | Hook tick 1s, seed từ server, tái dùng | A1 | `src/app/(public)/_hooks/use-countdown.ts` *(nâng 1 rung từ `(home)/_hooks/`)* |
 | `countdown` (utils) | `parseTargetDate`/`remaining`/`pad2`, thuần, không I/O | A1, A2 | `src/utils/countdown.ts` *(lên Zone A — `src/proxy.ts` cần, mà Zone A không được import `src/app`)* |
 | `proxy` | Edge guard — auth optimistic (có sẵn) + khoá điều hướng prelaunch (mở rộng) | A2 | `src/proxy.ts` |
@@ -114,7 +120,7 @@ None. "Đã khoá"/"đã gỡ khoá" chỉ 2 giá trị, 1 chuyển tiếp một
 #### Bin 3 — cross-cutting, belongs to no single action
 
 **A0 · `FR-601` — Feature này không có gate quyền nào ở bất kỳ action nào.** Không guard đăng nhập, không kiểm role, không dùng `(protected)/layout.tsx`. 4 test case ACCESSING của MoMorph (`68d82c58`, `e6a59553`, `1c266552`, `17aa9e0d`) là boilerplate tự sinh (`Sub_Category` = "Access control unspecified", `Expected_Result` = "---"/"as per application configuration") — chủ đích KHÔNG hiện thực, không suy ra luật phân quyền nào từ đó.
-**Source:** TBD (draft)
+**Source:** `src/app/(public)/prelaunch/page.tsx:24-77` (không import `(protected)/layout.tsx` nào)
 
 #### Bin 2 — used by ≥2 named actions
 
@@ -139,8 +145,11 @@ PRELAUNCH_LOCK_ENABLED = "false"     # cờ mới; chỉ "true" mới bật kho�
 
 - **SC-001** *(A1)* 3 ô hiển thị đúng zero-pad tối thiểu 2 chữ số; âm → `00`; days ≥ 100 giữ nguyên 3 chữ số (covers FR-204, BR-004)
 - **SC-002** *(A1)* Tick mỗi giây không cần reload; về 0 cả 3 ô đọc `00` (covers FR-205, FR-206)
-- **SC-003** *(A2)* Cờ tắt → không route nào bị khoá, kể cả `/prelaunch` (covers FR-102, BR-001)
-- **SC-004** *(A2)* Cờ bật + chưa tới giờ → mọi route trừ ngoại lệ redirect `/prelaunch`; đã tới giờ → `/prelaunch` redirect `/` (covers FR-102, FR-103, DEC-001)
+- **SC-003** *(A2)* Cờ tắt → không route nào bị khoá, kể cả `/prelaunch` (covers FR-102, BR-001) — `tests/e2e/prelaunch.spec.ts:128` `[C6]` (lock mặc định TẮT, `playwright.config.ts` không set cờ).
+- **SC-004** *(A2)* Cờ BẬT + chưa tới giờ → mọi route trừ ngoại lệ redirect `/prelaunch`; đã tới giờ → `/prelaunch` redirect `/` (covers FR-102, FR-103, DEC-001) — **REVISION (2026-09-10):** trước đây nhánh cờ BẬT chưa từng có e2e nào chứng minh (audit gap). Fix: `tests/e2e/prelaunch-lock.spec.ts` chạy trên MỘT dev server thứ 2 (`playwright.lock.config.ts`, `pnpm test:e2e:lock`, CI step riêng) với `PRELAUNCH_LOCK_ENABLED=true` baked vào `webServer.env` — một biến env chỉ set được lúc khởi động server, không thể bật/tắt trong cùng 1 process đang chạy.
+- **SC-005** *(A1)* Mỗi đơn vị render ≥2 `[data-testid='tile-digit']` bên trong `[data-testid='tile-digits']`, 1 phần tử/ký tự (covers FR-207) — Playwright `tests/e2e/prelaunch.spec.ts:82-102`, `tests/e2e/home.spec.ts:119-131` (component dùng chung F003).
+- **SC-006** *(A1)* — **[UNVERIFIED]** không có test nào assert `font-family` của digit (covers
+  FR-208) — vẫn `monospace` vì D002/F003-D003 chưa chốt.
 
 #### US001 *(A1)*
 
@@ -188,8 +197,10 @@ Code đã viết và merge (`status: implemented`). File thật, đã đọc và
 | Wrapper tick client | `src/app/(public)/prelaunch/_components/prelaunch-countdown.tsx:1-50` |
 | Toán đếm ngược thuần (dùng chung với trang chủ) | `src/utils/countdown.ts:15-52` |
 | Hook tick, seed từ server | `src/app/(public)/_hooks/use-countdown.ts:36-72` |
-| 3 ô số LED (dùng chung với trang chủ) | `src/app/(public)/_components/countdown-tiles.tsx:84-113` |
-| E2E màn hình | `tests/e2e/prelaunch.spec.ts:1-150` |
+| 3 ô số LED, mỗi ô N hộp/ký tự (dùng chung với trang chủ) | `src/app/(public)/_components/countdown-tiles.tsx:26-77` |
+| E2E màn hình (lock TẮT — mặc định) | `tests/e2e/prelaunch.spec.ts:1-150` |
+| E2E lock BẬT (dev server riêng, `PRELAUNCH_LOCK_ENABLED=true`) | `tests/e2e/prelaunch-lock.spec.ts`, `playwright.lock.config.ts`, `pnpm test:e2e:lock` |
+| Font debt (đã ghi, chưa đủ để đóng — RISK-02) | `plans/260908-1653-countdown-prelaunch-page/clarifications.md` § Ghi nợ |
 
 Đo tay trạng thái KHOÁ (e2e không lật được cờ, xem § 5.3):
 `plans/260908-1653-countdown-prelaunch-page/reports/manual-lock-verification-260908.md`.

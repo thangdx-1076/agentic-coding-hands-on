@@ -78,6 +78,30 @@ test.describe("Countdown Prelaunch Page (/prelaunch)", () => {
       const digitsText = await digitsElement.textContent();
       expect(digitsText).toMatch(/^\d{2,}$/);
     }
+
+    // [C3 ext] Each digits wrapper is built from one [data-testid='tile-digit']
+    // box PER CHARACTER (min 2, no upper cap) — a design showing "2 boxes"
+    // is the default zero-padded width, not a ceiling. Verified generically
+    // by wrapper string length so this holds for both a 2-digit unit
+    // (HOURS/MINUTES) and a 5-digit one (DAYS, under the 2099 fixture).
+    for (let i = 0; i < 3; i++) {
+      const digitsWrapper = tiles.nth(i).locator("[data-testid='tile-digits']");
+      const wrapperText = (await digitsWrapper.textContent())?.trim() ?? "";
+      const digitBoxes = digitsWrapper.locator("[data-testid='tile-digit']");
+
+      await expect(digitBoxes).toHaveCount(wrapperText.length);
+      expect(wrapperText.length).toBeGreaterThanOrEqual(2);
+
+      const boxTexts = await digitBoxes.allTextContents();
+      expect(boxTexts.join("")).toBe(wrapperText);
+    }
+
+    // DAYS specifically must NOT be clamped to 2 boxes under the 2099
+    // fixture (pad2 never clamps days — src/utils/countdown.ts).
+    const daysWrapperText = (
+      await tiles.nth(0).locator("[data-testid='tile-digits']").textContent()
+    )?.trim();
+    expect(daysWrapperText?.length ?? 0).toBeGreaterThan(2);
   });
 
   test("[C4] No <header>, no <footer>; exactly 1 background image with aria-hidden", async ({
