@@ -272,7 +272,10 @@
     },
     "heroSearch": {
       "placeholder": "Tìm kiếm profile Sunner",
-      "ariaLabel": "Tìm kiếm profile Sunner"
+      "ariaLabel": "Tìm kiếm profile Sunner",
+      "loading": "Searching…",
+      "empty": "No matching Sunner found",
+      "signInHint": "Sign in to search Sunner profiles"
     },
     "highlight": {
       "eyebrow": "Sun* Annual Awards 2025",

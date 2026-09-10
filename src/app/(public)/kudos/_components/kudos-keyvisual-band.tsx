@@ -2,7 +2,7 @@ import type { KudosPageCopy } from "../_shared/build-kudos-copy";
 
 import { KudosBanner } from "./kudos-banner";
 import { KudosComposeLauncher } from "./kudos-compose-launcher";
-import { KudosHeroSearchPill } from "./kudos-hero-search-pill";
+import { KudosHeroProfileSearch } from "./kudos-hero-profile-search";
 
 export type KudosKeyvisualBandProps = {
   copy: Pick<
@@ -43,9 +43,9 @@ export function KudosKeyvisualBand({
           isSignedIn={isSignedIn}
           hashtagVocabulary={hashtagVocabulary}
         />
-        <KudosHeroSearchPill
-          placeholder={copy.heroSearch.placeholder}
-          ariaLabel={copy.heroSearch.ariaLabel}
+        <KudosHeroProfileSearch
+          copy={copy.heroSearch}
+          isSignedIn={isSignedIn}
         />
       </div>
     </div>

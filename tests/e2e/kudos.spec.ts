@@ -62,6 +62,9 @@ loadEnv();
  * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` visible, trạng thái enable/disable lấy từ `secretBoxUnopened` thật (DEC-001) — viewer test mới (0 tim đã gửi) nên vẫn `disabled` | TC[15] | FR-211 |
  * | C28 | `@auth` | Bấm tên/avatar trên thẻ → URL tới `/profile?id=<uuid>` | TC[00], TC[35], TC[36] | FR-402, US008 |
  * | C29 | `@auth` | Ẩn danh bấm tên/avatar → URL về `/login` *(gate `(protected)/layout.tsx` có sẵn, không code mới)* | TC[02] | FR-601, BR-013 |
+ * | C30 | *(CI-safe)* | `[data-testid=kudos-hero-search-input]` **không** `readonly`, nhận được chữ gõ vào, `maxlength="128"` | — | FR-402 |
+ * | C31 | *(CI-safe)* | Ẩn danh gõ vào ô hero → `[data-testid=kudos-hero-search-options]` hiện gợi ý đăng nhập, **không** phải "không tìm thấy" | — | FR-402, SEC_004 |
+ * | C32 | `@auth` | Đã đăng nhập: gõ tên Sunner → `[data-testid=kudos-hero-search-option]` hiện, bấm 1 kết quả → URL tới `/profile?id=<uuid>` | TC[00], TC[35] | FR-402, US008 |
  * ========================================================
  *
  * OUT OF SCOPE (deferred to frame Figma chưa tồn tại, clarifications § § Out-of-Scope):
@@ -162,6 +165,46 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
 
     const value = await search.inputValue();
     expect(value).toHaveLength(100);
+  });
+
+  test("[C30] Hero profile-search input accepts typing and caps at 128", async ({
+    page,
+  }) => {
+    // C30: `[data-testid=kudos-hero-search-input]` không `readonly`, nhận chữ, `maxlength="128"`
+    // Regression pin: ô này từng render `readOnly` nên gõ vào mất chữ.
+    await page.goto("/kudos");
+
+    // Định vị qua container (tồn tại ở cả bản lỗi) nên RED là do input không
+    // gõ được, chứ không phải do selector mới chưa có.
+    const input = page.locator("[data-testid=kudos-hero-search-pill] input");
+    await expect(input).toBeVisible();
+    await expect(input).not.toHaveAttribute("readonly", /.*/);
+    await expect(input).toHaveAttribute(
+      "data-testid",
+      "kudos-hero-search-input",
+    );
+    await expect(input).toHaveAttribute("maxlength", "128");
+
+    await input.fill("Nguyễn");
+    await expect(input).toHaveValue("Nguyễn");
+
+    const long = "a".repeat(200);
+    await input.fill(long);
+    expect(await input.inputValue()).toHaveLength(128);
+  });
+
+  test("[C31] Anonymous hero search shows the sign-in hint, not a no-match claim", async ({
+    page,
+  }) => {
+    // C31: `profile_cards` chỉ cấp cho `authenticated` → khách phải thấy gợi ý đăng nhập
+    await page.goto("/kudos");
+
+    const input = page.locator("[data-testid=kudos-hero-search-input]");
+    await input.fill("Nguyễn");
+
+    const listbox = page.locator("[data-testid=kudos-hero-search-options]");
+    await expect(listbox).toBeVisible();
+    await expect(listbox).toContainText("Đăng nhập để tìm profile Sunner");
   });
 
   test("[C07] Empty state for feed and carousel when no kudos", async ({
@@ -787,6 +830,44 @@ test.describe(
 
       await anonymousPage.close();
       await newContext.close();
+    });
+
+    test("[C32] Hero profile search opens another Sunner's profile", async ({
+      page,
+    }) => {
+      // C32: gõ tên Sunner → option hiện → bấm → `/profile?id=<uuid>`
+      await page.goto("/kudos");
+
+      // Lấy tên thật từ một thẻ đã seed thay vì hard-code chuỗi.
+      const receiverName = page
+        .locator("[data-testid=kudos-card-receiver-name]")
+        .first();
+      await expect(receiverName).toBeVisible();
+      const fullName = ((await receiverName.textContent()) ?? "").trim();
+      expect(fullName.length).toBeGreaterThan(0);
+
+      const input = page.locator("[data-testid=kudos-hero-search-input]");
+      await input.fill(fullName);
+
+      const option = page
+        .locator("[data-testid=kudos-hero-search-option]")
+        .first();
+      await expect(option).toBeVisible();
+      await expect(option).toContainText(fullName);
+
+      await option.click();
+      await page.waitForURL(/\/profile\?id=[a-f0-9-]+/);
+
+      const url = new URL(page.url());
+      expect(url.pathname).toBe("/profile");
+      expect(url.searchParams.get("id")).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+
+      // Đích thật của tính năng: profile của ĐÚNG Sunner đó render ra.
+      await expect(
+        page.getByRole("heading", { level: 1, name: fullName }),
+      ).toBeVisible();
     });
   },
 );

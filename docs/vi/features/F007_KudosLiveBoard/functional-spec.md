@@ -37,7 +37,7 @@ thị số tim, không viết FR/BR nào cho hành vi bấm.
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Xem, lọc & lan toả bảng Kudos trực tiếp | Xem toàn bộ board (banner, carousel Highlight, Spotlight, feed ALL KUDOS, sidebar); lọc theo Hashtag/Phòng ban; lật carousel; tìm Sunner trong Spotlight; cuộn thêm feed; copy link 1 kudo; mở hồ sơ người gửi/nhận/leaderboard | US001, US002, US003, US004, US005, US006, US007, US008 | FR-001, FR-002, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-211, FR-212, FR-213, FR-401, FR-402, FR-601, FR-602 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-014, BR-015, SM-001 | SCR007_KudosLiveBoard |
+| CAP-01 | Xem, lọc & lan toả bảng Kudos trực tiếp | Xem toàn bộ board (banner, carousel Highlight, Spotlight, feed ALL KUDOS, sidebar); lọc theo Hashtag/Phòng ban; lật carousel; tìm Sunner trong Spotlight; cuộn thêm feed; copy link 1 kudo; mở hồ sơ người gửi/nhận/leaderboard; tìm & mở hồ sơ Sunner qua ô tìm ở khối keyvisual | US001, US002, US003, US004, US005, US006, US007, US008, US009 | FR-001, FR-002, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-211, FR-212, FR-213, FR-214, FR-401, FR-402, FR-601, FR-602 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-014, BR-015, BR-016, SM-001 | SCR007_KudosLiveBoard |
 
 **Single-capability rationale:** Xem toàn bộ board (US001), lọc theo hashtag/phòng ban (US003), và
 chia sẻ một kudos ra ngoài (US006) đều phục vụ đúng một ý định — thấy và lan toả lời cảm ơn đang
@@ -78,6 +78,7 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - **FR-211** Sidebar hiển thị 5 chỉ số cá nhân (Kudos nhận được/đã gửi, tim nhận được, Secret Box đã mở/chưa mở) và 2 danh sách xếp hạng ("SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT", "SUNNER NHẬN QUÀ MỚI NHẤT"), cuộn độc lập với nội dung chính.
 - **FR-212** Khi hệ thống chưa có kudo nào, carousel Highlight và feed ALL KUDOS đều hiển thị cùng một thông báo rỗng.
 - **FR-213** Khi một danh sách xếp hạng ở sidebar chưa có dữ liệu, danh sách đó hiển thị thông báo rỗng riêng.
+- **FR-214** Ô tìm kiếm hồ sơ Sunner ở khối keyvisual (cạnh ô soạn Kudo, placeholder "Tìm kiếm profile Sunner") nhận input thật tối đa 128 ký tự, tìm theo tên chỉ khi người dùng đã đăng nhập, và bấm chọn một kết quả điều hướng sang trang hồ sơ Sunner đó.
 
 ### Interaction (4xx)
 
@@ -106,6 +107,7 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - Người dùng chưa đăng nhập bấm avatar, tên, hoặc "Xem chi tiết" trên bất kỳ Kudos nào bị chuyển hướng sang đăng nhập; chỉ xem trang không bị chặn. (BR-013)
 - Nút trái tim luôn hiển thị số lượt tim hiện tại; với người chưa đăng nhập, nút render ở trạng thái vô hiệu hoá kèm gợi ý đăng nhập — hành vi bấm tim khi đã đăng nhập thuộc `F008_KudosHeartReaction`, không phải quy tắc của F007. (BR-014)
 - `/kudos` không áp dụng route-guard nào; người dùng ẩn danh và đã đăng nhập nhận cùng một nội dung trang. (BR-015)
+- Ô tìm hồ sơ Sunner ở khối keyvisual nhận tối đa 128 ký tự và chỉ tìm kiếm khi người dùng đã đăng nhập; người chưa đăng nhập gõ vào ô này thấy gợi ý đăng nhập, không phải thông báo "không tìm thấy" — vì nguồn dữ liệu (`profile_cards`) chỉ cấp quyền đọc cho `authenticated`. (BR-016)
 - Vị trí trượt hiện tại của carousel Highlight Kudos là trạng thái riêng của trình duyệt, không được lưu lại giữa các lượt tải trang. (SM-001)
 
 ## 6. Screens
@@ -206,6 +208,17 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - [ ] Sunner đã đăng nhập bấm avatar/tên mở đúng trang hồ sơ người đó.
 - [ ] Sunner chưa đăng nhập bấm avatar/tên bị chuyển hướng sang đăng nhập.
 
+### US009_SearchAndOpenSunnerProfileFromHero — Search and Open Sunner Profile from Keyvisual
+
+**Actor:** Sunner đã đăng nhập
+**Goal:** Gõ tên một đồng nghiệp vào ô tìm ở khối keyvisual và mở thẳng hồ sơ người đó, không cần lướt tìm trong feed hay Spotlight.
+**Business value:** Rút ngắn đường tới hồ sơ một Sunner cụ thể ngay từ đầu trang, thay vì phải cuộn xuống Spotlight hoặc feed để tìm tên.
+
+**Acceptance Criteria:**
+- [ ] Gõ vào ô tìm ở khối keyvisual chấp nhận chữ (không còn `readOnly`), giới hạn 128 ký tự.
+- [ ] Sunner đã đăng nhập gõ tên một đồng nghiệp thấy danh sách gợi ý; bấm một kết quả mở trang hồ sơ (`/profile?id=`) của người đó.
+- [ ] Sunner chưa đăng nhập gõ vào ô này thấy gợi ý đăng nhập, không phải "không tìm thấy".
+
 ## 8. Scenarios
 
 ### US001_ViewKudosLiveBoard — Happy Path
@@ -269,6 +282,16 @@ hồ sơ (`/profile?id=...`) của người đó mở ra.
 **Given** Sunner chưa đăng nhập đang xem board Kudos, **When** bấm avatar hoặc tên bất kỳ, **Then**
 hệ thống chuyển hướng sang trang đăng nhập thay vì mở hồ sơ.
 
+### US009_SearchAndOpenSunnerProfileFromHero — Happy Path
+
+**Given** Sunner đã đăng nhập gõ tên một đồng nghiệp vào ô tìm ở khối keyvisual, **When** bấm một
+kết quả trong danh sách gợi ý, **Then** trang hồ sơ (`/profile?id=...`) của người đó mở ra.
+
+### US009_SearchAndOpenSunnerProfileFromHero — Error: chưa đăng nhập
+
+**Given** Sunner chưa đăng nhập gõ vào ô tìm ở khối keyvisual, **When** gõ xong một từ khoá,
+**Then** danh sách gợi ý hiện thông báo mời đăng nhập thay vì kết quả tìm hoặc "không tìm thấy".
+
 ## 9. Edge Cases
 
 | Scenario | What Happens | User-Facing Message |
@@ -279,6 +302,8 @@ hệ thống chuyển hướng sang trang đăng nhập thay vì mở hồ sơ.
 | Danh sách xếp hạng sidebar chưa có dữ liệu | Danh sách đó hiện thông báo rỗng riêng, phần còn lại của sidebar vẫn hiển thị | "Chưa có dữ liệu" |
 | Người chưa đăng nhập bấm avatar/tên/"Xem chi tiết" | Hệ thống chuyển hướng sang trang đăng nhập | "Không có thông báo tại chỗ — chuyển hướng sang màn đăng nhập" |
 | Carousel đang ở thẻ đầu tiên hoặc cuối cùng | Nút lùi/tiến tương ứng bị vô hiệu hoá, không lật thêm được | "Không có thông báo riêng — nút mũi tên bị vô hiệu hoá" |
+| Người chưa đăng nhập gõ vào ô tìm hồ sơ Sunner ở khối keyvisual | Danh sách gợi ý hiện thông báo mời đăng nhập, không gọi tìm kiếm thật | "Đăng nhập để tìm profile Sunner" |
+| Ô tìm hồ sơ Sunner ở khối keyvisual nhập quá 128 ký tự | Ô input tự chặn không cho gõ thêm từ ký tự thứ 129 | "Không có thông báo riêng — ô nhập tự chặn ký tự vượt quá 128" |
 
 ## 10. Edge Behaviours to Verify
 
@@ -288,6 +313,7 @@ hệ thống chuyển hướng sang trang đăng nhập thay vì mở hồ sơ.
 - **FR-210** → Kiểm tra cuộn tới cuối feed tự tải thêm kudo.
 - **FR-212** → Kiểm tra thông báo rỗng hiện đúng chuỗi khi chưa có kudo nào.
 - **FR-601** → Kiểm tra người chưa đăng nhập bị chuyển hướng khi bấm avatar/tên.
+- **FR-214** → Kiểm tra ô tìm hồ sơ Sunner ở khối keyvisual nhận input thật (không `readOnly`), chặn ký tự thứ 129, và mở đúng hồ sơ khi chọn 1 kết quả (đã đăng nhập) hoặc hiện gợi ý đăng nhập (ẩn danh).
 
 ## 11. Risks & Known Issues
 
@@ -303,6 +329,7 @@ hệ thống chuyển hướng sang trang đăng nhập thay vì mở hồ sơ.
 | F006_ProfilePage | feature | Bấm avatar/tên trên board điều hướng sang trang hồ sơ đã có sẵn, tái dùng nguyên gate đăng nhập của trang đó | FR-402, BR-013, SCR006_Profile |
 | Cột `department` mới trên `users` | data | Bộ lọc Phòng ban và hiển thị phòng ban trên thẻ cần nguồn dữ liệu này | FR-002 |
 | Dữ liệu mẫu Figma (tên, nội dung, hashtag, mốc thời gian, số liệu sidebar) | data | Seed dữ liệu thật cho demo, không bịa | `clarifications.md` § Quyết định |
+| F009_KudosCompose | feature | Ô tìm hồ sơ Sunner ở khối keyvisual (FR-214) tái dùng nguyên Server Action `searchSunners` và DAL `sunner-search.ts` mà F009 đã dựng cho ô nhận Kudo, cùng view `profile_cards` | FR-214, BR-016 |
 
 ## 13. Configuration
 
@@ -314,4 +341,5 @@ CONTENT_MAX_LINES_FEED = 5        # số dòng tối đa nội dung trên thẻ 
 HASHTAG_MAX_PER_LINE = 5          # số hashtag tối đa hiển thị trên 1 dòng trước khi rút gọn (BR-006)
 IMAGE_MAX_PER_CARD = 5            # số ảnh đính kèm tối đa hiển thị trên 1 thẻ (BR-007)
 STAR_TIER_THRESHOLDS = 10, 20, 50 # số kudo nhận được để đạt 1/2/3 hoa thị (BR-008)
+HERO_SEARCH_MAX_LENGTH = 128      # số ký tự tối đa ô tìm hồ sơ Sunner ở khối keyvisual (BR-016)
 ```

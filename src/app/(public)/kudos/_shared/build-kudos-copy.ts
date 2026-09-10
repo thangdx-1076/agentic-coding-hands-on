@@ -14,6 +14,18 @@ import { LOCALE_LABEL, type AppLocale } from "@/lib/i18n/locale";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
 
+/** KV-band Sunner-profile search (mm:2940:13450). `loading`/`empty` mirror the
+ * recipient combobox's dropdown states; `signInHint` covers what that combobox
+ * never faces — `/kudos` renders for anonymous visitors, and `profile_cards` is
+ * `authenticated`-only, so their search cannot return rows. */
+export type KudosHeroSearchCopy = {
+  placeholder: string;
+  ariaLabel: string;
+  loading: string;
+  empty: string;
+  signInHint: string;
+};
+
 /**
  * Presentational copy contract for `/kudos` (phase 13's merge point) —
  * composes `SiteChromeCopy` (chrome: nav/header/kudos-widget/footer/
@@ -27,7 +39,7 @@ export type KudosPageCopy = SiteChromeCopy & {
   banner: { title: string; logoAlt: string };
   compose: { placeholder: string; ariaLabel: string };
   /** mm:2940:13450 — sibling of the compose pill on the same KV row. */
-  heroSearch: { placeholder: string; ariaLabel: string };
+  heroSearch: KudosHeroSearchCopy;
   highlight: {
     eyebrow: string;
     heading: string;
@@ -117,6 +129,9 @@ export function buildKudosCopy(
     heroSearch: {
       placeholder: tKudos("heroSearch.placeholder"),
       ariaLabel: tKudos("heroSearch.ariaLabel"),
+      loading: tKudos("heroSearch.loading"),
+      empty: tKudos("heroSearch.empty"),
+      signInHint: tKudos("heroSearch.signInHint"),
     },
     highlight: {
       eyebrow: tKudos("highlight.eyebrow"),
