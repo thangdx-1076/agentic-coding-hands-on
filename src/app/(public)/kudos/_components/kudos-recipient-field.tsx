@@ -80,7 +80,11 @@ export function KudosRecipientField({
       {/* mm:I520:11647;520:9871 */}
       <div data-testid="kudos-recipient-field" className="relative w-full">
         {/* mm:I520:11647;520:9873 mms_B.2_Search */}
-        <div className="flex w-full items-center justify-between rounded-lg border border-[#998C5F] bg-white px-6 py-4">
+        <div
+          className={`flex w-full items-center justify-between rounded-lg border bg-white px-6 py-4 ${
+            error ? "border-[#FF8A80]" : "border-[#998C5F]"
+          }`}
+        >
           <input
             id={CONTROL_ID}
             type="text"

@@ -963,10 +963,12 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const recipientInput = dialog.locator(
       "[data-testid=kudos-recipient-input]",
     );
-    await recipientInput.fill("Test");
+    // Pin to seeded "Huỳnh Dương Xuân" (0008:75) — a `.first()` pick can
+    // land on a transient test user another spec deletes mid-run.
+    await recipientInput.fill("Huỳnh");
     const options = dialog.locator("[data-testid=kudos-recipient-option]");
     // Wait for options to appear (C21 contract: dropdown shows seeded Sunners)
-    await expect(options.first()).toBeVisible();
+    await expect(options).toHaveCount(1);
     await options.first().click();
 
     const titleInput = dialog.locator("[data-testid=kudos-title-input]");
@@ -975,7 +977,8 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const contentTextarea = dialog.locator(
       "[data-testid=kudos-content-textarea]",
     );
-    await contentTextarea.fill("Good work");
+    const kudoContent = `Good work C23 ${Date.now()}`;
+    await contentTextarea.fill(kudoContent);
 
     const hashtagAdd = dialog.locator("[data-testid=kudos-hashtag-add]");
     await hashtagAdd.click();
@@ -996,8 +999,14 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const feedCards = page.locator(
       "[data-testid=kudos-feed] [data-testid=kudos-card]",
     );
+    // Locate THIS test's own kudo, never `.first()`: other specs
+    // (and `kudos.spec.ts`'s `sendKudo`) write to the same feed
+    // concurrently under `fullyParallel`, so "newest card" is not this
+    // test's card. Filter on its unique content instead.
+    const ownCard = feedCards.filter({ hasText: kudoContent });
+    await expect(ownCard).toHaveCount(1);
     // Wait for the new card by content before reading children
-    await expect(feedCards.first()).toContainText("Award");
+    await expect(ownCard).toContainText("Award");
   });
 
   test("[C24] Submit with 2 images → new kudo shows 2 images with /storage/ URLs", async ({
@@ -1012,10 +1021,12 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const recipientInput = dialog.locator(
       "[data-testid=kudos-recipient-input]",
     );
-    await recipientInput.fill("Test");
+    // Pin to seeded "Huỳnh Dương Xuân" (0008:75) — a `.first()` pick can
+    // land on a transient test user another spec deletes mid-run.
+    await recipientInput.fill("Huỳnh");
     const options = dialog.locator("[data-testid=kudos-recipient-option]");
     // Wait for options to appear (C21 contract: dropdown shows seeded Sunners)
-    await expect(options.first()).toBeVisible();
+    await expect(options).toHaveCount(1);
     await options.first().click();
 
     const titleInput = dialog.locator("[data-testid=kudos-title-input]");
@@ -1024,7 +1035,8 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const contentTextarea = dialog.locator(
       "[data-testid=kudos-content-textarea]",
     );
-    await contentTextarea.fill("Good work");
+    const kudoContent = `Good work C24 ${Date.now()}`;
+    await contentTextarea.fill(kudoContent);
 
     const hashtagAdd = dialog.locator("[data-testid=kudos-hashtag-add]");
     await hashtagAdd.click();
@@ -1066,8 +1078,14 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const feedCards = page.locator(
       "[data-testid=kudos-feed] [data-testid=kudos-card]",
     );
-    await expect(feedCards.first()).toContainText("Award"); // Wait for new card by content
-    const firstCard = feedCards.first();
+    // Locate THIS test's own kudo, never `.first()`: other specs
+    // (and `kudos.spec.ts`'s `sendKudo`) write to the same feed
+    // concurrently under `fullyParallel`, so "newest card" is not this
+    // test's card. Filter on its unique content instead.
+    const ownCard = feedCards.filter({ hasText: kudoContent });
+    await expect(ownCard).toHaveCount(1);
+    await expect(ownCard).toContainText("Award"); // Wait for new card by content
+    const firstCard = ownCard;
 
     // Should contain images from storage (scope to image strip, not badge)
     const images = firstCard.locator("[data-testid=kudos-image-strip] img");
@@ -1114,10 +1132,12 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const recipientInput = dialog.locator(
       "[data-testid=kudos-recipient-input]",
     );
-    await recipientInput.fill("Test");
+    // Pin to seeded "Huỳnh Dương Xuân" (0008:75) — a `.first()` pick can
+    // land on a transient test user another spec deletes mid-run.
+    await recipientInput.fill("Huỳnh");
     const options = dialog.locator("[data-testid=kudos-recipient-option]");
     // Wait for options to appear (C21 contract: dropdown shows seeded Sunners)
-    await expect(options.first()).toBeVisible();
+    await expect(options).toHaveCount(1);
     await options.first().click();
 
     const titleInput = dialog.locator("[data-testid=kudos-title-input]");
@@ -1126,7 +1146,8 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const contentTextarea = dialog.locator(
       "[data-testid=kudos-content-textarea]",
     );
-    await contentTextarea.fill("Good work");
+    const kudoContent = `Good work C25 ${Date.now()}`;
+    await contentTextarea.fill(kudoContent);
 
     const hashtagAdd = dialog.locator("[data-testid=kudos-hashtag-add]");
     await hashtagAdd.click();
@@ -1154,18 +1175,20 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const feedCards = page.locator(
       "[data-testid=kudos-feed] [data-testid=kudos-card]",
     );
+    // Locate THIS test's own kudo, never `.first()`: other specs
+    // (and `kudos.spec.ts`'s `sendKudo`) write to the same feed
+    // concurrently under `fullyParallel`, so "newest card" is not this
+    // test's card. Filter on its unique content instead.
+    const ownCard = feedCards.filter({ hasText: kudoContent });
+    await expect(ownCard).toHaveCount(1);
     // Sender block should show anonymous name "Secret Admirer" with NO profile link
-    const senderBlock = feedCards
-      .first()
-      .locator("[data-testid=kudos-card-sender]");
+    const senderBlock = ownCard.locator("[data-testid=kudos-card-sender]");
     await expect(senderBlock).toContainText("Secret Admirer");
     const senderLink = senderBlock.locator('a[href*="/profile"]');
     await expect(senderLink).toHaveCount(0);
 
     // Receiver block should still have a profile link (real Sunner, not anonymous)
-    const receiverBlock = feedCards
-      .first()
-      .locator("[data-testid=kudos-card-receiver]");
+    const receiverBlock = ownCard.locator("[data-testid=kudos-card-receiver]");
     const receiverLink = receiverBlock.locator('a[href*="/profile"]');
     await expect(receiverLink).toHaveCount(1);
   });
@@ -1182,10 +1205,12 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const recipientInput = dialog.locator(
       "[data-testid=kudos-recipient-input]",
     );
-    await recipientInput.fill("Test");
+    // Pin to seeded "Huỳnh Dương Xuân" (0008:75) — a `.first()` pick can
+    // land on a transient test user another spec deletes mid-run.
+    await recipientInput.fill("Huỳnh");
     const options = dialog.locator("[data-testid=kudos-recipient-option]");
     // Wait for options to appear (C21 contract: dropdown shows seeded Sunners)
-    await expect(options.first()).toBeVisible();
+    await expect(options).toHaveCount(1);
     await options.first().click();
 
     const titleInput = dialog.locator("[data-testid=kudos-title-input]");
@@ -1194,7 +1219,12 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const contentTextarea = dialog.locator(
       "[data-testid=kudos-content-textarea]",
     );
-    await contentTextarea.fill("This is **bold** text");
+    // `nonce` sits OUTSIDE the markdown so it survives rendering verbatim —
+    // `**bold**` becomes `<strong>bold</strong>`, so the raw `kudoContent`
+    // string is NOT what lands in the DOM and cannot be used as a filter.
+    const nonce = `C26-${Date.now()}`;
+    const kudoContent = `This is **bold** text ${nonce}`;
+    await contentTextarea.fill(kudoContent);
 
     const hashtagAdd = dialog.locator("[data-testid=kudos-hashtag-add]");
     await hashtagAdd.click();
@@ -1211,11 +1241,14 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const feedCards = page.locator(
       "[data-testid=kudos-feed] [data-testid=kudos-card]",
     );
-    // Wait for new card by title (Award is unique to this test)
-    await expect(feedCards.first()).toContainText("Award");
-    const content = feedCards
-      .first()
-      .locator("[data-testid=kudos-card-content]");
+    // Locate THIS test's own kudo, never `.first()`: other specs
+    // (and `kudos.spec.ts`'s `sendKudo`) write to the same feed
+    // concurrently under `fullyParallel`, so "newest card" is not this
+    // test's card. Filter on its unique content instead.
+    const ownCard = feedCards.filter({ hasText: nonce });
+    await expect(ownCard).toHaveCount(1);
+    await expect(ownCard).toContainText("Award");
+    const content = ownCard.locator("[data-testid=kudos-card-content]");
 
     // Wait for content to render (should have "This is bold text" without **)
     await expect(content).toContainText("This is bold text");

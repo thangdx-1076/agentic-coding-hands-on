@@ -31,12 +31,16 @@ loadEnv();
 
 /**
  * Drives the "Viết Kudo" compose dialog (F009) end-to-end from `/kudos`:
- * search a real seeded recipient ("Test" always matches the seeded "Visual
- * Tester" Sunner, same query `kudos-compose.spec.ts`'s C23/C24 already
- * rely on), fill title/content, optionally tick anonymous with a display
- * name, submit, and wait for the dialog to close. Used by C26/C34 (both
- * need a REAL kudo the signed-in test user sent, not a seed fixture) — not
- * exported, since only this file's `@auth` describe block calls it.
+ * search a seeded recipient by exact name match (not transient test users),
+ * fill title/content, optionally tick anonymous with a display name, submit,
+ * and wait for the dialog to close. Used by C26/C34 (both need a REAL kudo
+ * the signed-in test user sent, not a seed fixture) — not exported, since
+ * only this file's `@auth` describe block calls it.
+ *
+ * DEFECT FIX (C26/C34 non-determinism under fullyParallel): pinned to
+ * "Huỳnh Dương Xuân" from seed 0008 (line 75), NOT a transient "Test User"
+ * created/deleted by kudos-compose.spec.ts. Fails loudly if that seeded
+ * recipient disappears.
  */
 async function sendKudo(
   page: Page,
@@ -48,11 +52,13 @@ async function sendKudo(
   const dialog = page.locator("[data-testid=kudos-compose-dialog]");
 
   const recipientInput = dialog.locator("[data-testid=kudos-recipient-input]");
-  await recipientInput.fill("Test");
+  // Pin to partial name "Huỳnh" — only seeded "Huỳnh Dương Xuân" matches
+  await recipientInput.fill("Huỳnh");
   const recipientOptions = dialog.locator(
     "[data-testid=kudos-recipient-option]",
   );
-  await expect(recipientOptions.first()).toBeVisible();
+  // MUST find the seeded recipient; fail loudly if not present
+  await expect(recipientOptions).toHaveCount(1);
   await recipientOptions.first().click();
 
   await dialog.locator("[data-testid=kudos-title-input]").fill("E2E");
@@ -455,22 +461,30 @@ test.describe(
       page,
     }) => {
       // C14: Chọn 1 hashtag từ dropdown → URL có `?hashtag=`, **cả** carousel **và** feed chỉ còn thẻ mang tag đó, counter về `1/5` hoặc `1/N`
+      // DEFECT FIX (non-determinism under fullyParallel): pinned to "Dedicated"
+      // from seed 0008 (lines 153, 161, 171, 189), NOT a transient "TeamWork"
+      // tag created by sendKudo in C26/C34. Filter options are DB-derived
+      // distinct values (0014_kudos_filter_options.sql), so the list can grow
+      // and order can vary as tests run concurrently. Pin to guaranteed seeded
+      // tag and assert the same contract: URL param, carousel filter,
+      // feed filter, counter reset to 1/N.
       await page.goto("/kudos");
 
       const hashtagFilter = page.locator("[data-testid=kudos-filter-hashtag]");
       await hashtagFilter.click();
 
-      // Select first option (assuming dropdown has options)
-      const firstOption = page
+      // Find the seeded "Dedicated" option — MUST exist, fail loudly if not
+      const dedicatedOption = page
         .locator("[data-testid=kudos-filter-hashtag-option]")
-        .first();
-      const hashtagValue = await firstOption.getAttribute("data-value");
-      await firstOption.click();
+        .filter({ hasText: "Dedicated" });
+      await expect(dedicatedOption).toHaveCount(1);
+      const hashtagValue = await dedicatedOption.getAttribute("data-value");
+      await dedicatedOption.click();
 
       // Wait for URL to change to include hashtag parameter (Server Component navigation)
       await page.waitForURL(/\?hashtag=/);
 
-      // URL should contain ?hashtag=
+      // URL should contain ?hashtag=Dedicated
       const url = new URL(page.url());
       expect(url.searchParams.has("hashtag")).toBe(true);
       expect(url.searchParams.get("hashtag")).toBe(hashtagValue);

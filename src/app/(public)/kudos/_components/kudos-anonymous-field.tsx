@@ -107,7 +107,9 @@ export function KudosAnonymousField({
             onChange={handleNameChange}
             aria-invalid={nameError ? true : undefined}
             aria-describedby={nameError ? "anonymousName-error" : undefined}
-            className="h-14 w-full rounded border border-[#998C5F] bg-transparent px-4 font-montserrat text-login-button-text"
+            className={`h-14 w-full rounded border bg-transparent px-4 font-montserrat text-login-button-text ${
+              nameError ? "border-[#FF8A80]" : "border-[#998C5F]"
+            }`}
           />
         </KudosComposeField>
       ) : null}

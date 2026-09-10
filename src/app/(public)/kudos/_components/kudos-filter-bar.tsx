@@ -41,6 +41,7 @@ export function KudosFilterBar({
             {...hashtag}
             testId="kudos-filter-hashtag"
             optionTestId="kudos-filter-hashtag-option"
+            labelPrefix="#"
           />
           <KudosFilterMenu
             {...department}
