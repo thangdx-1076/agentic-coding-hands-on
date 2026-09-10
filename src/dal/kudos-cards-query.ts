@@ -35,6 +35,16 @@ export type CardRow = {
   receiver_avatar_url: string | null;
   receiver_department: string | null;
   receiver_kudos_received: number;
+  /** `k.sender_id = auth.uid()` computed server-side by the view
+   * (migration `0016`) against the REAL, unmasked sender — `true` even for
+   * an anonymous kudo's own sender, whose `sender_id` above is `NULL`
+   * (F008 BR-005). `NULL` for an unauthenticated request (`auth.uid()` is
+   * itself `NULL`), never a leak of the real sender's identity: this is a
+   * boolean comparison result, not a value. Optional (not `null`-only)
+   * purely so callers/fixtures outside F008's scope that stub a `CardRow`
+   * without it (e.g. `kudos.test.ts`) keep type-checking unchanged — every
+   * REAL read always selects it (`CARD_COLUMNS` below). */
+  is_own?: boolean | null;
 };
 
 type CardsResult = { data: CardRow[] | null; error: unknown };
@@ -49,10 +59,10 @@ type CardsResult = { data: CardRow[] | null; error: unknown };
  * literal type and a second query shape in `KudosClient`.
  */
 type CardColumns =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
 
 const CARD_COLUMNS: CardColumns =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
 
 /**
  * The minimal slice of a Supabase client this helper touches:

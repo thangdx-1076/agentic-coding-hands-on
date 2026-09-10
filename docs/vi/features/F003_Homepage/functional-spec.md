@@ -44,7 +44,7 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Xem & tương tác với trang chủ SAA 2025 | Xem toàn bộ nội dung công khai (hero, đếm ngược, thông tin sự kiện, CTA, Root Further, 6 thẻ giải thưởng, Sun* Kudos, footer), điều hướng tới các trang liên quan, và — khi đã đăng nhập — mở menu tài khoản, xem thông báo, dùng widget hành động nhanh | US001, US002, US003, US004 | FR-001, FR-002, FR-003, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-401, FR-402, FR-403, FR-601 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, DEC-001, SM-001 | SCR003_Home |
+| CAP-01 | Xem & tương tác với trang chủ SAA 2025 | Xem toàn bộ nội dung công khai (hero, đếm ngược, thông tin sự kiện, CTA, Root Further, khối Giải thưởng đủ 3 dòng mô tả, 6 thẻ giải thưởng, Sun* Kudos, footer), điều hướng tới các trang liên quan với đúng nhãn/kích thước header, và — khi đã đăng nhập — mở menu tài khoản, xem thông báo, dùng widget hành động nhanh | US001, US002, US003, US004 | FR-001, FR-002, FR-003, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-211, FR-212, FR-213, FR-214, FR-401, FR-402, FR-403, FR-601 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, DEC-001, SM-001 | SCR003_Home |
 
 ## 3. Open Decisions
 
@@ -52,6 +52,7 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 |------|----------|-------------------|-----------|--------------|
 | D001 | Nội dung thật của menu widget hành động nhanh (spec không liệt kê option) | **RESOLVED 2026-09-08** — MoMorph cấp thiết kế thật cho component set `214:3916` (2 variant: đóng/mở). Nội dung `[INFERRED]` cũ (bút chì → "Sun* Kudos" `/kudos`, icon SAA → "Award Information" `/awards`) bị thay hoàn toàn bởi panel đã thiết kế: "Thể lệ" (`ROUTES.STANDARDS`) và "Viết KUDOS" (`ROUTES.KUDOS`) — `/awards` không còn là lựa chọn trong widget (header nav vẫn giữ link `/awards` riêng). Trigger cũng đổi: pill 106×64 morph thành nút tròn 56×56 đỏ `#D4271D` "×" khi mở, cùng 1 `<button>` DOM node. Chi tiết: `technical-spec.md` § 3.1 A6, § 4.3 SM-001. | Thiết kế thật đã có, không còn suy diễn | no |
 | D002 | Nội dung thật của khối thông tin sự kiện — design ghi "26/12/2025 · Âu Cơ Art Center · Livestream", spec/TC ghi "18h30 · Nhà hát nghệ thuật quân đội · Group Facebook Sun* Family" | Dùng theo spec/TC (TC ID-14 là acceptance criteria, design chỉ là authority cho phần nhìn) | TC là nguồn xác nhận nội dung được chấp nhận, ưu tiên hơn văn bản trong file design | no |
+| D003 | Font digit "Digital Numbers" (7-segment LED) cho `CountdownTiles` chưa có file/license — cần chọn: (a) mua/license font thật, (b) dùng font 7-segment thay thế đã được duyệt, (c) tạm giữ fallback `monospace`. Dùng CHUNG bởi F003 (đếm ngược trang chủ) và F011 (đếm ngược prelaunch) — quyết định 1 lần ở đây, F011 trỏ về. | (b) — chọn 1 font 7-segment thay thế miễn phí/có license hợp lệ, thay `monospace` tạm thời; (c) KHÔNG đạt bar "UI chính xác tuyệt đối so với Figma" nên không phải default lâu dài | Đây là quyết định cấp phép/thương hiệu — không phải thứ developer tự chọn được; nợ đã ghi tại `plans/260908-1653-countdown-prelaunch-page/clarifications.md` § Ghi nợ | yes |
 
 ## 4. Requirements
 
@@ -92,6 +93,14 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 - **FR-209** Footer hiển thị logo, 4 link điều hướng và dòng bản quyền.
 - **FR-210** Một nút hành động nhanh nổi, cố định ở góc dưới bên phải màn hình, mở menu 2 lối tắt
   tới các tính năng thường dùng.
+- **FR-211** Khối tiêu đề mục Giải thưởng hiển thị đủ 3 dòng: caption nhỏ "Sun* annual awards
+  2025", tiêu đề lớn "Hệ thống giải thưởng", và dòng mô tả phụ "Các hạng mục sẽ được trao giải theo
+  TOP những người xuất sắc nhất."
+- **FR-212** Link nav thứ 2 trong header hiển thị đúng nhãn SỐ NHIỀU "Awards Information" (KHÔNG
+  phải "Award Information" số ít) — theo MoMorph row A1.3/7.3 và TC ID-21/23.
+- **FR-213** Logo header có kích thước 64×60px.
+- **FR-214** Chữ số trong mỗi ô đếm ngược (hero) dùng font 7-segment "Digital Numbers" (hoặc font
+  thay thế đã được duyệt theo D003) — KHÔNG được rơi về `monospace` mặc định của trình duyệt.
 
 ### Interaction (4xx)
 
@@ -129,7 +138,7 @@ chuyển ngôn ngữ (F002 sở hữu, tái dùng nguyên trạng).
 
 | Screen Name | SCR### | What User Sees | What User Can Do |
 |-------------|--------|-----------------|-------------------|
-| Trang chủ SAA 2025 | SCR003_Home (draft — số thật cấp lúc promote) | Header, hero + đếm ngược, thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ giải thưởng, quảng bá Sun* Kudos, footer, widget nổi | Điều hướng tới mọi trang liên quan; (nếu đã đăng nhập) mở menu tài khoản/thông báo; đổi ngôn ngữ; mở widget hành động nhanh |
+| Trang chủ SAA 2025 | SCR003_Home (draft — số thật cấp lúc promote) | Header (logo 64×60px, nav "Awards Information" số nhiều), hero + đếm ngược, thông tin sự kiện, CTA, nội dung Root Further, khối Giải thưởng đủ 3 dòng mô tả, 6 thẻ giải thưởng, quảng bá Sun* Kudos, footer, widget nổi | Điều hướng tới mọi trang liên quan; (nếu đã đăng nhập) mở menu tài khoản/thông báo; đổi ngôn ngữ; mở widget hành động nhanh |
 
 ### User Journey
 
@@ -150,8 +159,11 @@ kiện, giải thưởng, Sun* Kudos) và điều hướng tới các trang liê
 cần đăng nhập trước — mở rộng tiếp cận tới toàn bộ Sunner.
 
 **Acceptance Criteria:**
-- [ ] Vào `/` không đăng nhập vẫn thấy đủ toàn bộ nội dung công khai.
-- [ ] Đếm ngược hiển thị đúng trạng thái (đang đếm / đã tới mốc) theo `EVENT_START_AT`.
+- [ ] Vào `/` không đăng nhập vẫn thấy đủ toàn bộ nội dung công khai, kể cả dòng mô tả thứ 3 của
+      khối Giải thưởng.
+- [ ] Đếm ngược hiển thị đúng trạng thái (đang đếm / đã tới mốc) theo `EVENT_START_AT`, chữ số
+      dùng font LED (không phải `monospace`).
+- [ ] Header hiển thị logo 64×60px và nhãn nav "Awards Information" (số nhiều).
 - [ ] Mọi link (CTA, thẻ giải thưởng, Sun* Kudos, footer) dẫn đúng route/hashtag.
 
 ### US002_ManageAccountFromHeader — Manage Account From Header
@@ -196,7 +208,8 @@ header, đặc biệt hữu ích khi đang ở cuối trang.
 ### US001_BrowseHomepage — Happy Path
 
 **Given** chưa tới mốc sự kiện và chưa đăng nhập, **When** khách vào `/`, **Then** trang hiển thị
-đầy đủ hero/đếm ngược đang chạy/thông tin sự kiện/6 thẻ giải thưởng/Sun* Kudos/footer.
+đầy đủ hero/đếm ngược đang chạy/thông tin sự kiện/khối Giải thưởng đủ 3 dòng/6 thẻ giải thưởng/
+Sun* Kudos/footer, header có logo 64×60px và nhãn "Awards Information".
 
 ### US001_BrowseHomepage — Error: Mốc sự kiện cấu hình sai
 
@@ -240,6 +253,12 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 - **FR-202** → Tester xác nhận đếm ngược giảm đúng mỗi phút và dừng đúng ở 00/00/00 khi tới/qua
   mốc.
 - **FR-206** → Tester xác nhận cả 6 thẻ giải thưởng đều dẫn đúng hashtag hạng mục tương ứng.
+- **FR-211** → Tester xác nhận khối Giải thưởng render đủ 3 dòng, kể cả dòng mô tả phụ.
+- **FR-212** → Tester xác nhận nhãn nav là "Awards Information" (số nhiều) ở cả 2 locale.
+- **FR-213** → Tester xác nhận logo header đo được 64×60px.
+- **FR-214** → Tester xác nhận `font-family` của chữ số đếm ngược không phải `monospace` mặc định
+  (phải là font LED thật hoặc thay thế đã duyệt theo D003) — hiện vẫn `monospace` vì D003 chưa
+  chốt, xem RISK-03.
 - **FR-403** → Tester xác nhận menu tài khoản chỉ hiện "Trang quản trị" cho đúng tài khoản quản
   trị viên.
 - **FR-402** → Tester xác nhận huy hiệu đỏ không hiện khi không có thông báo chưa đọc.
@@ -250,6 +269,7 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 |----|------|--------------|--------|--------|
 | RISK-01 | risk | `/admin` không có route thật — `account-menu.tsx` render `href="/admin"` cho `role='admin'` nhưng `ROUTES` không có `ADMIN`; 4 trang đích còn lại (`/awards`, `/kudos`, `/standards`, `/profile`) đã implement từ các feature riêng | Link "Trang quản trị" 404 cho admin; TC ID-59 (broken links) chỉ còn áp dụng cho `/admin` | confirmed (`/admin` only) |
 | RISK-02 | risk | Bảng `notifications` đã có từ F012_NotificationsPanel (migration `0012_notifications.sql`, `0013_notification_emitters.sql`) | Panel thông báo không còn rỗng vĩnh viễn — `NotificationBell`/`useNotifications` đọc dữ liệu thật | resolved |
+| RISK-03 | known-issue | Font "Digital Numbers" cho digit đếm ngược chưa được nạp — không có file font nào dưới `public/`; `countdown-tiles.tsx` khai `fontFamily: '"Digital Numbers", monospace'` nhưng font khai không tồn tại nên trình duyệt luôn render `monospace`. Dùng chung với F011 (đếm ngược prelaunch). Nợ đã ghi ở `plans/260908-1653-countdown-prelaunch-page/clarifications.md` § Ghi nợ; cần D003 (quyết định cấp phép font, chưa chốt). | Chữ số đếm ngược sai font thiết kế trên cả `/` và `/prelaunch` | confirmed |
 
 ## 12. Dependencies
 
@@ -260,6 +280,7 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 | Supabase `saa-app` (`public.users.role`) | external-service | Nguồn dữ liệu vai trò member/admin, đọc phía server | FR-003, FR-601 |
 | `EVENT_START_AT` (biến môi trường) | config | Mốc thời gian sự kiện quyết định trạng thái đếm ngược | FR-202 |
 | `/admin` (route không tồn tại) | feature | Nút "Trang quản trị" của `account-menu.tsx` trỏ tới route này cho `role='admin'` — không có trang, không có `ROUTES.ADMIN` | RISK-01 |
+| Font "Digital Numbers" hoặc thay thế được duyệt | asset/license | Cần để `CountdownTiles` khớp thiết kế LED — quyết định người, xem D003 | FR-214 |
 
 ## 13. Configuration
 

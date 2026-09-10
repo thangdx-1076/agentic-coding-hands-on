@@ -7,7 +7,10 @@ import type { KudosCard as KudosCardModel } from "@/dal/kudos";
 
 const VIEWER_ID = "viewer-1";
 
-function makeCard(senderId: string): KudosCardModel {
+function makeCard(
+  senderId: string | null,
+  { isOwn = false }: { isOwn?: boolean | null } = {},
+): KudosCardModel {
   const person = {
     id: senderId,
     fullName: "Sender",
@@ -24,6 +27,7 @@ function makeCard(senderId: string): KudosCardModel {
     createdAt: "2026-09-07T00:00:00Z",
     sender: person,
     receiver: { ...person, id: "receiver-1" },
+    isOwn,
   };
 }
 
@@ -49,7 +53,22 @@ describe("useKudosHearts", () => {
     );
 
     act(() => {
-      result.current.toggleHeart(makeCard(VIEWER_ID));
+      result.current.toggleHeart(makeCard(VIEWER_ID, { isOwn: true }));
+    });
+
+    expect(action).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it("kudo ẩn danh do chính mình gửi (sender.id null, is_own true) → không gọi Server Action (BR-005)", () => {
+    const action = vi.fn<(kudoId: string) => Promise<ToggleHeartResult>>();
+    const { result, unmount } = renderHook(() =>
+      useKudosHearts(VIEWER_ID, action),
+    );
+
+    act(() => {
+      result.current.toggleHeart(makeCard(null, { isOwn: true }));
     });
 
     expect(action).not.toHaveBeenCalled();
@@ -116,6 +135,34 @@ describe("useKudosHearts", () => {
     expect(result.current.heartOverrides).toEqual({});
 
     unmount();
+  });
+
+  it("click 1 lần → pendingIds chứa id đó ngay lập tức, cho tới khi request trả lời (BR-004)", async () => {
+    let release: (value: ToggleHeartResult) => void = () => {};
+    const pending = new Promise<ToggleHeartResult>((resolve) => {
+      release = resolve;
+    });
+    const action = vi.fn().mockReturnValue(pending);
+    const card = makeCard("someone-else");
+
+    const { result } = renderHook(() => useKudosHearts(VIEWER_ID, action));
+
+    expect(result.current.pendingIds.has("kudo-1")).toBe(false);
+
+    act(() => {
+      result.current.toggleHeart(card);
+    });
+
+    expect(result.current.pendingIds.has("kudo-1")).toBe(true);
+
+    await act(async () => {
+      release({ ok: true, hearted: true, heartCount: 8 });
+      await pending;
+    });
+
+    await waitFor(() => {
+      expect(result.current.pendingIds.has("kudo-1")).toBe(false);
+    });
   });
 
   it("hai click nhanh cùng lúc → chỉ gọi Server Action MỘT lần (guard in-flight)", async () => {

@@ -1,14 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 import {
   createTestSession,
   generateSupabaseCookies,
   injectSupabaseSession,
 } from "./helpers/sign-in";
-import { deleteTestUser } from "./helpers/service-role";
+import {
+  deleteTestUser,
+  getServiceRoleKey,
+  getSupabaseUrl,
+} from "./helpers/service-role";
 
 // Load environment variables from .env.local for Node process
 function loadEnv() {
@@ -24,6 +28,62 @@ function loadEnv() {
   }
 }
 loadEnv();
+
+/**
+ * Drives the "Viết Kudo" compose dialog (F009) end-to-end from `/kudos`:
+ * search a seeded recipient by exact name match (not transient test users),
+ * fill title/content, optionally tick anonymous with a display name, submit,
+ * and wait for the dialog to close. Used by C26/C34 (both need a REAL kudo
+ * the signed-in test user sent, not a seed fixture) — not exported, since
+ * only this file's `@auth` describe block calls it.
+ *
+ * DEFECT FIX (C26/C34 non-determinism under fullyParallel): pinned to
+ * "Huỳnh Dương Xuân" from seed 0008 (line 75), NOT a transient "Test User"
+ * created/deleted by kudos-compose.spec.ts. Fails loudly if that seeded
+ * recipient disappears.
+ */
+async function sendKudo(
+  page: Page,
+  options: { content: string; anonymousName?: string },
+): Promise<void> {
+  await page.goto("/kudos");
+  await page.locator("[data-testid=kudos-compose-pill]").click();
+
+  const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+
+  const recipientInput = dialog.locator("[data-testid=kudos-recipient-input]");
+  // Pin to partial name "Huỳnh" — only seeded "Huỳnh Dương Xuân" matches
+  await recipientInput.fill("Huỳnh");
+  const recipientOptions = dialog.locator(
+    "[data-testid=kudos-recipient-option]",
+  );
+  // MUST find the seeded recipient; fail loudly if not present
+  await expect(recipientOptions).toHaveCount(1);
+  await recipientOptions.first().click();
+
+  await dialog.locator("[data-testid=kudos-title-input]").fill("E2E");
+  await dialog
+    .locator("[data-testid=kudos-content-textarea]")
+    .fill(options.content);
+
+  // `hashtags` is one of the 5 required fields (REQUIRED_DRAFT_FIELDS) —
+  // Submit stays `aria-disabled` without at least one, same as C23/C24.
+  await dialog.locator("[data-testid=kudos-hashtag-add]").click();
+  const picker = dialog.locator("[data-testid=kudos-hashtag-picker]");
+  const hashtagInput = picker.locator("input").first();
+  await hashtagInput.fill("TeamWork");
+  await hashtagInput.press("Enter");
+
+  if (options.anonymousName) {
+    await dialog.locator("[data-testid=kudos-anonymous-checkbox]").click();
+    await dialog
+      .locator("[data-testid=kudos-anonymous-name-input]")
+      .fill(options.anonymousName);
+  }
+
+  await dialog.locator("[data-testid=kudos-compose-submit]").click();
+  await expect(dialog).not.toHaveAttribute("open", "");
+}
 
 /**
  * DOM Contract — Kudos Live Board Page (`/kudos`)
@@ -65,6 +125,8 @@ loadEnv();
  * | C30 | *(CI-safe)* | `[data-testid=kudos-hero-search-input]` **không** `readonly`, nhận được chữ gõ vào, `maxlength="128"` | — | FR-402 |
  * | C31 | *(CI-safe)* | Ẩn danh gõ vào ô hero → `[data-testid=kudos-hero-search-options]` hiện gợi ý đăng nhập, **không** phải "không tìm thấy" | — | FR-402, SEC_004 |
  * | C32 | `@auth` | Đã đăng nhập: gõ tên Sunner → `[data-testid=kudos-hero-search-option]` hiện, bấm 1 kết quả → URL tới `/profile?id=<uuid>` | TC[00], TC[35] | FR-402, US008 |
+ * | C33 | `@local-db` | Seed 1 dòng `secret_box_openings` cho Sunner có sẵn → board thứ 2 (gift) chứa tên Sunner đó và **không** hiện `Chưa có dữ liệu` | US010, TC `6b1e2359`, `0952e2f0` | FR-219, BR-020 |
+ * | C34 | `@local-db` | Kudo ẩn danh do CHÍNH MÌNH gửi (qua dialog Viết Kudo) → nút tim của thẻ đó `disabled` dù `sender_id` bị mask NULL (BR-005, `is_own`) | — | F008 FR-205, BR-005 |
  * ========================================================
  *
  * OUT OF SCOPE (deferred to frame Figma chưa tồn tại, clarifications § § Out-of-Scope):
@@ -399,22 +461,30 @@ test.describe(
       page,
     }) => {
       // C14: Chọn 1 hashtag từ dropdown → URL có `?hashtag=`, **cả** carousel **và** feed chỉ còn thẻ mang tag đó, counter về `1/5` hoặc `1/N`
+      // DEFECT FIX (non-determinism under fullyParallel): pinned to "Dedicated"
+      // from seed 0008 (lines 153, 161, 171, 189), NOT a transient "TeamWork"
+      // tag created by sendKudo in C26/C34. Filter options are DB-derived
+      // distinct values (0014_kudos_filter_options.sql), so the list can grow
+      // and order can vary as tests run concurrently. Pin to guaranteed seeded
+      // tag and assert the same contract: URL param, carousel filter,
+      // feed filter, counter reset to 1/N.
       await page.goto("/kudos");
 
       const hashtagFilter = page.locator("[data-testid=kudos-filter-hashtag]");
       await hashtagFilter.click();
 
-      // Select first option (assuming dropdown has options)
-      const firstOption = page
+      // Find the seeded "Dedicated" option — MUST exist, fail loudly if not
+      const dedicatedOption = page
         .locator("[data-testid=kudos-filter-hashtag-option]")
-        .first();
-      const hashtagValue = await firstOption.getAttribute("data-value");
-      await firstOption.click();
+        .filter({ hasText: "Dedicated" });
+      await expect(dedicatedOption).toHaveCount(1);
+      const hashtagValue = await dedicatedOption.getAttribute("data-value");
+      await dedicatedOption.click();
 
       // Wait for URL to change to include hashtag parameter (Server Component navigation)
       await page.waitForURL(/\?hashtag=/);
 
-      // URL should contain ?hashtag=
+      // URL should contain ?hashtag=Dedicated
       const url = new URL(page.url());
       expect(url.searchParams.has("hashtag")).toBe(true);
       expect(url.searchParams.get("hashtag")).toBe(hashtagValue);
@@ -638,6 +708,60 @@ test.describe(
       // Detail button should be disabled (feature deferred)
       await expect(detailBtn).toBeDisabled();
     });
+
+    test("[C33] Gift leaderboard shows a Sunner who just opened a Secret Box", async ({
+      page,
+    }) => {
+      // C33: seed 1 secret_box_openings row for an existing seed Sunner →
+      // the SECOND kudos-leaderboard (gift board, kudos-sidebar.tsx) must
+      // show their name and drop the "Chưa có dữ liệu" empty state.
+      // Not `test.skip`: a missing service-role key means this assertion
+      // can never be proven either way, so it must fail loudly, same
+      // posture `deleteTestUser` takes for cleanup failures.
+      const serviceRoleKey = getServiceRoleKey();
+      expect(
+        serviceRoleKey,
+        "no local Supabase service-role key (env or `supabase status`) — cannot seed secret_box_openings",
+      ).toBeTruthy();
+
+      const supabaseUrl = getSupabaseUrl();
+      const headers = {
+        apikey: serviceRoleKey as string,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      };
+      // Đỗ hoàng Hiệp — 0008_kudos_demo_seed.sql seed id 1, never signs in,
+      // so this row cannot collide with anything a login-based test touches.
+      const seedUserId = "a0000000-0000-4000-8000-000000000001";
+      const seedUserName = "Đỗ hoàng Hiệp";
+
+      const insertResponse = await fetch(
+        `${supabaseUrl}/rest/v1/secret_box_openings`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ user_id: seedUserId, badge_key: "stay-gold" }),
+        },
+      );
+      expect(insertResponse.ok).toBe(true);
+      const [insertedRow] = (await insertResponse.json()) as { id: string }[];
+
+      try {
+        await page.goto("/kudos");
+
+        const giftBoard = page
+          .locator("[data-testid=kudos-leaderboard]")
+          .nth(1);
+        await expect(giftBoard).toContainText(seedUserName);
+        await expect(giftBoard).not.toContainText("Chưa có dữ liệu");
+      } finally {
+        await fetch(
+          `${supabaseUrl}/rest/v1/secret_box_openings?id=eq.${insertedRow.id}`,
+          { method: "DELETE", headers },
+        );
+      }
+    });
   },
 );
 
@@ -736,30 +860,58 @@ test.describe(
         .toBe(initialCount);
     });
 
-    test.fixme(
+    test(
       "[C26] Own kudo: heart button disabled",
       { tag: "@local-db" },
       async ({ page }) => {
         // C26: Kudo do chính mình gửi → nút tim `disabled`
-        // FIXME: Unsatisfiable in this release — Compose Kudo dialog not implemented.
-        // RLS rule proven at DB level (evidence/rls-verification.md): SET ROLE authenticated
-        // + auth.uid() = sender → "new row violates row-level security policy".
-        // This e2e test cannot run without a way to create a kudo as the test user.
-        // Marked fixme() not skip() — the rule is real and working, just not testable yet.
-        await page.goto("/kudos");
+        // Compose Kudo dialog now ships (F009) — send a non-anonymous kudo
+        // to a seeded Sunner first, so a real "self" card exists on the
+        // board (`kudos-card.tsx`'s `data-sender-id="self"`, driven by
+        // `isOwnKudo`, which this repo's compose flow already renders
+        // correctly for a non-anonymous kudo today). RLS itself is proven
+        // at the DB level (evidence/rls-verification.md): SET ROLE
+        // authenticated + auth.uid() = sender → "new row violates row-level
+        // security policy" — this e2e test exercises the UI mirror of that
+        // rule, not the rule itself.
+        await sendKudo(page, { content: `C26 self kudo ${Date.now()}` });
 
-        // Find a kudo sent by self
         const ownKudos = page.locator(
-          '[data-testid=kudos-card][data-sender-id="self"]',
+          '[data-testid=kudos-feed] [data-testid=kudos-card][data-sender-id="self"]',
         );
-        const count = await ownKudos.count();
-
-        // At least one own kudo should exist (will work once Compose dialog is built)
-        expect(count).toBeGreaterThan(0);
+        await expect(ownKudos.first()).toBeVisible();
 
         const heart = ownKudos
           .first()
           .locator("[data-testid=kudos-card-heart]");
+        await expect(heart).toBeDisabled();
+      },
+    );
+
+    test(
+      "[C34] Anonymous kudo from self: heart button disabled (BR-005)",
+      { tag: "@local-db" },
+      async ({ page }) => {
+        // C34: `sender_id` is masked NULL for an anonymous kudo (0009), so
+        // the OLD `card.sender.id === viewerId` comparison could never see
+        // "this is mine" — the button rendered enabled, then Postgres's own
+        // `kudo_hearts_insert_own` policy (0007) rejected the write. `0016`
+        // adds a server-computed `is_own` boolean to `kudos_cards` so the UI
+        // can disable the button honestly, even when the sender is hidden
+        // from everyone else.
+        const uniqueContent = `C34 anon self kudo ${Date.now()}`;
+        await sendKudo(page, {
+          content: uniqueContent,
+          anonymousName: "Một Sunner ẩn danh",
+        });
+
+        const feedCards = page.locator(
+          "[data-testid=kudos-feed] [data-testid=kudos-card]",
+        );
+        const newCard = feedCards.filter({ hasText: uniqueContent }).first();
+        await expect(newCard).toBeVisible();
+
+        const heart = newCard.locator("[data-testid=kudos-card-heart]");
         await expect(heart).toBeDisabled();
       },
     );

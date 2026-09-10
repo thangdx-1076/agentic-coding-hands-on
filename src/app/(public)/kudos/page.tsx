@@ -9,15 +9,19 @@ import { toggleKudoHeart } from "./_actions/toggle-kudo-heart";
 import { loadMoreKudos } from "./_actions/load-more-kudos";
 import { KudosClient } from "./_components/kudos-client";
 import { buildKudosCopy } from "./_shared/build-kudos-copy";
+import { buildGiftRecipientItems } from "./_shared/build-gift-recipient-items";
 import type { KudosStats } from "./_components/kudos-stat-list";
 
 import { getCurrentUser } from "@/dal/auth";
 import { getKudosBoard } from "@/dal/kudos";
+import { toKudosAggregatesClient } from "@/dal/kudos-board-aggregates-client";
 import { toKudosClient } from "@/dal/kudos-client";
 import { getViewerHeartedKudoIds } from "@/dal/kudo-hearts";
 import { toKudoHeartsClient } from "@/dal/kudo-hearts-client";
 import { getKudosStats, type KudosStatsClient } from "@/dal/kudos-stats";
 import { toKudosStatsClient } from "@/dal/kudos-stats-client";
+import { getRecentGiftRecipients } from "@/dal/recent-gift-recipients";
+import { toRecentGiftRecipientsClient } from "@/dal/recent-gift-recipients-client";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeLocale } from "@/lib/i18n/locale";
 
@@ -68,17 +72,24 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
   const locale = normalizeLocale(rawLocale);
   const tHome = await getTranslations("home");
   const tKudos = await getTranslations("kudos");
+  const tStandards = await getTranslations("standards");
   const notificationsCopy = await getNotificationsCopy();
   const copy = buildKudosCopy(tHome, tKudos, notificationsCopy, locale);
 
   const supabase = await createClient();
-  const [board, stats] = await Promise.all([
-    getKudosBoard(toKudosClient(supabase), {
-      hashtag: hashtag ?? undefined,
-      department: department ?? undefined,
-    }),
+  const [board, stats, recentGiftRecipients] = await Promise.all([
+    getKudosBoard(
+      toKudosClient(supabase),
+      { hashtag: hashtag ?? undefined, department: department ?? undefined },
+      toKudosAggregatesClient(supabase),
+    ),
     buildViewerStats(toKudosStatsClient(supabase), viewerId),
+    getRecentGiftRecipients(toRecentGiftRecipientsClient(supabase)),
   ]);
+  const giftRecipients = buildGiftRecipientItems(
+    recentGiftRecipients,
+    tStandards,
+  );
 
   const visibleCardIds = [...board.highlight, ...board.feed.items].map(
     (card) => card.id,
@@ -103,6 +114,7 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
       hashtag={hashtag}
       department={department}
       stats={stats}
+      giftRecipients={giftRecipients}
       logoutAction={logoutAction}
       toggleKudoHeartAction={toggleKudoHeart}
       loadMoreKudosAction={loadMoreKudos}

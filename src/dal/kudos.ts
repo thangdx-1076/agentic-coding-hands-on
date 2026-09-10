@@ -5,51 +5,53 @@ import {
   type CardRow,
   type KudosClient,
 } from "./kudos-cards-query";
+import {
+  getKudosFilterOptions,
+  getKudosTotal,
+  type KudosAggregatesClient,
+  type KudosFilterOptions,
+} from "./kudos-board-aggregates";
+import type { KudosCard } from "./kudos-card-model";
 
 /**
  * Server-side read for `/kudos` (F007_KudosLiveBoard's public, read-only
  * board). Mirrors `src/dal/awards.ts`: the Supabase client is always
  * INJECTED (never created here), and every failure — a Supabase error, a
- * null result, or a thrown exception, on ANY of the three reads this
- * function issues — fails OPEN to a fully empty board rather than throwing
- * or rendering a partially-populated one (`/kudos` has no auth guard,
- * BR-015; an empty board only ever renders the empty states BR-011/BR-012
- * already define, never a 500).
+ * null result, or a thrown exception, on ANY read this function issues —
+ * fails OPEN to a fully empty board rather than throwing or rendering a
+ * partially-populated one (`/kudos` has no auth guard, BR-015; an empty
+ * board only ever renders the empty states BR-011/BR-012 already define).
+ *
+ * Spotlight's total and the Hashtag/Phòng ban filter option lists come
+ * from a SEPARATE, OPTIONAL `aggregatesClient` (`getKudosTotal`/
+ * `getKudosFilterOptions`, `./kudos-board-aggregates`) — an exact `COUNT`
+ * and a distinct-value view read, both independent of PostgREST's
+ * `max_rows = 1000` cap (BR-017/FR-215/FR-217); they used to be derived
+ * from `.length`/`.flatMap` over the same unbounded `kudos_cards` read
+ * Highlight/Feed also use, which silently went wrong past 1000 rows. When
+ * `aggregatesClient` is omitted, `spotlightTotal` defaults to `0` and
+ * `filters` to empty lists — `loadMoreKudos` (`_actions/load-more-kudos.ts`)
+ * only ever reads `board.feed` and skips both extra reads on every scroll.
+ *
+ * `spotlightNames` (the scatter's receiver names) is NOT board-wide — it
+ * only needs names from the currently-displayed set (Highlight + Feed), so
+ * it stays a plain dedupe over those two reads.
  *
  * Deliberately does NOT know about `kudo_hearts` (migration `0007`,
- * F008_KudosHeartReaction) — plan.md AD-2: this keeps F007 runnable and
- * testable before `0007` is ever applied.
- *
- * The row shape, column list, injected-client surface and the single
- * `selectCards` read live in `./kudos-cards-query` (a size split only).
- * Both client types are re-exported below so `@/dal/kudos` stays the one
- * import path for this DAL — `kudos-client.ts` and this file's own test
- * still reach them here.
+ * F008_KudosHeartReaction) — plan.md AD-2. The row shape, column list,
+ * injected-client surface and the `selectCards` read live in
+ * `./kudos-cards-query` (a size split only); both client types are
+ * re-exported below so `@/dal/kudos` stays the one import path.
  */
 
 export type { KudosCardsQuery, KudosClient } from "./kudos-cards-query";
-
-export type KudosPerson = {
-  /** `null` on the sender of an anonymous kudo (AD-2) — the view's only
-   * anonymity signal, never a second `isAnonymous` flag. Never `null` for a
-   * receiver: `kudos_cards` masks the sender side only. */
-  id: string | null;
-  fullName: string | null;
-  avatarUrl: string | null;
-  department: string | null;
-  kudosReceived: number;
-};
-
-export type KudosCard = {
-  id: string;
-  content: string;
-  hashtags: string[];
-  imageUrls: string[];
-  heartCount: number;
-  createdAt: string;
-  sender: KudosPerson;
-  receiver: KudosPerson;
-};
+export type {
+  AggregatesQuery,
+  FilterOptionRow,
+  KudosAggregatesClient,
+  KudosFilterOptions,
+} from "./kudos-board-aggregates";
+export type { KudosCard, KudosPerson } from "./kudos-card-model";
 
 export type KudosBoard = {
   highlight: KudosCard[];
@@ -76,31 +78,35 @@ const EMPTY_BOARD: KudosBoard = {
   filters: { hashtags: [], departments: [] },
 };
 
+const EMPTY_FILTER_OPTIONS: KudosFilterOptions = {
+  hashtags: [],
+  departments: [],
+};
+
 /**
  * Resolves the whole `/kudos` board in one call: the Highlight carousel
  * (top `HIGHLIGHT_LIMIT` by `heart_count`, BR-001), one Feed page (keyset
- * `cursor` on `created_at`, AD-5 — no `OFFSET`), and the unfiltered totals
- * `kudos_cards` also carries: Spotlight's real count (BR-009), distinct
- * receiver names for its scatter (real receivers, per `clarifications.md`
- * § Spotlight), and the distinct hashtag/department lists
- * `KudosFilterBar`'s dropdowns render (FR-206). `hashtag`/`department`
- * filter Highlight and Feed together (BR-003); the totals read stays
- * unfiltered — Spotlight's totals and the filter option lists are
- * board-wide, not scoped to the current selection.
+ * `cursor` on `created_at`, AD-5 — no `OFFSET`), and Spotlight's total +
+ * filter option lists via `aggregatesClient` (BR-009/BR-017, see top
+ * comment). `hashtag`/`department` filter Highlight and Feed together
+ * (BR-003); the two aggregate reads stay board-wide, unfiltered.
  *
  * Fails open to a fully empty board on a Supabase error, a null result, or
- * a thrown exception from ANY of the three reads — never a partially-
- * populated board from a partially-failed read.
+ * a thrown exception from ANY of the reads.
  */
 export async function getKudosBoard(
   client: KudosClient,
   options: GetKudosBoardOptions = {},
+  aggregatesClient?: KudosAggregatesClient,
 ): Promise<KudosBoard> {
   const { hashtag, department, cursor } = options;
 
   try {
-    const [totalsRows, highlightRows, feedRows] = await Promise.all([
-      selectCards(client, {}),
+    const [total, filters, highlightRows, feedRows] = await Promise.all([
+      aggregatesClient ? getKudosTotal(aggregatesClient) : 0,
+      aggregatesClient
+        ? getKudosFilterOptions(aggregatesClient)
+        : EMPTY_FILTER_OPTIONS,
       selectCards(client, {
         hashtag,
         department,
@@ -127,16 +133,13 @@ export async function getKudosBoard(
             ? lastFeedRow.created_at
             : null,
       },
-      spotlightTotal: totalsRows.length,
+      spotlightTotal: total,
       spotlightNames: dedupe(
-        totalsRows.map((row) => row.receiver_full_name).filter(isPresent),
+        [...highlightRows, ...feedRows]
+          .map((row) => row.receiver_full_name)
+          .filter(isPresent),
       ),
-      filters: {
-        hashtags: dedupe(totalsRows.flatMap((row) => toArray(row.hashtags))),
-        departments: dedupe(
-          totalsRows.map((row) => row.receiver_department).filter(isPresent),
-        ),
-      },
+      filters,
     };
   } catch {
     return EMPTY_BOARD;
@@ -165,6 +168,7 @@ function toCard(row: CardRow): KudosCard {
       department: row.receiver_department,
       kudosReceived: row.receiver_kudos_received,
     },
+    isOwn: row.is_own,
   };
 }
 

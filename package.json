@@ -1,6 +1,6 @@
 {
   "name": "agentic-coding-hands-on",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "private": true,
   "packageManager": "pnpm@10.33.2",
   "engines": {
@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:e2e": "playwright test",
+    "test:e2e:lock": "playwright test --config=playwright.lock.config.ts",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",

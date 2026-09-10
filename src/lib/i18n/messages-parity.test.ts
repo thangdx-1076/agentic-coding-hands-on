@@ -41,6 +41,37 @@ function flattenKeys(obj: unknown, prefix = ""): string[] {
   return keys;
 }
 
+/**
+ * Flattens a nested object into a list of `[path, value]` pairs, keeping the
+ * leaf value alongside its dot-notation path. Non-string leaves are skipped
+ * since the diacritic guard only inspects display text.
+ */
+function flattenEntries(obj: unknown, prefix = ""): [string, string][] {
+  if (typeof obj !== "object" || obj === null) {
+    return [];
+  }
+
+  const entries: [string, string][] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const entryPath = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "object" && value !== null) {
+      entries.push(...flattenEntries(value, entryPath));
+    } else if (typeof value === "string") {
+      entries.push([entryPath, value]);
+    }
+  }
+  return entries;
+}
+
+// Explicit Vietnamese diacritic character class: precomposed vowels carrying
+// a Vietnamese tone/quality mark, the letters đ/Đ, and the standalone
+// combining marks (U+0300 grave, U+0301 acute, U+0303 tilde, U+0309 hook
+// above, U+0323 dot below) used by Vietnamese diacritics. Deliberately NOT
+// `/[^\x00-\x7F]/` — that would also flag legitimate non-ASCII characters in
+// English copy such as `Sun*`, the ellipsis `…`, or emoji.
+const VI_DIACRITICS =
+  /[ăâđêôơưĂÂĐÊÔƠƯáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ̣̀́̃̉]/u;
+
 describe("i18n messages parity (MODEL003)", () => {
   it("English and Vietnamese messages have identical key sets (bidirectional)", () => {
     const enKeys = new Set(flattenKeys(enMessages));
@@ -77,5 +108,20 @@ describe("i18n messages parity (MODEL003)", () => {
     const viKeys = flattenKeys(viMessages);
 
     expect(viKeys.length).toBe(enKeys.length);
+  });
+
+  it("en.json has 0 leaves containing Vietnamese diacritics", () => {
+    const enEntries = flattenEntries(enMessages);
+    const offending = enEntries
+      .filter(([, value]) => VI_DIACRITICS.test(value))
+      .map(([key, value]) => `  ${key} = "${value}"`);
+
+    if (offending.length > 0) {
+      throw new Error(
+        `en.json must be pure English, but found Vietnamese text in ${offending.length} leaf(ves):\n${offending.join("\n")}`,
+      );
+    }
+
+    expect(offending).toHaveLength(0);
   });
 });

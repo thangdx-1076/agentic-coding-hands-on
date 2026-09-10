@@ -25,7 +25,7 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
 | **A0** | *cross-cutting — belongs to no single action* | — | FR-102, BR-015 | — | § 4.4 |
-| **A1** | `KudosPage` (Server Component) | `GET` `/kudos` | FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-205, FR-206, FR-207, FR-208, FR-211, FR-212, FR-213, BR-001, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-011, BR-012, US001, US003, US007 | — *(read-only)* | § 3.1 |
+| **A1** | `KudosPage` (Server Component) | `GET` `/kudos` | FR-001, FR-002, FR-101, FR-201, FR-202, FR-203, FR-205, FR-206, FR-207, FR-208, FR-211, FR-212, FR-213, FR-215, FR-217, FR-219, BR-001, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-011, BR-012, BR-017, BR-020, US001, US003, US007, US010 | — *(read-only)* | § 3.1 |
 | **A2** | `loadMoreKudos` (Server Action) | — *(gọi từ client khi cuộn hết trang hiện có, không phải HTTP path riêng)* | FR-210, BR-005, BR-006, BR-007, BR-008, US005 | — *(read-only)* | § 3.1 |
 | **A3** | `KudosSpotlightSearch` (client-only, không BE) | — *(gõ/click icon, không HTTP)* | FR-209, BR-010, US004 | — *(read-only)* | § 3.1 |
 | **A4** | `KudosHighlightCarouselNav` (client-only, không BE) | — *(click, không HTTP)* | FR-204, BR-002, SM-001, US002 | — *(read-only)* | § 3.1 |
@@ -33,6 +33,7 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 | **A6** | `KudosProfileLink` (Link tới `/profile?id=`, gate tái dùng `(protected)/layout.tsx`) | `GET` `/profile?id=` *(đích đã có sẵn, F006_ProfilePage)* | FR-402, FR-601, BR-013, US008 | — *(read-only)* | § 3.1 |
 | **A7** | `KudosHeartDisplay` (render-only) | — *(không HTTP — bấm tim thuộc F008)* | FR-205, FR-602, BR-014 | — *(read-only)* | § 3.1 |
 | **A8** | `KudosHeroProfileSearch` (client, implemented) | — *(gõ tên/chọn kết quả, điều hướng qua `router.push`, không phải HTTP path riêng)* | FR-214, BR-016, US009 | — *(read-only)* | § 3.1 |
+| **A9** | `KudosFilterMenu` (client-only, không BE — trình bày panel dropdown) | — *(click mở, không HTTP)* | FR-218, BR-019 | — *(read-only)* | § 3.1 |
 
 ## 3. Actions
 
@@ -40,12 +41,12 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 
 #### A1 · Render trang `/kudos` (đọc toàn bộ board: banner, carousel, Spotlight, feed trang đầu, sidebar)
 `GET` `/kudos` → `` `KudosPage` ``
-`FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-205` `FR-206` `FR-207` `FR-208` `FR-211` `FR-212` `FR-213` · `SCR007_KudosLiveBoard` · `US001` `US003` `US007`
+`FR-001` `FR-002` `FR-101` `FR-201` `FR-202` `FR-203` `FR-205` `FR-206` `FR-207` `FR-208` `FR-211` `FR-212` `FR-213` `FR-215` `FR-217` `FR-219` · `SCR007_KudosLiveBoard` · `US001` `US003` `US007` `US010`
 
 **Who** · Bất kỳ khách truy cập nào — Anonymous hoặc Authenticated, không qua guard nào *(gate A0 — § 4.4)*.
 **FE** · `src/app/(public)/kudos/page.tsx:56` đọc `searchParams.hashtag`/`searchParams.department`, dựng `copy` (`_shared/build-kudos-copy.ts:78`, `_shared/kudos-copy.ts:31` — chrome dùng chung namespace `home`, leaf riêng namespace `kudos`), giao cho `KudosClient` (`_components/kudos-client.tsx:60`) → `KudosScreen` (`_components/kudos-screen.tsx:80`) render: banner ghi nhận (`FR-201`, chỉ đọc), ô nhập A.1 (`FR-002`/`FR-202` — chỉ render, KHÔNG mở dialog Viết Kudo trong phạm vi F007), `KudosFilterBar` (`_components/kudos-filter-bar.tsx:17` — dropdown Hashtag/Phòng ban lấy danh sách distinct từ DB; click 1 hashtag trên thẻ set lại filter), carousel Highlight 5 thẻ (`FR-203`), Spotlight tổng "N KUDOS" + scatter tĩnh (`FR-208`), feed ALL KUDOS trang đầu, sidebar 5 chỉ số + 2 leaderboard (`FR-211`). Khi không có kudo nào, carousel và feed cùng hiện thông báo rỗng (`FR-212`); khi 1 leaderboard rỗng, chỉ leaderboard đó hiện thông báo rỗng riêng (`FR-213`). `FR-101` được thoả đơn giản bởi việc `GET /kudos` resolve `200` thay vì 404.
 **Request** · query `hashtag` *(string, optional)*, `department` *(string, optional)* — không tham số nào bắt buộc.
-**BE** · `` `getKudosBoard(toKudosClient(supabase), { hashtag, department })` `` (`src/dal/kudos.ts:95`, shim `src/dal/kudos-client.ts:57`) — 1 lần đọc view `public.kudos_cards` (lọc theo `hashtag`/`department` nếu có), sắp `heart_count` giảm dần lấy 5 dòng đầu cho carousel, `COUNT(*)` trên `public.kudos` cho tổng Spotlight, trang đầu (giới hạn cursor) cho feed, cộng 1 lần đọc thống kê cá nhân (chỉ khi đã đăng nhập — xem D001, `functional-spec.md § 3`, qua `src/dal/kudos-stats.ts:112`) và 2 leaderboard.
+**BE** · `` `getKudosBoard(toKudosClient(supabase), { hashtag, department })` `` (`src/dal/kudos.ts:95`, shim `src/dal/kudos-client.ts:57`) — 1 lần đọc view `public.kudos_cards` (lọc theo `hashtag`/`department` nếu có), sắp `heart_count` giảm dần lấy 5 dòng đầu cho carousel, trang đầu (giới hạn cursor) cho feed, cộng 1 lần đọc thống kê cá nhân (chỉ khi đã đăng nhập — xem D001, `functional-spec.md § 3`, qua `src/dal/kudos-stats.ts:112`) và 2 leaderboard. Tổng Spotlight VÀ 2 danh sách option bộ lọc KHÔNG còn suy ra từ cùng 1 lần đọc `kudos_cards` bị `max_rows=1000` cắt (BR-017/FR-215/FR-217) — `getKudosTotal(client)` (`src/dal/kudos-board-aggregates.ts:20-30`) đọc `COUNT(*)` chính xác trên `public.kudos` (`count: "exact", head: true`), và `getKudosFilterOptions(client)` (`kudos-board-aggregates.ts:36-52`) đọc view `public.kudos_filter_options` (migration `0014`, `UNION ALL` distinct hashtag/department) — cả 2 độc lập với dòng nào PostgREST tình cờ trả về cho `kudos_cards`. `giftRecipients` (FR-219) không còn hardcode `[]` — `getRecentGiftRecipients(client, { limit: 10 })` (`src/dal/recent-gift-recipients.ts:91-112`) đọc view `public.recent_gift_recipients` (migration `0015`, `SECURITY DEFINER`, join `users`), map qua `buildGiftRecipientItems` (`src/app/(public)/kudos/_shared/build-gift-recipient-items.ts:51-73`) — mô tả quà lấy caption huy hiệu thật qua `t("secretBoxSection.badges.<camelKey>.caption")` (D004), không phải text quà vật lý mock; `rankUps` vẫn `[]` (không có bảng rank-tracking, ngoài phạm vi).
 **Rule**
 - **BR-001 — Carousel Highlight luôn lấy đúng 5 kudo có `heart_count` cao nhất tại thời điểm tải trang.** *(Bin 1 — chỉ dùng ở A1)*
 - **BR-003 — Chọn filter Hashtag/Phòng ban lọc lại đồng thời carousel Highlight và feed ALL KUDOS, đưa carousel về slide 1.** *(Bin 1 — chỉ dùng ở A1)*
@@ -57,8 +58,10 @@ không action nào cần diagram (không action nào ghi ≥2 bảng, không act
 - **BR-009 — Tổng "N KUDOS" ở Spotlight là `COUNT(*)` thật của bảng `kudos`, không phải giá trị tĩnh.** *(Bin 1 — chỉ dùng ở A1)*
 - **BR-011 — Không có kudo nào → carousel và feed cùng hiện "Hiện tại chưa có Kudos nào.".** *(Bin 1 — chỉ dùng ở A1)*
 - **BR-012 — 1 leaderboard chưa có dữ liệu → chỉ leaderboard đó hiện "Chưa có dữ liệu".** *(Bin 1 — chỉ dùng ở A1)*
-**Result** · read-only — không ghi DB. Props xuống `KudosScreen`: `highlight: KudosCard[5]`, `feed: { items: KudosCard[], nextCursor }`, `spotlightTotal: number`, `spotlightNames: string[]`, `sidebarStats | null` (null khi anonymous, D001), `leaderboards`.
-**Source:** `src/app/(public)/kudos/page.tsx:56`, `src/dal/kudos.ts:95`; hành vi khoá tại `tests/e2e/kudos.spec.ts`.
+- **BR-017 — Tổng Spotlight và 2 danh sách option bộ lọc không được tính từ 1 lần đọc bị `max_rows=1000` giới hạn — phải là `COUNT` chính xác + truy vấn distinct-value độc lập.** *(Bin 1 — chỉ dùng ở A1)*
+- **BR-020 — Sidebar hiển thị đúng 10 Sunner mở Secret Box gần nhất, sắp `opened_at` giảm dần, đọc qua view `SECURITY DEFINER` (RLS gốc của `secret_box_openings` chỉ own-rows).** *(Bin 1 — chỉ dùng ở A1)*
+**Result** · read-only — không ghi DB. Props xuống `KudosScreen`: `highlight: KudosCard[5]`, `feed: { items: KudosCard[], nextCursor }`, `spotlightTotal: number` (nay là `COUNT` chính xác), `spotlightNames: string[]`, `filterOptions: { hashtags: string[], departments: string[] }` (nay distinct-value đầy đủ, không phụ thuộc `max_rows`), `sidebarStats | null` (null khi anonymous, D001), `leaderboards` (`rankUps: []`, `giftRecipients: GiftRecipientItem[]` — không còn hardcode rỗng).
+**Source:** `src/app/(public)/kudos/page.tsx:56`, `src/dal/kudos.ts:95`, `src/dal/kudos-board-aggregates.ts`, `src/dal/recent-gift-recipients.ts`, `src/app/(public)/kudos/_shared/build-gift-recipient-items.ts`; hành vi khoá tại `tests/e2e/kudos.spec.ts`.
 
 <!-- Không cần diagram: đọc 1 lần, không ghi bảng nào, không phải background/async. -->
 
@@ -196,6 +199,36 @@ nguyên chữ đã gõ; `Enter` mở kết quả đầu tiên nếu có.
 
 ---
 
+#### A9 · Trình bày panel dropdown Hashtag/Phòng ban
+— *(click mở, không HTTP)* → `` `KudosFilterMenu` `` (client-only)
+`FR-218` · `SCR007_KudosLiveBoard` · `BR-019`
+
+**Who** · Bất kỳ khách truy cập nào mở dropdown Hashtag hoặc Phòng ban *(gate A0)*.
+**FE** · `src/app/(public)/kudos/_components/kudos-filter-menu.tsx:104-127` render panel
+`rounded-lg border border-[#998C5F] bg-[#00070C] p-1.5 shadow-lg max-h-87 overflow-y-auto`; mỗi
+option `h-14 rounded px-4 text-center font-montserrat text-base leading-6 font-bold
+tracking-[0.5px]`, mục đang chọn (`aria-selected`) có nền `rgba(255,234,158,0.10)` +
+`text-shadow: 0 4px 4px rgba(0,0,0,.25), 0 0 6px #FAE287`; nhãn hashtag giữ tiền tố `#` qua prop
+`labelPrefix` (`:19-25`, KHÔNG chạm `data-value` mà `tests/e2e/kudos.spec.ts` C14/C15 select).
+**Request** · không có (client-only).
+**BE** · không có.
+**Rule**
+- **BR-019 — Panel dropdown và mỗi option dùng đúng giá trị thiết kế: nền `#00070C`, viền
+  `1px solid #998C5F`, bo góc `8px`, đệm `6px`, cuộn dọc khi vượt chiều cao khung; option cao
+  `56px`, đệm `16px`, bo góc `4px`, chữ Montserrat 700 16px/24px, letter-spacing `0.5px`; mục đang
+  chọn có nền `rgba(255,234,158,0.10)` + text-shadow; nhãn hashtag giữ tiền tố `#`.** *(Bin 1 —
+  chỉ dùng ở A9)*
+**Result** · read-only — không ghi DB, chỉ CSS/markup panel đã có.
+**Source:** `src/app/(public)/kudos/_components/kudos-filter-menu.tsx:104-127`.
+
+<!-- Không cần diagram: trình bày client-side thuần, không ghi bảng nào. -->
+
+**Hover color:** không có giá trị thiết kế xác nhận cho trạng thái hover (spec CSV chỉ ghi "hiển
+thị hiệu ứng nổi nhẹ", không có node hover riêng) — giữ `hover:bg-white/10` như một giá trị đoán,
+không phải giá trị đã đọc; xem D003 ở `functional-spec.md § 3`.
+
+---
+
 ### 3.2 Edge cases
 
 | Action | Scenario | Behavior |
@@ -203,6 +236,9 @@ nguyên chữ đã gõ; `Enter` mở kết quả đầu tiên nếu có.
 | A1 | Hệ thống chưa có kudo nào | Carousel Highlight và feed ALL KUDOS đều hiện "Hiện tại chưa có Kudos nào." (BR-011) |
 | A1 | 1 leaderboard sidebar chưa có dữ liệu | Chỉ leaderboard đó hiện "Chưa có dữ liệu"; 5 chỉ số cá nhân và leaderboard còn lại vẫn render bình thường (BR-012) |
 | A1 | Người dùng ẩn danh xem sidebar | 5 chỉ số cá nhân + nút "Mở quà" ẩn hoàn toàn; 2 leaderboard vẫn hiện (D001, `functional-spec.md § 3`) |
+| A1 | `secret_box_openings` rỗng (chưa ai mở Secret Box) | `getRecentGiftRecipients` trả `[]`; sidebar hiện "Chưa có dữ liệu" giống nhánh rỗng hiện có (BR-012) — không phải lỗi |
+| A1 | Số dòng `kudos` vượt 1000 | Tổng Spotlight và 2 danh sách option bộ lọc vẫn đúng/đầy đủ (BR-017 dùng `COUNT` chính xác + view distinct-value, không còn phụ thuộc `max_rows`) |
+| A9 | Danh sách phòng ban (số lượng phụ thuộc dữ liệu thật, không cố định) vượt chiều cao panel | Panel cuộn dọc (`max-h-87` + `overflow-y-auto`), không tràn layout |
 | A2 | Cuộn tới cuối danh sách đã tải hết dữ liệu | Ngừng gọi tải thêm, không hiện thông báo lỗi/rỗng nào (khác BR-011 — đây là hết trang, không phải hệ thống rỗng) |
 | A3 | Nhập ký tự thứ 101 vào ô tìm Sunner | Ký tự bị chặn ngay tại input (`maxLength=100`), không có thông báo lỗi hiển thị |
 | A3 | Ô tìm Sunner để trống | Nút tìm bị disable, không gửi được yêu cầu tìm |
@@ -222,6 +258,9 @@ nguyên chữ đã gõ; `Enter` mở kết quả đầu tiên nếu có.
 | `KudosClient` | Client boundary — nối handler xuống `KudosScreen` (mirror `awards-client.tsx`) | A1-A7 | `src/app/(public)/kudos/_components/kudos-client.tsx:60` |
 | `KudosScreen` | Presentational root — banner, filter bar, carousel, Spotlight, feed, sidebar | A1 | `src/app/(public)/kudos/_components/kudos-screen.tsx:80` |
 | `KudosFilterBar` | Dropdown Hashtag + Phòng ban | A1 | `src/app/(public)/kudos/_components/kudos-filter-bar.tsx:17` |
+| `KudosFilterMenu` | Panel + option của mỗi dropdown (nền, viền, bo góc, cuộn, active state — FR-218/BR-019) | A9 | `src/app/(public)/kudos/_components/kudos-filter-menu.tsx` |
+| `getKudosTotal` / `getKudosFilterOptions` | `COUNT` chính xác cho Spotlight + distinct-value cho 2 danh sách option, độc lập `max_rows` (BR-017) | A1 | `src/dal/kudos-board-aggregates.ts` |
+| `getRecentGiftRecipients` / `buildGiftRecipientItems` | Đọc 10 Sunner mở Secret Box gần nhất qua view definer + map sang props sidebar (FR-219/BR-020) | A1 | `src/dal/recent-gift-recipients.ts`, `src/app/(public)/kudos/_shared/build-gift-recipient-items.ts` |
 | `KudosHighlightCarousel` | Carousel 5 thẻ + 2 cặp nút điều hướng + pagination "x/5" | A4 | `src/app/(public)/kudos/_components/kudos-highlight-carousel.tsx:51` |
 | `KudosSpotlight` | Tổng "N KUDOS" + scatter tĩnh tên + ô tìm Sunner | A3 | `src/app/(public)/kudos/_components/kudos-spotlight.tsx:103` |
 | `KudosFeed` | Danh sách ALL KUDOS + infinite scroll sentinel | A2 | `src/app/(public)/kudos/_components/kudos-feed.tsx:66` |
@@ -375,13 +414,23 @@ action trong § 3**, không riêng action nào.
 **Source:** `src/proxy.ts:19` (`PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` — `/kudos` không
 có mặt); hành vi đã chốt tại `clarifications.md` § "Q: `/kudos` là public hay protected?".
 
+**A0 · FR-217 — Mọi phép đếm/liệt kê board-wide (tổng Spotlight, danh sách lọc) không được phụ
+thuộc `max_rows=1000` của PostgREST.** Áp dụng cho A1 (đọc lần đầu) và ngầm định cho mọi lần đọc
+lại board sau này — không riêng 1 hành động.
+**Source:** `supabase/config.toml:18`.
+
 ### 4.5 Algorithms & Integrations
 
 None.
 
 ### 4.6 Configuration
 
-N/A — no technical configuration beyond framework defaults.
+```text
+GIFT_RECIPIENTS_LIMIT = 10   # số Sunner hiển thị ở "10 SUNNER NHẬN QUÀ MỚI NHẤT" (BR-020, src/dal/recent-gift-recipients.ts:61)
+```
+
+Không có hằng số cấu hình nào cho danh sách hashtag/phòng ban — 2 danh sách này là dữ liệu vận
+hành đọc trực tiếp từ view `kudos_filter_options` (BR-017), không phải giá trị cấu hình tĩnh.
 
 **Client behavior:** see
 [`behavior-logic.md`](../../../../docs/vi/generated/behavior-logic.md) (client-side patterns — debounce, optimistic UI, polling, upload, realtime),
@@ -399,6 +448,17 @@ N/A — no technical configuration beyond framework defaults.
 - **SC-005** *(A2)* Cuộn tới cuối feed hiện có tự tải thêm kudo (covers FR-210)
 - **SC-006** *(A6)* Người chưa đăng nhập bấm avatar/tên bị chuyển hướng `/login` (covers FR-601, BR-013)
 - **SC-007** *(A8)* Ô tìm hồ sơ Sunner ở khối keyvisual nhận input thật (không `readOnly`), chặn ký tự thứ 129; đã đăng nhập chọn 1 kết quả mở đúng `/profile?id=`, ẩn danh thấy gợi ý đăng nhập (covers FR-214, BR-016 — `tests/e2e/kudos.spec.ts` C30-C32)
+- **SC-008** *(A1)* Sidebar "10 SUNNER NHẬN QUÀ MỚI NHẤT" render đúng dữ liệu Secret Box thật, sắp
+  `opened_at` giảm dần, không còn hardcode rỗng (covers FR-219, BR-020) — unit
+  `src/dal/recent-gift-recipients.test.ts`,
+  `src/app/(public)/kudos/_shared/build-gift-recipient-items.test.ts` — `[UNVERIFIED]` không có
+  Playwright e2e nào seed `secret_box_openings` rồi assert sidebar `/kudos`.
+- **SC-009** *(A1)* Tổng Spotlight là `COUNT` chính xác và 2 danh sách option bộ lọc chứa đủ mọi
+  giá trị distinct thật, không phụ thuộc `max_rows` (covers FR-215, FR-217, BR-017) — unit
+  `src/dal/kudos-board-aggregates.test.ts`; `tests/e2e/kudos.spec.ts:467` ghi chú hành vi distinct
+  nhưng không seed >1000 dòng (xem D005 — seed hiện có không đủ để chứng minh).
+- **SC-010** *(A9)* Panel dropdown Phòng ban cuộn được, mục đang chọn có nền khác biệt, nhãn
+  hashtag giữ tiền tố `#` (covers FR-218, BR-019).
 
 #### US001_ViewKudosLiveBoard *(A1)*
 
@@ -433,6 +493,17 @@ và render đầy đủ banner/carousel/Spotlight/feed/sidebar (rút gọn theo 
 **Acceptance Scenarios:**
 1. **Given** đã đăng nhập, **When** gõ tên một đồng nghiệp và bấm 1 kết quả gợi ý, **Then** trang hồ sơ của người đó mở ra.
 2. **Given** chưa đăng nhập, **When** gõ vào ô tìm, **Then** dropdown hiện gợi ý đăng nhập thay vì kết quả hoặc "không tìm thấy".
+
+#### US010_ViewRecentGiftRecipients *(A1)*
+
+**Independent Test:** Seed ≥1 row `secret_box_openings`, mở `/kudos` — sidebar phải hiện đúng tên
+Sunner đó thay vì "Chưa có dữ liệu".
+
+**Acceptance Scenarios:**
+1. **Given** có ≥1 lượt mở Secret Box, **When** mở `/kudos`, **Then** sidebar "10 SUNNER NHẬN QUÀ
+   MỚI NHẤT" hiện đúng (các) Sunner đó, mới nhất trước.
+2. **Given** chưa ai mở Secret Box, **When** mở `/kudos`, **Then** sidebar hiện "Chưa có dữ liệu"
+   (không phải lỗi).
 
 ### 5.2 Assumptions
 

@@ -254,7 +254,7 @@ cả 2:
 **`SiteHeader`/`SiteFooter` — XÁC NHẬN tái dùng nguyên vẹn** (khác F005 `/standards`, nơi frame
 không có chrome nào): MoMorph frame `362:5037` chứa node header (`mms_1_Button`,
 `I362:5041;186:1597` — nút tài khoản) VÀ node footer (`mms_7.4_Button-IC`,
-`I435:3154;1161:9487`) — logo, `About SAA 2025`, `Award Information`, `Sun* Kudos`, bell, `VN`
+`I435:3154;1161:9487`) — logo, `About SAA 2025`, `Awards Information`, `Sun* Kudos`, bell, `VN`
 switcher, avatar button ở đầu; footer chuẩn ở cuối. Vì `/profile` LUÔN đã đăng nhập khi render
 (gate `(protected)/layout.tsx` chạy trước), `SiteHeader` chỉ bao giờ render biến thể "đã đăng
 nhập" (bell + menu tài khoản) — không bao giờ nút "Đăng nhập" như trên `/`/`/awards` cho khách

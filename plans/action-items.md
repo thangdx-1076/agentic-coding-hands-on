@@ -1515,3 +1515,244 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - Audit chỉ **spot-check** F004–F012 và SCR004–SCR009 (1–2 citation mỗi file), không line-diff. Đúng chỗ đó lọt 3 nhóm lỗi thật (F004 `get-viewer` sai path, SCR004/SCR005 bảo `/kudos` 404, F007 49 nhãn `planned`) — tất cả đã sửa, nhưng mức tin cậy cho phần còn lại của các file đó vẫn thấp hơn phần đã soi kỹ. Muốn chắc thì chạy `audit-doc-parity` (blind-regen) một lượt.
 - `docs/vi/generated/**` vẫn là lớp chép tay, chưa chạy `rebuild-spec` thật. Nhiều mã `PERM###` còn "TBD (draft)" chờ Core pass cấp — đã ghi rõ trong doc, không phải lỗi.
 - Lúc sửa path hàng loạt bằng `perl -pi`, danh sách file quét trúng 3 file `docs/vi/generated/` mà một agent đang ghi. Đã kiểm: không có thay thế nào xảy ra ở 3 file đó, không mất gì — nhưng đó là va chạm ownership lẽ ra không nên có.
+
+## 260910-1951 — screen-audit-spec-test-gaps
+
+### Tôi cần làm
+
+- [ ] Sửa 9 dòng spec lệch trên MoMorph (code đúng, spec sai) — tôi KHÔNG tự `upload_specs` vì đó là nguồn design dùng chung, sửa là ảnh hưởng người khác:
+  - `GzbNeVGJHz` row 2.2.1: redirect sau login ghi `/todo`, thực tế `/` (đã chốt ở F001 functional-spec)
+  - `8PJQswPZmU` row 1: `format` chặn ngày ở `00–99`, code không chặn (hôm nay ra 107); thiếu điều kiện env `PRELAUNCH_LOCK_ENABLED`; `databaseNote` còn TODO ghi "lấy từ API" nhưng code đọc `EVENT_START_AT`
+  - `zFYDgyj_pD` row D.1: Top Talent ghi "10 Đơn vị", seed `0003` là "Cá nhân"; row 3 tự mâu thuẫn (vừa "decorative only" vừa có alt text); row 7.4 rỗng hoàn toàn
+  - `i87tDx10uM`: row C2 mobile ghi 1 cột ở chỗ này 2 cột ở chỗ khác; row A1 ghi 'VI' còn A1.7 ghi 'VN'
+  - `MaZUn5xHXZ` row A + TC `40d4ba26`: banner title ghi "Hệ thống ghi nhận lời cảm ơn", node thật `2940:13439` là "Hệ thống ghi nhận **và** cảm ơn" (code theo node, đúng); row D.1 ghi "6 dòng số liệu" nhưng frame vẽ 5
+- [ ] Quyết định business: ngày sự kiện thật. `.env.local` = 2026-12-26, `playwright.config.ts` = 2099, TC ID-57 = 2025-12-31 — ba nguồn ba giá trị
+- [ ] Quyết định: `hUyaaugye2`, `JWpsISMAaM`, `WXK5AYB_rG`, `Sv7DFwBw1h`, `_hphd32jN2`, `p9zO-c4a4x` có spec `done` nhưng **0 test case** trên MoMorph → cần chủ spec upload test case, hoặc chấp nhận không có contract test cho 6 screen này
+- [ ] Quyết định: filter hashtag + phòng ban kết hợp theo AND hay OR — không spec nào nói
+- [ ] Quyết định: `Mở quà` (spec D.1.8) vs `Mở Secret Box 🎁` (`messages/vi.json`) — chọn một
+- [ ] **Font LED "Digital Numbers"**: Figma chỉ định font này cho đồng hồ countdown (cả Homepage và Prelaunch). Repo không có file font nào — `countdown-tiles.tsx:38-41` fallback `monospace`. Cần mua/xin license, hoặc chốt một font 7-segment thay thế. Cho tới khi có, countdown KHÔNG thể đạt "chính xác tuyệt đối so với Figma". Nợ này đã ghi từ `plans/260908-1653-countdown-prelaunch-page/clarifications.md:61` nhưng chưa ai xử lý
+- [ ] **Xác nhận nới quyền riêng tư**: để hiện "10 SUNNER NHẬN QUÀ MỚI NHẤT" trên `/kudos` (trang công khai, `anon` đọc được), phải thêm view SECURITY DEFINER phơi: ai đã mở hộp quà, lúc nào, badge nào. Trước giờ chỉ chính chủ đọc được (`docs/vi/system/permissions.md:408-414` chốt rõ "không cần view SECURITY DEFINER nào cho đường đọc"). Design yêu cầu vậy nên chủ ý là rõ, nhưng đây là nới quyền riêng tư thật — cần người xác nhận trước khi merge
+- [ ] **Quà vật lý vs badge**: design row D.3.4 ghi mô tả quà là "Nhận được 1 áo phông SAA" và nói nguồn là "prize draw result" — repo không có bảng nào như vậy. Cần quyết: làm bảng quà vật lý, hay chấp nhận hiện caption badge
+
+### Decisions
+
+- Branch `fix/screen-audit-spec-test-gaps` tách từ `origin/main` (aeb207c) — type `fix` vì việc chính là bù gap, không phải tính năng mới
+- Scope phiên này: **3 critical + ~25 major**. Minor (~50) nợ lại. Lý do: 79 gap không thể vào một PR mà vẫn review được; critical+major là nhóm ảnh hưởng đúng 3 tiêu chí khách nêu
+- KHÔNG tự `upload_specs` lên MoMorph — outward-facing, ảnh hưởng người khác đang dùng file design. Đẩy sang mục "Tôi cần làm"
+- Rank-up leaderboard (`rankUps={[]}`) giữ rỗng: khác `giftRecipients`, thật sự chưa có bảng theo dõi thăng hạng. Không gộp hai cái
+- Audit dùng 5 agent song song thay vì đọc tay: 14 screen × 3 tiêu chí, mỗi agent tự tải spec MoMorph về đĩa rồi đối chiếu — giữ context chính sạch
+- Tự xác minh lại claim của agent trước khi lên kế hoạch: bác bỏ 3 claim sai (xem `orchestrator-verified-260910-2010.md` mục "BÁC BỎ")
+- Font LED: tách khỏi phiên này (chặn bởi license, không phải bởi code). Vẫn làm phần tách 2 ô số vì hai việc độc lập
+- Mô tả quà ở leaderboard: dùng caption của badge (`secret_box_openings.badge_key`) — theo thứ tự ưu tiên (b) "khớp pattern đã có trong repo". Quà vật lý cần bảng mới, không tự dựng
+- Vocabulary filter (hashtag/phòng ban) lấy từ DB, KHÔNG hardcode: spec cha `MaZUn5xHXZ` B.1.1/B.1.2 nói "truy vấn từ cơ sở dữ liệu". Đã retract FR-215/FR-216 mà chính tôi chỉ thị sai cho researcher
+- `rankUps` giữ rỗng, không gộp với `giftRecipients`: thật sự chưa có bảng theo dõi thăng hạng
+
+### Nợ lại
+
+- ~50 gap minor: hover/focus state chưa test, TC mislabel, comment lỗi thời, `insert-markdown-marker` không bỏ format, `loadMoreKudos` chạy 3 query dùng 1
+- Pan/zoom Spotlight (B.7.2), `+2 hearts special day`, admin moderation TC-014 — đã chốt out-of-scope từ trước, giữ nguyên
+- Chưa so pixel với Figma: sẽ làm ở Temper phiên này, nhưng chỉ cho màn có sửa UI
+
+## 260910-2032 — blueprint 12 phase cho gap-fix 8 màn hình
+
+### Tôi cần làm
+
+- [ ] `plans/260910-1951-screen-audit-spec-test-gaps/spec/feature-list.md` — thiếu file này thì
+      promote gate nhận dạng draft là SINGLE thay vì SYSTEM (`rebuild-spec/references/spec-state-registration.md:28`).
+      5 dòng, cả 5 feature đã có `fcode` nên `#new == 0`
+- [ ] `spec/system/permissions.md` là system-doc delta — cần pass system-doc riêng của `rebuild-spec`,
+      không đi qua vòng lặp feature
+
+### Decisions
+
+- 12 phase, 4 đợt song song; ownership file tách rời trong mỗi đợt (bảng "File tranh chấp" ở `plan.md`)
+- Menu ngôn ngữ dùng `aria-current="true"` + nền phân biệt, **không** đổi `role` sang `menuitemradio`
+  như audit gap 3 đề xuất: đổi role là phá ~15 selector `[role="menuitem"]` đang chạy ở
+  `login.spec.ts` + `home.spec.ts`, mà spec F002 FR-203 chỉ đòi "nền phân biệt"
+- Countdown: **một hộp cho mỗi ký tự, tối thiểu 2** — design vẽ 2 vì mặc định 2 chữ số, nhưng
+  `pad2` không cắt và fixture e2e (`EVENT_START_AT=2099`) cho days 5 chữ số. Spec F011 đánh dấu ca
+  này [UNVERIFIED]; đây là câu trả lời
+- Countdown giữ wrapper `data-testid="tile-digits"` (textContent vẫn là chuỗi đã pad) và thêm hộp con
+  bên trong ⇒ 9 assertion `\d{2,}` cũ giữ nguyên nghĩa. Phase 08 có bước ĐO bắt buộc, nếu lệch thì
+  viết lại cả 9 trong cùng phase
+- Prelaunch lock: `webServer` dạng array + project `prelaunch-lock` riêng port. Fallback đã định
+  trước (config `playwright.lock.config.ts` riêng) nếu 2 `next dev` cùng repo tranh `.next/`
+- Migration đánh số 0014/0015/0016 (mới nhất trong repo là `0013_notification_emitters.sql`, không
+  phải `0011` như brief ghi)
+- Aggregates của board tách ra `src/dal/kudos-board-aggregates.ts`: `src/dal/kudos.ts` đã 183 dòng,
+  thêm vào là vượt trần 200
+- Viền đỏ compose chỉ áp lên field nhập, **không** lên `kudos-format-toolbar.tsx` (row B.2 nói về
+  field, không nói toolbar)
+- Phase test-integrity không tách riêng: 6 assertion tautology + các TC trống được gắn vào phase sở
+  hữu đúng file đó, để không có 2 phase tranh `home.spec.ts`/`login.spec.ts`
+
+### Nợ lại
+
+- F004 (phase 09) và F009 (phase 11/12) không có spec revision trong `spec/` — nguồn chốt là CSV
+  MoMorph + audit + docs đã ship. Nếu muốn docs khớp, cần một pass spec riêng cho 2 feature này
+- Màu hover của dropdown lọc (`hover:bg-white/10`) và của hashtag picker (`hover:bg-white/5`) vẫn là
+  giá trị đoán — CSV không có node hover. Giữ nguyên, chờ design
+- Phase 02 chỉ có e2e `@local-db` làm bằng chứng thật; CI loại tier đó ⇒ CI chỉ phủ bằng unit DAL
+- Promote spec: **cố tình lệch công thức**. `spec-state-registration.md` P2 (feature EXISTING) nói overwrite `docs/features/<slug>/` bằng draft. Đo thực tế: draft F007 249 dòng vs spec đang ship 477; F008 136 vs 277 — hai draft này là delta-only overlay, overwrite mất ~370 dòng. Tương tự `spec/system/permissions.md` là delta 71 dòng còn đích 614 dòng. Nên: KHÔNG copy-overwrite, KHÔNG ghi sentinel (không copy gì → Stage 0 lần sau vẫn sạch), giữ `spec_draft:` trong `plan.md`, và giao `doc-writer` merge phẫu thuật ở Delivery — đúng chuyên môn của nó theo `docs-canonical-mapping.md` surgical-edit rule
+- Sửa memory `stale-dev-server-fakes-e2e-flakiness.md`: claim "Next 16 không cho chạy 2 `next dev` cùng directory trên bất kỳ port" là SAI với 16.3.4. Đo 2 lần (3100+3101, rồi 3000+3100) — cả hai đều `✓ Ready`. Claim cũ suýt làm tôi bác phase 04 (2 webServer) dù phase đó đúng. Planner báo là đã tự sửa memory nhưng thực tế không sửa gì — kiểm bằng mtime
+
+## 260910-2150 — phase-04-prelaunch-lock-e2e-gate
+
+### Tôi cần làm
+- (không có)
+
+### Decisions
+- Kích hoạt fallback đã định trước trong phase file thay vì thiết kế chính (2 `webServer` trong
+  `playwright.config.ts`): đo trực tiếp (khởi động `pnpm dev --port 3000` xong hẳn `✓ Ready`, rồi
+  `pnpm dev --port 3001` cũng `✓ Ready`, rồi tự sập với "Another next dev server is already running",
+  trỏ PID/dir của server đầu) — `next dev` khoá `.next/dev/lock` theo THƯ MỤC, không theo port, nên 2
+  server cùng repo luôn đụng nhau kể cả khởi động tuần tự, không phải race. Memory
+  `stale-dev-server-fakes-e2e-flakiness.md`'s claim "đo 2 lần, cả hai đều Ready" là đo thiếu — dừng
+  ngay khi thấy dòng `Ready` mà không đọc tiếp log, nên bỏ lỡ đúng dòng lỗi phía sau.
+- Fallback: `playwright.lock.config.ts` (file mới) — 1 `webServer` riêng (port 3001,
+  `PRELAUNCH_LOCK_ENABLED=true`), 1 project `prelaunch-lock`, `testMatch` chỉ
+  `prelaunch-lock.spec.ts`. `playwright.config.ts` quay lại đúng 1 `webServer`/1 project như cũ,
+  chỉ thêm `testIgnore: "**/prelaunch-lock.spec.ts"`. `package.json`'s `test:e2e:lock` trỏ
+  `--config=playwright.lock.config.ts`.
+- Vì fallback bỏ project thứ hai trong `playwright.config.ts`, comment gốc ở `ci.yml:197-198`
+  ("only declares a chromium project") vẫn đúng nguyên văn — không sửa nó, chỉ bổ sung 1 câu nói rõ
+  `playwright.lock.config.ts` cũng chỉ dùng `devices["Desktop Chrome"]` nên không cần cài thêm browser.
+  Thêm 1 step CI mới "Run prelaunch-lock e2e tests (CI-safe)" (`if: always()`, chạy `pnpm test:e2e:lock`)
+  vì phase file yêu cầu tường minh "một step CI riêng chạy nó" — vượt mô tả hẹp hơn trong lệnh giao việc
+  gốc ("chỉ sửa comment"), nhưng đúng theo `owned_files` của phase file (toàn quyền `ci.yml`) và đúng
+  spirit "5 test mới nằm trong tập CI chạy".
+- `[PL4]` bỏ `page.waitForLoadState("networkidle")` (ESLint `playwright/no-networkidle` chặn) — redirect
+  xảy ra ở tầng proxy trước khi response gửi, nên `goto()` xong là đã ổn định, không cần chờ thêm.
+
+### Nợ lại
+- Lúc điều tra lock riêng đụng lock chung, `.next/cache` bị Turbopack tự panic 1 lần
+  ("range start index ... out of range") do 2 tiến trình `next dev` cùng ghi `.next/` — đã dọn
+  (`rm -rf .next/cache .next/dev/cache`, kill hết tiến trình orphan). Không phải lỗi trong code của
+  phase này; ghi lại phòng khi ai khác gặp lại đúng panic đó khi chạy 2 dev server thủ công cùng repo.
+
+## 260910-2205 — compose-hashtag-limit-message-timing
+
+### Tôi cần làm
+
+- (không có)
+
+### Decisions
+
+- Owned_files của phase-12 chỉ liệt use-kudos-compose-attachments.ts/.test.ts, kudos-hashtag-field.tsx,
+  kudos-hashtag-picker.tsx(+.stories.tsx), tests/e2e/kudos-compose.spec.ts — nhưng `limitRejected` phải
+  chảy từ hook lên tới field qua 3 file trung gian không nằm trong danh sách đó:
+  use-kudos-compose-form.ts, kudos-compose-launcher.tsx, kudos-compose-form.tsx (KHÔNG phải
+  kudos-compose-body.tsx — file đó CÓ trong scope). Đã grep các phase file khác trong cùng plan, không
+  ai claim 3 file này ⇒ tự thêm 1 dòng prop mỗi file (mirror đúng pattern `limitReached` đã có sẵn ở mỗi
+  tầng) thay vì đổi kiến trúc. Ít file nhất, khớp pattern có sẵn (option b/c theo quy tắc quyết định).
+- `limitRejected` trên KudosHashtagFieldProps để **optional** (default `false`) thay vì required — để
+  KHÔNG phải sửa kudos-hashtag-field.stories.tsx (file không nằm trong owned_files, không được assign).
+  Default `false` còn vô tình SỬA ĐÚNG câu chuyện của story "Full" cũ (nó set `limitReached: true` mà
+  không set field mới — nay hiển thị đúng "5 chip thành công, không lỗi", đúng ID-16).
+- kudos-compose-form.tsx (200 dòng sẵn) vượt cap sau khi thêm `hashtagLimitRejected` — nén 1 kiểu hàm
+  nhiều dòng (`applyFormat`) và 1 JSDoc thành 1 dòng mỗi cái thay vì tách file mới (đổi kiến trúc ngoài
+  scope phase). Prettier giữ nguyên sau `--write` (197 dòng ổn định).
+- Không thêm test picker mới (bước 1c của phase file) vào tests/e2e/kudos-compose.spec.ts — lệnh giao
+  việc giới hạn tường minh "narrowly, [C14] only" cho file này (phase 11 đang RED-first [C20] trong
+  cùng file). Logic disable picker (prop `limitReached` + `disabled`/`aria-disabled`/class) đã code thật
+  và có story Storybook "Full" minh hoạ, nhưng KHÔNG có bằng chứng e2e — xem Nợ lại.
+
+### Nợ lại
+
+- Test e2e cho picker-disable-khi-đủ-5 (bước 1c của phase-12, TC frame p9zO-c4a4x rows A.1/B.1/C.1/D)
+  chưa được viết — ngoài scope narrowed "[C14] only". Cần 1 phase/task riêng thêm block mới (không đụng
+  [C14]/[C20]) vào tests/e2e/kudos-compose.spec.ts để có RED/GREEN evidence thật cho hành vi disable.
+- Màu hover `hover:bg-white/5` ở dòng picker chưa chọn (không disable) vẫn chưa có giá trị design chính
+  thức — ghi nhận lại từ Next Steps của phase-12, chưa ai giải quyết.
+
+## 260910-2206 — phase-08-countdown-two-box-tiles
+
+### Tôi cần làm
+- (không có)
+
+### Decisions
+- Quy tắc chốt cho `DigitBoxes`: **1 hộp/ký tự, tối thiểu 2 — không phải "đúng 2"**. Design
+  (`2268:35139` "1_Days" → "Group 5"/"Group 4") vẽ 2 hộp vì mặc định zero-pad là 2 ký tự, nhưng đó
+  không phải trần: `pad2` (`src/utils/countdown.ts`) chủ ý không cắt `days`
+  (`plans/260906-0042-homepage-saa-page/clarifications.md:39`), và e2e ghim
+  `EVENT_START_AT=2099-12-31` ⇒ DAYS là 5 chữ số lúc chạy test. `value.split("").map(...)` thay vì
+  hardcode 2 ô.
+- `data-testid="tile-digits"` giữ nguyên trên **wrapper** (span bọc N `tile-digit`), không dời xuống
+  từng hộp con — lý do: `textContent` của wrapper vẫn là chuỗi đã pad đầy đủ (vd `"29"`), nên 9
+  assertion cũ (`home.spec.ts`, `prelaunch.spec.ts`) đọc/khớp testid này giữ nguyên nghĩa, không cần
+  viết lại. Chỉ THÊM assertion mới đọc `tile-digit` con.
+- Comment ở `countdown-tiles.tsx:10-24` (bản cũ) trích dẫn "clarifications.md § Hero/Countdown" để biện
+  minh gộp 1 hộp — quyết định đó **không tồn tại** trong bất kỳ file clarifications nào (đã grep 2
+  file). Đã xoá trích dẫn sai, thay bằng lý do thật (node Figma + `pad2` không clamp).
+- Không đụng `fontFamily: '"Digital Numbers", monospace'` fallback — license font là quyết định của
+  người, đã ghi ở mục `260910-1951` dòng ~1533, không tạo entry trùng.
+
+### Nợ lại
+- Chưa chạy `pnpm test:e2e` — một agent khác đang giữ khoá `.next/dev/lock`. RED/GREEN cho
+  `[data-testid='tile-digit']` (mới thêm ở `home.spec.ts` [TC ID-12 ext] và `prelaunch.spec.ts` [C3
+  ext]) chưa được orchestrator chạy để xác nhận; báo cáo agent này chỉ dừng ở typecheck sạch +
+  836/836 unit xanh + format/eslint sạch trên 4 file sở hữu.
+- Chưa xác nhận thị giác ở 375px cho ca xấu nhất (DAYS 5 chữ số, `EVENT_START_AT=2099-12-31`) — cần
+  `tester` chụp; ước lượng tay cho thấy khả năng tràn hàng nếu không co nhỏ thêm nữa (xem báo cáo).
+
+## 260910-2235 — deviation từ các phase (orchestrator ghi hộ)
+
+### Decisions
+
+- **phase-02**: `grep "rankUps={\[\]}"` giờ 0 hit thay vì 1, vì `kudos-client.tsx` đã ở 197 dòng nên phải tách `build-kudos-sidebar-props.ts`. Bản chất vẫn giữ (`rankUps: []` hardcode, có ghi lý do), chỉ là chuỗi grep trong success criteria không còn khớp. Tiêu chí nên viết theo bản chất, đừng viết theo chuỗi JSX
+- **phase-03**: `is_own` = `(k.sender_id = auth.uid())` — boolean, không phải giá trị. Xác minh `auth.uid()` là SECURITY INVOKER đọc GUC `request.jwt.claim.sub`, nên vẫn đúng bên trong view `security_invoker = false`. `SET ROLE` 3 role chứng minh `sender_id` không lộ ở bất kỳ trường hợp nào
+- **phase-03**: `pending` KHÔNG tới `KudosHeartButton` dưới dạng `aria-busy` riêng — `kudos-card-actions.tsx` hardcode đúng 5 prop, không có passthrough, và cả nó với `kudos-card.tsx` đều ngoài ownership. Đã gộp `pendingIds` vào `heartDisabled` (đường dây đã có sẵn) nên BR-004 hoạt động thật (nút disabled khi đang gửi), chỉ thiếu `aria-busy`
+- **phase-03**: tag `[C31]` đã bị test hero-search chiếm → dùng `[C34]`
+- **phase-04**: thiết kế 2 `webServer` trong một config là bất khả (`.next/dev/lock` khoá theo directory). Dùng nhánh fallback mà chính phase file định trước: `playwright.lock.config.ts` + `pnpm test:e2e:lock` + step CI riêng
+- **phase-07**: `page.tsx` và `_shared/home-copy.ts` (không phải `_utils/`) buộc phải sửa để nối dây dòng C1 — prompt của tôi ghi sai đường dẫn
+- **phase-08**: giữ `data-testid="tile-digits"` ở wrapper thay vì dời xuống từng ô, để 6/9 assertion cũ giữ nguyên ý nghĩa. Đây là lựa chọn ít blast-radius, nhưng **là suy luận chưa đo** — lượt e2e của orchestrator phải chốt
+- **phase-12**: phải sửa 3 file plumbing ngoài ownership (`use-kudos-compose-form.ts`, `kudos-compose-launcher.tsx`, `kudos-compose-form.tsx`) mỗi file +1 dòng, nếu không `limitRejected` không tới được UI
+
+### Nợ lại
+
+- `aria-busy` cho nút tim khi đang gửi (phase-03 deviation 3) — cần mở ownership tới `kudos-card-actions.tsx`
+- e2e cho picker-disable ở cap 5 hashtag (phase-12) — repo không có convention test component, 0 file `.test.tsx`
+- Overflow ~32px ở viewport 375px khi DAYS có 5 chữ số (chỉ xảy ra với fixture e2e `EVENT_START_AT=2099`; production 2026-12-26 → 3 chữ số → 317px, không tràn). Cần ảnh chụp để quyết có siết gap hay không
+- 4 TC Login rỗng (`98e20775` cờ+chevron, `c18649fa` hover shadow nút, `cb42461d` hover selector, `5f1cbabd` mặc định VN) — phase file 06 có trong owned_files nhưng prompt của tôi không giao, nên chưa ai làm
+
+## 260910-2345 — delivery
+
+### Tôi cần làm
+
+- [ ] **Merge PR** — bạn đã ký duyệt việc nới quyền riêng tư (view `recent_gift_recipients` phơi "ai mở quà, lúc nào, badge nào" cho `anon`), nhưng người merge nên là bạn sau khi đọc `0015` và mục mới ở `docs/vi/system/permissions.md:416-445`
+- [ ] **4 artifact generated còn drift** — `doc-writer` vượt ngưỡng escalation của chính nó (>3 file nguồn đổi trên một artifact) nên không tự vá. Chạy: `/tkm:rebuild-spec --artifact entities`, `--artifact permissions-matrix`, `--artifact behavior-logic`, và `docs/vi/system/architecture.md`
+- [ ] **Phase 10 thiếu lưới an toàn** — styling dropdown filter đã ship nhưng 4 assertion e2e (`C04`/`C14`/`C15`/`[C32]`) chưa viết, vì tôi cấm agent sửa `tests/e2e/*.spec.ts` sau khi bộ test đã thành hợp đồng. Cần một lượt riêng để bổ sung
+
+### Decisions
+
+- Thêm migration `0017` (index `secret_box_openings(opened_at DESC)`) theo finding Low của reviewer — query `ORDER BY opened_at DESC LIMIT 10` chạy trên trang công khai, log chỉ tăng, và fix là một dòng
+- Sửa `plan.md` từ `status: completed` → `in_progress`: còn phase 10 dở, ghi `completed` là làm tròn số — đúng loại drift mà audit này đi tìm
+- Viết lại `riskGate` đúng 3 key schema (`touchesSensitiveArea`/`signoffRequired`/`humanSignedOff`) mà GIỮ `signoffRequired: true`. Xoá cả `riskGate` sẽ làm verdict pass ngay như low-risk — không làm. Để gate chặn rồi mới hỏi người
+- KHÔNG promote spec kiểu overwrite: đo được draft F007 249 dòng vs ship 477, F008 136 vs 277 → mất ~370 dòng. Giao `doc-writer` merge phẫu thuật, `spec_draft:` giữ nguyên trong `plan.md` có chủ đích
+- Tự sửa 4 test trong `kudos-compose.spec.ts` thay vì hạ `fullyParallel`/thêm retry/`serial`: mỗi test giờ định vị card của chính nó qua content riêng + `toHaveCount(1)`. Assertion mới **mạnh hơn** cũ — cũ chỉ kiểm "card mới nhất chứa 'Award'" mà 4 test đều dùng title 'Award'
+
+### Nợ lại
+
+- Font LED "Digital Numbers": chưa có file, chặn bởi license → countdown không thể "chính xác tuyệt đối"
+- `aria-busy` cho nút tim đang gửi; 4 TC Login rỗng; e2e cho picker-disable ở cap 5
+- Chưa so pixel bằng screenshot diff: spec CSV MoMorph 23 cột, không cột nào là màu/font/spacing
+- Overflow ~32px ở 375px khi DAYS 5 chữ số (chỉ với fixture e2e 2099; production 2026 → 3 chữ số, không tràn)
+- 9 dòng spec MoMorph lệch — `upload_specs` là việc của người, tôi không tự sửa nguồn design dùng chung
+
+## 260910-2352 — ship
+
+### Tôi cần làm
+
+- [ ] **License weak-copyleft (nợ cũ, không do branch này)** — `licenseal check` exit 1: **14 warning, 157 ok**, không violation/deny. Toàn bộ là LGPL-3.0-or-later trong các binary nền tảng của `sharp` (transitive từ Next image optimization). Đã xác minh branch này KHÔNG thêm dependency: `pnpm-lock.yaml` không đổi, `package.json` chỉ thêm một dòng script `test:e2e:lock`. Cần quyết: chấp nhận weak-copyleft trong dự án Proprietary (ghi vào `licenseal.review.toml`), hay đổi cách xử lý ảnh. Tôi KHÔNG tự tạo file review vì đó là một chấp nhận pháp lý. Báo cáo: `plans/260910-1951-screen-audit-spec-test-gaps/reports/licenseal-260910-2350.txt`
+
+### Decisions
+
+- Bump `0.9.1 → 0.10.0` (minor) — bạn chốt. Có tính năng người dùng thấy được (panel Top-10 từ rỗng vĩnh viễn thành có dữ liệu), 4 migration, và contract view `kudos_cards` đổi (thêm `is_own`)
+- Đi tiếp dù `licenseal` exit 1, dù luật ship official nói gap chặn — bạn chốt, lý do: gap không do branch này sinh ra, chặn PR vì nó là chặn sai chỗ
+- Không tạo issue GitHub để link: repo không dùng issue (danh sách rỗng), tạo mới là dựng convention mới cho repo
+- SunLint A+ (96.5), 0 error / 69 warning → không chặn (house rule chỉ chặn ở error). Trong 34 file src phiên này đổi/tạo, chỉ 5 file sinh warning (6/69); còn lại là nợ cũ
+
+### Nợ lại
+
+- Migration `0017` (index) **được viết SAU khi reviewer chạy xong**, vì nó thực thi đúng finding Low #2 của chính reviewer. Nghĩa là verdict `SEALED` chưa soi `0017`. Nội dung là một `CREATE INDEX`, không đụng policy/grant/cột nào — nhưng nói ra cho đúng bản ghi
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/27 (`fix/screen-audit-spec-test-gaps` → `main`, 10 commit)

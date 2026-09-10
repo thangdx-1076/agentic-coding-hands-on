@@ -8,7 +8,7 @@ authored_by: rebuild-spec
 
 **Priority**: P1
 **Type**: ui
-**Generated**: 2026-09-05
+**Generated**: 2026-09-10
 
 **See also:** [`technical-spec.md`](./technical-spec.md) — endpoint, Source citation, pseudocode,
 key entity, DB write cho độc giả Dev/QA/SA.
@@ -22,8 +22,10 @@ key entity, DB write cho độc giả Dev/QA/SA.
 **Solution:** Một bộ chọn ngôn ngữ đặt ở header của màn Đăng nhập, cho phép đổi giữa Tiếng Việt
 và English; lựa chọn được ghi nhớ (khoảng 1 năm) và áp dụng lại toàn bộ nội dung ngay sau khi
 chọn, không cần tải lại trang.
-**Scope:** Hiển thị ngôn ngữ hiện tại, cho chọn giữa 2 ngôn ngữ hỗ trợ, ghi nhớ lựa chọn cho các
-lần ghé thăm sau, điều hướng đầy đủ bằng bàn phím theo chuẩn accessibility.
+**Scope:** Hiển thị đúng cờ + nhãn của ngôn ngữ hiện tại, cho chọn giữa 2 ngôn ngữ hỗ trợ (mỗi
+lựa chọn có cờ riêng), ghi nhớ lựa chọn cho các lần ghé thăm sau, điều hướng đầy đủ bằng bàn phím
+theo chuẩn accessibility, và giữ nội dung tiếng Anh (`messages/en.json`) sạch — không còn sót text
+tiếng Việt.
 **Non-Scope:** Không hỗ trợ ngôn ngữ nào khác ngoài vi/en; không đổi ngôn ngữ tự động theo trình
 duyệt; không liên quan đến trạng thái đăng nhập (tính năng này hoạt động độc lập với F001, xem
 `feature-list.md` § F002).
@@ -38,7 +40,7 @@ duyệt; không liên quan đến trạng thái đăng nhập (tính năng này 
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Chuyển đổi ngôn ngữ giao diện | Mở bộ chọn ngôn ngữ (chuột hoặc bàn phím), xem ngôn ngữ hiện tại, chọn Tiếng Việt hoặc English và thấy toàn bộ nội dung đổi theo ngay lập tức | US001 | FR-001, FR-101, FR-201, FR-202, FR-401, FR-402, FR-601 | BR-001, BR-002, SM-001 | SCR001 |
+| CAP-01 | Chuyển đổi ngôn ngữ giao diện | Mở bộ chọn ngôn ngữ (chuột hoặc bàn phím), xem ngôn ngữ hiện tại (đúng cờ + nhãn), chọn Tiếng Việt hoặc English (mỗi lựa chọn có cờ riêng, lựa chọn active có nền phân biệt) và thấy toàn bộ nội dung đổi theo ngay lập tức | US001 | FR-001, FR-002, FR-003, FR-101, FR-201, FR-202, FR-203, FR-401, FR-402, FR-601 | BR-001, BR-002, SM-001 | SCR001 |
 
 ## 3. Open Decisions
 
@@ -50,6 +52,12 @@ None — no unresolved domain confirmations.
 
 - **FR-001** Hệ thống chỉ chấp nhận đúng 2 giá trị ngôn ngữ (Tiếng Việt, English); mọi giá trị
   khác luôn được chuẩn hoá về Tiếng Việt trước khi dùng.
+- **FR-002** *(REVISION — mới)* Gói nội dung tiếng Anh (`messages/en.json`) không được chứa bất kỳ
+  đoạn text tiếng Việt nào ở bất kỳ leaf nào — mọi khoá đã có bản dịch tiếng Việt phải có bản dịch
+  tiếng Anh tương ứng, không được để nguyên tiếng Việt làm placeholder.
+- **FR-003** *(REVISION — mới)* Ba nhãn điều hướng dùng chung ở header ("About SAA 2025",
+  "Award(s) Information", "Sun* Kudos") giữ nguyên tiếng Anh ở CẢ 2 locale — đây là quyết định nội
+  dung có chủ đích, không phải phần dịch còn thiếu.
 
 ### Navigation (1xx)
 
@@ -58,16 +66,23 @@ None — no unresolved domain confirmations.
 
 ### Login Screen (2xx)
 
-- **FR-201** Bộ chọn ngôn ngữ hiển thị đúng nhãn ngôn ngữ đang active ("VN" hoặc "EN") và, khi
-  kích hoạt, mở ra đúng 2 lựa chọn theo mẫu menu chuẩn accessibility.
+- **FR-201** *(REVISION — sửa)* Nút trigger của bộ chọn ngôn ngữ hiển thị ĐÚNG cờ và nhãn của ngôn
+  ngữ đang active — cờ Việt Nam + "VN" khi đang ở tiếng Việt, cờ Anh/UK + "EN" khi đang ở tiếng
+  Anh (KHÔNG phải luôn luôn cờ Việt Nam bất kể locale nào). Khi kích hoạt, trigger mở ra đúng 2 lựa
+  chọn theo mẫu menu chuẩn accessibility.
 - **FR-202** Toàn bộ điều hướng bàn phím trong menu (mũi tên mở và chạy vòng, Home/End nhảy hai
   đầu, Escape đóng và trả focus, Tab đóng nhưng không trả focus) hoạt động theo đúng chuẩn ARIA
   APG cho menu-button.
+- **FR-203** *(REVISION — mới, theo MoMorph `hUyaaugye2` row A/A.1/A.2)* Mỗi lựa chọn trong menu
+  hiển thị cờ của riêng ngôn ngữ đó (cờ Việt Nam cho "VN", cờ Anh cho "EN"); lựa chọn đang active
+  có nền phân biệt với lựa chọn còn lại; mỗi ô lựa chọn có kích thước 110×56px, nền tối.
 
 ### Interaction (4xx)
 
-- **FR-401** Chọn một ngôn ngữ ghi nhớ lựa chọn (hiệu lực khoảng 1 năm) và làm toàn bộ nội dung
-  giao diện hiển thị lại theo ngôn ngữ mới ngay lập tức, không cần tải lại trang.
+- **FR-401** *(REVISION — làm rõ giá trị thật)* Chọn một ngôn ngữ ghi nhớ lựa chọn vào cookie
+  `NEXT_LOCALE` (`maxAge` 31536000 giây ~ 1 năm, `sameSite=lax`, `path=/`) và làm toàn bộ nội dung
+  giao diện hiển thị lại theo ngôn ngữ mới ngay lập tức, không cần tải lại trang — lựa chọn phải
+  sống sót qua một lần tải lại trang (reload).
 - **FR-402** Nếu lựa chọn ngôn ngữ đã ghi nhớ trước đó bị hỏng/không hợp lệ, hệ thống âm thầm
   quay về Tiếng Việt ở lần ghé thăm kế tiếp, không hiển thị lỗi nào.
 
@@ -91,24 +106,26 @@ None — no unresolved domain confirmations.
 
 | Screen Name | SCR### | What User Sees | What User Can Do |
 |-------------|--------|-----------------|-------------------|
-| Login | SCR001_LoginScreen | Bộ chọn ngôn ngữ ở góc phải header, hiển thị cờ Việt Nam + nhãn "VN" hoặc "EN" kèm mũi tên chỉ xuống | Click hoặc dùng bàn phím (ArrowDown/ArrowUp) để mở menu; chọn Tiếng Việt hoặc English; điều hướng menu bằng mũi tên/Home/End; đóng menu bằng Escape hoặc Tab |
+| Login | SCR001_LoginScreen | Bộ chọn ngôn ngữ ở góc phải header, trigger hiển thị đúng cờ + nhãn ("VN" hoặc "EN") của ngôn ngữ đang active kèm mũi tên chỉ xuống; mở menu thấy 2 lựa chọn, mỗi lựa chọn có cờ riêng, lựa chọn active có nền phân biệt | Click hoặc dùng bàn phím (ArrowDown/ArrowUp) để mở menu; chọn Tiếng Việt hoặc English; điều hướng menu bằng mũi tên/Home/End; đóng menu bằng Escape hoặc Tab |
 
 ### User Journey
 
-1. Khách truy cập vào màn Đăng nhập, thấy bộ chọn ngôn ngữ ở header đang hiển thị đúng ngôn ngữ
-   hiện tại ("VN" hoặc "EN").
-2. Khách click (hoặc dùng bàn phím) để mở menu — thấy đúng 2 lựa chọn Tiếng Việt/English.
-3. Khách chọn một ngôn ngữ — menu đóng lại, nhãn trên bộ chọn đổi theo, và toàn bộ nội dung màn
-   hình (tiêu đề, mô tả, nút đăng nhập, footer) hiển thị lại bằng ngôn ngữ vừa chọn ngay lập tức.
+1. Khách truy cập vào màn Đăng nhập, thấy bộ chọn ngôn ngữ ở header đang hiển thị đúng cờ + nhãn
+   ngôn ngữ hiện tại ("VN" hoặc "EN").
+2. Khách click (hoặc dùng bàn phím) để mở menu — thấy đúng 2 lựa chọn Tiếng Việt/English, mỗi lựa
+   chọn có cờ riêng.
+3. Khách chọn một ngôn ngữ — menu đóng lại, nhãn + cờ trên bộ chọn đổi theo, và toàn bộ nội dung
+   màn hình (tiêu đề, mô tả, nút đăng nhập, footer) hiển thị lại bằng ngôn ngữ vừa chọn ngay lập
+   tức; lựa chọn còn giữ nguyên sau khi tải lại trang.
 
 ```mermaid
 journey
     title Chuyển đổi ngôn ngữ giao diện
     section Mở bộ chọn
-      Thấy nhãn ngôn ngữ hiện tại: 5: Khách truy cập
+      Thấy đúng cờ + nhãn ngôn ngữ hiện tại: 5: Khách truy cập
       Mở menu bằng chuột hoặc bàn phím: 5: Khách truy cập
     section Chọn ngôn ngữ
-      Chọn Tiếng Việt hoặc English: 5: Khách truy cập
+      Chọn Tiếng Việt hoặc English (mỗi lựa chọn có cờ riêng): 5: Khách truy cập
       Thấy toàn bộ nội dung đổi ngôn ngữ ngay: 5: Khách truy cập
 ```
 
@@ -122,20 +139,22 @@ journey
 ngữ ngay từ bước đầu tiên tiếp xúc với sản phẩm.
 
 **Acceptance Criteria:**
-- [ ] Mở bộ chọn ngôn ngữ hiển thị đúng 2 lựa chọn Tiếng Việt/English theo mẫu menu chuẩn
-      accessibility.
-- [ ] Chọn một ngôn ngữ làm nhãn trên bộ chọn cập nhật đúng theo lựa chọn, và nội dung trang
-      hiển thị lại bằng ngôn ngữ mới.
+- [ ] Trigger luôn hiển thị đúng cờ + nhãn khớp ngôn ngữ đang active — không cố định một cờ.
+- [ ] Mở bộ chọn ngôn ngữ hiển thị đúng 2 lựa chọn Tiếng Việt/English, mỗi lựa chọn có cờ riêng,
+      lựa chọn active có nền phân biệt, theo mẫu menu chuẩn accessibility.
+- [ ] Chọn một ngôn ngữ làm nhãn + cờ trên bộ chọn cập nhật đúng theo lựa chọn, nội dung trang
+      hiển thị lại bằng ngôn ngữ mới, và lựa chọn còn giữ nguyên sau khi tải lại trang.
 - [ ] Một lựa chọn ngôn ngữ đã ghi nhớ trước đó nhưng bị hỏng/không hợp lệ luôn được âm thầm
       quay về Tiếng Việt mặc định ở lần ghé thăm kế tiếp.
+- [ ] `messages/en.json` không còn leaf nào sót lại text tiếng Việt.
 
 ## 8. Scenarios
 
 ### US001_SwitchLanguage — Happy Path
 
 **Given** đang ở màn Đăng nhập với ngôn ngữ hiện tại là Tiếng Việt, **When** khách mở bộ chọn
-ngôn ngữ và chọn English, **Then** nhãn trên bộ chọn đổi thành "EN" và toàn bộ nội dung màn hình
-hiển thị lại bằng English, không cần tải lại trang.
+ngôn ngữ và chọn English, **Then** trigger đổi cờ + nhãn thành cờ Anh/"EN" và toàn bộ nội dung màn
+hình hiển thị lại bằng English, không cần tải lại trang; tải lại trang vẫn giữ English.
 
 ### US001_SwitchLanguage — Error: Lựa chọn ngôn ngữ đã ghi nhớ bị hỏng
 
@@ -154,12 +173,14 @@ mặc định, không có lỗi nào hiển thị cho khách.
 
 ## 10. Edge Behaviours to Verify
 
-- **FR-201** → Tester xác nhận bộ chọn luôn hiển thị đúng nhãn khớp với ngôn ngữ hiện tại mỗi khi
-  tải lại màn hình.
-- **FR-202** → Tester xác nhận toàn bộ phím tắt điều hướng (mũi tên, Home, End, Escape, Tab) hoạt
-  động đúng như mô tả.
+- **FR-002** → Tester quét toàn bộ `messages/en.json`, xác nhận không leaf nào còn text tiếng Việt.
+- **FR-003** → Tester xác nhận 3 nhãn nav dùng chung header giữ tiếng Anh khi đổi sang locale `vi`.
+- **FR-201** → Tester xác nhận trigger đổi ĐÚNG cờ (không chỉ nhãn chữ) khi đổi locale.
+- **FR-203** → Tester xác nhận mỗi lựa chọn trong menu có cờ riêng, lựa chọn active có nền khác
+  biệt, và kích thước ô đúng 110×56px.
 - **FR-401** → Tester xác nhận chọn ngôn ngữ đổi toàn bộ nội dung trang ngay lập tức, không tải
-  lại trang, và lựa chọn được ghi nhớ khoảng 1 năm.
+  lại trang, và lựa chọn còn giữ nguyên sau khi reload (cookie `NEXT_LOCALE`, `maxAge` 31536000,
+  `sameSite=lax`).
 - **FR-402** → Tester xác nhận một lựa chọn ngôn ngữ đã ghi nhớ nhưng bị hỏng luôn quay về Tiếng
   Việt mặc định mà không có lỗi hiển thị.
 
@@ -178,11 +199,12 @@ mặc định, không có lỗi nào hiển thị cho khách.
 | next-intl (thư viện dịch, phiên bản 4.14.2) | infrastructure | Cung cấp cơ chế đọc gói nội dung dịch theo ngôn ngữ đang chọn (chế độ không dùng URL prefix) | FR-401, FR-402 |
 | Server Actions của Next.js (App Router) | infrastructure | Cần thiết để ghi lại lựa chọn ngôn ngữ phía server mà không cần một API endpoint riêng | FR-401, BR-001 |
 | F001_GoogleOAuthLogin | feature | Dùng chung khung màn hình Đăng nhập (header) và dùng chung cơ chế "đang xử lý" của nút đăng nhập (xem BR-002) — dù outcome nghiệp vụ hoàn toàn độc lập | BR-002 |
+| `IconEnFlag` | component | Cờ Anh cho trigger/menu khi locale `en`, chọn theo `label` qua bảng `FLAG` (FR-201/FR-203) | FR-201, FR-203 |
 
 ## 13. Configuration
 
 ```text
 LOCALE_COOKIE = "NEXT_LOCALE"        # tên nơi lưu lựa chọn ngôn ngữ của người dùng
-LOCALE_COOKIE_MAX_AGE = 31536000     # lựa chọn được ghi nhớ khoảng 1 năm trước khi hết hạn
+LOCALE_COOKIE_MAX_AGE = 31536000     # lựa chọn được ghi nhớ khoảng 1 năm trước khi hết hạn (sameSite=lax, path=/)
 DEFAULT_LOCALE = "vi"                 # ngôn ngữ mặc định khi chưa có lựa chọn hợp lệ nào
 ```

@@ -1,0 +1,68 @@
+{
+  "score": 8,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "the Top-10 recent gift recipients panel renders real data instead of a hardcoded empty array",
+    "Spotlight total and both filter option lists are exact and independent of the 1000-row max_rows cap",
+    "messages/en.json contains no Vietnamese text and the parity test fails when it does",
+    "the language selector shows the flag of the active locale, a flag per menu option, and a distinct selected option",
+    "locale choice survives a page reload, proven by an e2e test",
+    "the prelaunch redirect gate is proven by an executable test with the lock ON for /, /login and /kudos",
+    "the header nav label is the plural Awards Information in all three places that carry it",
+    "the header logo box is 64x60 and a test asserts the box, not just visibility",
+    "spec row C1's third description line renders on the homepage",
+    "each countdown time unit renders one box per digit, minimum two",
+    "the award caption is small and muted and the desktop active-category indicator is an underline with hover feedback",
+    "the kudos filter dropdown panel matches the design tokens and scrolls within a max height, with a distinct selected option and hashtag labels carrying the # prefix",
+    "all four compose fields render the error border colour when the field is in error",
+    "the max-5-hashtag message fires on the sixth attempt rather than at five chips, and picker rows are disabled at the cap",
+    "the heart button is disabled while a toggle is in flight and for a kudo the viewer sent, including an anonymous one",
+    "no tautological assertion of the form expect(page.url()).toContain(\"/\") remains in the e2e suite",
+    "the stale test.fixme on the own-kudo heart rule is removed and the test executes",
+    "the baseline stays green: 808 unit tests across 83 files, and the default e2e suite at 217 passed with 5 skipped and 0 failed",
+    "pnpm typecheck, pnpm lint --max-warnings 0 and pnpm format:check all pass"
+  ],
+  "regressionChecked": [
+    "kudos_cards view column order/shape for its ~20 consumers — 0016 restates 0009's SELECT byte-for-byte and appends is_own last (CREATE OR REPLACE VIEW column-append rule), REVOKE/GRANT reissued",
+    "sender_id anonymity mask (0009) — is_own is computed from the unmasked k.sender_id inside the view only, never re-exposed as a value; verified the SQL directly, not just the comment",
+    "secret_box_openings own-row RLS (0011 secret_box_openings_select_own) — left untouched by 0015; the base table's REVOKE ALL / GRANT SELECT authenticated-only posture is unchanged, confirmed by reading 0011 and 0015 together",
+    "loadMoreKudos still calls getKudosBoard with 2 args (no aggregatesClient) by design — it only ever reads board.feed, never spotlightTotal/filters, so the omission is inert, not a behaviour drift",
+    "e2e cross-file interference fixes (C26/C34/C14/C23) reviewed in diff — assertions now pin to seeded/unique data with toHaveCount(1)/hasText filters, strictly stronger than before, no weakening",
+    "test.fixme count is 0 repo-wide outside the intentional notifications.spec.ts TC-014 placeholder and pre-existing skips (awards.spec.ts, login.spec.ts) unrelated to this change",
+    "no tautological expect(page.url()).toContain(\"/\") assertions remain anywhere in tests/e2e/*.spec.ts",
+    "CI workflow / playwright.config.ts / playwright.lock.config.ts split is consistent with the documented single-next-dev-per-directory lock constraint"
+  ],
+  "contractStatus": "CHANGED",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Medium",
+      "category": "Completeness",
+      "location": "docs/vi/system/permissions.md:408-414",
+      "summary": "The living security-decision doc still states 'không cần view SECURITY DEFINER nào cho đường đọc' for secret_box_openings — directly contradicted by migration 0015, which adds exactly that view. Migration 0015's own header says it 'REVERSES' this doc and points to plans/260910-1951-screen-audit-spec-test-gaps/spec/system/permissions.md, but that plan-scoped copy was never merged into the real docs/ tree (git status confirms docs/vi/system/permissions.md is unmodified on this branch). A future reader of the canonical doc — the one place this project's security posture is supposed to be recorded — will be told something false about a privacy-sensitive read path.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Performance",
+      "location": "supabase/migrations/0015_recent_gift_recipients.sql:32",
+      "summary": "recent_gift_recipients does ORDER BY s.opened_at DESC LIMIT 10 over secret_box_openings with no index on opened_at (0011 only indexes user_id). Currently a full sort on an append-only log; cheap while the table is small, becomes a real per-request cost as openings accumulate since /kudos is a public, unauthenticated, presumably high-traffic page. Fix: CREATE INDEX idx_secret_box_openings_opened_at ON public.secret_box_openings (opened_at DESC).",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Logic",
+      "location": "src/app/(public)/kudos/_hooks/use-kudos-hearts.ts:97-98",
+      "summary": "A transport failure (network error, action throws) on toggleKudoHeart is swallowed silently with only a comment — pendingIds clears via finally so the button un-wedges, but the user gets no visible signal the toggle failed (no toast, unlike other kudos actions which do use useKudosToast). This is a UX gap, not a correctness bug: the card state stays consistent with the server, and the design note explicitly frames it as deliberate (not optimistic). Worth a toast on catch in a follow-up, not blocking.",
+      "disposition": "Accept"
+    }
+  ],
+  "riskGate": {
+    "touchesSensitiveArea": true,
+    "signoffRequired": true,
+    "humanSignedOff": true
+  }
+}

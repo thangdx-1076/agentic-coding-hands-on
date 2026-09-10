@@ -48,6 +48,19 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      // `prelaunch-lock.spec.ts` needs `PRELAUNCH_LOCK_ENABLED=true`, which
+      // this project's server never sets (see the file-level comment on
+      // `tests/e2e/prelaunch-lock.spec.ts` and `playwright.lock.config.ts`
+      // for why that lives in a wholly separate config, not a second
+      // project here): a second `next dev` sharing this repo's `.next/`
+      // fails to start — `next dev` takes a directory-wide lock in
+      // `.next/dev/lock`, keyed by directory, not by port, so a same-repo
+      // second server collides even on a different port. Confirmed
+      // 2026-09-10: a clean, fully-sequential second `pnpm dev` against an
+      // already-`✓ Ready` first one still self-aborts with "Another next
+      // dev server is already running." Excluding the file here keeps this
+      // project from ever needing that second server.
+      testIgnore: "**/prelaunch-lock.spec.ts",
     },
   ],
 

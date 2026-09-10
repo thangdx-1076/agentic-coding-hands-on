@@ -61,6 +61,7 @@ export type KudosComposeFormProps = {
   onAddHashtag: (tag: string) => void;
   onRemoveHashtag: (tag: string) => void;
   hashtagLimitReached: boolean;
+  hashtagLimitRejected: boolean;
   onAddImages: (files: FileList | File[]) => void;
   onRemoveImage: (id: string) => void;
   onToggleAnonymous: () => void;
@@ -68,14 +69,9 @@ export type KudosComposeFormProps = {
 };
 
 /**
- * The "Viết Kudo" form body's TOP half (C04: Người nhận → Danh hiệu →
- * toolbar+Nội dung); the bottom half lives in `kudos-compose-body.tsx`.
- * Props come from `useKudosComposeForm`'s return via `kudos-compose-launcher.tsx`.
+ * The "Viết Kudo" form body's TOP half (C04: Người nhận → Danh hiệu → toolbar+Nội dung); the bottom half lives in `kudos-compose-body.tsx`. Props come from `useKudosComposeForm`'s return via `kudos-compose-launcher.tsx`.
  *
- * Owns the `<textarea>` ref. `handleFormat` bridges `onFormat(kind)` to
- * `applyFormat(kind, textarea, url?, linkText?)`, except `"link"`, which
- * opens `KudosComposeLinkDialog` (A5) via an imperative ref it registers
- * on mount — that dialog calls `applyFormat` once "Lưu" validates.
+ * Owns the `<textarea>` ref. `handleFormat` bridges `onFormat(kind)` to `applyFormat(kind, textarea, url?, linkText?)`, except `"link"`, which opens `KudosComposeLinkDialog` (A5) via an imperative ref it registers on mount — that dialog calls `applyFormat` once "Lưu" validates.
  */
 export function KudosComposeForm({
   copy,
@@ -103,6 +99,7 @@ export function KudosComposeForm({
   onAddHashtag,
   onRemoveHashtag,
   hashtagLimitReached,
+  hashtagLimitRejected,
   onAddImages,
   onRemoveImage,
   onToggleAnonymous,
@@ -111,8 +108,7 @@ export function KudosComposeForm({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const openLinkRef = useRef<OpenLinkFn | null>(null);
 
-  // Closed once a recipient is picked (`draft.recipient` set); editing the
-  // query text away from that name clears it back to `null` and reopens it.
+  // Closed once a recipient is picked (`draft.recipient` set); editing the query text away from that name clears it back to `null` and reopens it.
   const recipientIsOpen =
     draft.recipient === null && recipientQuery.trim() !== "";
 
@@ -183,6 +179,7 @@ export function KudosComposeForm({
         onAddHashtag={onAddHashtag}
         onRemoveHashtag={onRemoveHashtag}
         hashtagLimitReached={hashtagLimitReached}
+        hashtagLimitRejected={hashtagLimitRejected}
         onAddImages={onAddImages}
         onRemoveImage={onRemoveImage}
         onToggleAnonymous={onToggleAnonymous}

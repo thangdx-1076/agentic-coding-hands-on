@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect, userEvent, within } from "storybook/test";
 
 import { KudosFilterMenu } from "./kudos-filter-menu";
 
@@ -25,6 +26,7 @@ export const Default: Story = {
     onClear: () => {},
     testId: "kudos-filter-hashtag",
     optionTestId: "kudos-filter-hashtag-option",
+    labelPrefix: "#",
   },
 };
 
@@ -34,6 +36,63 @@ export const HashtagSelected: Story = {
   args: {
     ...Default.args,
     selected: "teamwork",
+  },
+};
+
+/**
+ * Open state (real click, `play` — `open` is `useMenuKeyboardNav`'s internal
+ * state, not a prop, same rule as `language-selector.stories.tsx` `Open`).
+ * Locks FR-218/BR-019: the selected option (`aria-selected="true"`) carries
+ * the design's background + text-shadow, and the label reads `#teamwork`
+ * while `data-value` stays the bare `"teamwork"` — verified against node
+ * `563:8026` / `I563:8026;525:13508`.
+ */
+export const HashtagSelectedOpen: Story = {
+  args: {
+    ...HashtagSelected.args,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole("button", { expanded: false });
+
+    await userEvent.click(trigger);
+
+    const selectedOption = canvas.getByRole("option", { name: "#teamwork" });
+    await expect(selectedOption).toHaveAttribute("aria-selected", "true");
+    await expect(selectedOption).toHaveAttribute("data-value", "teamwork");
+  },
+};
+
+/**
+ * Department menu (`labelPrefix` unset) with 50 options — the department
+ * list is now DISTINCT-from-real-data (phase 01), not a fixed ~50-item set,
+ * so the panel must scroll instead of overflowing. Locks `max-h-87`
+ * (348px, node `563:8027` height) + `overflow-y-auto` on the panel.
+ */
+const MANY_DEPARTMENTS = Array.from(
+  { length: 50 },
+  (_, index) => `Department ${index + 1}`,
+);
+
+export const ManyOptionsScroll: Story = {
+  args: {
+    label: "Phòng ban",
+    options: MANY_DEPARTMENTS,
+    selected: null,
+    onSelect: () => {},
+    onClear: () => {},
+    testId: "kudos-filter-department",
+    optionTestId: "kudos-filter-department-option",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole("button", { expanded: false });
+
+    await userEvent.click(trigger);
+
+    const panel = canvas.getByRole("listbox");
+    await expect(panel).toHaveStyle({ maxHeight: "348px", overflowY: "auto" });
+    await expect(canvas.getAllByRole("option")).toHaveLength(50);
   },
 };
 

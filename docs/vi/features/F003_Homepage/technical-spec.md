@@ -31,8 +31,8 @@ Trang chủ công khai (`/`) của SAA 2025 — trước đây route này chỉ 
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
 | **A0** | *cross-cutting — thuộc về không action nào* | — | FR-001 | — | § 4.4 |
-| **A1** | `HomePage` (Server Component) | `GET` `/` | FR-002, FR-003, FR-101, FR-201, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, BR-001, BR-004, INT-001, US001, US002 | — *(read-only)* | § 3.1 |
-| **A2** | `useCountdown` *(client-only, no BE)* | — *(client tick, không HTTP)* | FR-202, BR-003, BR-004, ALG-001, US001 | — *(read-only)* | § 3.1 |
+| **A1** | `HomePage` (Server Component) | `GET` `/` | FR-002, FR-003, FR-101, FR-201, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-211, FR-212, FR-213, BR-001, BR-004, INT-001, US001, US002 | — *(read-only)* | § 3.1 |
+| **A2** | `useCountdown` *(client-only, no BE)* | — *(client tick, không HTTP)* | FR-202, FR-214, BR-003, BR-004, ALG-001, US001 | — *(read-only)* | § 3.1 |
 | **A3** | `NavLink` *(client-only)* | — *(client, không HTTP)* | FR-102, DEC-001, US001 | — *(read-only)* | § 3.1 |
 | **A4** | `AccountMenu` + `useMenuKeyboardNav` + `logoutAction` | `POST` `/` *(Server Action, không phải route riêng)* | FR-401, FR-403, FR-601, BR-002, BR-006, SM-001, US002 | — *(kết thúc session — không phải bảng DB)* | § 3.1 |
 | **A5** | `NotificationBell` *(client-only, no BE)* | — *(client render/open state)* | FR-402, BR-005, US003 | — *(read-only)* | § 3.1 |
@@ -44,10 +44,21 @@ Trang chủ công khai (`/`) của SAA 2025 — trước đây route này chỉ 
 
 #### A1 · Render trang chủ (đọc session + role, dựng toàn bộ nội dung)
 `GET` `/` → `` `HomePage` ``
-`FR-002` `FR-003` `FR-101` `FR-201` `FR-203` `FR-204` `FR-205` `FR-206` `FR-207` `FR-208` `FR-209` · `SCR003_Home` · `US001` `US002`
+`FR-002` `FR-003` `FR-101` `FR-201` `FR-203` `FR-204` `FR-205` `FR-206` `FR-207` `FR-208` `FR-209` `FR-211` `FR-212` `FR-213` · `SCR003_Home` · `US001` `US002`
 
 **Who** · Bất kỳ khách truy cập nào — Anonymous hoặc Authenticated (member/admin), không qua guard nào *(gate A0 — § 4.4)*
-**FE** · `src/app/(public)/(home)/page.tsx` build `HomeCopy` rồi render `HomeClient` → `HomeScreen` (`_components/home-client.tsx`, `_components/home-screen.tsx`) — cây trang thật: `SiteHeader` (dùng chung, trước là `HomeHeader`), hero + `CountdownTimer` (props seed cho A2), khối thông tin sự kiện + CTA, nội dung Root Further, `AwardCard` × 6, khối Sun* Kudos, `SiteFooter` (dùng chung, trước là `HomeFooter`). Nội dung tĩnh lấy từ `src/app/(public)/(home)/_shared/home-copy.ts`'s `defaultHomeCopy` (vi) + `messages/{locale}.json` `home.*` (en, next-intl) — không bịa dữ liệu.
+**FE** · `src/app/(public)/(home)/page.tsx` build `HomeCopy` rồi render `HomeClient` → `HomeScreen` (`_components/home-client.tsx`, `_components/home-screen.tsx`) — cây trang thật: `SiteHeader` (dùng chung, trước là `HomeHeader`), hero + `CountdownTimer` (props seed cho A2), khối thông tin sự kiện + CTA, nội dung Root Further, khối C1 Giải thưởng (`AwardsSection`) + `AwardCard` × 6, khối Sun* Kudos, `SiteFooter` (dùng chung, trước là `HomeFooter`). Nội dung tĩnh lấy từ `src/app/(public)/(home)/_shared/home-copy.ts`'s `defaultHomeCopy` (vi) + `messages/{locale}.json` `home.*` (en, next-intl) — không bịa dữ liệu.
+
+**REVISION (2026-09-10) — 3 điểm sai đã sửa trong cùng phiên (FR-211/212/213):**
+- **FR-211** `AwardsSection` (`src/app/(public)/(home)/_components/awards-section.tsx:38-58`) nay
+  render đủ 3 dòng khối C1: `copy.awards.caption`, `copy.awards.heading`, VÀ
+  `copy.awards.description` — field `description` đã thêm vào `HomeCopy["awards"]`
+  (`home-copy.ts:53-57,99-100`) và `messages/{locale}.json` `home.awards.description`.
+- **FR-212** `defaultSiteChromeCopy.nav.awardsInfo` (`src/app/_shared/site-chrome.ts:64-71`) nay là
+  `"Awards Information"` (số nhiều) — comment nguồn tại chỗ ghi rõ lý do (TC ID-21/23 thắng số ít
+  của tên layer Figma).
+- **FR-213** `SiteHeader` (`src/app/_components/site-header.tsx:60-64`) nay render
+  `<Image width={64} height={60}>` cho logo.
 **Request** · không có tham số — chỉ có session cookie Supabase (đọc qua `@supabase/ssr` server client)
 **BE** · `getViewer()` — nay ở `src/app/_utils/get-viewer.ts` (dùng chung, KHÔNG còn cục bộ trong `page.tsx` như bản gốc) — gọi `getCurrentUser()` (`src/dal/auth.ts`) rồi (nếu có user) đọc `role` qua `getUserRole(toUsersRoleClient(supabase), user.id)` (`src/dal/users.ts`, shim `src/dal/users-role-client.ts`) VÀ `unreadCount` qua `getUnreadCount(toNotificationsClient(supabase), user.id)` (`src/dal/notifications.ts`, F012) — cả 3 field gộp vào một `SiteViewer`, bọc chung 1 try/catch fail-open `null` *(INT-001 — § 4.5)*
 **Rule**
@@ -60,7 +71,13 @@ Trang chủ công khai (`/`) của SAA 2025 — trước đây route này chỉ 
 
 #### A2 · Đếm ngược thời gian thực (client hook)
 — *(client tick, không HTTP)* → `` `useCountdown` ``
-`FR-202` · `SCR003_Home` · `US001`
+`FR-202` `FR-214` · `SCR003_Home` · `US001`
+
+**Known Gap (FR-214 — chưa implement, dùng chung với F011, xem D003 ở functional-spec.md § 3):**
+`DigitBox` (`src/app/(public)/_components/countdown-tiles.tsx:26-46`) đặt
+`style={{ fontFamily: '"Digital Numbers", monospace' }}` nhưng font `"Digital Numbers"` KHÔNG có
+file nào được nạp trong app (không `@font-face`, không entry trong `app/fonts.ts`) — trình duyệt
+luôn rơi về `monospace`. Đây là quyết định cấp phép font (D003), không phải bug code.
 
 **Who** · Bất kỳ khách truy cập nào đang xem trang chủ
 **FE** · `src/app/(public)/(home)/_components/countdown-timer.tsx` gọi `useCountdown(targetIso, initialNowMs)` (`src/app/(public)/_hooks/use-countdown.ts` — nay dùng chung ở Zone A, climb lên từ F011_CountdownPrelaunchPage) — state đầu SEED từ prop server, không gọi `Date.now()` ở render đầu (khớp SSR); `setInterval` 1000ms cập nhật `nowMs` (hiển thị đổi theo phút); render client đầu trùng byte với SSR nhờ seed `initialNowMs`, KHÔNG dùng `suppressHydrationWarning`.
@@ -172,6 +189,7 @@ như claim gốc.
 | `HomeClient` / `HomeScreen` | Ranh giới client + composition thật của cây trang | A1 | `src/app/(public)/(home)/_components/home-client.tsx`, `home-screen.tsx` |
 | `HomeHeader` | Header: logo, nav, LanguageSelector (F002), bell/account hoặc login link | A1, A4, A5 | `src/app/_components/site-header.tsx` |
 | `CountdownTimer` | Hiển thị 3 ô số + nhãn, dùng `useCountdown` | A2 | `src/app/(public)/(home)/_components/countdown-timer.tsx` |
+| `AwardsSection` | Khối C1: caption + heading + dòng mô tả phụ (FR-211), bọc lưới `AwardCard` | A1 | `src/app/(public)/(home)/_components/awards-section.tsx` |
 | `AwardCard` | Thẻ giải thưởng (ảnh+tiêu đề+mô tả+Chi tiết) | A1 | `src/app/(public)/(home)/_components/award-card.tsx` |
 | `NotificationBell` | Nút chuông + panel thông báo thật (F012 — badge số, list, mark-read) | A5 | `src/app/_components/notification-bell.tsx` |
 | `AccountMenu` | Nút tài khoản + menu Hồ sơ/Đăng xuất/Trang quản trị | A4 | `src/app/_components/account-menu.tsx` |
@@ -198,7 +216,7 @@ Không vẽ quan hệ nào — cả 2 shape mới của feature này độc lậ
 
 | Entity | Table | Used for | Action |
 |---|---|---|---|
-| `HomeCopy` (chưa có MODEL### — nội dung tĩnh, xem `entities.md` honest-scope note) | — *(không persist, giống MODEL003_LoginCopy)* | Nguồn copy vi mặc định cho toàn bộ trang chủ; bản en qua next-intl `home.*` | A1 |
+| `HomeCopy` (chưa có MODEL### — nội dung tĩnh, xem `entities.md` honest-scope note) | — *(không persist, giống MODEL003_LoginCopy)* | Nguồn copy vi mặc định cho toàn bộ trang chủ; `awards.description` (dòng mô tả phụ thứ 3, FR-211) đã thêm vào field `awards`; bản en qua next-intl `home.*` | A1 |
 | `UserRole` (mở rộng MODEL002_SupabaseUser — chưa có MODEL### riêng) | `public.users` *(Supabase `saa-app`, schema committed tại `supabase/migrations/0001_users_table.sql`)* | Xác định hiện/ẩn mục "Trang quản trị" | A1, A4 |
 | `AppLocale` (MODEL001, tái dùng nguyên trạng từ F002) | `NEXT_LOCALE` cookie | Nhãn ngôn ngữ hiện tại trên LanguageSelector tái dùng | A1 |
 
@@ -296,9 +314,17 @@ EVENT_START_AT   # server-only ISO-8601 datetime (không NEXT_PUBLIC_), mốc s�
 - **SC-004** *(A1, A2)* Tới/qua mốc sự kiện: 3 ô giữ `00/00/00`, "Coming soon" ẩn, không âm; env thiếu/sai vẫn `00/00/00` nhưng "Coming soon" VẪN hiện (covers FR-202, BR-003, BR-004)
 - **SC-005** *(A4)* Admin thấy "Trang quản trị" trong menu tài khoản; member không thấy (covers FR-403, FR-601, BR-002)
 - **SC-006** *(A6)* Widget mở đúng 2 `menuitem`, mỗi mục điều hướng đúng route (covers FR-210)
+- **SC-007** *(A1)* Logo header đo được 64×60px (covers FR-213) — Playwright
+  `tests/e2e/home.spec.ts:52-53`.
+- **SC-008** *(A1)* Nav link thứ 2 hiển thị "Awards Information" và điều hướng đúng `/awards`
+  (covers FR-212) — Playwright `[TC ID-21]` `tests/e2e/home.spec.ts:510-517`.
+- **SC-009** *(A1)* Khối C1 render dòng mô tả phụ "Các hạng mục sẽ được trao giải theo TOP những
+  người xuất sắc nhất." (covers FR-211) — Playwright `tests/e2e/home.spec.ts:289`.
+- **SC-010** *(A2)* — **[UNVERIFIED]** không có test nào assert `font-family` của digit đếm ngược
+  (covers FR-214) — hiện vẫn `monospace` vì D003 chưa chốt (xem A2 Known Gap trên).
 
 #### US001_BrowseHomepage *(A1, A2, A3)*
-**Independent Test:** Vào `/` không đăng nhập — xác nhận thấy đủ hero/đếm ngược/thông tin sự kiện/CTA/Root Further/6 thẻ giải thưởng/Sun* Kudos/footer, và mọi link dẫn đúng route/hashtag.
+**Independent Test:** Vào `/` không đăng nhập — xác nhận thấy đủ hero/đếm ngược/thông tin sự kiện/CTA/Root Further/khối C1 đủ 3 dòng/6 thẻ giải thưởng/Sun* Kudos/footer, header đúng logo 64×60px + nhãn "Awards Information", và mọi link dẫn đúng route/hashtag.
 **Acceptance Scenarios:** **Given** `EVENT_START_AT` không hợp lệ, **When** vào `/`, **Then** countdown hiện `00/00/00` + "Coming soon" vẫn hiện, trang không lỗi.
 
 #### US002_ManageAccountFromHeader *(A1, A4)*

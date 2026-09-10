@@ -93,6 +93,7 @@ export default async function HomePage() {
     awards: {
       caption: t("awards.caption"),
       heading: t("awards.heading"),
+      description: t("awards.description"),
       items: defaultHomeCopy.awards.items.map((item, index) => ({
         slug: item.slug,
         image: item.image,

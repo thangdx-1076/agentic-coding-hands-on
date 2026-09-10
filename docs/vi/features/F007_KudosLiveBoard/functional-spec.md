@@ -37,7 +37,7 @@ thị số tim, không viết FR/BR nào cho hành vi bấm.
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Xem, lọc & lan toả bảng Kudos trực tiếp | Xem toàn bộ board (banner, carousel Highlight, Spotlight, feed ALL KUDOS, sidebar); lọc theo Hashtag/Phòng ban; lật carousel; tìm Sunner trong Spotlight; cuộn thêm feed; copy link 1 kudo; mở hồ sơ người gửi/nhận/leaderboard; tìm & mở hồ sơ Sunner qua ô tìm ở khối keyvisual | US001, US002, US003, US004, US005, US006, US007, US008, US009 | FR-001, FR-002, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-211, FR-212, FR-213, FR-214, FR-401, FR-402, FR-601, FR-602 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-014, BR-015, BR-016, SM-001 | SCR007_KudosLiveBoard |
+| CAP-01 | Xem, lọc & lan toả bảng Kudos trực tiếp | Xem toàn bộ board (banner, carousel Highlight, Spotlight, feed ALL KUDOS, sidebar); lọc theo Hashtag/Phòng ban với danh sách option đầy đủ + đúng phong cách thiết kế; lật carousel; tìm Sunner trong Spotlight; cuộn thêm feed; copy link 1 kudo; mở hồ sơ người gửi/nhận/leaderboard; tìm & mở hồ sơ Sunner qua ô tìm ở khối keyvisual; xem sidebar "10 SUNNER NHẬN QUÀ MỚI NHẤT" từ dữ liệu Secret Box thật | US001, US002, US003, US004, US005, US006, US007, US008, US009, US010 | FR-001, FR-002, FR-101, FR-102, FR-201, FR-202, FR-203, FR-204, FR-205, FR-206, FR-207, FR-208, FR-209, FR-210, FR-211, FR-212, FR-213, FR-214, FR-215, FR-217, FR-218, FR-219, FR-401, FR-402, FR-601, FR-602 | BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-014, BR-015, BR-016, BR-017, BR-019, BR-020, SM-001 | SCR007_KudosLiveBoard |
 
 **Single-capability rationale:** Xem toàn bộ board (US001), lọc theo hashtag/phòng ban (US003), và
 chia sẻ một kudos ra ngoài (US006) đều phục vụ đúng một ý định — thấy và lan toả lời cảm ơn đang
@@ -50,6 +50,9 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 |------|----------|-------------------|-----------|--------------|
 | D001 | Sidebar 5 chỉ số cá nhân + nút "Mở quà" hiển thị thế nào cho người chưa đăng nhập? | Ẩn hoàn toàn khối 5 chỉ số + nút "Mở quà" khi ẩn danh; giữ nguyên 2 danh sách xếp hạng (dữ liệu công khai, không thuộc về người xem). | 5 chỉ số vốn cá nhân hoá theo viewer — hiện "0" giả cho người ẩn danh dễ gây hiểu nhầm "bạn có 0 kudos" thay vì "chưa đăng nhập"; ẩn khối là lựa chọn ít nhầm lẫn nhất và không cần dựng thêm trạng thái mới. | no |
 | D002 | Ô tìm Sunner trong Spotlight (B.7.3) làm gì khi Spotlight đã là scatter tĩnh (không phải canvas tương tác)? | Tìm kiếm lọc/làm nổi bật đúng (các) tên khớp trong scatter tĩnh hiện có; không điều hướng đi đâu. | Click-node và trang chi tiết đã hoãn cùng lý do Spotlight tĩnh (`clarifications.md`); giữ hành vi tìm kiếm trong đúng phạm vi dữ liệu đang hiển thị là lựa chọn ít thay đổi nhất. | no |
+| D003 | Bộ lọc Hashtag và Phòng ban kết hợp AND hay OR khi cả 2 cùng được chọn? | Giữ nguyên AND (hành vi code hiện tại) | Không có row thiết kế nào (kể cả 2 CSV dropdown mới đọc) nói rõ; code đã chạy AND từ trước, đổi sang OR là thay đổi hành vi cần xác nhận sản phẩm trước, không phải một gap kỹ thuật | no |
+| D004 | Mô tả "quà" hiển thị cho mỗi Sunner ở "10 SUNNER NHẬN QUÀ MỚI NHẤT" là gì, khi hệ thống thật chỉ lưu `badge_key` (1 trong 6 huy hiệu), không lưu text quà vật lý như node mock ("Nhận được 1 áo phông SAA")? | Hiển thị tên/caption huy hiệu thật (đã có sẵn ánh xạ badge→caption trong `standards-copy.ts`) | Text "áo phông SAA" là dữ liệu mock của Figma, không tồn tại trong schema thật (`secret_box_openings` không có cột mô tả quà) — dùng đúng dữ liệu hệ thống có, không bịa thêm cột mới | no |
+| D005 | Dữ liệu seed hiện tại (`0008_kudos_demo_seed.sql`) chỉ có 2 phòng ban (`CEVC10`, `CEVC20`) — không đủ để bất kỳ test nào chứng minh danh sách option Phòng ban (FR-215) thật sự đầy đủ/distinct trên dữ liệu thật. Có nên mở rộng seed về gần với danh sách tổ chức thật không? | Không mở rộng seed trong revision này — để riêng cho người quyết định dữ liệu | Đây là quyết định về khối lượng/nội dung dữ liệu demo (không phải một khiếm khuyết kỹ thuật), có thể ảnh hưởng tới các test khác đang dựa vào đúng 2 phòng ban hiện có (`src/dal/kudos.test.ts`) — cần người quyết định trước khi đổi seed | no |
 
 ## 4. Requirements
 
@@ -79,6 +82,18 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - **FR-212** Khi hệ thống chưa có kudo nào, carousel Highlight và feed ALL KUDOS đều hiển thị cùng một thông báo rỗng.
 - **FR-213** Khi một danh sách xếp hạng ở sidebar chưa có dữ liệu, danh sách đó hiển thị thông báo rỗng riêng.
 - **FR-214** Ô tìm kiếm hồ sơ Sunner ở khối keyvisual (cạnh ô soạn Kudo, placeholder "Tìm kiếm profile Sunner") nhận input thật tối đa 128 ký tự, tìm theo tên chỉ khi người dùng đã đăng nhập, và bấm chọn một kết quả điều hướng sang trang hồ sơ Sunner đó.
+- **FR-215** Danh sách option của bộ lọc Hashtag và bộ lọc Phòng ban được lấy từ TOÀN BỘ dữ liệu
+  `kudos` thật trong CSDL — mọi giá trị distinct thực sự tồn tại, không phụ thuộc việc PostgREST
+  giới hạn 1 lần đọc ở 1000 dòng (`max_rows`). Cụ thể (falsifiable): với >1000 dòng `kudos`, 2 danh
+  sách option vẫn phải chứa đủ MỌI giá trị hashtag/phòng ban phân biệt có trong dữ liệu, không chỉ
+  những giá trị xuất hiện trong 1000 dòng đầu PostgREST tình cờ trả về.
+- **FR-217** Tổng "N KUDOS" ở Spotlight là số đếm chính xác của toàn bộ bảng `kudos`, không bị giới
+  hạn bởi ngưỡng 1000 dòng mặc định của PostgREST.
+- **FR-218** Bảng dropdown Hashtag/Phòng ban hiển thị đúng phong cách thiết kế: nền tối, viền, bo
+  góc, đệm, cuộn dọc khi danh sách vượt chiều cao khung, trạng thái mục đang chọn khác biệt rõ với
+  mục thường, và nhãn hashtag giữ tiền tố "#" giống trên thẻ Kudos.
+- **FR-219** Sidebar hiển thị danh sách "10 SUNNER NHẬN QUÀ MỚI NHẤT" từ dữ liệu Secret Box thật đã
+  mở, sắp theo thời điểm mở gần nhất trước — không còn là danh sách rỗng cố định.
 
 ### Interaction (4xx)
 
@@ -109,6 +124,15 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - `/kudos` không áp dụng route-guard nào; người dùng ẩn danh và đã đăng nhập nhận cùng một nội dung trang. (BR-015)
 - Ô tìm hồ sơ Sunner ở khối keyvisual nhận tối đa 128 ký tự và chỉ tìm kiếm khi người dùng đã đăng nhập; người chưa đăng nhập gõ vào ô này thấy gợi ý đăng nhập, không phải thông báo "không tìm thấy" — vì nguồn dữ liệu (`profile_cards`) chỉ cấp quyền đọc cho `authenticated`. (BR-016)
 - Vị trí trượt hiện tại của carousel Highlight Kudos là trạng thái riêng của trình duyệt, không được lưu lại giữa các lượt tải trang. (SM-001)
+- Tổng Spotlight và 2 danh sách option của bộ lọc không được tính từ 1 lần đọc bị giới hạn 1000
+  dòng — tổng phải là số đếm chính xác, và 2 danh sách option phải chứa đủ mọi giá trị distinct
+  thật trong dữ liệu `kudos`, không phụ thuộc dòng nào PostgREST tình cờ trả về. (BR-017)
+- Panel dropdown và mỗi option dùng đúng giá trị thiết kế (nền, viền, bo góc, đệm, cuộn, trạng thái
+  đang chọn, kiểu chữ, tiền tố "#" cho hashtag). (BR-019)
+- Sidebar hiển thị đúng 10 Sunner mở Secret Box gần nhất, sắp theo thời điểm mở giảm dần. (BR-020)
+- `rankUps` (leaderboard "SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT") không có bảng rank-tracking nào tồn
+  tại, tiếp tục hiển thị "Chưa có dữ liệu" theo đúng thiết kế hiện có — không nhầm với BR-020 (gift
+  recipients, CÓ dữ liệu thật).
 
 ## 6. Screens
 
@@ -219,6 +243,21 @@ bộ board vào một Feature duy nhất thay vì tách theo từng khu vực hi
 - [ ] Sunner đã đăng nhập gõ tên một đồng nghiệp thấy danh sách gợi ý; bấm một kết quả mở trang hồ sơ (`/profile?id=`) của người đó.
 - [ ] Sunner chưa đăng nhập gõ vào ô này thấy gợi ý đăng nhập, không phải "không tìm thấy".
 
+### US010_ViewRecentGiftRecipients — View Recent Gift Recipients
+
+**Actor:** Sunner (bất kỳ)
+**Goal:** Xem nhanh 10 đồng nghiệp vừa mở Secret Box gần đây nhất ngay trên board Kudos.
+**Business value:** Tạo thêm điểm ghi nhận công khai cho hoạt động Secret Box (F010), hiện tại
+đang là một danh sách rỗng vĩnh viễn dù dữ liệu Secret Box thật đã tồn tại từ migration `0011`.
+
+**Acceptance Criteria:**
+- [ ] Có ≥1 lượt mở Secret Box → sidebar "10 SUNNER NHẬN QUÀ MỚI NHẤT" hiện đúng tên/avatar Sunner
+  đó, mới nhất trước.
+- [ ] Chưa ai mở Secret Box → sidebar hiện "Chưa có dữ liệu" (nhánh rỗng đã có, không phải lỗi
+  mới).
+- [ ] Bấm avatar/tên một Sunner trong danh sách này mở đúng trang hồ sơ người đó (tái dùng hành vi
+  điều hướng chung đã có ở leaderboard, US008).
+
 ## 8. Scenarios
 
 ### US001_ViewKudosLiveBoard — Happy Path
@@ -292,6 +331,16 @@ kết quả trong danh sách gợi ý, **Then** trang hồ sơ (`/profile?id=...
 **Given** Sunner chưa đăng nhập gõ vào ô tìm ở khối keyvisual, **When** gõ xong một từ khoá,
 **Then** danh sách gợi ý hiện thông báo mời đăng nhập thay vì kết quả tìm hoặc "không tìm thấy".
 
+### US010_ViewRecentGiftRecipients — Happy Path
+
+**Given** đã có ≥1 Sunner mở Secret Box, **When** Sunner bất kỳ mở `/kudos`, **Then** sidebar "10
+SUNNER NHẬN QUÀ MỚI NHẤT" hiện đúng (các) Sunner đó, sắp theo thời điểm mở gần nhất.
+
+### US010_ViewRecentGiftRecipients — Error: chưa có dữ liệu
+
+**Given** chưa ai từng mở Secret Box, **When** Sunner mở `/kudos`, **Then** sidebar hiện "Chưa có
+dữ liệu" thay vì danh sách trống không giải thích.
+
 ## 9. Edge Cases
 
 | Scenario | What Happens | User-Facing Message |
@@ -304,6 +353,9 @@ kết quả trong danh sách gợi ý, **Then** trang hồ sơ (`/profile?id=...
 | Carousel đang ở thẻ đầu tiên hoặc cuối cùng | Nút lùi/tiến tương ứng bị vô hiệu hoá, không lật thêm được | "Không có thông báo riêng — nút mũi tên bị vô hiệu hoá" |
 | Người chưa đăng nhập gõ vào ô tìm hồ sơ Sunner ở khối keyvisual | Danh sách gợi ý hiện thông báo mời đăng nhập, không gọi tìm kiếm thật | "Đăng nhập để tìm profile Sunner" |
 | Ô tìm hồ sơ Sunner ở khối keyvisual nhập quá 128 ký tự | Ô input tự chặn không cho gõ thêm từ ký tự thứ 129 | "Không có thông báo riêng — ô nhập tự chặn ký tự vượt quá 128" |
+| Chưa ai mở Secret Box | Sidebar "10 SUNNER NHẬN QUÀ MỚI NHẤT" hiện nhánh rỗng đã có | "Chưa có dữ liệu" |
+| Số dòng `kudos` vượt 1000 | Tổng Spotlight (COUNT chính xác) và 2 danh sách option bộ lọc (mọi giá trị distinct thật) vẫn đúng, không đứng lại ở tập con 1000 dòng cũ | "Không có thông báo riêng — số liệu vẫn cập nhật đúng" |
+| Danh sách phòng ban thật (số lượng phụ thuộc dữ liệu, không cố định) vượt chiều cao panel dropdown | Panel cuộn dọc, không tràn layout | "Không có thông báo riêng — cuộn để xem hết" |
 
 ## 10. Edge Behaviours to Verify
 
@@ -314,12 +366,23 @@ kết quả trong danh sách gợi ý, **Then** trang hồ sơ (`/profile?id=...
 - **FR-212** → Kiểm tra thông báo rỗng hiện đúng chuỗi khi chưa có kudo nào.
 - **FR-601** → Kiểm tra người chưa đăng nhập bị chuyển hướng khi bấm avatar/tên.
 - **FR-214** → Kiểm tra ô tìm hồ sơ Sunner ở khối keyvisual nhận input thật (không `readOnly`), chặn ký tự thứ 129, và mở đúng hồ sơ khi chọn 1 kết quả (đã đăng nhập) hoặc hiện gợi ý đăng nhập (ẩn danh).
+- **FR-215** → Kiểm tra seed dữ liệu với nhiều giá trị hashtag/phòng ban phân biệt vượt 1000 dòng,
+  2 danh sách option bộ lọc vẫn chứa đủ mọi giá trị distinct (không thể chạy trên seed hiện có —
+  xem D005).
+- **FR-217** → Kiểm tra seed >1000 dòng kudos (hoặc mock count), tổng Spotlight vẫn đúng.
+- **FR-218** → Kiểm tra panel dropdown Phòng ban cuộn được và mục đang chọn có nền khác biệt.
+- **FR-219** → Kiểm tra sidebar hiện đúng Sunner vừa mở Secret Box, không còn hardcode rỗng.
 
 ## 11. Risks & Known Issues
 
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
 | RISK-01 | risk | Spotlight scatter dựng tĩnh cho đúng 8 tên lặp lại theo design gốc (Figma); khi dữ liệu thật có nhiều Sunner nhận kudo hơn 8 người, scatter tĩnh có thể không còn phản ánh đúng danh sách người nhận nhiều nhất. | Trải nghiệm Spotlight kém chính xác/kém hữu ích khi quy mô dữ liệu thật lớn hơn mock. | [EXPECTED] |
+| RISK-02 | known-issue | MoMorph row A + TC `40d4ba26` ghi banner "Hệ thống ghi nhận lời cảm ơn", nhưng TEXT node thật `2940:13439` là "Hệ thống ghi nhận và cảm ơn" — code đã đúng theo node thật, spec prose và TC sai. | Không ảnh hưởng người dùng (code đúng); audit sau có thể tưởng nhầm là bug nếu không ghi lại. | confirmed |
+| RISK-03 | known-issue | Row D.1 ghi "6 dòng số liệu" nhưng frame `2940:13490` chỉ vẽ 5 dòng thật (khớp code + e2e C27). | Không ảnh hưởng người dùng; chỉ là lỗi đánh máy trong prose thiết kế. | confirmed |
+
+RISK-02/RISK-03 KHÔNG phải yêu cầu sửa code — mã nguồn đã đúng theo dữ liệu node thật; chỉ upstream
+MoMorph row/TC cần sửa ở lần audit thiết kế sau.
 
 ## 12. Dependencies
 
@@ -330,6 +393,8 @@ kết quả trong danh sách gợi ý, **Then** trang hồ sơ (`/profile?id=...
 | Cột `department` mới trên `users` | data | Bộ lọc Phòng ban và hiển thị phòng ban trên thẻ cần nguồn dữ liệu này | FR-002 |
 | Dữ liệu mẫu Figma (tên, nội dung, hashtag, mốc thời gian, số liệu sidebar) | data | Seed dữ liệu thật cho demo, không bịa | `clarifications.md` § Quyết định |
 | F009_KudosCompose | feature | Ô tìm hồ sơ Sunner ở khối keyvisual (FR-214) tái dùng nguyên Server Action `searchSunners` và DAL `sunner-search.ts` mà F009 đã dựng cho ô nhận Kudo, cùng view `profile_cards` | FR-214, BR-016 |
+| `secret_box_openings` (migration `0011`, F010_SecretBoxModal) | data | Nguồn dữ liệu thật cho "10 SUNNER NHẬN QUÀ MỚI NHẤT" — đọc qua view `public.recent_gift_recipients` (`0015`, `SECURITY DEFINER`) vì RLS gốc là own-rows-only | BR-020, `technical-spec.md § 4.2` |
+| `standards.secretBoxSection.badges.<camelKey>.caption` (`messages/{vi,en}.json`) | data | Nguồn hiển thị mô tả quà cho mỗi Sunner trong danh sách gift recipients (D004) — tái dùng nguyên leaf đã có ở `/standards`, không thêm message key mới | `src/app/(public)/kudos/_shared/build-gift-recipient-items.ts:21-25,65-67` |
 
 ## 13. Configuration
 

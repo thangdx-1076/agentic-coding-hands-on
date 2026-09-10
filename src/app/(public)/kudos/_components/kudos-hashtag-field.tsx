@@ -14,10 +14,17 @@ export type KudosHashtagFieldProps = {
   onPickerOpenChange: (open: boolean) => void;
   onAdd: (tag: string) => void;
   onRemove: (tag: string) => void;
-  /** `hashtags.length >= 5`, computed by the phase-07 hook (Out of scope:
-   * this file holds no `hashtags`-list state of its own). Drives
-   * `aria-disabled` + `maxMessage`, never hides the button (ID-16/C14). */
+  /** `hashtags.length >= 5`, computed by the phase-07 hook. Drives
+   * `aria-disabled` on the add button and the picker's row-disable
+   * affordance — NOT the message (that's `limitRejected`); 5 chips alone
+   * is a success state, never hides the button (ID-16/C14). */
   limitReached: boolean;
+  /** True only while a 6th add attempt was actually rejected (phase-07
+   * hook); clears again on a successful add or a chip removal. Defaults to
+   * `false` so existing callers/stories that never pass it keep the
+   * correct (no-message-at-5) behaviour. Drives `maxMessage` — do NOT
+   * derive the message from `limitReached` (ID-16/17/C14). */
+  limitRejected?: boolean;
   /** Submit-time validation error (e.g. required-empty), takes priority
    * over `maxMessage` when both would otherwise apply. */
   error?: string | null;
@@ -71,6 +78,7 @@ export function KudosHashtagField({
   onAdd,
   onRemove,
   limitReached,
+  limitRejected = false,
   error = null,
   label,
   addLabel,
@@ -79,7 +87,7 @@ export function KudosHashtagField({
   removeLabelTemplate,
   maxMessage,
 }: KudosHashtagFieldProps) {
-  const effectiveError = error ?? (limitReached ? maxMessage : null);
+  const effectiveError = error ?? (limitRejected ? maxMessage : null);
 
   return (
     <KudosComposeField
@@ -135,6 +143,7 @@ export function KudosHashtagField({
           <KudosHashtagPicker
             suggestions={suggestions}
             hashtags={hashtags}
+            limitReached={limitReached}
             query={query}
             onQueryChange={onQueryChange}
             onAdd={onAdd}

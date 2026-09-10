@@ -29,6 +29,7 @@ const meta = {
   args: {
     suggestions: SUGGESTIONS,
     hashtags: SELECTED,
+    limitReached: false,
     label: copy.hashtagPickerLabel,
     onQueryChange: fn(),
     onAdd: fn(),
@@ -54,5 +55,17 @@ export const Open: Story = {
 export const Typing: Story = {
   args: {
     query: "TeamWork",
+  },
+};
+
+/** Đã chọn 5 (BR-002 cap) — rows NOT already selected are `disabled`
+ * (opacity + `cursor-not-allowed`, no hover, no click); the 3 selected
+ * rows above stay clickable so the user can still unselect one
+ * (`momorph/specs-p9zO-c4a4x.csv` rows A.1/B.1/C.1/D). */
+export const Full: Story = {
+  args: {
+    query: "",
+    hashtags: SUGGESTIONS.slice(0, 5),
+    limitReached: true,
   },
 };

@@ -15,6 +15,14 @@ export type KudosFilterState = {
 export type KudosFilterMenuProps = KudosFilterState & {
   testId: string;
   optionTestId: string;
+  /**
+   * Display-only prefix for option labels (e.g. `"#"` for the hashtag menu).
+   * The Figma node text itself bakes the `#` in (`563:8026` children read
+   * `#Dedicated`/`#Inspring`, verified via `get_node`), so the label prefix
+   * mirrors the design's own content — it never touches `data-value`, which
+   * `tests/e2e/kudos.spec.ts` C14/C15 select by.
+   */
+  labelPrefix?: string;
 };
 
 const TRIGGER_BASE =
@@ -50,6 +58,7 @@ export function KudosFilterMenu({
   onClear,
   testId,
   optionTestId,
+  labelPrefix,
 }: KudosFilterMenuProps) {
   const {
     open,
@@ -101,7 +110,7 @@ export function KudosFilterMenu({
           aria-label={label}
           tabIndex={-1}
           onKeyDown={handleMenuKeyDown}
-          className="animate-login-menu-in absolute top-full left-0 z-30 mt-1 min-w-full overflow-hidden rounded bg-[#0B0F12] shadow-lg"
+          className="animate-login-menu-in absolute top-full left-0 z-30 mt-1 max-h-87 min-w-full overflow-y-auto rounded-lg border border-[#998C5F] bg-[#00070C] p-1.5 shadow-lg"
         >
           {options.map((option, index) => (
             <button
@@ -114,9 +123,9 @@ export function KudosFilterMenu({
               aria-selected={selected === option}
               tabIndex={index === activeIndex ? 0 : -1}
               onClick={() => handleOptionClick(option)}
-              className="w-full cursor-pointer scroll-my-1 px-4 py-2 text-left font-montserrat text-sm font-bold whitespace-nowrap text-white outline-none hover:bg-white/10 focus-visible:bg-white/10"
+              className="flex h-14 w-full cursor-pointer scroll-my-1 items-center justify-center rounded px-4 text-center font-montserrat text-base leading-6 font-bold tracking-[0.5px] whitespace-nowrap text-white outline-none hover:bg-white/10 focus-visible:bg-white/10 aria-selected:bg-[rgba(255,234,158,0.10)] aria-selected:[text-shadow:0_4px_4px_rgba(0,0,0,0.25),0_0_6px_#FAE287]"
             >
-              {option}
+              {labelPrefix ? `${labelPrefix}${option}` : option}
             </button>
           ))}
         </div>

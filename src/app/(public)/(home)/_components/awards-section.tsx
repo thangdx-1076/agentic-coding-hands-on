@@ -46,6 +46,17 @@ export function AwardsSection({ copy }: AwardsSectionProps) {
             {copy.awards.heading}
           </h2>
         </div>
+        {/*
+         * Spec row C1's 3rd line ("mô tả phụ") — no Figma node carries this
+         * text (query_section on 2167:9069 returns only the caption + divider
+         * + heading nodes), so there is no design token to read for it.
+         * Reuses the muted description color/size `AwardCard` already uses
+         * for the same C1 section's card copy (`award-card.tsx`) rather than
+         * inventing a new value.
+         */}
+        <p className="font-montserrat text-base leading-6 tracking-[0.5px] text-[#999999]">
+          {copy.awards.description}
+        </p>
       </div>
       {/* mm:5005:14974 */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-3 lg:gap-x-20 lg:gap-y-16">

@@ -64,9 +64,10 @@ export type SiteChromeCopy = {
 export const defaultSiteChromeCopy: SiteChromeCopy = {
   nav: {
     about: "About SAA 2025",
-    // Design says "Award Information" (singular); spec A1.3/7.3 + TC ID-21/23
-    // win as content acceptance (clarifications.md § Header).
-    awardsInfo: "Award Information",
+    // The Figma layer name uses the singular form of this label; spec
+    // A1.3/7.3 + TC ID-21/23 win as content acceptance (clarifications.md
+    // § Header) — plural, per the value below.
+    awardsInfo: "Awards Information",
     kudos: "Sun* Kudos",
   },
   header: {

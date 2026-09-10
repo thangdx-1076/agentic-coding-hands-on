@@ -107,7 +107,9 @@ export function KudosContentField({
             aria-label={copy.contentLabel}
             aria-invalid={error ? "true" : undefined}
             aria-describedby={error ? errorId : undefined}
-            className="h-[200px] min-h-[120px] w-full resize-none overflow-y-auto rounded-b-lg border border-[#998C5F] bg-white pl-6 font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-login-button-text placeholder:text-[#999999]"
+            className={`h-[200px] min-h-[120px] w-full resize-none overflow-y-auto rounded-b-lg border bg-white pl-6 font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-login-button-text placeholder:text-[#999999] ${
+              error ? "border-[#FF8A80]" : "border-[#998C5F]"
+            }`}
           />
           {mentionOpen ? (
             <KudosSunnerOptions

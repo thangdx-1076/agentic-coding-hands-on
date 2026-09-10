@@ -83,7 +83,7 @@ content is public" ở trên ghi đè kỳ vọng này — cùng cách PERM001_R
    lượng, giá trị giải. Không PII, không dữ liệu thuộc về một cá nhân nào. Gác một trang không
    có gì bí mật là gác cho có.
 2. **Gác nó sẽ phá `/`.** Trang chủ đã công khai và header/footer/CTA của nó có 6 link trỏ
-   `/awards`. Gác lại nghĩa là khách chưa đăng nhập bấm "Award Information" ngay trên một trang
+   `/awards`. Gác lại nghĩa là khách chưa đăng nhập bấm "Awards Information" ngay trên một trang
    công khai thì bị đá sang `/login` — ngược mục đích của trang giới thiệu sự kiện.
 3. **Đã có tiền lệ đúng y hệt.** Quyết định 2026-09-06 mở công khai `/` nêu đích danh "giải
    thưởng" trong lý lẽ của nó. `/awards` là đúng loại nội dung đó, chỉ chi tiết hơn.
@@ -405,14 +405,48 @@ promote — KHÔNG đoán số:
 > Mã feature `F010` đã cấp ở `feature-list.md`; PERM### riêng cho các bề mặt bên dưới vẫn chờ
 > Core `rebuild-spec` pass — KHÔNG tự đoán số ở đây.
 
-### Bảng mới `public.secret_box_openings` — log mở hộp, đọc own-row only
+### Bảng `public.secret_box_openings` — log mở hộp, RLS own-row trên CHÍNH BẢNG không đổi
 
-Migration `0011` thêm `public.secret_box_openings(user_id, badge_key, opened_at)`, RLS bật.
-Trục đọc mirror đúng pattern RLS own-row đã có từ `public.users` (`0001`): một viewer chỉ SELECT
-được đúng hàng của chính mình (`user_id = auth.uid()`), không có cách nào đọc lượt mở hộp của
-người khác qua bảng này — không cần view SECURITY DEFINER nào cho đường đọc, khác `profile_cards`/
-`kudos_cards` (2 view đó tồn tại vì cần phơi dữ liệu CỦA NGƯỜI KHÁC; log mở hộp thì không, mỗi
-người chỉ cần thấy đúng lượt mở của chính mình).
+Migration `0011` thêm `public.secret_box_openings(user_id, badge_key, opened_at)`, RLS bật. Trên
+chính bảng này, trục đọc vẫn mirror đúng pattern RLS own-row đã có từ `public.users` (`0001`): một
+viewer chỉ SELECT được đúng hàng của chính mình (`user_id = auth.uid()`), qua policy
+`secret_box_openings_select_own`. `0015`/`0017` (bên dưới) không đụng tới policy này — bảng gốc vẫn
+own-row-only y nguyên.
+
+### View `public.recent_gift_recipients` (`0015`) — ĐẢO kết luận "không cần view SECURITY DEFINER" ở trên
+
+Kết luận trước đây ở mục này — "không cần view SECURITY DEFINER nào cho đường đọc [log mở hộp]" —
+SAI với `/kudos`: trang **công khai** hiển thị "10 SUNNER NHẬN QUÀ MỚI NHẤT" (F007 FR-219/BR-020).
+Đó đúng là "phơi dữ liệu CỦA NGƯỜI KHÁC", cùng lý do `profile_cards`/`kudos_cards` cần view riêng.
+Migration `0015_recent_gift_recipients.sql` thêm view `public.recent_gift_recipients`
+(`security_invoker = false` — SECURITY DEFINER view, chạy bằng quyền chủ sở hữu, bỏ qua RLS bảng
+gốc) để phục vụ đúng đường đọc công khai này. Đoạn dưới đây THAY THẾ hoàn toàn kết luận cũ ở trên —
+không để hai kết luận cùng tồn tại.
+
+Cột phơi ra đúng 5 cột: `id, full_name, avatar_url, badge_key, opened_at` (`id`/`full_name`/
+`avatar_url` lấy từ `public.users`, `badge_key`/`opened_at` từ `secret_box_openings`) — không hơn.
+Cấm tuyệt đối `email, role, locale, created_at, updated_at` của `users`, cùng ranh giới SEC_004 mà
+`profile_cards`/`kudos_cards` đã vạch. Quyền: `REVOKE ALL` trước, sau đó `GRANT SELECT TO anon,
+authenticated` — đọc công khai, không cần đăng nhập.
+
+`LIMIT 10` trong view là RÀNG BUỘC HIỂN THỊ, không phải ranh giới bảo mật: ai query thẳng view này
+vẫn thấy 10 lượt mở gần nhất của TẤT CẢ Sunner, không phải một lát cắt theo viewer. Muốn giới hạn
+số hàng lộ ra theo cách khác (RPC nhận tham số `limit`, hay theo viewer) là việc chưa làm.
+
+Đây là một quyết định NỚI LỎNG quyền riêng tư có chủ đích, không phải chi tiết kỹ thuật thuần túy:
+trước `0015`, không ai ngoài chính chủ đọc được ai đã mở Secret Box, lúc nào, huy hiệu gì; sau
+`0015`, ba dữ kiện đó công khai với cả `anon`. Design yêu cầu vậy (bảng vinh danh trên trang công
+khai) nên nó cần người ký duyệt, không phải chỉ review kỹ thuật.
+
+**Đã ký duyệt 2026-09-10** — dang.xuan.thang, trả lời trực tiếp trong phiên takumi khi được đặt
+ba lựa chọn: (1) ký và mở PR · (2) bỏ panel Top-10 khỏi PR, giữ 11 phase còn lại · (3) push branch
+nhưng chưa mở PR. Chọn (1). Trước khi hỏi, `evidence-gate --stage hard` chặn đúng ở một điểm này
+(`riskGate.signoffRequired: true`, `humanSignedOff: false`) và không điểm nào khác. Xuất xứ đầy đủ:
+`plans/260910-1951-screen-audit-spec-test-gaps/reports/inspection-riskgate-260910-2312.md`.
+
+`secret_box_openings` giữ nguyên RLS own-row (`0011`) — view là đường đọc thứ hai, hẹp hơn, không
+phải nới policy bảng gốc. Migration `0017` thêm index `(opened_at DESC)` trên `secret_box_openings`
+để phục vụ `ORDER BY opened_at DESC LIMIT 10` của view — không đụng policy/grant/cột nào.
 
 ### Ghi CHỈ qua RPC `open_secret_box()` — SECURITY DEFINER được GỌI, khác trigger `0007`
 

@@ -30,6 +30,17 @@ dùng chung ở `src/app/_components/language-selector/` (trước đây nằm r
 — cùng đợt route-colocation + di dời `src/` đưa `LoginHeader`, `LoginScreen`, `LoginClient` vào
 `src/app/(public)/login/_components/`. Hành vi mô tả trong file này không đổi; chỉ vị trí file đổi.
 
+**REVISION (2026-09-10):** MoMorph spec `hUyaaugye2` (row A/A.1/A.2) yêu cầu trigger + mỗi menu
+item hiển thị ĐÚNG cờ theo locale, item active có nền phân biệt, và box menu-item 110×56px nền
+tối — trước đợt sửa này trigger hardcode `IconVnFlag` bất kể locale. Đã fix trong cùng phiên: bảng
+`FLAG` chọn icon theo `label` (`language-selector.tsx:28-31,56`), mỗi menu item tự chọn icon theo
+`option.label` (`:105,119`) và có `isActive` style riêng (`:106,117`). `messages/en.json` cũng
+được rà lại — 7 leaf từng sót tiếng Việt (`kudos.banner.title`, `kudos.compose.placeholder`,
+`kudos.heroSearch.placeholder`, `kudos.heroSearch.ariaLabel`, `kudos.spotlight.searchPlaceholder`,
+`kudos.feed.empty`, `kudos.sidebar.emptyBoard`) nay đã dịch, có guard test chặn hồi quy
+(`messages-parity.test.ts`); 3 nhãn nav dùng chung header giữ tiếng Anh ở cả 2 locale là chủ đích
+(FR-003), không phải phần dịch còn thiếu.
+
 ```mermaid
 flowchart LR
     subgraph CAP01["CAP-01 — Chuyển đổi ngôn ngữ"]
@@ -44,13 +55,13 @@ flowchart LR
 
 | # | Action (handler) | Method · Path | Codes | Writes | Detail |
 |---|---|---|---|---|---|
-| **A0** | *cross-cutting — belongs to no single action* | — | — | — | — |
-| **A1** | `LanguageSelector` + `useMenuKeyboardNav` *(client-only, no BE)* | — *(client render/open state, không có HTTP)* | FR-001, FR-101, FR-201, FR-202, SM-001, US001 | — *(read-only)* | § 3.1 |
+| **A0** | *cross-cutting — content-purity contract* | — | FR-002, FR-003 | — *(không có write)* | § 4.4 |
+| **A1** | `LanguageSelector` + `useMenuKeyboardNav` *(client-only, no BE)* | — *(client render/open state, không có HTTP)* | FR-001, FR-101, FR-201, FR-202, FR-203, SM-001, US001 | — *(read-only)* | § 3.1 |
 | **A2** | `setLocale()` | `POST` `/login` *(Server Action call, không phải route riêng)* | FR-001, FR-401, FR-402, FR-601, BR-001, BR-002, US001 | `NEXT_LOCALE` *(cookie, không phải bảng DB)* | § 3.1 |
 
-Không có row nào ở **A0**: F002 không có rule cross-cutting nào (không PERM###, không guard —
-xem `permissions-matrix.md` ground-truth note "dự án này không có RBAC", và F002 tách biệt hoàn
-toàn khỏi guard của F001). Row **A0** vẫn giữ vì bắt buộc theo template.
+**A0** không có handler riêng — đây là 2 rule nội dung áp dụng xuyên suốt gói dịch
+(`messages/en.json`, `defaultSiteChromeCopy.nav`), không gắn với một action cụ thể nào; chi tiết ở
+§ 4.4 Bin 3.
 
 ## 3. Actions
 
@@ -58,14 +69,15 @@ toàn khỏi guard của F001). Row **A0** vẫn giữ vì bắt buộc theo tem
 
 #### A1 · Hiển thị nhãn ngôn ngữ hiện tại và mở menu chọn
 `—` (client state, không có HTTP) → `` `LanguageSelector` + `useMenuKeyboardNav` ``
-`FR-001` `FR-101` `FR-201` `FR-202` `SM-001` `US001` · `SCR001_LoginScreen`
+`FR-001` `FR-101` `FR-201` `FR-202` `FR-203` `SM-001` `US001` · `SCR001_LoginScreen`
 
 **Who** · Khách truy cập (Anonymous) tại `/login` *(không qua PERM### nào)*
-**FE** · `src/app/_components/language-selector/language-selector.tsx:26-102` render nút trigger
-(`button[aria-haspopup="menu"]`, nhãn "VN"/"EN" + `IconVnFlag` + `IconDown`) và menu
-(`[role="menu"]` chứa 2 `[role="menuitem"]`). Vòng đời mở/đóng, focus roving-tabindex và mọi
-keydown handler (ArrowDown/ArrowUp mở vào item đầu/cuối, mũi tên chạy vòng, Home/End nhảy hai
-đầu, Escape đóng + trả focus, Tab đóng không trả focus) nằm ở
+**FE** · `src/app/_components/language-selector/language-selector.tsx:38-127` render nút trigger
+(`button[aria-haspopup="menu"]`, nhãn "VN"/"EN" + cờ đúng locale qua bảng `FLAG` + `IconDown`,
+`:28-31,56,76-81`) và menu (`[role="menu"]` chứa 2 `[role="menuitem"]`, mỗi item tự chọn cờ theo
+`option.label` và có class riêng khi `isActive`, box `h-14 w-[110px]`, `:104-122`). Vòng đời
+mở/đóng, focus roving-tabindex và mọi keydown handler (ArrowDown/ArrowUp mở vào item đầu/cuối, mũi
+tên chạy vòng, Home/End nhảy hai đầu, Escape đóng + trả focus, Tab đóng không trả focus) nằm ở
 `src/hooks/use-menu-keyboard-nav.ts:64-177`. Phép tính chỉ số chạy vòng (wrap-around) tách riêng ở
 `src/utils/a11y/roving-index.ts:10-24` *(§ 4.5 ALG-001)*.
 **Request** · *không có request* — nhãn hiện tại đến từ locale đã được server resolve, truyền
@@ -81,9 +93,10 @@ logic beyond DISC-001 Polymorphic Behavior in this feature (menu open/close ch�
 `SM-001`; nhãn VN/EN là single-field enum, thuộc `DISC-001` — không thoả điều kiện ≥2 predicate
 của DEC theo contract).
 
-**Result** · read-only — **no DB write**. Nhãn nút trigger đổi theo `DISC-001`'s giá trị `value`
-(vi → "VN", en → "EN"). Mở menu hiển thị đúng 2 `menuitem` theo thứ tự `OPTIONS`
-(`src/app/_components/language-selector/language-selector.tsx:16-19`).
+**Result** · read-only — **no DB write**. Nhãn VÀ cờ trên nút trigger đổi theo `DISC-001`'s giá trị
+`value` (vi → "VN" + `IconVnFlag`, en → "EN" + `IconEnFlag`, tra qua bảng `FLAG`). Mở menu hiển thị
+đúng 2 `menuitem` theo thứ tự `OPTIONS` (`src/app/_components/language-selector/language-selector.tsx:19-22`),
+mỗi item có cờ riêng và item khớp locale hiện tại có nền phân biệt (`bg-[rgba(255,234,158,0.2)]`).
 **State** · `SM-001`: `closed` → `open` *(§ 4.3)*
 **Source:** `src/app/_components/language-selector/language-selector.tsx:26-102` → `src/hooks/use-menu-keyboard-nav.ts:64-177` → `src/utils/a11y/roving-index.ts:10-24` → `src/i18n/request.ts:22-41` → `src/app/(public)/login/page.tsx:39-51`
 
@@ -185,8 +198,12 @@ Không vẽ quan hệ FK nào — cả hai shape độc lập, không entity nà
 
 | Value | Render | Validation | Persistence |
 |-------|--------|------------|-------------|
-| `vi` | Nhãn nút trigger "VN"; load `messages/vi.json` (`i18n/request.ts:27-32`); mặc định khi cookie thiếu/rỗng/không hợp lệ | Là target fallback của `normalizeLocale` — mọi giá trị không khớp whitelist đều rơi về đây | Ghi khi người dùng chọn "VN" trong menu (A2); hoặc mặc định do `normalizeLocale`/`i18n/request.ts` khi cookie thiếu/sai (A1) |
-| `en` | Nhãn nút trigger "EN"; load `messages/en.json` | Phải khớp chính xác chuỗi `"en"` (case-sensitive — `normalizeLocale("EN")` KHÔNG khớp, rơi về `vi`, xem `src/lib/i18n/locale.test.ts`) | Chỉ ghi khi người dùng chủ động chọn "EN" trong menu (A2) — không bao giờ là giá trị mặc định |
+| `vi` | Nhãn nút trigger "VN" + `IconVnFlag`; load `messages/vi.json` (`i18n/request.ts:27-32`); mặc định khi cookie thiếu/rỗng/không hợp lệ | Là target fallback của `normalizeLocale` — mọi giá trị không khớp whitelist đều rơi về đây | Ghi khi người dùng chọn "VN" trong menu (A2); hoặc mặc định do `normalizeLocale`/`i18n/request.ts` khi cookie thiếu/sai (A1) |
+| `en` | Nhãn nút trigger "EN" + `IconEnFlag`; load `messages/en.json` | Phải khớp chính xác chuỗi `"en"` (case-sensitive — `normalizeLocale("EN")` KHÔNG khớp, rơi về `vi`, xem `src/lib/i18n/locale.test.ts`) | Chỉ ghi khi người dùng chủ động chọn "EN" trong menu (A2) — không bao giờ là giá trị mặc định |
+
+Cờ hiển thị (`FLAG[label]`, `language-selector.tsx:28-31`) tra CÙNG bảng `label` này — không phải
+một discriminator riêng — nên `vi`/`en` luôn kéo đúng cờ theo cùng một giá trị dùng để chọn bundle
+dịch, không có đường lệch pha giữa nhãn chữ và icon.
 
 **Source:** `docs/vi/generated/entities.md` § MODEL001_AppLocale > Discriminator Fields
 
@@ -194,7 +211,7 @@ Không vẽ quan hệ FK nào — cả hai shape độc lập, không entity nà
 
 #### Trạng thái đóng/mở của menu chọn ngôn ngữ (SM-001)
 **kind:** ui
-**Linked FR:** FR-201, FR-202
+**Linked FR:** FR-201, FR-202, FR-203
 **Source:** `src/hooks/use-menu-keyboard-nav.ts:64-177`
 
 ```mermaid
@@ -216,8 +233,15 @@ trên cạnh đó (§ 3.1) — không lặp lại ở đây (DRY).
 
 #### Bin 3 — cross-cutting, belongs to no single action
 
-None — F002 không có rule cross-cutting nào (không PERM### nào áp dụng; hành vi guard duy nhất
-của app thuộc F001, độc lập với F002).
+**A0 · FR-002, FR-003 — content-purity contract cho gói nội dung.**
+- **FR-002** `messages/en.json` không được chứa leaf tiếng Việt — chặn bằng
+  `messages-parity.test.ts` (value-based check, thêm ngày 2026-09-10, không chỉ so tập key).
+- **FR-003** 3 nhãn nav dùng chung header ("About SAA 2025", "Award(s) Information", "Sun* Kudos")
+  KHÔNG dịch — giữ tiếng Anh ở cả 2 locale, theo chủ đích tại
+  `src/app/_shared/site-chrome.ts:64-71` (`defaultSiteChromeCopy.nav`).
+**Source:** `messages/en.json` · `src/lib/i18n/messages-parity.test.ts` · `src/app/_shared/site-chrome.ts:64-71`
+
+Không có PERM### nào áp dụng ở F002; hành vi guard duy nhất của app thuộc F001, độc lập với F002.
 
 #### Bin 2 — used by ≥2 named actions
 
@@ -300,6 +324,11 @@ SUPPORTED_LOCALES = ["vi", "en"]     # whitelist duy nhất (src/lib/i18n/locale
   `i18n/request.ts`. Test còn thiếu sẽ cần: mock `next/headers`'s `cookies()` trả về
   `NEXT_LOCALE=fr`, gọi `getRequestConfig`'s callback, rồi assert `locale === "vi"` và bundle nạp
   là `messages/vi.json`
+- **SC-008** *(A1)* Trigger đổi ĐÚNG cờ theo locale (không cố định `IconVnFlag`), mỗi menu item có
+  cờ riêng, item active có nền phân biệt (covers FR-201, FR-203) — Playwright
+  `tests/e2e/language-switch.spec.ts`.
+- **SC-009** *(A0)* `messages/en.json` không còn leaf tiếng Việt (covers FR-002) — unit test
+  value-based `src/lib/i18n/messages-parity.test.ts`.
 
 #### US001_SwitchLanguage *(A1, A2)*
 
@@ -347,8 +376,11 @@ Playwright test nào tự động hoá bước này) cookie `NEXT_LOCALE=en` đ�
 | A1 | 4 | `lastIndex`/`nextIndex`/`prevIndex` | `src/utils/a11y/roving-index.ts:1-24` | Wrap-around index math cho roving-tabindex (ALG-001) |
 | A1 | 5 | `getRequestConfig` | `src/i18n/request.ts:1-41` | Đọc cookie, chuẩn hoá locale, import message bundle mỗi SSR render |
 | A1 | 6 | `LoginPage` | `src/app/(public)/login/page.tsx:33-51` | Build `languageLabel` từ `LOCALE_LABEL[locale]` (xem RISK-01) |
-| A2 | 7 | `useLoginActions` | `src/app/(public)/login/_hooks/use-login-actions.ts:39-69` | Bọc `setLocale` trong `startTransition` DÙNG CHUNG với login (BR-002) |
-| A2 | 8 | `setLocale` | `src/app/_actions/set-locale.ts:1-44` | Server Action chuẩn hoá + ghi cookie `NEXT_LOCALE` |
+| A1 | 7 | `IconEnFlag`, `IconVnFlag`, `FLAG` | `src/app/_components/language-selector/icon-en-flag.tsx`, `icon-vn-flag.tsx`, `language-selector.tsx:28-31` | Chọn icon cờ theo `label` cho trigger + mỗi menu item |
+| A0 | 8 | `messages/en.json`, `messages-parity.test.ts` | `messages/en.json`, `src/lib/i18n/messages-parity.test.ts` | Content-purity target + guard — FR-002 |
+| A0 | 9 | `defaultSiteChromeCopy.nav` | `src/app/_shared/site-chrome.ts:64-71` | Nhãn nav giữ tiếng Anh — FR-003 |
+| A2 | 10 | `useLoginActions` | `src/app/(public)/login/_hooks/use-login-actions.ts:39-69` | Bọc `setLocale` trong `startTransition` DÙNG CHUNG với login (BR-002) |
+| A2 | 11 | `setLocale` | `src/app/_actions/set-locale.ts:1-44` | Server Action chuẩn hoá + ghi cookie `NEXT_LOCALE` |
 
 #### Data Flow
 

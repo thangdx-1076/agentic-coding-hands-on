@@ -72,7 +72,9 @@ export function KudosTitleField({
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${FIELD_NAME}-error` : undefined}
           data-testid={CONTROL_ID}
-          className="w-full rounded-lg border border-[#998C5F] bg-white px-6 py-4 font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-login-button-text placeholder:text-[#999999] focus:outline-none"
+          className={`w-full rounded-lg border bg-white px-6 py-4 font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-login-button-text placeholder:text-[#999999] focus:outline-none ${
+            error ? "border-[#FF8A80]" : "border-[#998C5F]"
+          }`}
         />
         {/* mm:I520:11647;1688:10447 */}
         <p

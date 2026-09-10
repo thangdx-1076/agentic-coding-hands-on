@@ -58,11 +58,11 @@ modal. Cây node cùng hình dạng với khối đếm ngược hero trang ch�
 | E01 | Nền toàn màn | image | — | — | Always | — | static | raw | — | N/A |
 | E02 | Lớp phủ tối | display field | — | — | Always | — | static | raw | — | N/A |
 | E03 | Tiêu đề | display field | — | "Sự kiện sẽ bắt đầu sau" / "Event starts in" | Always | — | static (i18n) | raw | — | N/A |
-| E04 | Ô DAYS | display field | — | "00" | Always | — | computed | 2 chữ số, 00-99 | — | binding: `remaining().days` |
+| E04 | Ô DAYS (2 hộp LED riêng biệt, 1 hộp/chữ số, tối thiểu 2 — không cap) | display field | — | "00" | Always | — | computed | pad tối thiểu 2 chữ số, không giới hạn trên (≥100 tự thêm hộp thứ 3) | — | binding: `remaining().days` |
 | E05 | Nhãn DAYS | display field | — | "DAYS" | Always | — | static (i18n) | raw | — | N/A |
-| E06 | Ô HOURS | display field | — | "00" | Always | — | computed | 2 chữ số, 00-23 | — | binding: `remaining().hours` |
+| E06 | Ô HOURS (2 hộp LED riêng biệt, 1 hộp/chữ số) | display field | — | "00" | Always | — | computed | 2 chữ số, 00-23 | — | binding: `remaining().hours` |
 | E07 | Nhãn HOURS | display field | — | "HOURS" | Always | — | static (i18n) | raw | — | N/A |
-| E08 | Ô MINUTES | display field | — | "00" | Always | — | computed | 2 chữ số, 00-59 | — | binding: `remaining().minutes` |
+| E08 | Ô MINUTES (2 hộp LED riêng biệt, 1 hộp/chữ số) | display field | — | "00" | Always | — | computed | 2 chữ số, 00-59 | — | binding: `remaining().minutes` |
 | E09 | Nhãn MINUTES | display field | — | "MINUTES" | Always | — | static (i18n) | raw | — | N/A |
 
 ## 4. User Actions

@@ -53,7 +53,7 @@ migrate lại. F008 cũng không cung cấp một API/DAL đọc số tim riêng
 
 | ID | Capability | What the user can do | User Stories | Requirements | Business Rules | Screens |
 |----|------------|------------------------|-----------------|---------------|-------------------|---------|
-| CAP-01 | Thả tim cho Kudos | Bấm trái tim trên 1 kudo của người khác để thả tim; bấm lại để bỏ tim | US001 | FR-001, FR-201, FR-202, FR-203, FR-401, FR-402, FR-601 | BR-001, BR-002, BR-003 | SCR007_KudosLiveBoard |
+| CAP-01 | Thả tim cho Kudos | Bấm trái tim trên 1 kudo của người khác để thả tim; bấm lại để bỏ tim; thấy đúng trạng thái nút khi đang xử lý hoặc trên kudo ẩn danh của chính mình | US001, US002 | FR-001, FR-201, FR-202, FR-203, FR-204, FR-205, FR-401, FR-402, FR-601 | BR-001, BR-002, BR-003, BR-004, BR-005 | SCR007_KudosLiveBoard |
 
 ## 3. Open Decisions
 
@@ -75,6 +75,10 @@ precondition), không phải một câu hỏi chờ stakeholder trả lời.
 - **FR-202** Nút tim bị disable trên kudo do chính người xem gửi — người gửi không thể tự thả tim
   cho lời cảm ơn của mình.
 - **FR-203** Người chưa đăng nhập nhìn thấy nút tim ở trạng thái disable kèm gợi ý đăng nhập.
+- **FR-204** Nút tim của đúng kudo đang thao tác hiển thị trạng thái đang xử lý (disable tạm thời)
+  trong lúc chờ máy chủ trả lời, thay vì không phản hồi gì với lượt bấm thứ 2.
+- **FR-205** Nút tim của một kudo gửi ẩn danh disable đúng cho chính người đã gửi kudo đó, giống
+  hệt kudo không ẩn danh — không còn hiện nhầm ở trạng thái có thể bấm.
 
 ### Interaction (4xx)
 
@@ -95,6 +99,12 @@ precondition), không phải một câu hỏi chờ stakeholder trả lời.
 - Sunner đã gửi 1 kudo không được thả tim cho chính kudo đó (BR-002)
 - Mỗi lượt thả tim cộng đúng 1 tim vào tài khoản của Sunner đã GỬI kudo đó (không phải người
   nhận); bỏ tim thu hồi đúng số tim đã cộng (BR-003)
+- Trong lúc yêu cầu thả/bỏ tim của 1 kudo chưa được máy chủ trả lời, nút tim của đúng kudo đó ở
+  trạng thái disable tạm thời; trở lại bình thường ngay khi có phản hồi (thành công hay lỗi)
+  (BR-004)
+- Chính người đã gửi 1 kudo ẩn danh nhìn thấy nút tim của kudo đó ở trạng thái disable, giống hệt
+  mọi kudo tự gửi khác — không phụ thuộc việc danh tính người gửi có bị ẩn trên giao diện hay
+  không (BR-005)
 
 ## 6. Screens
 
@@ -129,6 +139,21 @@ thị/Hero tier trên trang hồ sơ của Sunner đã viết kudo đó
   tim nào.
 - [ ] Chưa đăng nhập → nút tim hiển thị nhưng disable, không thể bấm.
 
+### US002_SeePendingAndOwnKudoHeartState — See Pending and Own-Kudo Heart Button State
+
+**Actor:** Sunner đã đăng nhập
+**Goal:** Nhìn thấy đúng trạng thái nút tim ngay cả khi yêu cầu đang xử lý hoặc khi đang xem lại
+kudo ẩn danh do chính mình gửi.
+**Business value:** Tránh cảm giác nút "bị đơ" khi mạng chậm, và tránh nút hiện sai trạng thái có
+thể bấm trên kudo tự gửi ẩn danh — cả 2 đều làm người dùng nghi ngờ tính năng bị lỗi dù server vẫn
+đúng.
+
+**Acceptance Criteria:**
+- [ ] Bấm tim, trước khi có phản hồi bấm lại lần nữa trên đúng kudo đó → nút hiện disable tạm
+  thời, không có phản hồi bất thường (không đổi trạng thái 2 lần, không gửi 2 request).
+- [ ] Đăng nhập đúng tài khoản đã gửi 1 kudo ẩn danh, xem lại kudo đó trên board → nút tim disable,
+  giống mọi kudo tự gửi không ẩn danh khác.
+
 ## 8. Scenarios
 
 ### US001_ThaTimChoKudo — Happy Path
@@ -153,6 +178,16 @@ trái tim, **Then** nút vẫn ở trạng thái disable và không có lượt 
 **Given** khách truy cập `/kudos` chưa đăng nhập, **When** khách nhìn thấy nút trái tim trên một
 thẻ Kudos, **Then** nút hiển thị nhưng ở trạng thái disable, không thể bấm.
 
+### US002_SeePendingAndOwnKudoHeartState — Happy Path: đang xử lý
+
+**Given** Sunner đã đăng nhập vừa bấm tim trên 1 kudo, **When** Sunner bấm lại ngay trong lúc yêu
+cầu đầu chưa trả lời, **Then** nút hiện trạng thái disable tạm thời cho tới khi máy chủ trả lời.
+
+### US002_SeePendingAndOwnKudoHeartState — Happy Path: kudo ẩn danh của chính mình
+
+**Given** Sunner đã đăng nhập từng gửi 1 kudo ẩn danh, **When** Sunner xem lại đúng kudo đó trên
+board, **Then** nút tim của kudo đó hiện disable, giống mọi kudo tự gửi khác.
+
 ## 9. Edge Cases
 
 | Scenario | What Happens | User-Facing Message |
@@ -161,6 +196,8 @@ thẻ Kudos, **Then** nút hiển thị nhưng ở trạng thái disable, không
 | Gọi thẳng hành động thả tim trên chính kudo mình gửi, bỏ qua nút đã disable ở giao diện | Máy chủ từ chối ghi ở tầng dữ liệu, không tạo lượt tim nào | "None — nút vẫn hiển thị disable, không có thông báo lỗi rời rạc" |
 | Chưa đăng nhập cố thả tim (bỏ qua nút đã disable) | Máy chủ từ chối vì không xác thực được người dùng | "Đăng nhập để thả tim cho Kudos này" |
 | Kudo bị xoá nhưng vẫn còn lượt tim cũ tham chiếu tới | Lượt tim liên quan bị xoá theo kudo (ràng buộc khoá ngoại cascade) | "None — kudo không còn hiển thị nên lượt tim liên quan cũng biến mất theo" |
+| Bấm tim liên tiếp thật nhanh trên cùng 1 kudo trước khi lượt trước trả lời | Nút hiện disable tạm thời ngay từ lượt bấm thứ 2, không gửi thêm request | "None — trạng thái nút tự phản ánh đang xử lý, không có thông báo lỗi rời rạc" |
+| Chính người gửi 1 kudo ẩn danh xem lại kudo đó | Nút tim disable đúng như kudo không ẩn danh | "None — nút disable, không có tooltip nhắc lý do (khác trường hợp chưa đăng nhập, vốn có gợi ý đăng nhập)" |
 
 ## 10. Edge Behaviours to Verify
 
@@ -172,6 +209,10 @@ thẻ Kudos, **Then** nút hiển thị nhưng ở trạng thái disable, không
   thiếu.
 - **FR-601** → Xác nhận gọi thẳng hành động thả tim (bỏ qua giao diện) vẫn bị chặn đúng theo các
   điều kiện nghiệp vụ.
+- **FR-204** → Xác nhận bấm tim lần 2 trong lúc lần 1 đang xử lý không gửi thêm request và nút
+  hiện disable tạm thời.
+- **FR-205** → Xác nhận nút tim disable đúng khi người xem hiện tại chính là người đã gửi 1 kudo ẩn
+  danh (không dựa vào `sender.id`, vốn luôn `null` với kudo ẩn danh).
 
 ## 11. Risks & Known Issues
 
@@ -186,6 +227,7 @@ N/A — none found. Chưa có code nên chưa có hành vi bất thường nào 
 |------------|------|-----------------------------|----------|
 | F007_KudosLiveBoard | feature | Bảng lượt tim của F008 tham chiếu `kudos.id`/`kudos.sender_id` do F007 định nghĩa; nút tim và số tim hiển thị trên thẻ do F007 render, đọc trực tiếp dữ liệu F008 ghi — F008 không lộ API/DAL đọc riêng | `clarifications.md`, `feature-list.md` § F008 |
 | public.users | data | Khoá ngoại của lượt tim trỏ về Sunner đang đăng nhập | `supabase/migrations/0001_users_table.sql` |
+| F007's `kudos_cards` view | feature | FR-205 cần 1 cờ `is_own` tính từ `sender_id` THẬT (chưa mask ẩn danh) — F008 không tự sở hữu view này, chỉ tiêu thụ cột mới | `technical-spec.md § 4.2`, migration `0016_kudos_cards_is_own.sql` |
 
 ## 13. Configuration
 

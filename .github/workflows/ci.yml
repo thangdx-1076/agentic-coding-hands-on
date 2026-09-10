@@ -194,8 +194,10 @@ jobs:
         # Runs even on a cache hit: the cache only restores the browser
         # binary, not the OS-level shared libraries `--with-deps` installs.
         # A cache hit with a skipped install is a known-broken combination.
-        # `playwright.config.ts` only declares a `chromium` project, so
-        # that is the only browser installed here.
+        # `playwright.config.ts` only declares a `chromium` project, and the
+        # separate `playwright.lock.config.ts` (phase 04) also only uses
+        # `devices["Desktop Chrome"]`, so `chromium` is still the only
+        # browser either config ever needs.
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Count e2e coverage split
@@ -210,6 +212,18 @@ jobs:
 
       - name: Run CI-safe e2e tests
         run: pnpm exec playwright test --grep-invert "@auth|@local-db"
+
+      # `tests/e2e/prelaunch-lock.spec.ts` (phase 04) is excluded from
+      # `playwright.config.ts` (`testIgnore`) and lives in its own
+      # `playwright.lock.config.ts` instead, each with its own `webServer` —
+      # see that config's docblock for why. It runs as its own step, not
+      # folded into "Run CI-safe e2e tests" above, and `if: always()` keeps
+      # it independent of that step's result: none of its 5 tests touch
+      # auth or Supabase, so a failure in the unrelated main suite is no
+      # reason to skip proving the prelaunch lock still redirects.
+      - name: Run prelaunch-lock e2e tests (CI-safe)
+        if: always()
+        run: pnpm test:e2e:lock
 
       # This step MUST run even when the test step above fails, so the
       # limitation is visible on both a red run and a green one — a failed

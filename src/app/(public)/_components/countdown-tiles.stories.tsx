@@ -42,13 +42,27 @@ export const Default: Story = {
 
 /**
  * Trạng thái sống — chứng minh `days` KHÔNG bị kẹp ở 2 chữ số khi mốc sự
- * kiện còn xa (>=100 ngày hiện 3 chữ số), theo clarifications.md §
- * Hero/Countdown.
+ * kiện còn xa (>=100 ngày hiện 3 chữ số): 3 hộp thay vì 2, `pad2` chỉ pad
+ * lên (`src/utils/countdown.ts`), không cắt xuống.
  */
 export const Live: Story = {
   args: {
     days: "120",
     hours: "05",
     minutes: "32",
+  },
+};
+
+/**
+ * Days 5 chữ số — ca xấu nhất thật của e2e (`playwright.config.ts` ghim
+ * `EVENT_START_AT=2099-12-31` ⇒ days còn lại là 5 chữ số). Chứng minh quy
+ * tắc "1 hộp/ký tự, tối thiểu 2" không có trần: 5 hộp DAYS phải vẫn co vừa
+ * cạnh 2 hộp HOURS/MINUTES mà không tràn hàng.
+ */
+export const DaysFiveDigits: Story = {
+  args: {
+    days: "26838",
+    hours: "07",
+    minutes: "41",
   },
 };
