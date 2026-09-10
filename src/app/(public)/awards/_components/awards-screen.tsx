@@ -83,8 +83,11 @@ export function AwardsScreen({
         </div>
         {/* mm:313:8453 */}
         <div className="mx-auto flex w-full max-w-[1152px] flex-col items-center gap-4 text-center">
-          {/* mm:313:8454 */}
-          <p className="font-montserrat text-2xl leading-8 font-bold text-white">
+          {/* mm:313:8454 — row A / TC ID-4: "small; muted text". CSV carries
+              only that prose, no hex/px (audit gap 6, Unverifiable 2), so
+              `text-sm text-white/60` is the repo's own small/muted token
+              pair, not a value read off the node. */}
+          <p className="font-montserrat text-sm leading-5 font-normal text-white/60">
             {copy.caption}
           </p>
           {/* mm:313:8455 */}

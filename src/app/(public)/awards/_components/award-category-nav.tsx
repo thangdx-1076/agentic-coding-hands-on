@@ -15,11 +15,15 @@ export type AwardCategoryNavProps = {
 };
 
 const LINK_BASE =
-  "group flex shrink-0 items-center gap-2 whitespace-nowrap rounded p-4 font-montserrat text-sm leading-5 font-bold tracking-[0.25px] transition-colors duration-200 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background";
+  "group flex shrink-0 items-center gap-2 whitespace-nowrap rounded p-4 font-montserrat text-sm leading-5 font-bold tracking-[0.25px] transition-colors duration-200 ease-out motion-reduce:transition-none hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-login-background";
+// Rows C/C.1–C.6 + TC ID-9: gold underline is the active indicator at EVERY
+// breakpoint, including `lg` (audit gap 7) — no `lg:border-l-2` swap, and no
+// `lg:pl-[14px]` compensation now that there is no left border to offset.
 const LINK_ACTIVE =
-  "border-b border-login-button text-login-button [text-shadow:0_4px_4px_rgba(0,0,0,0.25),0_0_6px_#FAE287] lg:border-b-0 lg:border-l-2 lg:pl-[14px]";
-const LINK_INACTIVE =
-  "border-b border-transparent text-white hover:bg-white/10 lg:border-b-0 lg:border-l-2 lg:border-transparent lg:pl-[14px]";
+  "border-b border-login-button text-login-button [text-shadow:0_4px_4px_rgba(0,0,0,0.25),0_0_6px_#FAE287]";
+// TC ID-10: hover feedback now lives on LINK_BASE so the active item still
+// responds to hover (audit gap 8) — this only sets the resting state.
+const LINK_INACTIVE = "border-b border-transparent text-white";
 
 /**
  * Left category nav (mm:313:8459 `mms_C_Menu list`) — the ONLY interactive

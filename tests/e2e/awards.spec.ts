@@ -29,9 +29,27 @@ test.describe("Awards page chrome (CI-safe)", () => {
     const h1 = page.locator("h1");
     await expect(h1).toContainText("Hệ thống giải thưởng SAA 2025");
 
-    // Caption text above h1
+    // Caption text above h1 — TC ID-4 requires "small; muted", not just
+    // present (phase 09, gap 6). `text-sm` = 14px / 400 weight at the
+    // repo's default root font size.
     const caption = page.locator("text=Sun* Annual Awards 2025");
     await expect(caption).toBeVisible();
+    await expect(caption).toHaveCSS("font-size", "14px");
+    await expect(caption).toHaveCSS("font-weight", "400");
+  });
+
+  test("[TC ID-2] Clicking the header nav link reaches /awards", async ({
+    page,
+  }) => {
+    // href-based locator, not label text: the header nav label is owned by
+    // phase 07 and may not be merged yet (phase 09 § Key Insights).
+    await page.goto("/");
+    await page.locator('header a[href="/awards"]').click();
+
+    await expect(page).toHaveURL(/\/awards/);
+    await expect(page.locator("h1")).toContainText(
+      "Hệ thống giải thưởng SAA 2025",
+    );
   });
 
   test("[TC ID-8] Kudos block renders heading and /kudos link", async ({
@@ -48,6 +66,18 @@ test.describe("Awards page chrome (CI-safe)", () => {
     // from the Kudos section block to avoid strict-mode violation.
     const kudosLink = page.getByLabel("Chi tiết Sun* Kudos");
     await expect(kudosLink).toBeVisible();
+  });
+
+  test("[TC ID-12] Clicking Sun* Kudos 'Chi tiết' opens /kudos", async ({
+    page,
+  }) => {
+    // Deferred until /kudos existed (phase-05/06 era); it exists now
+    // (`src/app/(public)/kudos/page.tsx`) — closes out audit gap 14.
+    await page.goto("/awards");
+
+    await page.getByLabel("Chi tiết Sun* Kudos").click();
+
+    await expect(page).toHaveURL(/\/kudos/);
   });
 
   test("[TC ID-13] No uncaught JS console errors on page load", async ({
@@ -316,15 +346,21 @@ test.describe("Awards content", { tag: "@local-db" }, () => {
     }
   });
 
-  test("[TC ID-9] Clicking each nav item scrolls the matching section into view", async ({
+  test("[TC ID-9] Clicking each nav item scrolls the matching section into view and shows the gold underline", async ({
     page,
   }) => {
+    // Desktop width so the `lg` breakpoint is active — rows C/C.1–C.6 +
+    // TC ID-9 require the underline indicator AT `lg` too, not just below it
+    // (phase 09, gap 7).
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/awards");
 
     const navLinks = [
       { href: "#top-talent", sectionId: "top-talent" },
       { href: "#top-project", sectionId: "top-project" },
+      { href: "#top-project-leader", sectionId: "top-project-leader" },
       { href: "#best-manager", sectionId: "best-manager" },
+      { href: "#signature-2025-creator", sectionId: "signature-2025-creator" },
       { href: "#mvp", sectionId: "mvp" },
     ];
 
@@ -335,6 +371,10 @@ test.describe("Awards content", { tag: "@local-db" }, () => {
       // Verify section is in viewport (or close to it)
       const section = page.locator(`section#${link.sectionId}`);
       await expect(section).toBeInViewport({ ratio: 0.5 });
+
+      // Active indicator is the gold underline, even at `lg` (not a left
+      // border) — asserts the actual rendered border, not just the class.
+      await expect(navLink).toHaveCSS("border-bottom-width", "1px");
     }
   });
 
@@ -346,7 +386,10 @@ test.describe("Awards content", { tag: "@local-db" }, () => {
     const navLinks = [
       { href: "#top-talent", sectionId: "top-talent" },
       { href: "#top-project", sectionId: "top-project" },
+      { href: "#top-project-leader", sectionId: "top-project-leader" },
       { href: "#best-manager", sectionId: "best-manager" },
+      { href: "#signature-2025-creator", sectionId: "signature-2025-creator" },
+      { href: "#mvp", sectionId: "mvp" },
     ];
 
     for (const linkData of navLinks) {
@@ -362,6 +405,32 @@ test.describe("Awards content", { tag: "@local-db" }, () => {
       // Verify the clicked link is the active one
       await expect(navLink).toHaveAttribute("aria-current", "true");
     }
+  });
+
+  test("[TC ID-10] Hovering the currently-active nav item still highlights", async ({
+    page,
+  }) => {
+    // `hover:bg-white/10` used to live only on the inactive-item class, so
+    // the active item stopped responding to the pointer (phase 09, gap 8).
+    await page.goto("/awards");
+
+    const activeLink = page.locator(
+      'nav[aria-label="Danh mục giải thưởng"] a[aria-current="true"]',
+    );
+    await expect(activeLink).toHaveCount(1);
+
+    const beforeHover = await activeLink.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
+
+    await activeLink.hover();
+
+    await expect(async () => {
+      const afterHover = await activeLink.evaluate(
+        (el) => getComputedStyle(el).backgroundColor,
+      );
+      expect(afterHover).not.toBe(beforeHover);
+    }).toPass();
   });
 
   test("[REG 2026-09-07] English locale renders award content, not the empty state", async ({
