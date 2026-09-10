@@ -1755,3 +1755,4 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Migration `0017` (index) **được viết SAU khi reviewer chạy xong**, vì nó thực thi đúng finding Low #2 của chính reviewer. Nghĩa là verdict `SEALED` chưa soi `0017`. Nội dung là một `CREATE INDEX`, không đụng policy/grant/cột nào — nhưng nói ra cho đúng bản ghi
+- PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/27 (`fix/screen-audit-spec-test-gaps` → `main`, 10 commit)
