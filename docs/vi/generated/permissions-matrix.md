@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
-**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 4 route xác nhận PUBLIC không route-guard cho chính nó (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard, `/prelaunch` F011_CountdownPrelaunchPage — xem mục cuối) + 2 trục phân quyền GHI ở tầng RLS Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh, KHÔNG phải route-guard — xem mục `/kudos`) + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, nhánh `feat/countdown-prelaunch-page` chưa merge `main` — cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI route trang kể cả 3 guard active và cả `/`, `/awards`, `/standards` khi bật, xem mục `/prelaunch`) + 1 trục ĐỌC own-row mới qua RLS + Realtime, không gắn với route nào (F012_NotificationsPanel, 2026-09-09, nhánh `feat/notifications-panel` chưa merge `main` — bảng `public.notifications`, xem mục cuối) — no RBAC in scope, see note below
+**Analysis Scope**: 3 active frontend page guards (`/login`, `/todo`, `/profile` — `/profile` mới từ F006_ProfilePage, gia nhập ĐÚNG cơ chế `/todo`) + 1 superseded guard (`/`, xem PERM001) + 1 backend redirect-target guard (`/auth/callback`) + 4 route xác nhận PUBLIC không route-guard cho chính nó (`/awards` F004_AwardSystemPage, `/standards` F005_StandardsRulesPage, `/kudos` F007_KudosLiveBoard, `/prelaunch` F011_CountdownPrelaunchPage — xem mục cuối) + 3 trục phân quyền GHI ở tầng RLS/RPC Postgres, cùng route `/kudos` (F008_KudosHeartReaction — thả tim; F009_KudosCompose, 2026-09-08 — gửi Kudo + upload ảnh Storage + ẩn danh; F010_SecretBoxModal — mở Secret Box qua RPC `open_secret_box()`, KHÔNG phải route-guard — xem mục `/kudos`) + 1 trục khoá điều hướng site-wide MỚI (F011_CountdownPrelaunchPage, 2026-09-08, nhánh `feat/countdown-prelaunch-page` chưa merge `main` — cờ `PRELAUNCH_LOCK_ENABLED` + thời gian, áp cho MỌI route trang kể cả 3 guard active và cả `/`, `/awards`, `/standards` khi bật, xem mục `/prelaunch`) + 1 trục ĐỌC own-row mới qua RLS + Realtime, không gắn với route nào (F012_NotificationsPanel, 2026-09-09, nhánh `feat/notifications-panel` chưa merge `main` — bảng `public.notifications`, xem mục cuối) — no RBAC in scope, see note below
 
 > **Raw PERM### matrix.** Machine-generated inventory of every permission item with full
 > per-permission detail. The plain-language curated view lives at
@@ -29,7 +29,7 @@
 
 **Ground-truth note (verified against source, not assumed)**: Dự án này KHÔNG có RBAC — không role, không ownership check, không policy table. Mọi tài khoản Google xác thực thành công đều nhận đúng một mức truy cập giống nhau. Cơ chế phân quyền duy nhất là **route-guard theo trạng thái đăng nhập** (đã auth / chưa auth), thực thi ở HAI lớp cho mỗi route được bảo vệ: `proxy.ts` (optimistic, tên mới của `middleware` trong Next 16) và một lần re-check `getUser()`/tương đương AUTHORITATIVE ở chính trang đó. Vì vậy cột "Role" trong bảng `Permission Rules` bên dưới giữ đúng hai giá trị **Anonymous** / **Authenticated** — đây là trạng thái đăng nhập, không phải vai trò tổ chức (admin/manager/owner không tồn tại trong code).
 
-**Cập nhật 2026-09-06 (F003_Homepage)**: `public.users` nay có cột `role` (`member`|`admin`), đọc qua `lib/auth/get-user-role.ts` để quyết định một mục HIỂN THỊ trong menu tài khoản của SCR003_HomeScreen ("Trang quản trị") — đây KHÔNG phải một route-guard mới (không route nào bị chặn theo `role`), nên KHÔNG được cấp mã `PERM###` mới ở đây; xem "Role-based screen-permission" ở cuối mục này.
+**Cập nhật 2026-09-06 (F003_Homepage)**: `public.users` nay có cột `role` (`member`|`admin`), đọc qua `src/dal/users.ts` (`getUserRole`) để quyết định một mục HIỂN THỊ trong menu tài khoản của SCR003_HomeScreen ("Trang quản trị") — đây KHÔNG phải một route-guard mới (không route nào bị chặn theo `role`), nên KHÔNG được cấp mã `PERM###` mới ở đây; xem "Role-based screen-permission" ở cuối mục này.
 
 **Cập nhật 2026-09-08 (F011_CountdownPrelaunchPage, nhánh `feat/countdown-prelaunch-page` chưa
 merge `main`) — PERM002/PERM003 dưới đây có thể bị PREEMPT bởi một nhánh chạy TRƯỚC chúng.** Khi
@@ -43,9 +43,9 @@ PERM003 từng chạy — cơ chế route-guard của cả hai mã KHÔNG đổi
 | Code | Name | Type | Enforced At |
 |------|------|------|-------------|
 | PERM001_RootRouteGuard | Root Route Guard — **SUPERSEDED (không còn hoạt động)** | route-guard | ~~`proxy.ts` (optimistic) + `app/page.tsx` (authoritative fallback)~~ — `/` nay public, không guard |
-| PERM002_LoginRouteGuard | Login Route Guard (fail-open) | route-guard | `proxy.ts` (optimistic) + `app/login/page.tsx` (authoritative) |
-| PERM003_TodoRouteGuard | Todo Route Guard (fail-closed) | route-guard | `proxy.ts` (optimistic) + `app/todo/page.tsx` (authoritative) |
-| PERM004_CallbackNextPathGuard | Callback Next-Path Open-Redirect Guard | route-guard | `app/auth/callback/route.ts` via `lib/supabase/next-path.ts:88` (`safeNextPath`) |
+| PERM002_LoginRouteGuard | Login Route Guard (fail-open) | route-guard | `proxy.ts` (optimistic) + `src/app/(public)/login/page.tsx` (authoritative) |
+| PERM003_TodoRouteGuard | Todo Route Guard (fail-closed) | route-guard | `proxy.ts` (optimistic) + `src/app/(protected)/layout.tsx` (authoritative, dùng chung `/profile`) |
+| PERM004_CallbackNextPathGuard | Callback Next-Path Open-Redirect Guard | route-guard | `src/app/auth/callback/route.ts` via `src/utils/url/next-path.ts:88` (`safeNextPath`) |
 
 ---
 
@@ -75,19 +75,19 @@ PERM003 từng chạy — cơ chế route-guard của cả hai mã KHÔNG đổi
 
 ### Related Modules
 
-- proxy.ts (predicate cũ đã gỡ, xem PERM002/PERM003)
-- app/page.tsx (viết lại hoàn toàn — nay thuộc F003_Homepage, không còn thuộc phạm vi guard)
+- `src/proxy.ts` (predicate cũ đã gỡ, xem PERM002/PERM003)
+- `src/app/(public)/(home)/page.tsx` (viết lại hoàn toàn — nay thuộc F003_Homepage, không còn thuộc phạm vi guard)
 
 ---
 
 ## PERM002_LoginRouteGuard: Login Route Guard (fail-open)
 
 **Type**: route-guard
-**Enforced At**: `proxy.ts` (optimistic) + `app/login/page.tsx` (authoritative, fail-open)
+**Enforced At**: `proxy.ts` (optimistic) + `src/app/(public)/login/page.tsx` (authoritative, fail-open)
 
 ### Description
 
-Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`); authenticated bị redirect sang `/` (đổi từ `/todo`, F003_Homepage) trước khi form kịp render — thực thi ở cả `proxy.ts` (optimistic) lẫn `getAuthenticatedUser()` AUTHORITATIVE trong `app/login/page.tsx`. Đây là gate duy nhất fail **OPEN**: `getAuthenticatedUser()` bọc `supabase.auth.getUser()` trong try/catch và trả về `null` cho BẤT KỲ lỗi Supabase nào — nghĩa là khi Supabase gián đoạn, trang vẫn render form login (coi như anonymous) thay vì chặn truy cập. Đây là chủ đích: `/login` là cổng vào duy nhất của app, chặn nó khi outage sẽ khoá toàn bộ người dùng ở ngoài vĩnh viễn.
+Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`); authenticated bị redirect sang `/` (đổi từ `/todo`, F003_Homepage) trước khi form kịp render — thực thi ở cả `proxy.ts` (optimistic) lẫn `getCurrentUser()` AUTHORITATIVE trong `src/app/(public)/login/page.tsx`. Đây là gate duy nhất fail **OPEN**: `getCurrentUser()` (`src/dal/auth.ts`) bọc `supabase.auth.getUser()` trong try/catch và trả về `null` cho BẤT KỲ lỗi Supabase nào — nghĩa là khi Supabase gián đoạn, trang vẫn render form login (coi như anonymous) thay vì chặn truy cập. Đây là chủ đích: `/login` là cổng vào duy nhất của app, chặn nó khi outage sẽ khoá toàn bộ người dùng ở ngoài vĩnh viễn.
 
 ### Related Routes
 
@@ -108,18 +108,25 @@ Gate trên `/login`: anonymous được render form đăng nhập (`LoginClient`
 ### Related Modules
 
 - proxy.ts
-- app/login/page.tsx
+- src/app/(public)/login/page.tsx
 
 ---
 
 ## PERM003_TodoRouteGuard: Todo Route Guard (fail-closed)
 
 **Type**: route-guard
-**Enforced At**: `proxy.ts` (optimistic) + `app/todo/page.tsx` (authoritative, fail-closed)
+**Enforced At**: `proxy.ts` (optimistic) + `src/app/(protected)/layout.tsx` (authoritative, fail-closed — hoisted khỏi `todo/page.tsx`, dùng chung `/todo`+`/profile`)
 
 ### Description
 
-Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có thật (placeholder). `app/todo/page.tsx` gọi `supabase.auth.getUser()` KHÔNG bọc try/catch: nếu lỗi, exception văng ra thẳng thay vì bị nuốt thành "coi như đã login"; nếu resolve mà không có `user`, `redirect("/login")` chạy trước khi bất cứ nội dung nào render. Đây là fail **CLOSED**, cố ý bất đối xứng với fail-open của `/login` — thà lỗi/chặn truy cập nội dung được bảo vệ còn hơn để lộ nó khi không xác thực được.
+Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có thật (placeholder). Gate nay nằm ở `src/app/(protected)/layout.tsx:23-27`, dùng chung cho cả `/todo` lẫn `/profile`, chạy trước khi bất cứ page con nào render.
+
+**Cơ chế hai bước** (đổi từ route-colocation refactor — trước đây `todo/page.tsx` tự gọi `supabase.auth.getUser()` trần và để exception văng thẳng ra):
+
+1. `getCurrentUser()` (`src/dal/auth.ts:17-27`) bọc `createClient()` + `auth.getUser()` trong try/catch và fail **OPEN** về `null` cho MỌI lỗi — một Supabase outage không được phép làm sập trang, chỉ khiến nó đọc như anonymous. Hàm này tự nó không bao giờ redirect.
+2. `(protected)/layout.tsx` là nơi biến `null` thành `redirect(ROUTES.LOGIN)`.
+
+Hợp lại, outcome ở mức route vẫn là fail **CLOSED**: cả "không có session" lẫn "Supabase lỗi" đều kết thúc bằng redirect `/login`, không có nhánh nào để nội dung được bảo vệ render khi chưa xác thực được. Sự bất đối xứng với fail-open của `/login` là cố ý — thà chặn truy cập nội dung được bảo vệ còn hơn để lộ nó. Lưu ý phân biệt: fail-open ở bước 1 là fail-open của *hàm đọc user*, không phải của *gate*; gate chỉ có một kết quả khi không xác thực được, là redirect.
 
 ### Related Routes
 
@@ -135,24 +142,25 @@ Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có th
 |------|-------|------------|
 | Anonymous | ✗ | Redirect `/login` |
 | Authenticated | ✓ | Render lời chào theo email + form đăng xuất (`logoutAction`) |
-| (Supabase lỗi khi check) | ✗ | Exception văng thẳng (không có try/catch) — không có đường nào lộ nội dung bảo vệ khi check thất bại, hiệu quả tương đương fail-closed dù không tường minh trả `null` |
+| (Supabase lỗi khi check) | ✗ | `getCurrentUser()` nuốt lỗi thành `null` nội bộ, rồi `layout.tsx` redirect `/login` như thể anonymous — không có đường nào lộ nội dung bảo vệ khi check thất bại, hiệu quả tương đương fail-closed |
 
 ### Related Modules
 
 - proxy.ts
-- app/todo/page.tsx
-- app/todo/actions.ts (`logoutAction` — chỉ tới được sau khi `/todo` đã render, tức đã ở trạng thái Authenticated)
+- src/app/(protected)/layout.tsx (`getCurrentUser()` — guard AUTHORITATIVE, hoisted khỏi từng `page.tsx`)
+- src/app/(protected)/todo/page.tsx (chỉ còn đọc `user.email` cho lời chào, không tự guard nữa)
+- src/app/_actions/logout.ts (`logoutAction` — shared, dùng chung bởi todo/profile/home/awards/kudos; chỉ tới được sau khi `/todo` đã render, tức đã ở trạng thái Authenticated)
 
 ---
 
 ## PERM004_CallbackNextPathGuard: Callback Next-Path Open-Redirect Guard
 
 **Type**: route-guard
-**Enforced At**: `app/auth/callback/route.ts` via `lib/supabase/next-path.ts:88` (`safeNextPath`)
+**Enforced At**: `src/app/auth/callback/route.ts` via `src/utils/url/next-path.ts:88` (`safeNextPath`)
 
 ### Description
 
-`/auth/callback` bị loại tường minh khỏi matcher của `proxy.ts` — route này tự xử lý redirect riêng, không có tiền điều kiện session (đây chính là đích PKCE code-exchange). Kiểm soát duy nhất liên quan bảo mật/điều hướng ở đây là một choke point chống open-redirect: query param `?next=` là input không tin cậy, được `safeNextPath()` xác thực trước khi dùng làm đích `Location` header — chỉ chấp nhận path same-origin, root-relative (loại `//`, `/\`, bất kỳ `://` scheme separator nào, và mọi control character/line separator thô hoặc percent-encoded có thể mở đường HTTP header/response splitting). Giá trị nào không hợp lệ đều fallback về `/todo`, im lặng.
+`/auth/callback` bị loại tường minh khỏi matcher của `proxy.ts` — route này tự xử lý redirect riêng, không có tiền điều kiện session (đây chính là đích PKCE code-exchange). Kiểm soát duy nhất liên quan bảo mật/điều hướng ở đây là một choke point chống open-redirect: query param `?next=` là input không tin cậy, được `safeNextPath()` xác thực trước khi dùng làm đích `Location` header — chỉ chấp nhận path same-origin, root-relative (loại `//`, `/\`, bất kỳ `://` scheme separator nào, và mọi control character/line separator thô hoặc percent-encoded có thể mở đường HTTP header/response splitting). Giá trị nào không hợp lệ đều fallback về `/` (đổi từ `/todo`, F003_Homepage — xác nhận lại qua `src/utils/url/next-path.ts:88` default `fallback = "/"`, cả 2 call site `src/app/auth/callback/route.ts:38` và `src/api/auth.ts:49` đều không override), im lặng.
 
 ### Related Routes
 
@@ -171,8 +179,8 @@ Gate trên `/todo` — route duy nhất thực sự bảo vệ nội dung có th
 
 ### Related Modules
 
-- app/auth/callback/route.ts
-- lib/supabase/next-path.ts
+- src/app/auth/callback/route.ts
+- src/utils/url/next-path.ts
 
 ---
 
@@ -278,8 +286,13 @@ nhận `200` với cùng bố cục. Không cấp `PERM###` mới cho phần đ�
 cùng lý do `/awards`/`/standards` không cấp mã. Căn cứ: precondition test case của màn ghi nguyên văn
 *"User is unauthenticated but can view Kudos UI"* — gate (nếu có) nằm ở ĐÍCH ĐẾN (click vào 1 profile
 hoặc chi tiết kudo), không nằm ở `/kudos` (`docs/vi/system/permissions.md § /kudos là route CÔNG KHAI`).
-`proxy.ts`'s `config.matcher` KHÔNG bao gồm `/kudos` — khác cả `/awards`/`/standards` (vẫn khớp
-matcher chỉ để refresh cookie) VÀ `/profile` (protected thật): `/kudos` nằm HOÀN TOÀN ngoài lớp proxy.
+`src/proxy.ts`'s `config.matcher` (`src/proxy.ts:188`) nay là negative lookahead khớp gần như MỌI
+route, `/kudos` nằm trong đó — ghi chú cũ "`/kudos` nằm hoàn toàn ngoài lớp proxy" viết khi matcher
+còn là whitelist 6 route và đã SAI kể từ lần widening ở F011. Điểm khác biệt thật nằm ở nhánh xử
+lý, không ở matcher: `planProxy` (`src/domain/prelaunch-lock.ts`) trả `{ kind: "pass" }` cho
+`/kudos` — zero I/O, `NextResponse.next()` ngay, không refresh cookie và không đọc session — trong
+khi `/awards`/`/standards` đi nhánh `auth` (khớp matcher để refresh cookie) và `/profile` là
+protected thật.
 
 **Khác mọi route PUBLIC trước đó**: `/kudos` có một hành động GHI — thả tim (F008). Đây là trục phân
 quyền THỨ HAI thật sự của dự án, sau "đã đăng nhập hay chưa" (PERM001-004): **quyền ghi gắn với danh
@@ -354,6 +367,28 @@ Bốn bề mặt của F009 đang chờ mã (cùng "Bốn bề mặt" của F007
 pass kế tiếp — không tự đặt số ở đây): gửi kudo khi đã đăng nhập · chặn gửi kudo khi chưa đăng nhập ·
 upload ảnh vào `kudo-images` khi đã đăng nhập · đọc công khai ảnh trong `kudo-images`. Xem
 `docs/vi/system/permissions.md § Bổ sung dự kiến — F009_KudosCompose` cho chi tiết đầy đủ.
+
+### F010_SecretBoxModal — trục phân quyền GHI thứ tư (RPC, chưa cấp mã PERM### riêng)
+
+Mở Secret Box (`openSecretBoxAction` → RPC `open_secret_box()`) là đường GHI thứ tư gắn với `/kudos`,
+khác hẳn `kudos_insert_own`/`kudo_hearts_insert_own`: không có RLS policy nào trên
+`public.secret_box_openings` cho phép `authenticated` tự INSERT — `authenticated` chỉ có `GRANT SELECT`
+(đọc lại openings của chính mình). Writer DUY NHẤT là hàm `SECURITY DEFINER` `open_secret_box()`
+(migration `0011_secret_box.sql`), tự resolve `auth.uid()`, không nhận tham số nào từ client:
+
+| Chủ thể | Đọc `/kudos` | Mở Secret Box modal | Gọi RPC `open_secret_box()` |
+|---|---|---|---|
+| Anonymous | ✓ | ✗ — UI ẩn/disable launcher | ✗ — RPC raise `unauthenticated` (`28000`) khi `auth.uid()` NULL; `REVOKE EXECUTE ... FROM anon, PUBLIC` (`0011:186`) |
+| Authenticated | ✓ | ✓ | ✓ nếu còn lượt (`unopened > 0`, tính lại trong transaction đã khoá `pg_advisory_xact_lock`) — hết lượt raise `no_boxes_left` (`P0001`), không insert gì |
+
+Hai điều enforce Ở TẦNG DỮ LIỆU: **entitlement luôn tính lại trong RPC** (`floor(SUM(kudos.heart_count
+WHERE sender_id = auth.uid())/5) - count(secret_box_openings WHERE user_id = auth.uid())`, không tin
+giá trị client gửi lên — client không gửi gì cả); **`authenticated` không có GRANT EXECUTE** trừ khi
+đã đăng nhập (`GRANT EXECUTE ON FUNCTION open_secret_box() TO authenticated`, `0011:187`).
+
+Bề mặt của F010 đang chờ mã (cùng "Bốn bề mặt" của F007/F008/F009 ở trên, cấp bởi `rebuild-spec` Core
+pass kế tiếp): mở Secret Box khi còn lượt và đã đăng nhập · chặn mở khi hết lượt · chặn gọi RPC khi
+chưa đăng nhập.
 
 ### Related Routes
 - (GET) /kudos — SCR007_KudosLiveBoard / SCR008_KudosCompose, không redirect
@@ -523,7 +558,7 @@ tồn tại) · ghi qua trigger `SECURITY DEFINER` khi có Kudos/tim mới. Xem
 ## Role-based screen-permission (chưa cấp mã PERM###)
 
 Mục menu "Trang quản trị" trên header của SCR003_HomeScreen chỉ hiện khi `public.users.role === "admin"`
-(đọc qua `lib/auth/get-user-role.ts`, fail-open về `"member"` khi lỗi/không có row). Đây là một
+(đọc qua `src/dal/users.ts` — `getUserRole`, fail-open về `"member"` khi lỗi/không có row). Đây là một
 `screen-permission` cấp UI (ẩn/hiện một link, không chặn route nào — `/admin` bản thân chưa tồn
 tại) chứ KHÔNG phải một `role-based` route-guard mới, nên KHÔNG được liệt vào Permissions Index ở
 trên với một mã `PERM###` tự đặt. Mã chính thức cho mục này sẽ được cấp bởi lượt `rebuild-spec` Core
@@ -627,4 +662,4 @@ Capture: env var name + compared value.
 Match comparisons against: `i18n\.locale|currentLocale|getLocale\(\)|locale\s*===|lang\s*===`
 Capture: locale/language value being compared.
 
-**Codebase check note (this project)**: `proxy.ts` normalize hoá cookie `NEXT_LOCALE` (raw != normalized → set lại `vi`/`en`) — đây là input-validation/fallback thuần (untrusted cookie → giá trị hợp lệ), KHÔNG phải locale-gate (không có nhánh UI/quyền nào rẽ theo giá trị locale đã chọn). `lib/supabase/client.ts`/`server.ts` dùng `!` non-null assertion trên biến môi trường (fail loud khi thiếu) — không phải env-gate (không có so sánh `===` rẽ nhánh theo `NODE_ENV`/`APP_ENV`). Không tìm thấy `useFlag`/`useExperiment`/tương đương nào trong codebase.
+**Codebase check note (this project)**: `proxy.ts` normalize hoá cookie `NEXT_LOCALE` (raw != normalized → set lại `vi`/`en`) — đây là input-validation/fallback thuần (untrusted cookie → giá trị hợp lệ), KHÔNG phải locale-gate (không có nhánh UI/quyền nào rẽ theo giá trị locale đã chọn). `src/lib/supabase/client.ts`/`server.ts` dùng `!` non-null assertion trên biến môi trường (fail loud khi thiếu) — không phải env-gate (không có so sánh `===` rẽ nhánh theo `NODE_ENV`/`APP_ENV`). Không tìm thấy `useFlag`/`useExperiment`/tương đương nào trong codebase.

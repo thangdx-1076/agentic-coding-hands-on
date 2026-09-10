@@ -135,9 +135,9 @@ trước khi điều hướng (khác nút "Đóng").
 **Request** · không có
 **BE** · không có
 **Rule**
-- **BR-004 — Luôn trỏ `/kudos`, không ẩn/disable dù đích chưa tồn tại.**
+- **BR-004 — Luôn trỏ `/kudos`, không ẩn/disable.** (Đích nay đã tồn tại — F007_KudosLiveBoard.)
 - **BR-005 — Không có điều kiện `disabled` nào cho nút này.**
-**Result** · read-only, không ghi DB. Điều hướng `/kudos` (404 tới khi route đó được xây, RISK-01).
+**Result** · read-only, không ghi DB. Điều hướng `/kudos` — route đã live kể từ F007_KudosLiveBoard (RISK-01 resolved).
 **Source:** `src/app/(public)/standards/_components/standards-footer-actions.tsx`
 
 ### 3.4 Edge cases
@@ -145,7 +145,7 @@ trước khi điều hướng (khác nút "Đóng").
 | Action | Scenario | Behavior |
 |---|---|---|
 | A2 | Direct-load `/standards` (không có lịch sử điều hướng trong tab) | `window.navigation?.canGoBack` là `false`/`undefined` → `router.push(ROUTES.HOME)` thay vì `router.back()` |
-| A3 | `/kudos` chưa tồn tại (TC FUN_004) | Link vẫn render `href="/kudos"`, điều hướng thật trả 404 — E2E chỉ assert `href`/điều hướng, không assert nội dung trang đích |
+| A3 | RISK-01 **resolved (route)** — `/kudos` đã live kể từ F007_KudosLiveBoard (TC FUN_004 cần rerun) | Link render `href="/kudos"`, điều hướng thật nay tới SCR007_KudosLiveBoard — E2E hiện chỉ assert `href`/điều hướng, không assert nội dung trang đích |
 | A1 | Nội dung Thể lệ vừa khít khung (TC FUN_002) | Panel không tạo overflow/scrollbar — CSS `overflow-y: auto` tự nhiên không kích hoạt khi content ngắn hơn container |
 
 ## 4. Shared Foundation

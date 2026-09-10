@@ -86,16 +86,15 @@ trị/slug) và layout xen kẽ trái-phải theo index.
 |--------|---------|---------|-----------|------------------------|--------|
 | Click mục nav | E05 | click | `awards` không rỗng | Cuộn mượt (hoặc tức thời nếu `prefers-reduced-motion`) tới section tương ứng; mục đó `aria-current="true"` | `src/app/(public)/awards/_components/award-category-nav.tsx` |
 | Cuộn tay qua các section | E06 | scroll | `awards` không rỗng | Scroll-spy tự cập nhật mục active trong E05 theo vị trí cuộn thực tế | `src/app/(public)/awards/_hooks/use-award-category-nav.ts` |
-| Click "Chi tiết" (Kudos) | E07 | click | luôn khả dụng | Điều hướng `/kudos` (chưa implement, hiện 404) | `src/app/(public)/_components/kudos-section.tsx` |
-| Mở menu tài khoản / bell / đăng xuất | E09 | click | đã đăng nhập | Như SCR003_Home (dùng chung `SiteHeader`) | `src/app/(public)/_components/site-header.tsx` |
+| Click "Chi tiết" (Kudos) | E07 | click | luôn khả dụng | Điều hướng `/kudos` | `src/app/_components/kudos-section.tsx` |
+| Mở menu tài khoản / bell / đăng xuất | E09 | click | đã đăng nhập | Như SCR003_Home (dùng chung `SiteHeader`) | `src/app/_components/site-header.tsx` |
 
 ### Happy Path
 
 1. Khách vào `/awards` (trực tiếp, từ CTA "ABOUT AWARDS" ở `/`, hoặc từ thẻ giải trên `/`), thấy
    ngay header + hero + nav trái + section đầu tiên, không cần đăng nhập.
 2. Khách click 1 mục nav hoặc tự cuộn — trang cuộn tới đúng section, nav cập nhật active theo.
-3. Khách cuộn tới cuối trang, thấy khối Sun* Kudos, click "Chi tiết" (dẫn `/kudos`, hiện 404 cho
-   tới khi trang đó được xây ở phiên khác).
+3. Khách cuộn tới cuối trang, thấy khối Sun* Kudos, click "Chi tiết" (dẫn `/kudos`).
 
 ### Branches
 
@@ -160,6 +159,6 @@ N/A — không có form nhập liệu nào trên màn hình này (thuần hiển
 
 | Action | Element | Condition | Destination | Result | Source |
 |--------|---------|-----------|-------------|--------|--------|
-| Click "Chi tiết" (Kudos) | E07 | — | external (`/kudos`, chưa implement) | 404 | `_components/kudos-section.tsx` |
+| Click "Chi tiết" (Kudos) | E07 | — | `/kudos` (F007_KudosLiveBoard) | điều hướng | `_components/kudos-section.tsx` |
 | Click "Đăng nhập" (khách) | E09 | Anonymous | `/login` | redirect | `site-header.tsx` |
 | Chọn "Đăng xuất" | E09 | đã đăng nhập | `/login` | redirect (submit `logoutAction`, dùng chung F001/F003) | `src/app/_actions/logout.ts` |

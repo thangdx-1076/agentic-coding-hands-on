@@ -1,9 +1,9 @@
 # Entities
 
-**Project**: SAA 2025 — Login
+**Project**: agentic-coding-hands-on
 **Generated**: 2026-09-06
 
-> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`, `0006_kudos.sql`, `0007_kudo_hearts.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`, cộng (từ F007_KudosLiveBoard + F008_KudosHeartReaction, 2026-09-07) bảng thứ 4 `public.kudos` + view thứ 5 `public.kudos_cards` (schema ở `0006_kudos.sql`, đọc qua `src/dal/kudos.ts`/`kudos-cards-query.ts`) và bảng thứ 6 `public.kudo_hearts` (schema ở `0007_kudo_hearts.sql`, đọc/ghi qua `src/dal/kudo-hearts.ts` + Server Action `toggleKudoHeart`) — cộng một cột mới `department` (nullable) trên `public.users`, chỉ lộ ra qua view `kudos_cards`, KHÔNG đọc trực tiếp `public.users.department` ở bất kỳ đâu khác trong app. Từ F009_KudosCompose (2026-09-08): migration `0009_kudos_write_anonymity.sql` thêm 2 cột ghi-only trên `public.kudos` (`is_anonymous boolean NOT NULL DEFAULT false`, `anonymous_name text`, đọc/ghi qua Server Action `createKudo`, `src/app/(public)/kudos/_actions/create-kudo.ts`) và patch `CREATE OR REPLACE VIEW public.kudos_cards` để `CASE WHEN is_anonymous` che 5 cột phía sender; migration `0010_kudo_images_bucket.sql` thêm bucket Supabase Storage đầu tiên của repo (`kudo-images`, đọc/ghi qua `src/app/(public)/kudos/_actions/upload-kudo-images.ts`) — bucket này không có DAL SELECT nào đọc lại nên không lên ERD như một entity riêng, chỉ ghi chú trong mục `KUDOS_KudosCard` bên dưới. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`app/todo/page.tsx:6-16`). Vì vậy ERD dưới đây liệt kê 7 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 4 do repo định nghĩa qua SQL migration và đọc/ghi qua DAL — `kudos`/`kudo_hearts` là 2 bảng ĐẦU TIÊN trong ERD này có FK thật, xem ghi chú dưới sơ đồ) — không có bảng, cột, hay migration nào bị bịa ra.
+> **Honest-scope note**: repo này không dùng ORM (không có ORM model) — schema CSDL được định nghĩa bằng SQL migrations committed tại `supabase/migrations/` trong chính repo này (`0001_users_table.sql`, `0002_handle_new_user_trigger.sql`, `0003_awards_table.sql`, `0005_profile_cards_view.sql`, `0006_kudos.sql`, `0007_kudo_hearts.sql`; xem `README.md` § Database). Persistence chạy qua một Supabase stack khởi động bằng `supabase start` từ repo root (`project_id` `saa-app`, API `http://127.0.0.1:55321`) — ngoài các migration, thứ duy nhất app tự đọc qua code là session/user object trả về từ `@supabase/ssr`, cộng (từ F003_Homepage) một cột `role` đọc qua PostgREST từ bảng `public.users` (schema ở `0001_users_table.sql`), cộng (từ F004_AwardSystemPage) bảng thứ 2, `public.awards` (schema ở `0003_awards_table.sql`), đọc read-only qua DAL `src/dal/awards.ts`, cộng (từ F006_ProfilePage) view thứ 3, `public.profile_cards` (schema ở `0005_profile_cards_view.sql`, phái sinh từ `public.users`, KHÔNG phải bảng độc lập), đọc read-only qua DAL `src/dal/profile-cards.ts`, cộng (từ F007_KudosLiveBoard + F008_KudosHeartReaction, 2026-09-07) bảng thứ 4 `public.kudos` + view thứ 5 `public.kudos_cards` (schema ở `0006_kudos.sql`, đọc qua `src/dal/kudos.ts`/`kudos-cards-query.ts`) và bảng thứ 6 `public.kudo_hearts` (schema ở `0007_kudo_hearts.sql`, đọc/ghi qua `src/dal/kudo-hearts.ts` + Server Action `toggleKudoHeart`) — cộng một cột mới `department` (nullable) trên `public.users`, chỉ lộ ra qua view `kudos_cards`, KHÔNG đọc trực tiếp `public.users.department` ở bất kỳ đâu khác trong app. Từ F009_KudosCompose (2026-09-08): migration `0009_kudos_write_anonymity.sql` thêm 2 cột ghi-only trên `public.kudos` (`is_anonymous boolean NOT NULL DEFAULT false`, `anonymous_name text`, đọc/ghi qua Server Action `createKudo`, `src/app/(public)/kudos/_actions/create-kudo.ts`) và patch `CREATE OR REPLACE VIEW public.kudos_cards` để `CASE WHEN is_anonymous` che 5 cột phía sender; migration `0010_kudo_images_bucket.sql` thêm bucket Supabase Storage đầu tiên của repo (`kudo-images`, đọc/ghi qua `src/app/(public)/kudos/_actions/upload-kudo-images.ts`) — bucket này không có DAL SELECT nào đọc lại nên không lên ERD như một entity riêng, chỉ ghi chú trong mục `KUDOS_KudosCard` bên dưới. `/todo` chỉ là placeholder chứng minh auth guard, không có entity todo thật (`src/app/(protected)/todo/page.tsx`). Từ F010_SecretBoxModal (migration `0011_secret_box.sql`): bảng thứ 7 `public.secret_box_openings` — log append-only, ghi DUY NHẤT qua RPC `SECURITY DEFINER` `open_secret_box()`, `authenticated` không có GRANT INSERT nào. Từ F012_NotificationsPanel (migration `0012_notifications.sql`): bảng thứ 8 `public.notifications` — inbox 4 loại sự kiện, RLS + `GRANT UPDATE (is_read)` cột-hẹp là lớp thực thi; writer duy nhất là trigger `SECURITY DEFINER` ở migration `0013` (ngoài phạm vi bảng này). Vì vậy ERD dưới đây liệt kê 9 **data shape** thật sự tồn tại trong source (2 do repo định nghĩa qua code app, 1 do SDK định nghĩa và chỉ bị đọc một phần field, 6 do repo định nghĩa qua SQL migration và đọc/ghi qua DAL — `kudos`/`kudo_hearts`/`secret_box_openings`/`notifications` là 4 bảng trong ERD này có FK thật, xem ghi chú dưới sơ đồ) — không có bảng, cột, hay migration nào bị bịa ra.
 
 ## Entity Relationship Diagram
 
@@ -60,60 +60,74 @@ erDiagram
         string createdAt
     }
     KUDOS_KudosCard ||--o{ KUDOS_KudoHeart : "heart_count duoc trigger tinh tu"
+    SECRETBOX_SecretBoxOpening {
+        string id PK "UUID"
+        string userId FK "-> public.users.id"
+        string badgeKey "1 trong 6 gia tri co dinh, CHECK constraint"
+        string openedAt "timestamptz, default now()"
+    }
+    NOTIFICATIONS_Notification {
+        string id PK "UUID"
+        string userId FK "-> public.users.id - la NGUOI NHAN, khong phai actor"
+        string type "1 trong 4 gia tri, CHECK constraint"
+        json payload "jsonb, mac dinh {}"
+        boolean isRead "default false - cot duy nhat authenticated duoc UPDATE"
+        string createdAt "timestamptz, default now()"
+    }
 ```
 
-7 shape trong ERD này, nhưng chỉ 2 cái CUỐI (`KUDOS_KudosCard`/`public.kudos`, `KUDOS_KudoHeart`/`public.kudo_hearts`) có FK thật ở tầng DB — 5 shape còn lại (`MODEL001-003`, `AWARD_Award`, `PROFILE_ProfileCard`) không có FK nào, giữ nguyên nhận định trước đây. `kudos.sender_id`/`kudos.receiver_id` VÀ `kudo_hearts.kudo_id`/`kudo_hearts.user_id` đều là FK thật (`REFERENCES ... ON DELETE CASCADE`, xem `0006_kudos.sql`/`0007_kudo_hearts.sql`) — đây là bảng ĐẦU TIÊN trong dự án ràng buộc quan hệ ở tầng DB thay vì chỉ "dùng chung một id" như `profile_cards`. Cạnh `KUDOS_KudosCard ||--o{ KUDOS_KudoHeart` trong sơ đồ trên diễn tả đúng 1 quan hệ thật (1 kudo có 0..N heart) — không vẽ 2 cạnh còn lại (`sender_id`/`receiver_id`/`user_id` → `users.id`) vì `MODEL002_SupabaseUser` không phải một bảng CSDL độc lập trong ERD này (là object SDK, xem mục riêng bên dưới), nên không có node `users` nào để nối tới. Xem mục **Relationships** của từng entity bên dưới để biết chi tiết.
+9 shape trong ERD này, nhưng chỉ 4 cái (`KUDOS_KudosCard`/`public.kudos`, `KUDOS_KudoHeart`/`public.kudo_hearts`, `SECRETBOX_SecretBoxOpening`/`public.secret_box_openings`, `NOTIFICATIONS_Notification`/`public.notifications`) có FK thật ở tầng DB — 5 shape còn lại (`MODEL001-003`, `AWARD_Award`, `PROFILE_ProfileCard`) không có FK nào, giữ nguyên nhận định trước đây. `kudos.sender_id`/`kudos.receiver_id`, `kudo_hearts.kudo_id`/`kudo_hearts.user_id`, `secret_box_openings.user_id`, VÀ `notifications.user_id` đều là FK thật (`REFERENCES ... ON DELETE CASCADE`, xem `0006_kudos.sql`/`0007_kudo_hearts.sql`/`0011_secret_box.sql`/`0012_notifications.sql`) — đây là nhóm bảng ĐẦU TIÊN trong dự án ràng buộc quan hệ ở tầng DB thay vì chỉ "dùng chung một id" như `profile_cards`. Cạnh `KUDOS_KudosCard ||--o{ KUDOS_KudoHeart` trong sơ đồ trên diễn tả đúng 1 quan hệ thật (1 kudo có 0..N heart) — không vẽ cạnh nào khác (`sender_id`/`receiver_id`/`user_id` (kudo_hearts) → `users.id`, `secret_box_openings.user_id` → `users.id`, `notifications.user_id` → `users.id`) vì `MODEL002_SupabaseUser` không phải một bảng CSDL độc lập trong ERD này (là object SDK, xem mục riêng bên dưới), nên không có node `users` nào để nối tới. Xem mục **Relationships** của từng entity bên dưới để biết chi tiết.
 
 ## Entities
 
 ### MODEL001_AppLocale
 
-**Description**: Locale hợp lệ duy nhất mà app hỗ trợ — không phải bảng CSDL, mà là một union type + hằng số module-level, là "chốt chặn" duy nhất mọi giá trị locale (cookie, tham số Server Action) phải đi qua trước khi được dùng. Nguồn: `lib/i18n/locale.ts:9-14` (`SUPPORTED_LOCALES`, `AppLocale`, `DEFAULT_LOCALE`), `lib/i18n/locale.ts:28-31` (`LOCALE_LABEL`).
+**Description**: Locale hợp lệ duy nhất mà app hỗ trợ — không phải bảng CSDL, mà là một union type + hằng số module-level, là "chốt chặn" duy nhất mọi giá trị locale (cookie, tham số Server Action) phải đi qua trước khi được dùng. Nguồn: `src/lib/i18n/locale.ts:9-14` (`SUPPORTED_LOCALES`, `AppLocale`, `DEFAULT_LOCALE`), `src/lib/i18n/locale.ts:28-31` (`LOCALE_LABEL`).
 
 | Attribute | Type | Constraints | Description |
 |-----------|------|-------------|-------------|
-| value | `"vi" \| "en"` | enum(2), NOT NULL | Mã locale — chỉ 2 giá trị hợp lệ (`lib/i18n/locale.ts:9`) |
+| value | `"vi" \| "en"` | enum(2), NOT NULL | Mã locale — chỉ 2 giá trị hợp lệ (`src/lib/i18n/locale.ts:9`) |
 
 **Relationships**:
-- None (không có FK). Được *tham chiếu như kiểu field* trong 2 props shape khác — `LoginClientProps.locale` (`app/login/login-client.tsx:10`) và `LanguageSelectorProps` (`components/login/language-selector.tsx:7,13`) — đây là type-level reuse, không phải quan hệ entity-entity của ERD.
+- None (không có FK). Được *tham chiếu như kiểu field* trong 2 props shape khác — `LoginClientProps.locale` (`src/app/(public)/login/_components/login-client.tsx:13`) và `LanguageSelectorProps` (`src/app/_components/language-selector/language-selector.tsx:9,13`) — đây là type-level reuse, không phải quan hệ entity-entity của ERD.
 
 **Discriminator Fields**:
 
 | Field | DISC-### | Values | Description |
 |-------|----------|--------|-------------|
-| value | DISC-001 | vi, en | `vi` = tiếng Việt (mặc định khi cookie thiếu/rỗng/không hợp lệ), `en` = tiếng Anh — mỗi giá trị chọn ra một message bundle khác nhau (`i18n/request.ts:21`, `import(../messages/${locale}.json)`) và một nhãn hiển thị khác nhau trên language selector (`lib/i18n/locale.ts:28-31`, `LOCALE_LABEL`: "VN"/"EN") |
+| value | DISC-001 | vi, en | `vi` = tiếng Việt (mặc định khi cookie thiếu/rỗng/không hợp lệ), `en` = tiếng Anh — mỗi giá trị chọn ra một message bundle khác nhau (`i18n/request.ts:21`, `import(../messages/${locale}.json)`) và một nhãn hiển thị khác nhau trên language selector (`src/lib/i18n/locale.ts:28-31`, `LOCALE_LABEL`: "VN"/"EN") |
 
 ---
 
 ### MODEL002_SupabaseUser
 
-**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`app`, `components`, `lib`) xác nhận 2 field từng được truy cập: `user.email` (`app/todo/page.tsx:34`, `t("greeting", { email: user.email ?? "" })`) và `user.id` (`app/page.tsx:161`, truyền vào `getUserRole(supabase, userId)`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `proxy.ts:36,40` và `app/todo/page.tsx:26-28`.
+**Description**: Object user trả về từ `supabase.auth.getUser()` — **không do repo này định nghĩa** (kiểu gốc thuộc `@supabase/supabase-js`, được `@supabase/ssr` re-export qua `createClient()`/`createProxyClient()`). Repo chỉ *đọc*, không lưu lại bản sao nào. Grep toàn repo (`src/app`, `src/dal`, `src/lib`) xác nhận 2 field từng được truy cập: `user.email` (`src/app/(protected)/todo/page.tsx:28`, `t("greeting", { email: user?.email ?? "" })`) và `user.id` (`src/app/_utils/get-viewer.ts:37`, truyền vào `getUserRole(toUsersRoleClient(supabase), user.id)`). Sự tồn tại (truthy) của `user` — không phải field nào của nó — cũng được dùng làm điều kiện rẽ nhánh tại `src/proxy.ts:91,95` và `src/app/(protected)/layout.tsx:24` (guard fail-closed AUTHORITATIVE của `/todo`+`/profile`, hoisted khỏi từng `page.tsx` — xem `permissions-matrix.md`).
 
 **Cập nhật 2026-09-06 (F003_Homepage)**: `id` của user nay được dùng để đọc thêm `role` từ bảng `public.users` (bảng riêng, KHÔNG phải trường của object `User` gốc — xem dòng `role` bên dưới, đánh dấu nguồn khác biệt).
 
 | Attribute | Type (as consumed) | Constraints | Description |
 |-----------|------|-------------|-------------|
-| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`app/todo/page.tsx:34`) và trong `HeaderViewer.email` ở SCR003_HomeScreen (`app/page.tsx:162`) |
-| id | `string` (UUID) | NOT NULL | Khoá tra cứu `public.users.role` — truyền vào `getUserRole(supabase, userId)` (`app/page.tsx:161`, `lib/auth/get-user-role.ts:49-67`) |
-| role *(nguồn khác — `public.users`, không phải field gốc của `User`)* | `"member" \| "admin"` (as consumed) | fail-open `"member"` khi lỗi/không có row | Đọc qua `lib/auth/get-user-role.ts:49-68` (`getUserRole`) bằng client PostgREST hẹp `lib/supabase/users-role-client.ts` (`toUsersRoleClient` — shim thu hẹp `@supabase/ssr` server client về đúng slice `.from("users").select("role").eq("id",…).maybeSingle()`, tránh lỗi TS2589 "type instantiation is excessively deep" khi so khớp kiểu SDK trực tiếp). Quyết định `HeaderViewer.isAdmin` (`role === "admin"`) — chỉ ẩn/hiện mục "Trang quản trị" trong menu tài khoản, KHÔNG phải một authorization gate (xem `permissions-matrix.md § Role-based screen-permission`) |
+| email | `string \| undefined` (thực tế code: `user.email ?? ""`) | nullable | Email hiển thị trong lời chào ở `/todo` (`src/app/(protected)/todo/page.tsx:28`) và trong `HeaderViewer.email` ở SCR003_HomeScreen (`src/app/_utils/get-viewer.ts:42`) |
+| id | `string` (UUID) | NOT NULL | Khoá tra cứu `public.users.role` — truyền vào `getUserRole(toUsersRoleClient(supabase), user.id)` (`src/app/_utils/get-viewer.ts:37`, `src/dal/users.ts:51-70`) |
+| role *(nguồn khác — `public.users`, không phải field gốc của `User`)* | `"member" \| "admin"` (as consumed) | fail-open `"member"` khi lỗi/không có row | Đọc qua `src/dal/users.ts:51-70` (`getUserRole`) bằng client PostgREST hẹp `src/dal/users-role-client.ts` (`toUsersRoleClient` — shim thu hẹp `@supabase/ssr` server client về đúng slice `.from("users").select("role").eq("id",…).maybeSingle()`, tránh lỗi TS2589 "type instantiation is excessively deep" khi so khớp kiểu SDK trực tiếp). Quyết định `HeaderViewer.isAdmin` (`role === "admin"`) — chỉ ẩn/hiện mục "Trang quản trị" trong menu tài khoản, KHÔNG phải một authorization gate (xem `permissions-matrix.md § Role-based screen-permission`) |
 
 Các field khác của kiểu `User` thật (vd. `user_metadata`, `app_metadata`, `aud`, `created_at`, ...) tồn tại trên SDK nhưng **không có dòng code nào trong repo đọc chúng** — không liệt kê để tránh bịa cột.
 
 **Relationships**:
-- None — object này không được persist lại bởi repo (không bảng nào giữ FK trỏ tới nó); nó được lấy lại mỗi request từ session Supabase (`lib/supabase/server.ts:16-42`, `lib/supabase/proxy-client.ts:13-31`, `lib/supabase/client.ts:13-18`).
+- None — object này không được persist lại bởi repo (không bảng nào giữ FK trỏ tới nó); nó được lấy lại mỗi request từ session Supabase (`src/lib/supabase/server.ts:16-42`, `src/lib/supabase/proxy-client.ts:13-34`, `src/lib/supabase/client.ts:13-18`).
 - `role` được join thủ công (không phải FK trong ERD — đọc bằng 2 lời gọi Supabase riêng biệt trong cùng 1 request): `getUser()` lấy `id`, rồi `getUserRole(toUsersRoleClient(supabase), id)` query `public.users` dưới RLS own-row (JWT của chính user). Không có API nào trong app trả role của người khác.
 
 **Discriminator Fields**:
 
 | Field | DISC-### | Values | Description |
 |-------|----------|--------|-------------|
-| role | DISC-002 | member, admin | `member` = mặc định/fail-open (không thấy mục "Trang quản trị"); `admin` = thấy thêm mục "Trang quản trị" (`/admin`, route chưa implement) trong menu tài khoản của SCR003_HomeScreen (`lib/auth/get-user-role.ts:14`, `components/home/account-menu.tsx`) |
+| role | DISC-002 | member, admin | `member` = mặc định/fail-open (không thấy mục "Trang quản trị"); `admin` = thấy thêm mục "Trang quản trị" (`/admin`, route chưa implement) trong menu tài khoản của SCR003_HomeScreen (`src/dal/users.ts:16`, `src/app/_components/account-menu.tsx`) |
 
 ---
 
 ### MODEL003_LoginCopy
 
-**Description**: Content contract cho copy tĩnh của màn `/login` (mm:662:14387) — **không phải domain/persisted data**, mà là bản copy mặc định (giá trị `vi`, đúng nguyên văn Figma `characters`) được truyền xuống làm props; bản dịch `en` do next-intl cung cấp riêng (Track B, xem `clarifications.md`). Đưa vào đây theo đúng yêu cầu honest-scope vì nó là structured data shape có thật, không phải vì nó là bảng CSDL. Nguồn: `components/login/login-copy.ts:7-15` (type `LoginCopy` + hằng số `defaultLoginCopy`).
+**Description**: Content contract cho copy tĩnh của màn `/login` (mm:662:14387) — **không phải domain/persisted data**, mà là bản copy mặc định (giá trị `vi`, đúng nguyên văn Figma `characters`) được truyền xuống làm props; bản dịch `en` do next-intl cung cấp riêng (Track B, xem `clarifications.md`). Đưa vào đây theo đúng yêu cầu honest-scope vì nó là structured data shape có thật, không phải vì nó là bảng CSDL. Nguồn: `src/app/(public)/login/_shared/login-copy.ts:7-25` (type `LoginCopy` dòng 7-15 + hằng số `defaultLoginCopy` dòng 17-25).
 
 | Attribute | Type | Constraints | Description |
 |-----------|------|-------------|-------------|
@@ -126,7 +140,7 @@ Các field khác của kiểu `User` thật (vd. `user_metadata`, `app_metadata`
 | languageLabel | string | NOT NULL | Nhãn mặc định của language selector ("VN") |
 
 **Relationships**:
-- None (presentational prop, không phải entity được persist). Được truyền làm prop `copy` vào `LoginClient` (`app/login/login-client.tsx:9,40`).
+- None (presentational prop, không phải entity được persist). Được truyền làm prop `copy` vào `LoginClient` (`src/app/(public)/login/_components/login-client.tsx:12,43`).
 
 **Discriminator Fields**: None.
 
@@ -272,13 +286,82 @@ không ghi gì. RLS enforce ở tầng Postgres, không phải application code 
 
 ---
 
+### SECRETBOX_SecretBoxOpening
+
+**Description**: Một lượt Sunner mở Secret Box (F010_SecretBoxModal) — bảng `public.secret_box_openings`
+(migration `0011_secret_box.sql`), append-only log, KHÔNG phải counter: `unopened` luôn được tính lại
+(`floor(SUM(kudos.heart_count WHERE sender_id = me)/5) - count(secret_box_openings WHERE user_id = me)`),
+không bao giờ lệch khỏi `kudos.heart_count`. Ghi DUY NHẤT qua RPC `SECURITY DEFINER` `open_secret_box()`
+— `authenticated` không có GRANT INSERT nào trên bảng này. Nguồn: `supabase/migrations/0011_secret_box.sql`,
+`src/dal/secret-box.ts` (`openSecretBox`, `SecretBoxBadgeKey`).
+
+| Attribute | Type (as consumed) | Constraints | Description |
+|-----------|------|-------------|-------------|
+| id | `string` (UUID) | PK, NOT NULL | `gen_random_uuid()` |
+| userId | `string` (UUID) | NOT NULL, FK → `public.users.id` `ON DELETE CASCADE` | Người mở — hearts tính trên kudo họ GỬI (`sender_id`), không phải nhận |
+| badgeKey | `"stay-gold" \| "flow-to-horizon" \| "touch-of-light" \| "beyond-the-boundary" \| "revival" \| "root-further"` | NOT NULL, CHECK IN 6 giá trị | Huy hiệu rút được — trùng lặp giữa các lượt mở là hành vi CHỦ Ý (clarifications.md § "Trùng huy hiệu"), không dedupe |
+| openedAt | `string` (ISO timestamp) | NOT NULL, default `now()` | Thời điểm mở |
+
+**Relationships**:
+- `user_id` → `public.users.id` (FK thật, `ON DELETE CASCADE`) — không vẽ node `users` riêng trong ERD, cùng lý do đã nêu ở `KUDOS_KudosCard`.
+
+**Discriminator Fields**: None — `badgeKey` là kết quả rút ngẫu nhiên có trọng số (ALG-001, tổng 100:
+Stay Gold 30/Flow to Horizon 25/Touch of Light 20/Beyond the Boundary 10/Revival 10/Root Further 5),
+không phải nhánh hành vi.
+
+**Write-path note**: chỉ 1 writer — hàm `open_secret_box()` (`SECURITY DEFINER`, chạy với quyền owner
+để vượt `FORCE ROW LEVEL SECURITY`), tự resolve `auth.uid()`, khoá `pg_advisory_xact_lock` theo user để
+chặn race 2 lần mở đồng thời, raise `unauthenticated`/`no_boxes_left` thay vì trả sentinel row khi
+không đủ điều kiện.
+
+---
+
+### NOTIFICATIONS_Notification
+
+**Description**: Một dòng inbox thuộc về người nhận (F012_NotificationsPanel) — bảng `public.notifications`
+(migration `0012_notifications.sql`), cho 4 loại sự kiện (`kudos_received`, `heart_received`,
+`secret_box_available`, `kudos_hidden`). RLS + GRANT ở tầng cột là lớp thực thi, không phải application
+code. `secret_box_available` và `kudos_hidden` chưa có emitter (trigger) ở v1 — chỉ tồn tại qua insert
+thủ công/seed cho tới migration tương lai. Nguồn: `supabase/migrations/0012_notifications.sql`,
+`src/dal/notifications.ts` (`getUnreadCount`, `listNotifications`, `markRead`, `markAllRead`),
+`src/api/notifications.ts` (`subscribeToNotifications` — Realtime).
+
+| Attribute | Type (as consumed) | Constraints | Description |
+|-----------|------|-------------|-------------|
+| id | `string` (UUID) | PK, NOT NULL | `gen_random_uuid()` |
+| userId | `string` (UUID) | NOT NULL, FK → `public.users.id` `ON DELETE CASCADE` | NGƯỜI NHẬN — không phải actor gây ra thông báo; mọi predicate RLS trên bảng này đều `user_id = auth.uid()` |
+| type | `"kudos_received" \| "heart_received" \| "secret_box_available" \| "kudos_hidden"` | NOT NULL, CHECK IN 4 giá trị | Loại sự kiện |
+| payload | `Record<string, unknown>` | NOT NULL, `jsonb` ở DB, default `{}` | Hợp đồng theo từng `type` (technical-spec.md § 2); với kudos ẩn danh chỉ được mang `anonymous_name` của sender, KHÔNG BAO GIỜ `sender_id`/tên thật — biên giới ẩn danh (`spec/system/permissions.md`) |
+| isRead | `boolean` | NOT NULL, default `false` | CỘT DUY NHẤT `authenticated` được `GRANT UPDATE` (column-level) — sửa cột khác qua REST bị Postgres từ chối, không phải application code chặn |
+| createdAt | `string` (ISO timestamp) | NOT NULL, default `now()` | Cũng là 1 nửa cursor keyset của `listNotifications` (`(created_at, id)` DESC) |
+
+**Relationships**:
+- `user_id` → `public.users.id` (FK thật, `ON DELETE CASCADE`) — không vẽ node `users` riêng trong ERD, cùng lý do đã nêu ở `KUDOS_KudosCard`.
+
+**Discriminator Fields**:
+
+| Field | DISC-### | Values | Description |
+|-------|----------|--------|-------------|
+| type | DISC-003 | kudos_received, heart_received, secret_box_available, kudos_hidden | Quyết định hình dạng `payload` (technical-spec.md § 2); `secret_box_available`/`kudos_hidden` chưa có trigger emitter trong v1 |
+
+**Write-path note**: không ai — kể cả `authenticated` — có GRANT INSERT/DELETE trên bảng này; writer
+duy nhất là trigger `SECURITY DEFINER` (migration `0013`, cùng nguyên tắc `sync_kudo_heart_count`/
+`open_secret_box`). `markRead`/`markAllRead` fail CLOSED (`{ok:false}`/`{updated:0}`); `getUnreadCount`
+fail OPEN về `0`; `listNotifications` throw khi lỗi (khác 2 hàm kia — panel đã có empty/error UI
+riêng, không cần nuốt lỗi thành "0 items"). Dedupe `heart_received` (chặn thả tim rồi bỏ rồi thả lại
+tạo nhiều dòng) thực thi bằng UNIQUE index từng phần trên
+`(user_id, type, payload->>'kudosId', payload->>'actorId') WHERE type = 'heart_received'`, không phải
+`ON CONFLICT` ở application code.
+
+---
+
 ## Validation Rules
 
 ### AppLocale
 
 | Rule | Field | Constraint | Error Message |
 |------|-------|------------|---------------|
-| Locale whitelist | value | Phải thuộc `SUPPORTED_LOCALES` (`isSupportedLocale`, `lib/i18n/locale.ts:34-39`) | N/A — không throw lỗi; giá trị sai được `normalizeLocale` (`lib/i18n/locale.ts:49-51`) âm thầm thay bằng `DEFAULT_LOCALE` ("vi"), không có message hiển thị cho user |
+| Locale whitelist | value | Phải thuộc `SUPPORTED_LOCALES` (`isSupportedLocale`, `src/lib/i18n/locale.ts:34-39`) | N/A — không throw lỗi; giá trị sai được `normalizeLocale` (`src/lib/i18n/locale.ts:49-51`) âm thầm thay bằng `DEFAULT_LOCALE` ("vi"), không có message hiển thị cho user |
 
 ### SupabaseUser
 
@@ -321,15 +404,43 @@ hiển thị riêng.
 | Fail-open (đọc) | (toàn bộ set đã thả tim) | `getViewerHeartedKudoIds` fail-open trả `Set` rỗng khi Supabase lỗi/không có dòng | N/A — mọi nút tim hiện "chưa thả", không có message |
 | Fail-closed (ghi) | (toàn bộ thao tác thả/bỏ tim) | `toggleKudoHeart` fail-closed — bất kỳ lỗi nào (khác `unauthenticated`/`23505`) đều trả `{ok:false, reason:"error"}`, không ghi gì | Không có message cố định trong DAL — UI tự quyết định hiển thị gì cho `ok:false` |
 
+### SecretBoxOpening
+
+| Rule | Field | Constraint | Error Message |
+|------|-------|------------|----------------|
+| Badge whitelist | badgeKey | `CHECK (badge_key IN (6 giá trị))` ở DB (`0011_secret_box.sql`) | N/A — ràng buộc DB, giá trị luôn do hàm `open_secret_box()` tự sinh, app không bao giờ tự ghi |
+| Không GRANT INSERT trực tiếp | (toàn bộ hàng) | `authenticated` chỉ có `GRANT SELECT`; INSERT duy nhất qua RPC `SECURITY DEFINER` `open_secret_box()` | N/A — Postgres bác mọi INSERT trực tiếp không qua RPC |
+| Hết lượt mở | (toàn hàm RPC) | `open_secret_box()` raise `no_boxes_left` (`P0001`) khi `count(*) >= entitlement`, tính lại TRONG transaction đã khoá (`pg_advisory_xact_lock`) | Server Action `openSecretBoxAction` bắt lỗi này, không insert gì |
+| Chưa đăng nhập | (toàn hàm RPC) | `open_secret_box()` raise `unauthenticated` (`28000`) khi `auth.uid()` NULL | Server Action trả `{ok:false, reason:"unauthenticated"}` |
+
+### Notification
+
+| Rule | Field | Constraint | Error Message |
+|------|-------|------------|----------------|
+| Type whitelist | type | `CHECK (type IN (4 giá trị))` ở DB (`0012_notifications.sql`) | N/A — ràng buộc DB |
+| Chỉ đọc hàng của chính mình | user_id | RLS policy `notifications_select_own`: `USING (user_id = auth.uid())` — áp dụng cả cho Realtime | N/A — Postgres/Realtime lọc trước khi tới app |
+| Chỉ sửa `is_read` của chính mình | is_read | RLS policy `notifications_update_own_read` (row) + `GRANT UPDATE (is_read)` (cột) — 2 lớp: policy chỉ đảm bảo quyền sở hữu hàng, GRANT cột-hẹp mới chặn sửa `type`/`payload` | N/A — Postgres bác UPDATE cột khác qua REST |
+| Không GRANT INSERT/DELETE | (toàn bộ hàng) | Không role người dùng nào có 2 quyền này — writer duy nhất là trigger `SECURITY DEFINER` (migration `0013`) | N/A |
+| Dedupe `heart_received` | (user_id, type, payload->>kudosId, payload->>actorId) | `UNIQUE INDEX ... WHERE type = 'heart_received'` (`0012_notifications.sql`) — chặn thả/bỏ/thả lại tim tạo nhiều dòng | N/A — ràng buộc DB, không phải `ON CONFLICT` app code |
+| Fail-open (đếm) | (toàn bộ) | `getUnreadCount` fail-open trả `0` khi Supabase lỗi/count không phải số | N/A — badge ẩn khi lỗi, không crash header |
+| Fail-closed (mark read) | (toàn bộ) | `markRead`/`markAllRead` fail-closed `{ok:false}`/`{updated:0}` khi lỗi | N/A |
+
 ---
 
 ## Summary
 
-- **Total Entities**: 7 (4 shape đọc/ghi từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`, view `public.kudos_cards`, bảng `public.kudo_hearts`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
-- **Total Relationships**: 2 FK thật (`kudos.sender_id`/`kudos.receiver_id` → `public.users.id`, biểu diễn qua `KUDOS_KudosCard`; `kudo_hearts.kudo_id` → `kudos.id` VÀ `kudo_hearts.user_id` → `public.users.id`, biểu diễn qua `KUDOS_KudoHeart`) — 2 bảng ĐẦU TIÊN trong ERD này có FK ở tầng DB, chỉ 1 cạnh (`KUDOS_KudosCard ||--o{ KUDOS_KudoHeart`) được vẽ trong sơ đồ vì `public.users` không có node riêng trong ERD (xem ghi chú dưới sơ đồ); 5 shape còn lại vẫn 0 FK như trước
+- **Total Entities**: 9 (6 shape đọc/ghi từ Supabase bởi repo — bảng `public.awards`, view `public.profile_cards`, view `public.kudos_cards`, bảng `public.kudo_hearts`, bảng `public.secret_box_openings`, bảng `public.notifications`; 3 còn lại là in-memory/type-level shape, không bảng/view nào trong số đó được persist bởi repo này)
+- **Total Relationships**: 4 FK thật (`kudos.sender_id`/`kudos.receiver_id` → `public.users.id`, biểu diễn qua `KUDOS_KudosCard`; `kudo_hearts.kudo_id` → `kudos.id` VÀ `kudo_hearts.user_id` → `public.users.id`, biểu diễn qua `KUDOS_KudoHeart`; `secret_box_openings.user_id` → `public.users.id`, biểu diễn qua `SECRETBOX_SecretBoxOpening`; `notifications.user_id` → `public.users.id`, biểu diễn qua `NOTIFICATIONS_Notification`) — 4 bảng trong ERD này có FK ở tầng DB, chỉ 1 cạnh (`KUDOS_KudosCard ||--o{ KUDOS_KudoHeart`) được vẽ trong sơ đồ vì `public.users` không có node riêng trong ERD (xem ghi chú dưới sơ đồ); 5 shape còn lại vẫn 0 FK như trước
 - **F009_KudosCompose (2026-09-08)**: không thêm entity mới vào ERD — mở rộng `public.kudos` (2 cột
   ghi-only `is_anonymous`/`anonymous_name`, đọc/ghi qua `createKudo`) và thêm bucket Supabase Storage
   `kudo-images` (`0010_kudo_images_bucket.sql`) — bucket này không có DAL SELECT nào đọc lại
   (`upload`/`getPublicUrl`/`remove` only qua `upload-kudo-images.ts`), nên không đủ điều kiện thành
   một ERD node riêng theo tiêu chí "data shape thật sự tồn tại trong source" đã áp dụng ở đầu tài
   liệu; ghi chú đầy đủ ở mục `KUDOS_KudosCard` phía trên.
+- **F010_SecretBoxModal**: thêm `SECRETBOX_SecretBoxOpening`/`public.secret_box_openings` (migration
+  `0011_secret_box.sql`) — bảng thứ 8, append-only, writer duy nhất là RPC `SECURITY DEFINER`
+  `open_secret_box()`.
+- **F012_NotificationsPanel**: thêm `NOTIFICATIONS_Notification`/`public.notifications` (migration
+  `0012_notifications.sql`) — bảng thứ 9, writer duy nhất là trigger `SECURITY DEFINER` (migration
+  `0013`, ngoài phạm vi bảng này); cũng là bảng đầu tiên trong repo nằm trong publication
+  `supabase_realtime` (xem `docs/vi/generated/behavior-logic.md` § Realtime).

@@ -79,7 +79,7 @@
 - US001_SwitchLanguage: Switch Language
 
 **Related APIs/Routes**:
-- Không có ROUTE### — `setLocale(locale)` là Next.js Server Action (`app/actions/locale.ts`), không phải HTTP endpoint có path (xem `api-map.md` § Server Actions)
+- Không có ROUTE### — `setLocale(locale)` là Next.js Server Action (`src/app/_actions/set-locale.ts`), không phải HTTP endpoint có path (xem `api-map.md` § Server Actions)
 
 **Related Data Models**:
 - MODEL001_AppLocale
@@ -99,7 +99,7 @@
 
 **Workspace**: agentic-coding-hands-on
 **Languages**: TypeScript
-**Components**: `app/page.tsx` + `components/home/**` + `lib/countdown/countdown.ts` + `hooks/use-countdown.ts` + `lib/auth/get-user-role.ts` + `hooks/use-select-locale.ts`
+**Components**: `src/app/(public)/(home)/page.tsx` + `src/app/(public)/(home)/_components/**` + `src/utils/countdown.ts` + `src/app/(public)/_hooks/use-countdown.ts` + `src/dal/users.ts` (`getUserRole`) + `src/app/_hooks/use-select-locale.ts`
 
 **Related Screens**:
 - SCR003_HomeScreen: Trang chủ (Homepage)

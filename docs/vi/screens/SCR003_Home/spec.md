@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 authored_by: takumi
 created: 2026-09-06
 fcode: F003
@@ -58,13 +58,13 @@ luồng cuộn) (`data/preview.png`, 1512×4480).
 
 | Region ID | Name | Position | Scrollable | Key Components |
 |-----------|------|----------|------------|----------------|
-| R1 | Header | sticky-top | no | HomeHeader, LanguageSelector (F002), NotificationBell, AccountMenu |
+| R1 | Header | sticky-top | no | SiteHeader (đổi tên từ HomeHeader, nay dùng chung 4 screen), LanguageSelector (F002), NotificationBell, AccountMenu |
 | R2 | Hero + Đếm ngược | static | yes (cuộn theo trang) | CountdownTimer |
 | R3 | Thông tin sự kiện + CTA | static | yes | HeroCta |
 | R4 | Root Further content | static | yes | (thuần văn bản) |
 | R5 | Lưới giải thưởng | static | yes | AwardCard × 6 |
 | R6 | Sun* Kudos promo | static | yes | (thuần văn bản + ảnh) |
-| R7 | Footer | static | yes | HomeFooter |
+| R7 | Footer | static | yes | SiteFooter (đổi tên từ HomeFooter) |
 | R8 | Widget hành động nhanh | fixed bottom-right | no | WidgetButton |
 
 ## 3. UI Elements
@@ -100,10 +100,10 @@ collapse to one row" — 6 thẻ giống cấu trúc, chỉ khác nội dung (ti
 
 | Action | Element | Trigger | Condition | Result on this screen | Source |
 |--------|---------|---------|-----------|------------------------|--------|
-| Mở menu tài khoản | E08 | click / Enter / Space | đã đăng nhập | `[role="menu"]` mở | `components/home/account-menu.tsx` |
+| Mở menu tài khoản | E08 | click / Enter / Space | đã đăng nhập | `[role="menu"]` mở | `src/app/_components/account-menu.tsx` |
 | Mở panel thông báo | E07 | click | đã đăng nhập | `[role="dialog"]` mở, nạp trang đầu (10 mục mới nhất, keyset) lần mở đầu tiên — không còn cố định rỗng (F012_NotificationsPanel) | `src/app/_components/notification-bell.tsx` |
-| Mở menu widget | E19 | click / Enter / Space | luôn khả dụng | `[role="menu"]` 2 mục mở | `components/home/widget-button.tsx` |
-| Cuộn lên đầu | E01, E02 | click khi đang active | `pathname === href` | cuộn mượt lên đầu, không tải lại | `components/home/nav-link.tsx` |
+| Mở menu widget | E19 | click / Enter / Space | luôn khả dụng | `[role="menu"]` 2 mục mở | `src/app/(public)/(home)/_components/widget-button.tsx` |
+| Cuộn lên đầu | E01, E02 | click khi đang active | `pathname === href` | cuộn mượt lên đầu, không tải lại | `src/app/_components/nav-link.tsx` |
 
 ### Happy Path
 
@@ -115,8 +115,8 @@ collapse to one row" — 6 thẻ giống cấu trúc, chỉ khác nội dung (ti
 
 | Decision point | Condition | Outcome on this screen | Source |
 |----------------|-----------|------------------------|--------|
-| Click logo/nav "About SAA 2025" | đang active (`pathname === href`) | Cuộn lên đầu, không điều hướng lại | `components/home/nav-link.tsx` |
-| Mở menu tài khoản | `role === "admin"` | Thêm mục "Trang quản trị" | `components/home/account-menu.tsx` |
+| Click logo/nav "About SAA 2025" | đang active (`pathname === href`) | Cuộn lên đầu, không điều hướng lại | `src/app/_components/nav-link.tsx` |
+| Mở menu tài khoản | `role === "admin"` | Thêm mục "Trang quản trị" | `src/app/_components/account-menu.tsx` |
 
 ## 5. UI States
 
@@ -124,8 +124,8 @@ collapse to one row" — 6 thẻ giống cấu trúc, chỉ khác nội dung (ti
 |-------|---------|----------------|-----------------------|--------|
 | empty (bell panel) | click bell, 0 thông báo (thật sự — không còn cố định trước F012) | "Bạn chưa có thông báo" | đóng panel | `src/app/_components/notifications/notification-panel.tsx` |
 | loaded (bell panel) | click bell, ≥1 thông báo | Danh sách item (icon + message + thời gian tương đối + chấm đỏ nếu chưa đọc), nút "Xem thêm" nếu còn trang sau (F012_NotificationsPanel) | đánh dấu đã đọc 1 mục / tất cả; "Xem thêm" nối trang kế | `src/app/_components/notifications/notification-panel.tsx` |
-| error (đọc role) | Supabase lỗi/không có row | fail-open `role: "member"`, không hiển thị lỗi cho user | — | `lib/auth/get-current-user-role.ts` |
-| success (đếm ngược về 0) | `nowMs >= targetMs` | 3 ô giữ `00/00/00`, ẩn "Coming soon" | — | `hooks/use-countdown.ts` |
+| error (đọc role) | Supabase lỗi/không có row | fail-open `role: "member"`, không hiển thị lỗi cho user | — | `src/dal/users.ts` (`getUserRole`) |
+| success (đếm ngược về 0) | `nowMs >= targetMs` | 3 ô giữ `00/00/00`, ẩn "Coming soon" | — | `src/app/(public)/_hooks/use-countdown.ts` |
 
 N/A phần loading/saving — Server Component không có async fetch phía client cho nội dung chính;
 không có hành động nào ghi dữ liệu trên màn hình này.
@@ -149,20 +149,25 @@ N/A — không có form nhập liệu nào trên màn hình này (thuần hiển
 | From | Trigger there | Condition | Source |
 |------|----------------|-----------|--------|
 | external — bất kỳ URL nào | truy cập trực tiếp `/` | không có điều kiện (public) | — |
-| `/login` (F001) | đăng nhập thành công / đã có session | mặc định landing sau đăng nhập | `app/login/login-client.tsx` (F001, planned edit) |
+| `/login` (F001) | đăng nhập thành công / đã có session | mặc định landing sau đăng nhập | `src/app/(public)/login/_components/login-client.tsx` |
 
 ### Exits
 
+**Cập nhật (claim gốc lỗi thời):** `/awards` (F004), `/kudos` (F007), `/standards` (F005), `/profile`
+(F006) đều là route sống ngày nay — chỉ còn `/admin` là chưa tồn tại (route không có trong
+`src/app/**` / `src/constants/routes.ts`; mục menu "Trang quản trị" vẫn render `href="/admin"` cho
+`role="admin"` nên 404 thật khi bấm, xem `docs/vi/system/permissions.md`).
+
 | Action | Element | Condition | Destination | Result | Source |
 |--------|---------|-----------|-------------|--------|--------|
-| Click "Award Information" | E03 | — | external (`/awards`, chưa implement) | redirect | `components/home/home-header.tsx` |
-| Click "Sun* Kudos" | E04 | — | external (`/kudos`, chưa implement) | redirect | `components/home/home-header.tsx` |
-| Click thẻ giải thưởng | E16 | — | external (`/awards#<slug>`, chưa implement) | redirect | `components/home/award-card.tsx` |
-| Click "Chi tiết" (Kudos) | E17 | — | external (`/kudos`, chưa implement) | redirect | |
-| Click "Tiêu chuẩn chung" (footer) | E18 | — | external (`/standards`, chưa implement) | redirect | `components/home/home-footer.tsx` |
-| Chọn "Hồ sơ" | (con của E08) | đã đăng nhập | external (`/profile`, chưa implement) | redirect | |
-| Chọn "Trang quản trị" | (con của E08) | `role === "admin"` | external (`/admin`, chưa implement) | redirect | |
-| Chọn "Đăng xuất" | (con của E08) | đã đăng nhập | `/login` | redirect (submit `logoutAction`, đã có) | `app/todo/actions.ts` (đã có, tái dùng) |
+| Click "Award Information" | E03 | — | `/awards` | redirect | `src/app/_components/site-header.tsx` |
+| Click "Sun* Kudos" | E04 | — | `/kudos` | redirect | `src/app/_components/site-header.tsx` |
+| Click thẻ giải thưởng | E16 | — | `/awards#<slug>` | redirect | `src/app/(public)/(home)/_components/award-card.tsx` |
+| Click "Chi tiết" (Kudos) | E17 | — | `/kudos` | redirect | |
+| Click "Tiêu chuẩn chung" (footer) | E18 | — | `/standards` | redirect | `src/app/_components/site-footer.tsx` |
+| Chọn "Hồ sơ" | (con của E08) | đã đăng nhập | `/profile` | redirect | |
+| Chọn "Trang quản trị" | (con của E08) | `role === "admin"` | external (`/admin`, KHÔNG tồn tại — 404, xem ghi chú trên) | redirect | `src/app/_components/account-menu.tsx:90-100` |
+| Chọn "Đăng xuất" | (con của E08) | đã đăng nhập | `/login` | redirect (submit `logoutAction`, đã có) | `src/app/_actions/logout.ts` (đã có, tái dùng) |
 | Click "Đăng nhập" (khách) | E06 | Anonymous | `/login` | redirect | |
 
 ## 9. Accessibility

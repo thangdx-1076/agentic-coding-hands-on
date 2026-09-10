@@ -28,7 +28,7 @@ cá nhân hoá theo actor, không có chrome nào (header/bell/account) đọc t
 chính màn hình này (khác SCR003/SCR004).
 **Entry Conditions:** Không có điều kiện nào — public, không guard.
 **Exit Conditions:** Người dùng rời trang qua "Đóng" (quay lại trang trước, hoặc `/` nếu không có
-lịch sử) hoặc "Viết KUDOS" (điều hướng `/kudos`, hiện 404); ở lại trang cuộn đọc cũng là trạng
+lịch sử) hoặc "Viết KUDOS" (điều hướng `/kudos`); ở lại trang cuộn đọc cũng là trạng
 thái hợp lệ.
 
 ## 2. Screen Layout
@@ -80,7 +80,7 @@ Cap 25 nhưng E03 (4 tier) và E05 (6 badge) gộp mỗi nhóm thành 1 dòng th
 |--------|---------|---------|-----------|------------------------|--------|
 | Cuộn panel | R1 | scroll | Nội dung dài hơn khung | Panel cuộn mượt, không ảnh hưởng phần còn lại của viewport | `_components/standards-screen.tsx` |
 | Click "Đóng" | E08 | click | luôn khả dụng | Có lịch sử điều hướng → quay lại trang trước; không có → điều hướng `/` | `_hooks/use-standards-close.ts` |
-| Click "Viết KUDOS" | E09 | click | luôn khả dụng | Điều hướng `/kudos` (chưa implement, hiện 404) | `_components/standards-screen.tsx` |
+| Click "Viết KUDOS" | E09 | click | luôn khả dụng | Điều hướng `/kudos` | `_components/standards-screen.tsx` |
 
 ### Happy Path
 
@@ -88,7 +88,7 @@ Cap 25 nhưng E03 (4 tier) và E05 (6 badge) gộp mỗi nhóm thành 1 dòng th
    nào), thấy ngay panel "Thể lệ" với đủ 3 section, không cần đăng nhập.
 2. Khách cuộn panel để đọc hết nội dung (nếu dài hơn khung).
 3. Khách click "Đóng" (quay lại trang trước, hoặc `/` nếu không có lịch sử) hoặc "Viết KUDOS"
-   (dẫn `/kudos`, hiện 404 cho tới khi trang đó được xây ở phiên khác).
+   (dẫn `/kudos`).
 
 ### Branches
 
@@ -143,7 +143,7 @@ suy diễn thêm breakpoint cụ thể ở spec draft này.
 | From | Trigger there | Condition | Source |
 |------|----------------|-----------|--------|
 | external — bất kỳ URL nào | truy cập trực tiếp `/standards` | không có điều kiện (public) | — |
-| Bất kỳ trang nào có `SiteFooter` (`/`, `/awards`, ...) | click link "Tiêu chuẩn chung" ở footer | không có điều kiện | `src/app/(public)/_components/site-footer.tsx:74` |
+| Bất kỳ trang nào có `SiteFooter` (`/`, `/awards`, ...) | click link "Tiêu chuẩn chung" ở footer | không có điều kiện | `src/app/_components/site-footer.tsx:74` |
 
 ### Exits
 
@@ -151,4 +151,4 @@ suy diễn thêm breakpoint cụ thể ở spec draft này.
 |--------|---------|-----------|-------------|--------|--------|
 | Click "Đóng" (có lịch sử) | E08 | `window.navigation?.canGoBack === true` | trang trước đó (bất kỳ) | `router.back()` | `_hooks/use-standards-close.ts` |
 | Click "Đóng" (không có lịch sử) | E08 | `window.navigation?.canGoBack` là `false`/`undefined` | `/` (`ROUTES.HOME`) | `router.push` | `_hooks/use-standards-close.ts` |
-| Click "Viết KUDOS" | E09 | — | external (`/kudos`, chưa implement) | 404 | `_components/standards-screen.tsx` |
+| Click "Viết KUDOS" | E09 | — | `/kudos` (F007_KudosLiveBoard) | điều hướng | `_components/standards-screen.tsx` |

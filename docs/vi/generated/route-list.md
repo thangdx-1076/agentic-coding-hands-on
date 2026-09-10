@@ -16,23 +16,23 @@
 
 Chỉ có đúng một backend route trong toàn bộ codebase: `app/auth/callback/route.ts`, xử lý bước redirect PKCE callback của Supabase OAuth. `Owner F###` = `F001` (F001_GoogleOAuthLogin claims route này — xem `feature-list.md` § F001 Related APIs/Routes).
 
-### File: app/auth/callback/route.ts
+### File: src/app/auth/callback/route.ts
 
 | Method | Path | Code | Owner F### | Handler | Middleware |
 |--------|------|------|------------|---------|------------|
-| GET | /auth/callback | ROUTE001 | F001 | `GET(request)` — nhận redirect PKCE từ Supabase, đọc `?code`/`?error`/`?error_description`/`?next`; có `code` thì gọi `exchangeCodeForSession(code)` rồi redirect tới `safeNextPath(next)` (mặc định `/`, đổi từ `/todo` — F003_Homepage); có `error` thì redirect `/login?error=...`; không có gì hợp lệ thì redirect `/login?error=auth_code_error` | none — loại trừ tường minh khỏi matcher của `proxy.ts` (route tự xử lý redirect riêng, xem `proxy.ts` dòng 112-114) |
+| GET | /auth/callback | ROUTE001 | F001 | `GET(request)` — nhận redirect PKCE từ Supabase, đọc `?code`/`?error`/`?error_description`/`?next`; có `code` thì gọi `exchangeCodeForSession(code)` rồi redirect tới `safeNextPath(next)` (mặc định `/`, đổi từ `/todo` — F003_Homepage); có `error` thì redirect `/login?error=...`; không có gì hợp lệ thì redirect `/login?error=auth_code_error` | none — loại trừ tường minh khỏi matcher của `proxy.ts` (route tự xử lý redirect riêng, xem `src/proxy.ts` dòng 187-189, `config.matcher`) |
 
 ## Frontend Routes/Pages
 
 Chín route frontend: tám route dựng từ `page.tsx` theo quy ước App Router, cộng route `/_not-found` do framework Next.js tự cấp phát mặc định (không có file `not-found.tsx` tùy biến nào trong `app/`).
 
-### File: app/page.tsx
+### File: src/app/(public)/(home)/page.tsx
 
 | Path | Component | Route Name |
 |------|-----------|------------|
 | / | HomePage | home (F003_Homepage) |
 
-Route `/` render SCR003_HomeScreen — trang chủ công khai (hero + đếm ngược, thông tin sự kiện, 6 thẻ giải thưởng, Sun* Kudos, header/footer). **Đổi từ 2026-09-06**: trước đây route này chỉ là fallback redirect thuần (`redirect(user ? "/todo" : "/login")`); nay `app/page.tsx` tự đọc session + role (`getUserRole`, fail-open `member`) và ủy quyền tương tác cho `app/home-client.tsx` (client boundary), KHÔNG redirect ai — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác phần cá nhân hoá header (xem `docs/vi/generated/permissions-matrix.md § PERM001_RootRouteGuard`, nay superseded).
+Route `/` render SCR003_HomeScreen — trang chủ công khai (hero + đếm ngược, thông tin sự kiện, 6 thẻ giải thưởng, Sun* Kudos, header/footer). **Đổi từ 2026-09-06**: trước đây route này chỉ là fallback redirect thuần (`redirect(user ? "/todo" : "/login")`); nay `src/app/(public)/(home)/page.tsx` tự đọc session + role qua `getViewer()` (`src/app/_utils/get-viewer.ts` — bọc `getCurrentUser`+`getUserRole`, fail-open `member`) và ủy quyền tương tác cho `src/app/(public)/(home)/_components/home-client.tsx` (client boundary), KHÔNG redirect ai — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác phần cá nhân hoá header (xem `docs/vi/generated/permissions-matrix.md § PERM001_RootRouteGuard`, nay superseded).
 
 ### File: src/app/(public)/awards/page.tsx
 
@@ -74,15 +74,15 @@ Dùng lại nguyên vẹn `SiteHeader`/`SiteFooter` (khác `/standards`, giống
 
 Route `/kudos` render SCR007_KudosLiveBoard — bảng Kudos trực tiếp công khai (banner, ô soạn Kudo, bộ lọc hashtag/phòng ban, carousel Highlight, feed ALL KUDOS phân trang keyset, Spotlight, sidebar thống kê cá nhân), dùng lại `SiteHeader`/`SiteFooter` chung với `/`, `/awards`, `/profile`. PUBLIC by design (clarifications.md § Route & điều hướng, BR-015) — anonymous và authenticated đều nhận `200` với cùng bố cục, chỉ khác `viewerId`/sidebar cá nhân (ẩn hoàn toàn khi ẩn danh) và trạng thái nút tim (xem `permissions-matrix.md`). Đọc `?hashtag=`/`?department=` để lọc Highlight+Feed (Spotlight và danh sách bộ lọc luôn tính trên toàn bộ dữ liệu, không theo filter đang chọn). Bốn Server Action riêng, không phải route: `toggleKudoHeart` (F008, fail-closed, có `revalidatePath`), `loadMoreKudos` (F007, fail-open, CỐ Ý không `revalidatePath`), `createKudo` (F009, fail-closed, có `revalidatePath` khi ghi thành công), `searchSunners` (F009, đọc, fail-open `[]`) — xem `api-map.md`. Mới từ 2026-09-07 (F007_KudosLiveBoard + F008_KudosHeartReaction) — trước đó 5 điểm vào hardcode `href="/kudos"` (`SiteHeader` nav, `SiteFooter`, `KudosSection` nút "Chi tiết", `WidgetButton` trên `/`, nút "Viết KUDOS" trên `/standards`) đều trỏ route chưa tồn tại (404); không cái nào trong 5 điểm này cần sửa code để hết 404. Từ 2026-09-08 (F009_KudosCompose): trang có thêm dialog SCR008_KudosCompose, mở từ pill "Viết Kudo" (đã có sẵn UI từ F007 nhưng cố tình vô hiệu tới lượt này) — vẫn CÙNG route `/kudos`, không route/URL mới; đây là đường INSERT đầu tiên vào `public.kudos` và lần đầu repo dùng Supabase Storage (bucket `kudo-images`, migration `0010_kudo_images_bucket.sql`).
 
-### File: app/login/page.tsx
+### File: src/app/(public)/login/page.tsx
 
 | Path | Component | Route Name |
 |------|-----------|------------|
 | /login | LoginPage | login |
 
-Guard AUTHORITATIVE ở đây bọc try/catch và fail OPEN (lỗi Supabase không chặn người dùng vào trang login) — khác với `/todo` fail CLOSED. Render ủy quyền phần tương tác (OAuth kickoff, đổi ngôn ngữ) cho boundary client `app/login/login-client.tsx` (đã gắn nhãn `screen-embedded` trong scout-report, không phải route riêng).
+Guard AUTHORITATIVE ở đây bọc try/catch và fail OPEN (lỗi Supabase không chặn người dùng vào trang login) — khác với `/todo` fail CLOSED. Render ủy quyền phần tương tác (OAuth kickoff, đổi ngôn ngữ) cho boundary client `src/app/(public)/login/_components/login-client.tsx` (đã gắn nhãn `screen-embedded` trong scout-report, không phải route riêng).
 
-### File: app/todo/page.tsx
+### File: src/app/(protected)/todo/page.tsx
 
 | Path | Component | Route Name |
 |------|-----------|------------|

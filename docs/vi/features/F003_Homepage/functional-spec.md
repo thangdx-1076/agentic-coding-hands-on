@@ -248,8 +248,8 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
-| RISK-01 | risk | 5 trang đích (`/awards`, `/kudos`, `/standards`, `/profile`, `/admin`) chưa được implement khi feature này lên production | Link 404 cho tới khi các screen đó được xây; TC ID-59 (broken links) sẽ fail cho tới lúc đó | confirmed |
-| RISK-02 | risk | Bảng notifications chưa tồn tại trong Supabase `saa-app` — chưa có migration nào tạo bảng này tại `supabase/migrations/` | Panel thông báo luôn rỗng vĩnh viễn cho tới khi có schema — không phải bug, nhưng người dùng không bao giờ thấy thông báo thật | confirmed |
+| RISK-01 | risk | `/admin` không có route thật — `account-menu.tsx` render `href="/admin"` cho `role='admin'` nhưng `ROUTES` không có `ADMIN`; 4 trang đích còn lại (`/awards`, `/kudos`, `/standards`, `/profile`) đã implement từ các feature riêng | Link "Trang quản trị" 404 cho admin; TC ID-59 (broken links) chỉ còn áp dụng cho `/admin` | confirmed (`/admin` only) |
+| RISK-02 | risk | Bảng `notifications` đã có từ F012_NotificationsPanel (migration `0012_notifications.sql`, `0013_notification_emitters.sql`) | Panel thông báo không còn rỗng vĩnh viễn — `NotificationBell`/`useNotifications` đọc dữ liệu thật | resolved |
 
 ## 12. Dependencies
 
@@ -259,7 +259,7 @@ chỉ thấy Hồ sơ/Đăng xuất (fail-open coi như thành viên thường),
 | F002_LanguageSwitch | feature | Tái dùng nguyên trạng `LanguageSelector` trong header, không re-spec | FR-208 |
 | Supabase `saa-app` (`public.users.role`) | external-service | Nguồn dữ liệu vai trò member/admin, đọc phía server | FR-003, FR-601 |
 | `EVENT_START_AT` (biến môi trường) | config | Mốc thời gian sự kiện quyết định trạng thái đếm ngược | FR-202 |
-| 5 trang đích chưa implement (`/awards`, `/kudos`, `/standards`, `/profile`, `/admin`) | feature | Mọi link điều hướng của trang chủ trỏ tới các trang này — sẽ 404 cho tới khi được xây ở feature riêng | RISK-01 |
+| `/admin` (route không tồn tại) | feature | Nút "Trang quản trị" của `account-menu.tsx` trỏ tới route này cho `role='admin'` — không có trang, không có `ROUTES.ADMIN` | RISK-01 |
 
 ## 13. Configuration
 

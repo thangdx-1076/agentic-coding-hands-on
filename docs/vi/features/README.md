@@ -10,5 +10,12 @@ Mọi tính năng trong sản phẩm. Mở một cái và đọc trọn vẹn qu
 - [F003_Homepage](F003_Homepage/)
 - [F004_AwardSystemPage](F004_AwardSystemPage/)
 - [F005_StandardsRulesPage](F005_StandardsRulesPage/)
+- [F006_ProfilePage](F006_ProfilePage/)
+- [F007_KudosLiveBoard](F007_KudosLiveBoard/)
+- [F008_KudosHeartReaction](F008_KudosHeartReaction/)
+- [F009_KudosCompose](F009_KudosCompose/)
+- [F010_SecretBoxModal](F010_SecretBoxModal/)
+- [F011_CountdownPrelaunchPage](F011_CountdownPrelaunchPage/)
+- [F012_NotificationsPanel](F012_NotificationsPanel/)
 
 <!-- end-generated -->

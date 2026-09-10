@@ -93,8 +93,8 @@ nút, disabled scope, bản dịch EN). Liệt kê lại đây để dễ tra c�
 - **FR-202** Hover đổi màu/độ nổi (elevation) cho cả 2 nút. *(TC GUI_004)*
 - **FR-203** Click "Đóng" → `router.back()`; khi không có lịch sử điều hướng để quay lại
   (direct-load hoặc mở tab mới) → fallback điều hướng `ROUTES.HOME`. *(TC FUN_003)*
-- **FR-204** Click "Viết KUDOS" → điều hướng `href="/kudos"` — route đích chưa tồn tại, chấp
-  nhận 404 cho tới khi trang đó được xây (cùng pattern `KudosSection` F003/F004). *(TC FUN_004)*
+- **FR-204** Click "Viết KUDOS" → điều hướng `href="/kudos"` (F007_KudosLiveBoard, đã implement).
+  *(TC FUN_004)*
 
 ### Scroll (3xx)
 
@@ -119,7 +119,7 @@ nút, disabled scope, bản dịch EN). Liệt kê lại đây để dễ tra c�
 
 | Screen Name | SCR### | What User Sees | What User Can Do |
 |-------------|--------|-----------------|-------------------|
-| Thể lệ SAA 2025 | SCR005_Standards | Panel "Thể lệ" phải màn hình trên nền tối `#00101A`: tiêu đề, 3 section nội dung (Hero badge, Secret Box 6-icon, Kudos Quốc dân), footer 2 nút | Cuộn panel khi nội dung dài; Đóng (quay lại); mở form Viết KUDOS (`/kudos`, hiện 404) |
+| Thể lệ SAA 2025 | SCR005_Standards | Panel "Thể lệ" phải màn hình trên nền tối `#00101A`: tiêu đề, 3 section nội dung (Hero badge, Secret Box 6-icon, Kudos Quốc dân), footer 2 nút | Cuộn panel khi nội dung dài; Đóng (quay lại); mở trang Viết KUDOS (`/kudos`) |
 
 ### User Journey
 
@@ -127,7 +127,7 @@ nút, disabled scope, bản dịch EN). Liệt kê lại đây để dễ tra c�
    nào), thấy panel "Thể lệ" hiện đầy đủ, không cần đăng nhập.
 2. Khách cuộn panel để đọc hết 3 section (nếu nội dung dài hơn khung).
 3. Khách click "Đóng" — quay lại trang trước đó (hoặc `/` nếu không có lịch sử) — hoặc click
-   "Viết KUDOS" — điều hướng `/kudos` (hiện 404 cho tới khi trang đó được xây ở phiên khác).
+   "Viết KUDOS" — điều hướng `/kudos`.
 
 ## 7. User Stories
 
@@ -192,14 +192,14 @@ khác đã có trên site.
 ### US003_NavigateToWriteKudos — Happy Path
 
 **Given** đang ở `/standards`, **When** click "Viết KUDOS", **Then** trình duyệt điều hướng tới
-`/kudos` (hiện 404 cho tới khi route đó được xây).
+`/kudos`.
 
 ## 9. Edge Cases
 
 | Scenario | What Happens | User-Facing Message |
 |----------|--------------|----------------------|
 | Click "Đóng" không có lịch sử điều hướng | Fallback điều hướng `ROUTES.HOME` | — (điều hướng im lặng, không thông báo) |
-| Click "Viết KUDOS" | Điều hướng `/kudos` — route chưa tồn tại | "Not found" (trang lỗi mặc định Next.js) |
+| Click "Viết KUDOS" | Điều hướng `/kudos` — route đã tồn tại (F007_KudosLiveBoard) | Mở `/kudos` bình thường |
 | Nội dung Thể lệ vừa khít khung (không tràn) | Panel không phát sinh scrollbar | — |
 | 2 nút footer ở trạng thái `disabled` | **Không xảy ra trên trang này** — không điều kiện nào kích hoạt state đó (TC GUI_003/FUN_005 out-of-scope, xem § 3 D001) | N/A |
 
@@ -216,7 +216,7 @@ khác đã có trên site.
 
 | ID | Type | Description | Impact | Status |
 |----|------|--------------|--------|--------|
-| RISK-01 | risk | `/kudos` chưa được implement | Nút "Viết KUDOS" 404 cho tới khi trang đó được xây; TC FUN_004 chỉ assert điều hướng, không assert trang đích | confirmed (cùng RISK-01 của F004) |
+| RISK-01 | risk | `/kudos` (F007_KudosLiveBoard) đã implement từ phiên khác | Nút "Viết KUDOS" không còn 404; TC FUN_004 chỉ assert điều hướng, không assert nội dung trang đích | resolved (route), cùng RISK-01 của F004 |
 | RISK-02 | risk | Bản dịch EN từ MoMorph `is_reviewed: false` (máy dịch, chưa người duyệt) | Nội dung EN có thể sai/lệch văn phong cho tới khi có người review | pending sign-off |
 | DEBT-01 | debt | TC_THELE_GUI_003 + TC_THELE_FUN_005 (disabled state) không implement | Nếu sau này có điều kiện thật làm nút disabled (vd yêu cầu đăng nhập để Viết KUDOS), 2 TC này cần mở lại | accepted (YAGNI) |
 
@@ -225,8 +225,8 @@ khác đã có trên site.
 | Dependency | Type | Why this feature needs it | Evidence |
 |------------|------|-----------------------------|----------|
 | `src/constants/routes.ts` (`ROUTES.HOME`) | shared module | Đích fallback của nút "Đóng" khi không có lịch sử | technical-spec.md § 4 |
-| `site-footer.tsx:74` | consumer | Link "Tiêu chuẩn chung" hiện có đã trỏ `/standards` — feature này lấp route, không sửa footer | `src/app/(public)/_components/site-footer.tsx` |
-| `/kudos` (chưa implement) | feature | Đích của nút "Viết KUDOS" | RISK-01 |
+| `site-footer.tsx:74` | consumer | Link "Tiêu chuẩn chung" hiện có đã trỏ `/standards` — feature này lấp route, không sửa footer | `src/app/_components/site-footer.tsx` |
+| `/kudos` (F007_KudosLiveBoard, đã implement) | feature | Đích của nút "Viết KUDOS" | RISK-01 |
 | `public/home/Pen.svg` | asset | Icon bút của nút "Viết KUDOS" — tái dùng, không thêm bản trùng | clarifications.md § Assets |
 
 ## 13. Configuration

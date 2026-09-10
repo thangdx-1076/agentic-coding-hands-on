@@ -1,4 +1,5 @@
 ---
+status: implemented
 authored_by: rebuild-spec
 ---
 <!-- Contract: references/feature-spec-researcher-contract.md -->

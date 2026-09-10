@@ -31,7 +31,7 @@ segment, và đổi tên phản ánh phạm vi mới: `header.tsx` (`HomeHeader`
 (`SiteHeader`); `home-footer.tsx` (`HomeFooter`) → `site-footer.tsx` (`SiteFooter`);
 `kudos-section.tsx` (`KudosSection`, không đổi tên). Cùng lý do, hàm đọc session+role
 `getViewer()` (trước đây cục bộ trong `(home)/page.tsx`) được hoisted lên
-`src/app/(public)/_utils/get-viewer.ts`, dùng chung bởi cả `(home)` và `awards`. `AwardCard`/
+`src/app/_utils/get-viewer.ts`, dùng chung bởi cả `(home)` và `awards`. `AwardCard`/
 lưới giải trên `/` KHÔNG đổi vị trí — vẫn ở `(home)/_components/award-card.tsx`, chỉ đổi
 import sang map asset dùng chung `(public)/_shared/award-name-graphics.ts` (`AWARD_NAME_GRAPHIC`,
 2 consumer: `award-card.tsx` và `awards/_components/award-section.tsx`). Chi tiết đầy đủ:
@@ -114,8 +114,8 @@ graph TB
         StandardsScreen["src/app/(public)/standards/_components/standards-screen.tsx"]
         RoleHelper["src/dal/users.ts (getUserRole)"]
         RoleShim["src/dal/users-role-client.ts"]
-        CountdownLib["src/app/(public)/(home)/_utils/countdown.ts"]
-        CountdownHook["src/app/(public)/(home)/_hooks/use-countdown.ts"]
+        CountdownLib["src/utils/countdown.ts"]
+        CountdownHook["src/app/(public)/_hooks/use-countdown.ts"]
         LocaleHook["src/app/_hooks/use-select-locale.ts (promoted lên gốc)"]
         LoginPage["src/app/(public)/login/page.tsx — self-check qua src/dal/auth.ts"]
         LoginClient["src/app/(public)/login/_components/login-client.tsx"]
@@ -180,11 +180,19 @@ graph TB
 ```
 
 Hai lớp guard tách biệt, cơ chế không đổi, chỉ đổi file:
-- `src/proxy.ts` — guard optimistic (matcher `/`, `/login`, `/todo/:path*`, `/awards`,
-  `/standards`, `/profile`; loại trừ `/auth/callback`). Predicate `isAuthPage`/`isProtectedPage`
-  đọc từ mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]` (mở rộng từ F006_ProfilePage,
-  trước đó chỉ so khớp `ROUTES.TODO` đơn lẻ), đọc cookie qua `getUserOrNull` — chỉ redirect,
-  không phải nguồn sự thật (comment trong `src/proxy.ts` trỏ thẳng vào layout dưới đây).
+- `src/proxy.ts` — guard optimistic. `config.matcher` (`src/proxy.ts:187-189`) KHÔNG còn whitelist
+  6-route literal (`/`, `/login`, `/todo/:path*`, `/awards`, `/standards`, `/profile`) — kể từ
+  F011_CountdownPrelaunchPage đã đổi sang một negative lookahead khớp mọi path trừ `api`, `auth`,
+  `_next/static`, `_next/image`, `favicon.ico`, và file tĩnh:
+  `matcher: ["/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"]` (pattern theo
+  `node_modules/next/dist/docs/.../proxy.md` § Matcher, khuyến nghị cho "khớp mọi thứ trừ một danh
+  sách loại trừ ngắn"). Route mới lộ ra do matcher rộng hơn (vd. `/kudos`) đi qua nhánh khoá
+  prelaunch trước (§ CountdownPrelaunchPage bên dưới), trả `{ kind: "pass" }` với ZERO I/O khi
+  không áp dụng — không hồi quy chi phí Supabase cho route chưa từng có. Predicate
+  `isAuthPage`/`isProtectedPage` đọc từ mảng `PROTECTED_ROUTES = [ROUTES.TODO, ROUTES.PROFILE]`
+  (mở rộng từ F006_ProfilePage, trước đó chỉ so khớp `ROUTES.TODO` đơn lẻ), đọc cookie qua
+  `getUserOrNull` — chỉ redirect, không phải nguồn sự thật (comment trong `src/proxy.ts` trỏ thẳng
+  vào layout dưới đây).
 - `src/app/(protected)/layout.tsx` (`src/app/(protected)/layout.tsx:19-29`) — guard
   authoritative DUY NHẤT cho mọi route trong nhóm `(protected)` (`/todo` VÀ `/profile`, mở rộng
   từ F006_ProfilePage — không có gate thứ 2 nào viết riêng cho `/profile`): gọi
@@ -328,7 +336,7 @@ nguyên: `src/app/(public)/login/_hooks/use-login-actions.ts:43-58` (`handleLogi
 `/login?error=...` không lộ raw error (`src/app/auth/callback/route.ts:24-29,40-43`).
 
 Locale action (`src/app/_actions/set-locale.ts`) và role/countdown flow (`src/dal/users.ts`,
-`src/app/(public)/(home)/_hooks/use-countdown.ts` + `_utils/countdown.ts`) giữ nguyên cơ chế,
+`src/app/(public)/_hooks/use-countdown.ts` + `src/utils/countdown.ts`) giữ nguyên cơ chế,
 chỉ đổi path — `use-select-locale.ts` (Homepage) và `use-login-actions.ts` (`/login`) gọi
 CÙNG Server Action nhưng qua hai hook riêng, không chia sẻ transition.
 
@@ -733,17 +741,10 @@ kiện không có đường nào vào được luồng đăng nhập/khu vực b
 (`proxy.ts` optimistic + `(protected)/layout.tsx` authoritative) không hề bị tắt hay yếu đi, chúng
 chỉ đơn giản không bao giờ được nhánh khoá nhường đường tới trong lúc khoá còn bật.
 
-**(b) Cú pháp matcher "tất cả trừ..." đã xác nhận, cộng một sửa lỗi phát sinh khi implement.**
-`config.matcher` đổi từ whitelist 6-route literal sang một negative lookahead:
-```
-matcher: ["/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"]
-```
-— pattern do `node_modules/next/dist/docs/.../proxy.md` § Matcher khuyến nghị cho "khớp mọi thứ
-trừ một danh sách loại trừ ngắn". Route mới lộ ra do matcher rộng hơn (vd. `/kudos`) được nhánh
-khoá trả `{ kind: "pass" }` với ZERO I/O trước khi `getUserOrNull` từng chạy — không hồi quy chi
-phí Supabase cho route chưa từng có. Sửa phát sinh khi implement: redirect của nhánh khoá dùng
-**303**, không phải 307 mặc định của `NextResponse.redirect` — 307 giữ nguyên method nên một
-Server Action POST bị khoá sẽ re-POST sang `/prelaunch` (không có action đó) và nhận 404
+**(b) Một sửa lỗi phát sinh khi implement.** (Cú pháp matcher "tất cả trừ..." đã merge vào mục
+"Hai lớp guard tách biệt" ở đầu file — không lặp lại ở đây.) Redirect của nhánh khoá dùng **303**,
+không phải 307 mặc định của `NextResponse.redirect` — 307 giữ nguyên method nên một Server Action
+POST bị khoá sẽ re-POST sang `/prelaunch` (không có action đó) và nhận 404
 `x-nextjs-action-not-found` thay vì màn đếm ngược (đo được lúc implement, không phải suy đoán).
 303 chỉ áp cho request không phải GET/HEAD; GET/HEAD vẫn nhận redirect mặc định của
 `NextResponse.redirect`.

@@ -100,11 +100,11 @@
       "F004",
       "F005"
     ],
-    "src/app/(public)/_components/site-footer.tsx": [
+    "src/app/_components/site-footer.tsx": [
       "F004",
       "F005"
     ],
-    "src/app/(public)/_components/icons/icon-pencil.tsx": [
+    "src/app/_components/icons/icon-pencil.tsx": [
       "F003",
       "F005"
     ],

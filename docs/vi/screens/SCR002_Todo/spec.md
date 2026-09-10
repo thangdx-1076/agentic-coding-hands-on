@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 authored_by: takumi
 created: 2026-09-04
 lang: vi
@@ -18,14 +18,17 @@ fcode: F001
 
 **Purpose:** Trang placeholder được bảo vệ, hiển thị ngay sau khi đăng nhập Google thành công; cho khách xem email của mình và đăng xuất. Không có tính năng todo thật.
 **Actors:** Người dùng đã xác thực (bất kỳ tài khoản Google nào)
-**Entry Conditions:** Đã đăng nhập thành công — xác thực lại bằng `getUser()` phía server (authoritative), không chỉ dựa vào guard optimistic.
+**Entry Conditions:** Đã đăng nhập thành công — gate authoritative nay tập trung tại
+`src/app/(protected)/layout.tsx` (dùng chung cho `/todo` VÀ `/profile`, F006_ProfilePage gia nhập
+đúng cơ chế này), không còn nằm riêng trong `page.tsx` của từng route; guard optimistic ở
+`src/proxy.ts` vẫn chạy trước như lớp phòng thủ đầu tiên.
 **Exit Conditions:** Bấm "Đăng xuất" → phiên bị xoá, quay lại `/login`.
 
 ## 2. Screen Layout
 
 ### Layout Sketch
 
-Một vùng nội dung duy nhất, căn giữa: tiêu đề `<h1>` chứa email người dùng, bên dưới là nút "Đăng xuất". Không có header/footer riêng của màn này (TBD (draft) — file:line chưa có, code chưa viết).
+Một vùng nội dung duy nhất, căn giữa: tiêu đề `<h1>` chứa email người dùng, bên dưới là nút "Đăng xuất". Không có header/footer riêng của màn này (`src/app/(protected)/todo/_components/todo-screen.tsx:16-34`).
 
 ```
 ┌─ R1: Nội dung chính ────────────────────┐
@@ -43,8 +46,8 @@ Một vùng nội dung duy nhất, căn giữa: tiêu đề `<h1>` chứa email 
 
 | ID | Element | Type | Required | Default | Visibility | Action | Source | Format | Empty Behavior | Cross-ref |
 |----|---------|------|----------|---------|------------|--------|--------|--------|-----------------|-----------|
-| E01 | Tiêu đề chào (`<h1>`, chứa email người dùng) | display field | — | — | Always | — | API field (session user) | raw | — | Supabase Auth user.email — MODEL### TBD (draft) |
-| E02 | Nút "Đăng xuất" | button | — | Enabled | Always | Đăng xuất người dùng (Server Action), chuyển hướng `/login` | — | — | — | binding: `logoutAction` (planned) |
+| E01 | Tiêu đề chào (`<h1>`, chứa email người dùng) | display field | — | — | Always | — | API field (session user) | raw | — | Supabase Auth user.email — MODEL002_SupabaseUser |
+| E02 | Nút "Đăng xuất" | button | — | Enabled | Always | Đăng xuất người dùng (Server Action), chuyển hướng `/login` | — | — | — | binding: `logoutAction` (`src/app/_actions/logout.ts`) |
 
 ## 4. User Actions
 
@@ -52,7 +55,7 @@ Một vùng nội dung duy nhất, căn giữa: tiêu đề `<h1>` chứa email 
 
 | Action | Element | Trigger | Condition | Result on this screen | Source |
 |--------|---------|---------|-----------|------------------------|--------|
-| Đăng xuất | E02 | click | — | Gọi Server Action đăng xuất, xoá session, chuyển hướng `/login` | TBD (draft) |
+| Đăng xuất | E02 | click | — | Gọi Server Action đăng xuất, xoá session, chuyển hướng `/login` | `src/app/_actions/logout.ts:15-25` |
 
 ### Happy Path
 
@@ -67,8 +70,8 @@ N/A — single-action screen, no branches.
 
 | State | Trigger | Visual Behavior | User Action Available | Source |
 |-------|---------|----------------|-----------------------|--------|
-| submitting | Bấm "Đăng xuất" | Server Action xử lý; trang điều hướng ngay khi xong | none | TBD (draft) |
-| redirect (thành công) | Đăng xuất thành công | Chuyển hướng về `/login` | none | TBD (draft) |
+| submitting | Bấm "Đăng xuất" | Server Action xử lý; trang điều hướng ngay khi xong | none | `src/app/_actions/logout.ts:15-22` |
+| redirect (thành công) | Đăng xuất thành công | Chuyển hướng về `/login` | none | `src/app/_actions/logout.ts:24` |
 
 ## 6. Validation & Feedback
 
@@ -84,14 +87,13 @@ N/A — no conditional UI detected.
 
 | From | Trigger there | Condition | Source |
 |------|----------------|-----------|--------|
-| SCR001_Login | Đăng nhập Google thành công (qua `/auth/callback`) | có session hợp lệ | TBD (draft) |
-| `/` (root) | Guard `proxy.ts` chuyển hướng khi truy cập `/` | đã đăng nhập | TBD (draft) |
+| SCR001_Login | Đăng nhập Google thành công (qua `/auth/callback`) | có session hợp lệ | `src/app/auth/callback/route.ts:31-39` |
 
 ### Exits
 
 | Action | Element | Condition | Destination | Result | Source |
 |--------|---------|-----------|-------------|--------|--------|
-| Bấm "Đăng xuất" | E02 | — | SCR001_Login | redirect | TBD (draft) |
+| Bấm "Đăng xuất" | E02 | — | SCR001_Login | redirect | `src/app/_actions/logout.ts:24` |
 
 ## 9. Accessibility
 

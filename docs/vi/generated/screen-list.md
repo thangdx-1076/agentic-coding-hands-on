@@ -2,7 +2,7 @@
 
 **Project**: agentic-coding-hands-on
 **Generated**: 2026-09-05
-**Analysis Scope**: route-view (Next.js 16 App Router) — 2 screens (`/login`, `/todo`) + SCR003-SCR005 bổ sung ở các wave sau (`/`, `/awards`, `/standards`)
+**Analysis Scope**: route-view (Next.js 16 App Router) — 9 screens, SCR001-SCR009 (`/login`, `/todo`, `/`, `/awards`, `/standards`, `/profile`, `/kudos` ×2, `/prelaunch`)
 
 **Code Format**: All codes MUST follow `SCR###_NameSlug` format (e.g., SCR001_LoginForm, SCR002_Dashboard) | `SCR###/REG###` for region-scoped references within a composite screen
 
@@ -38,16 +38,16 @@
 
 ### Description
 
-Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của app khi chưa xác thực. Hiển thị key visual + copy Figma (`vi` mặc định, `en` qua next-intl), cho phép đổi ngôn ngữ và đăng nhập bằng Google (Supabase OAuth). Guard AUTHORITATIVE (`getAuthenticatedUser()`, `app/login/page.tsx:73-83`) fail OPEN — lỗi Supabase không chặn người dùng vào trang này, khác hẳn `/todo`. Nếu đã có session hợp lệ, redirect ngay sang `/` trước khi render (đổi từ `/todo`, xem SCR003_HomeScreen).
+Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của app khi chưa xác thực. Hiển thị key visual + copy Figma (`vi` mặc định, `en` qua next-intl), cho phép đổi ngôn ngữ và đăng nhập bằng Google (Supabase OAuth). Guard AUTHORITATIVE (`getCurrentUser()`, `src/app/(public)/login/page.tsx:34-37`) fail OPEN — lỗi Supabase không chặn người dùng vào trang này, khác hẳn `/todo`. Nếu đã có session hợp lệ, redirect ngay sang `/` trước khi render (đổi từ `/todo`, xem SCR003_HomeScreen).
 
-**Composite classification (H-rules, `composite-screen-detection.md`)**: atomic. H1 (feature refs) fail — chưa có F### nào tồn tại ở wave này. H2 (domain-module imports) fail — không import nào khớp `features/*`/`modules/*`/`domains/*` (chỉ có `@/lib/supabase/*`, `@/lib/i18n/*`, `@/components/login/*`, đều bị loại theo bảng include/exclude JS/TS). H3 (semantic region wrappers) fail — chỉ có 1 `<section>` (LoginHero); `<header>`/`<footer>` không nằm trong danh sách đếm của H3 (chỉ `section`/`article`/`aside`/`role="region"`), dưới ngưỡng 3. 2-of-3 gate: 0/3 → atomic, không có REG###.
+**Composite classification (H-rules, `composite-screen-detection.md`)**: atomic. H1 (feature refs) fail — chưa có F### nào tồn tại ở wave này. H2 (domain-module imports) fail — không import nào khớp `features/*`/`modules/*`/`domains/*` (chỉ có `@/dal/*`, `@/lib/i18n/*`, `@/constants/*`, cộng import tương đối `_components/`/`_shared/` cùng thư mục, đều bị loại theo bảng include/exclude JS/TS). H3 (semantic region wrappers) fail — chỉ có 1 `<section>` (LoginHero); `<header>`/`<footer>` không nằm trong danh sách đếm của H3 (chỉ `section`/`article`/`aside`/`role="region"`), dưới ngưỡng 3. 2-of-3 gate: 0/3 → atomic, không có REG###.
 
 ### Components
 
 | Component | Type | Purpose |
 |-----------|------|---------|
-| LoginClient (`app/login/login-client.tsx`) | client-boundary | Nối props với `useLoginActions` (`hooks/use-login-actions.ts`) — hook giữ state pending/lỗi, gọi `signInWithGoogle` (`lib/auth/sign-in-with-google.ts`) và Server Action `setLocale` |
-| LoginScreen (`components/login/login-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: background, header, hero, footer |
+| LoginClient (`src/app/(public)/login/_components/login-client.tsx`) | client-boundary | Nối props với `useLoginActions` (`src/app/(public)/login/_hooks/use-login-actions.ts`) — hook giữ state pending/lỗi, gọi `signInWithGoogle` (`src/api/auth.ts`) và Server Action `setLocale` |
+| LoginScreen (`src/app/(public)/login/_components/login-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: background, header, hero, footer |
 | LoginBackground | decorative | Ảnh key visual + 2 lớp gradient phủ, `aria-hidden` |
 | LoginHeader | header | Logo tĩnh + LanguageSelector, sticky top |
 | LanguageSelector | interactive (dropdown) | Menu chọn ngôn ngữ vi/en theo mẫu ARIA menu-button, gọi `onSelectLocale` |
@@ -78,7 +78,7 @@ Màn hình đăng nhập công khai (`/login`) — cổng vào duy nhất của 
 
 ### Description
 
-Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng todo thật (`app/todo/page.tsx:6-16`), tồn tại để chứng minh auth guard end-to-end. Guard AUTHORITATIVE gọi `getUser()` mỗi request, fail CLOSED: không có user → redirect `/login` ngay. Nội dung chỉ gồm lời chào theo email và nút đăng xuất.
+Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng todo thật (`src/app/(protected)/todo/page.tsx`), tồn tại để chứng minh auth guard end-to-end. Guard AUTHORITATIVE nay nằm ở `src/app/(protected)/layout.tsx` (gọi `getCurrentUser()`, dùng chung `/profile`), fail CLOSED: không có user → redirect `/login` ngay trước khi page con render. Nội dung chỉ gồm lời chào theo email và nút đăng xuất.
 
 **Composite classification**: atomic — không có tín hiệu H nào (không tab, không wizard, không import domain module, không có ≥3 wrapper ngữ nghĩa; chỉ 1 `<main>` chứa heading + form). Raw-div fallback không áp dụng vì đây không phải cấu trúc div thuần, nhưng kết quả vẫn atomic.
 
@@ -87,7 +87,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 | Component | Type | Purpose |
 |-----------|------|---------|
 | Greeting heading | text | Chào user bằng email: `t("greeting", { email: user.email ?? "" })` |
-| Logout form/button | interactive (form submit) | Submit Server Action `logoutAction` (`app/todo/actions.ts`) — gọi `supabase.auth.signOut()` rồi luôn redirect `/login` |
+| Logout form/button | interactive (form submit) | Submit Server Action `logoutAction` (`src/app/_actions/logout.ts` — shared, dùng chung bởi todo/profile/home/awards/kudos, không riêng todo) — gọi `supabase.auth.signOut()` rồi luôn redirect `/login` |
 
 ### Data Displayed
 
@@ -109,19 +109,19 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 
 **Feature:** F003 — Trang chủ SAA 2025 (Homepage)
 **Route:** /
-**Description:** Trang chủ công khai SAA 2025 (public, không guard) — hero ROOT FURTHER + đồng hồ đếm ngược (`EVENT_START_AT`), thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ hạng mục giải thưởng, khối Sun* Kudos, widget hành động nhanh, header (nav + ngôn ngữ + bell + menu tài khoản theo role) và footer. `app/page.tsx` (Server Component) đọc session + role (`getUserRole`, fail-open `member`) rồi ủy quyền toàn bộ tương tác cho `app/home-client.tsx` (client boundary) — `HomeScreen`'s function props không thể băng qua render của Server Component.
+**Description:** Trang chủ công khai SAA 2025 (public, không guard) — hero ROOT FURTHER + đồng hồ đếm ngược (`EVENT_START_AT`), thông tin sự kiện, CTA, nội dung Root Further, 6 thẻ hạng mục giải thưởng, khối Sun* Kudos, widget hành động nhanh, header (nav + ngôn ngữ + bell + menu tài khoản theo role) và footer. `src/app/(public)/(home)/page.tsx` (Server Component) đọc session + role qua `getViewer()` (`src/app/_utils/get-viewer.ts` — bọc `getCurrentUser`+`getUserRole`, fail-open `member`) rồi ủy quyền toàn bộ tương tác cho `src/app/(public)/(home)/_components/home-client.tsx` (client boundary) — `HomeScreen`'s function props không thể băng qua render của Server Component.
 **States:** anonymous, member, admin, countdown-running, event-reached (Coming soon ẩn), env-invalid (00 00 00), menu-open
 
 ### Components
 
 | Component | Type | Purpose |
 |-----------|------|---------|
-| HomeClient (`app/home-client.tsx`) | client-boundary | Nối props với `useSelectLocale` (`hooks/use-select-locale.ts`), dựng slot `CountdownTimer` xung quanh `HomeScreen` |
-| HomeScreen (`components/home/home-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: keyvisual nền, header, `<main>` (hero/CTA/Root Further/awards/kudos), footer, widget nổi |
+| HomeClient (`src/app/(public)/(home)/_components/home-client.tsx`) | client-boundary | Nối props với `useSelectLocale` (`src/app/_hooks/use-select-locale.ts`), dựng slot `CountdownTimer` xung quanh `HomeScreen` |
+| HomeScreen (`src/app/(public)/(home)/_components/home-screen.tsx`) | layout (root) | Ghép bố cục toàn màn hình: keyvisual nền, header, `<main>` (hero/CTA/Root Further/awards/kudos), footer, widget nổi |
 | KeyvisualBackground | decorative | Ảnh nền hero full-bleed, `aria-hidden` |
-| Header (`components/home/header.tsx`) | header | Logo, nav 3 link, LanguageSelector (F002, tái dùng), bell + menu tài khoản (đã đăng nhập) hoặc link đăng nhập (ẩn danh); sticky top |
+| SiteHeader (`src/app/_components/site-header.tsx`) | header | Logo, nav 3 link, LanguageSelector (F002, tái dùng), bell + menu tài khoản (đã đăng nhập) hoặc link đăng nhập (ẩn danh); sticky top — component dùng chung với SCR004/SCR006/SCR007, không phải "Header" riêng của trang chủ |
 | HeroSection | section | Heading "ROOT FURTHER" + slot đếm ngược + thông tin sự kiện |
-| CountdownTimer (`components/home/countdown-timer.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống |
+| CountdownTimer (`src/app/(public)/(home)/_components/countdown-timer.tsx`) | interactive (client, tick 1s) | Bọc `useCountdown` (`src/app/(public)/_hooks/use-countdown.ts`), render `CountdownTiles` — seed từ `targetIso`/`initialNowMs` server truyền xuống |
 | CtaButtons | interactive (link group) | "ABOUT AWARDS" → `/awards`, "ABOUT KUDOS" → `/kudos` |
 | RootFurtherContent | section | Đoạn nội dung Root Further (nhiều paragraph) |
 | AwardsSection (+ AwardCard × 6) | card grid | 6 thẻ hạng mục giải thưởng, mỗi thẻ link `/awards#<slug>` |
@@ -133,7 +133,7 @@ Màn hình placeholder được bảo vệ (`/todo`) — chưa có tính năng t
 
 ### Data Displayed
 
-- Data Entity 1: MODEL002_SupabaseUser (email, mở rộng `role` đọc qua `public.users` — `lib/auth/get-user-role.ts`, fail-open `member`)
+- Data Entity 1: MODEL002_SupabaseUser (email, mở rộng `role` đọc qua `public.users` — `src/dal/users.ts`, fail-open `member`)
 - Data Entity 2: MODEL001_AppLocale (locale hiện tại quyết định nhãn "VN"/"EN" và bản dịch `home.*`)
 
 ### Routes/URLs
