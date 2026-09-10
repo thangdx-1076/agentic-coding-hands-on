@@ -38,19 +38,32 @@ test.describe("Awards page chrome (CI-safe)", () => {
     await expect(caption).toHaveCSS("font-weight", "400");
   });
 
-  test("[TC ID-2] Clicking the header nav link reaches /awards", async ({
-    page,
-  }) => {
-    // href-based locator, not label text: the header nav label is owned by
-    // phase 07 and may not be merged yet (phase 09 § Key Insights).
-    await page.goto("/");
-    await page.locator('header a[href="/awards"]').click();
+  // `@local-db` even though the rest of this describe is CI-safe: clicking a
+  // header link is a client-side RSC navigation, and `/awards` is a Server
+  // Component that reads Supabase. With Supabase unreachable the RSC fetch
+  // fails, Next ABORTS the navigation, and the URL simply stays at `/` — the
+  // assertion below then times out. Measured 2026-09-10 in CI and reproduced
+  // locally with `CI=1 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:59999`.
+  // Note this is NOT the same path the outage test at the bottom of this file
+  // covers: a full `page.goto("/awards")` still degrades gracefully and is
+  // asserted there. Only client-side navigation needs the database.
+  test(
+    "[TC ID-2] Clicking the header nav link reaches /awards",
+    {
+      tag: "@local-db",
+    },
+    async ({ page }) => {
+      // href-based locator, not label text: the header nav label is owned by
+      // phase 07 and may not be merged yet (phase 09 § Key Insights).
+      await page.goto("/");
+      await page.locator('header a[href="/awards"]').click();
 
-    await expect(page).toHaveURL(/\/awards/);
-    await expect(page.locator("h1")).toContainText(
-      "Hệ thống giải thưởng SAA 2025",
-    );
-  });
+      await expect(page).toHaveURL(/\/awards/);
+      await expect(page.locator("h1")).toContainText(
+        "Hệ thống giải thưởng SAA 2025",
+      );
+    },
+  );
 
   test("[TC ID-8] Kudos block renders heading and /kudos link", async ({
     page,
