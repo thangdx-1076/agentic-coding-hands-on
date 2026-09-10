@@ -1756,3 +1756,22 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 
 - Migration `0017` (index) **được viết SAU khi reviewer chạy xong**, vì nó thực thi đúng finding Low #2 của chính reviewer. Nghĩa là verdict `SEALED` chưa soi `0017`. Nội dung là một `CREATE INDEX`, không đụng policy/grant/cột nào — nhưng nói ra cho đúng bản ghi
 - PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/27 (`fix/screen-audit-spec-test-gaps` → `main`, 10 commit)
+
+## 260911-0033 — next-image-google-avatar-host
+
+### Tôi cần làm
+
+- [ ] **Quyết: có chặn `avatar_url` rác ở tầng DB hay không** — `supabase/migrations/0001_users_table.sql:59` cấp `UPDATE (avatar_url)` cho `authenticated` trên row của chính mình, nên một Sunner PATCH thẳng qua PostgREST là đặt được string bất kỳ, không qua app code. Lúc đó người XEM row đó ăn đúng cái throw `Invalid src prop` vừa fix (fix này chỉ đóng nguồn Google hợp lệ, không đóng được đường ghi trực tiếp). Hai hướng: `CHECK` constraint trên cột, hoặc `error.tsx` bao route. Không tự làm vì cái đầu là siết contract DB, cái sau là quyết định UX cho trang lỗi — cả hai vượt phạm vi một bug fix. Reviewer xếp Medium, không chặn.
+
+### Decisions
+
+- Tách logic image config ra `src/configs/image-remote-patterns.ts` thay vì thêm host thẳng vào `next.config.ts` — `next.config.ts` chỉ Next load, vitest không import assert được, nên bug này trước đó không có gì canh. Tách ra là điều kiện để có regression test. Đổi lại: sinh thêm 1 thư mục layer mới (`src/configs/`), đã có trong allowlist coverage nên vẫn bị gate 100% soi
+- `pathname` bó `/a/**` + `/a-/**` chứ không `**` trần — chặn Photos/Drive thumbnail của cùng host `lh3.googleusercontent.com` khỏi đi qua image optimizer. `search` để trống có chủ ý: suffix size (`=s96-c`) nằm trong PATH, pin `search: ""` là tự mở lại đúng cái crash này khi Google thêm query param
+- Đổi 2 story fixture từ `i.pravatar.cc` sang asset local trong `public/` — `profile-hero` giờ render qua `next/image`, host placeholder bên thứ ba sẽ bị chặn. Không thêm host của story vào allowlist production
+- Nhánh `fix/runtime-bug-sweep`, mọc từ `HEAD` hiện tại — PR #27 đã merge và `origin/main..HEAD` = 0 commit, nên HEAD trùng main, không cần rebase/fetch. Tên đặt kiểu "sweep" vì bạn nói còn fix tiếp nhiều bug trên cùng nhánh này
+- Bỏ workaround `<img>` + `eslint-disable` ở `profile-hero.tsx` (nợ từ phase-05) thay vì để nguyên — cùng một bug, giờ nguyên nhân đã hết thì workaround không còn lý do tồn tại
+
+### Nợ lại
+
+- Sửa kèm một bug có sẵn mà test mới bắt được: `new URL("http://[::1]:55321").hostname` trả `"[::1]"` KÈM ngoặc, nên nhánh `::1` trong `isLoopbackOrPrivateHostname` chưa từng chạy đúng — `dangerouslyAllowLocalIP` sẽ sai nếu ai đó trỏ Supabase local qua IPv6 literal. Không ai gặp vì local hiện dùng `127.0.0.1`
+- Comment trong code lúc đầu viết "list is complete for the data the database can actually hold" — sai, reviewer bắt đúng. Đã sửa lại thành nói rõ giới hạn (xem mục "Tôi cần làm")

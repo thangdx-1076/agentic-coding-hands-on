@@ -1,0 +1,39 @@
+{
+  "commands": [
+    {
+      "command": "pnpm run typecheck",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "tsc --noEmit → exit 0 :: > agentic-coding-hands-on@0.10.0 typecheck /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on | > tsc --noEmit",
+      "ts": "2026-09-10T17:34:02.836Z"
+    },
+    {
+      "command": "pnpm lint --max-warnings 0",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "eslint at CI strictness → exit 0 :: > agentic-coding-hands-on@0.10.0 lint /Users/dang.xuan.thang/Desktop/learnings/mock-project/agentic-coding-hands-on | > eslint --max-warnings 0",
+      "ts": "2026-09-10T17:34:04.806Z"
+    },
+    {
+      "command": "pnpm run format:check",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "prettier --check → exit 0 ::  | Checking formatting... | All matched files use Prettier code style!",
+      "ts": "2026-09-10T17:34:16.429Z"
+    },
+    {
+      "command": "pnpm run test:unit:coverage",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "full unit suite + 100% coverage gate → exit 0 ::  utils/url         |     100 |      100 |     100 |     100 |                    |   next-path.ts     |     100 |      100 |     100 |     100 |                    | -------------------|---------|----------|---------|---",
+      "ts": "2026-09-10T17:34:18.463Z"
+    },
+    {
+      "command": "pnpm run build",
+      "exitCode": 0,
+      "status": "pass",
+      "summary": "production build → exit 0 :: ƒ Proxy (Middleware) |  | ƒ  (Dynamic)  server-rendered on demand",
+      "ts": "2026-09-10T17:34:31.154Z"
+    }
+  ]
+}
