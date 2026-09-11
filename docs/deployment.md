@@ -266,19 +266,30 @@ một người, đừng làm vậy khi nhiều người đẩy code.
 Token nằm ở **tài khoản**, không nằm trong project — nên đường đi không qua
 project settings:
 
-1. Mở [vercel.com/account/settings/tokens](https://vercel.com/account/settings/tokens)
-   (hoặc: avatar góc phải → **Settings** → **Tokens**). Kể cả khi project thuộc
-   team, trang này vẫn là trang cá nhân của bạn.
+1. Mở [vercel.com/account/tokens](https://vercel.com/account/tokens). Trang này
+   thuộc **personal account** kể cả khi project nằm trong team — ở thanh chọn
+   scope góc trái trên cùng của dashboard phải đang xem tài khoản cá nhân, không
+   phải team, mới vào được.
 2. **Create Token**, điền ba ô:
    - **Token Name** — đặt tên nói rõ nơi dùng, ví dụ `github-actions-cd-saa`.
      Tên là thứ duy nhất phân biệt token sau này; `token1` thì ba tháng nữa
      không ai dám thu hồi vì không biết nó đang chạy ở đâu.
-   - **Scope** — chọn **đúng team sở hữu project SAA**, không phải tài khoản cá
-     nhân (trừ khi project nằm thẳng trong tài khoản cá nhân của bạn). Đây là chỗ
-     sai hay gặp nhất: token lệch scope vẫn hợp lệ, vẫn `vercel pull` được, nhưng
-     Vercel không thấy project ⇒ job `deploy` đỏ ngay step **Pull Vercel
-     environment** với lỗi kiểu "Project not found". Scope phải khớp với
-     `VERCEL_ORG_ID` ở mục dưới.
+   - **Scope** — dropdown có ba mức, chọn **hẹp nhất đủ dùng**: bấm vào **team
+     sở hữu project SAA** để nó xổ ra danh sách project, rồi **chọn đúng project
+     SAA**. Token project-scoped chỉ đụng được một project đó, và đủ cho toàn bộ
+     `vercel pull` / `build` / `deploy` của `cd.yml`.
+
+     Chọn **All Projects** thì thành team-scoped (rộng hơn, vẫn chạy). Chọn
+     **Full Account** là trao quyền trên tài khoản cá nhân lẫn mọi team bạn tham
+     gia — đừng dùng cho CI.
+
+     Scope phải khớp với `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` ở § 5.4. Lệch là
+     token vẫn hợp lệ nhưng Vercel từ chối ⇒ job `deploy` đỏ ở step **Pull Vercel
+     environment** với `Could not retrieve Project Settings` — đọc như lỗi cấu
+     hình workflow, thực ra là lỗi scope.
+
+     Một số team bắt buộc bật 2FA hoặc SAML mới cho tạo token scope vào team đó;
+     dashboard sẽ báo ngay lúc bạn chọn.
    - **Expiration** — chọn theo chính sách của bạn. Cân nhắc thật: token hết hạn
      thì `cd.yml` đỏ ở đúng step trên, và vì CD chỉ chạy khi có commit vào `main`,
      bạn sẽ phát hiện đúng lúc đang cần deploy gấp. Chọn hạn dài cho tiện thì phải
@@ -288,11 +299,31 @@ project settings:
 4. Nạp vào GitHub bằng lệnh ở 5.2 (`gh secret set VERCEL_TOKEN --env production`),
    hoặc dán qua UI. Đừng để nó nằm lại trong Notes/Slack/clipboard manager.
 
-**Token này không bị giới hạn theo project.** Nó cho toàn quyền API trên mọi thứ
-trong scope đã chọn — mọi project của team đó, không riêng SAA. Nên đối xử với nó
-như mật khẩu team: một token cho một mục đích, và **Revoke** ngay ở chính trang
-trên khi nghi ngờ lộ hoặc khi người tạo rời dự án. Thu hồi không làm hỏng
-deployment đang chạy, chỉ khiến lần deploy sau đỏ cho tới khi thay token mới.
+Một token cho một mục đích, và **Revoke** ngay ở chính trang trên khi nghi ngờ lộ
+hoặc khi người tạo rời dự án. Thu hồi không làm hỏng deployment đang chạy, chỉ
+khiến lần deploy sau đỏ cho tới khi thay token mới.
+
+#### Kiểm token vừa tạo — **đừng dùng `vercel whoami`**
+
+`whoami` đọc user-level resource, mà token scope Project hoặc Team bị từ chối mọi
+request tới tài nguyên mức đó. Nó trả `Error: User not found` **kể cả khi token
+hoàn toàn đúng** — dùng nó làm phép thử là tự dẫn mình đi sai hướng (đã dính
+2026-09-11). `whoami` chỉ có nghĩa với token Full Account.
+
+Phép thử thật là chạy đúng lệnh CI chạy:
+
+```bash
+rm -r .vercel 2>/dev/null
+VERCEL_ORG_ID="<org id>" VERCEL_PROJECT_ID="<project id>" \
+  vercel pull --yes --environment=production --token="<token>"
+```
+
+- Chạy được ⇒ token và cặp ID khớp nhau, nạp secret rồi re-run CD.
+- `Could not retrieve Project Settings` ⇒ hoặc scope token, hoặc cặp ID. Lấy ID
+  thật bằng `vercel link` ở § 5.4 rồi so lại.
+
+Token nằm trong lệnh ⇒ nó vào shell history. `history -d` dòng đó, hoặc gõ lệnh
+với một dấu cách ở đầu nếu shell của bạn bật `HIST_IGNORE_SPACE`.
 
 ### 5.4 — Lấy `VERCEL_ORG_ID` và `VERCEL_PROJECT_ID`
 

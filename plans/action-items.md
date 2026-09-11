@@ -1984,3 +1984,22 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Chưa có Supabase project cho Preview. Đây là thứ chặn việc bật lại preview, không phải bản thân cấu hình Vercel.
+
+## 260911-1740 — token scope và cái test sai
+
+### Tôi cần làm
+
+- [ ] **Thu hồi token đã dán ra plain text** tại https://vercel.com/account/tokens (prefix `vcp_6SVa…`). Nó nằm trong transcript hội thoại — coi như đã lộ, không phụ thuộc vào việc nó có dùng được hay không.
+- [ ] Tạo token mới **scope vào đúng project SAA** (không phải Full Account), rồi `gh secret set VERCEL_TOKEN --env production`.
+- [ ] Kiểm bằng `vercel pull` chứ không phải `vercel whoami`; nếu vẫn đỏ thì so `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` với `.vercel/project.json`.
+- [ ] Dọn shell history dòng có chứa token.
+
+### Decisions
+
+- **`vercel whoami` là phép thử SAI cho token có scope hẹp.** Vercel có 3 mức scope (Full Account / Team / Project); token Project- hoặc Team-scoped bị từ chối mọi request tới user-level resource, mà `whoami` đúng là loại đó — nó trả `User not found` kể cả khi token đúng hoàn toàn. Tôi đã đưa nhầm lệnh này làm test và nó dẫn chẩn đoán đi sai hướng. Runbook § 5.3 giờ ghi rõ, kèm phép thử đúng (`vercel pull` với đúng cặp ID).
+- **Đổi khuyến nghị scope từ Team sang Project.** Trước ghi "chọn đúng team"; tài liệu Vercel cho scope xuống tận một project, và đó là mức hẹp nhất đủ cho `pull`/`build`/`deploy` của `cd.yml`. Câu cũ "token không giới hạn theo project, toàn quyền API" là sai — đã xoá.
+- Sửa URL trang token: `vercel.com/account/tokens` (bản cũ ghi `/account/settings/tokens`).
+
+### Nợ lại
+
+- Chưa xác định được `deploy` đỏ vì scope token hay vì cặp ID sai — phải chờ kết quả `vercel pull` ở máy bạn.
