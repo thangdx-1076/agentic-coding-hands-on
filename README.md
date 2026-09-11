@@ -200,12 +200,17 @@ secrets, and the manual acceptance checklist — is in [`docs/deployment.md`](do
 
 `.github/workflows/cd.yml` is a **separate** workflow from CI and only ever targets `main`. It is
 triggered by `workflow_run` on CI's completion, not by `push`: a `push` trigger would start
-deploying in parallel with the tests meant to gate it. Two jobs, in this order:
+deploying in parallel with the tests meant to gate it. Three jobs, in this order:
 
-1. **`migrate`** — `supabase db push` against the production project. Gated behind the
+1. **`plan`** — `supabase db push --dry-run`, writing the pending migration list to the run
+   summary. It carries no GitHub Environment on purpose: required reviewers gate a whole job
+   before its first step, so a dry-run inside `migrate` would only print _after_ the approval.
+   That also forces the three `SUPABASE_*` secrets to be repository secrets rather than
+   environment ones — the cost of showing the plan before the gate.
+2. **`migrate`** — `supabase db push` against the production project. Gated behind the
    `production-db` GitHub Environment with a required reviewer, because a schema change has no
-   undo. A `--dry-run` step prints the pending migration list _before_ the approval prompt.
-2. **`deploy`** — `vercel build --prod` then `vercel deploy --prebuilt --prod`, so the artifact that
+   undo.
+3. **`deploy`** — `vercel build --prod` then `vercel deploy --prebuilt --prod`, so the artifact that
    goes live is the exact tree CI gated, followed by a `curl` liveness check on `/`.
 
 Vercel's own Git integration must stay **disabled** for this repo (`Ignored Build Step` →

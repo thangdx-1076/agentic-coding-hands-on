@@ -164,18 +164,78 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
 
 ## Bước 5 — Nạp secret và Environment cho GitHub Actions
 
-### Secrets
+Thứ tự bắt buộc: **tạo Environment trước, nạp secret sau**. Secret phải gắn vào
+một Environment đã tồn tại; làm ngược lại thì không có chỗ để chọn.
 
-**Repo → Settings → Secrets and variables → Actions → New repository secret**:
+### 5.1 — Tạo hai Environment
 
-| Secret                   | Lấy ở đâu                                                                   |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `VERCEL_TOKEN`           | Vercel → Account Settings → Tokens → Create                                  |
-| `VERCEL_ORG_ID`          | Vercel → Team/Account Settings → **Team ID**                                |
-| `VERCEL_PROJECT_ID`      | Vercel → Project Settings → General → **Project ID**                        |
-| `SUPABASE_ACCESS_TOKEN`  | Supabase → Account → Access Tokens → Generate                               |
-| `SUPABASE_PROJECT_REF`   | project ref ở Bước 1                                                        |
-| `SUPABASE_DB_PASSWORD`   | database password đặt ở Bước 1                                              |
+**Repo → Settings → Environments → New environment**:
+
+| Environment     | Job dùng nó | Protection rule                     |
+| --------------- | ----------- | ----------------------------------- |
+| `production-db` | `migrate`   | **Required reviewers** → thêm bạn   |
+| `production`    | `deploy`    | không cần                           |
+
+Tên phải khớp **chính xác** (phân biệt hoa thường) với `environment:` trong
+`cd.yml` — [`production-db`](../.github/workflows/cd.yml) ở job `migrate`,
+`production` ở job `deploy`. Gõ sai tên thì GitHub **tự tạo một Environment mới
+rỗng** mang tên trong workflow thay vì báo lỗi, job chạy thẳng không qua luật nào,
+và secret bạn vừa nạp vào cái tên gõ sai sẽ không bao giờ được đọc tới.
+
+Vì sao là hai chứ không phải một: protection rule gắn theo Environment, nên gộp
+lại chỉ còn hai lựa chọn, cả hai đều dở. Bật reviewer ⇒ **mọi** deploy đều phải
+duyệt, kể cả commit sửa CSS, và duyệt nhiều thì thành phản xạ. Tắt reviewer ⇒
+`supabase db push` đổi schema production mà không ai nhìn. Migration không có nút
+undo, deploy code thì rollback được bằng một click trên Vercel — hai mức rủi ro
+khác nhau thì cần hai cái cổng khác nhau.
+
+### 5.2 — Nạp secret, đúng phạm vi cho từng cái
+
+Sáu secret, chia theo job tiêu thụ chúng:
+
+| Secret                  | Job dùng           | Đặt ở đâu                        | Lấy ở đâu                                            |
+| ----------------------- | ------------------ | -------------------------------- | ---------------------------------------------------- |
+| `SUPABASE_PROJECT_REF`  | `plan` + `migrate` | **Repository secret**            | project ref ở Bước 1                                 |
+| `SUPABASE_ACCESS_TOKEN` | `plan` + `migrate` | **Repository secret**            | Supabase → Account → Access Tokens → Generate        |
+| `SUPABASE_DB_PASSWORD`  | `plan` + `migrate` | **Repository secret**            | database password đặt ở Bước 1                       |
+| `VERCEL_TOKEN`          | `deploy`           | Environment secret, `production` | Vercel → Account Settings → Tokens → Create          |
+| `VERCEL_ORG_ID`         | `deploy`           | Environment secret, `production` | Vercel → Team/Account Settings → **Team ID**         |
+| `VERCEL_PROJECT_ID`     | `deploy`           | Environment secret, `production` | Vercel → Project Settings → General → **Project ID** |
+
+**Vì sao bộ Supabase phải là repository secret, không phải environment secret
+của `production-db`.** Required reviewers chặn **toàn bộ job** trước khi step đầu
+tiên chạy. Nếu dry-run nằm trong job `migrate`, lúc bạn bấm Approve chưa có dòng
+log nào tồn tại — bạn duyệt mù. Nên nó được tách thành job `plan` chạy trước,
+không gắn Environment nào, và một job không có Environment thì không đọc được
+environment secret. Đó là cái giá để có danh sách SQL trước cổng duyệt: ba
+credential đó rộng phạm vi hơn mức tối thiểu.
+
+Bộ Vercel không vướng ràng buộc đó — job `deploy` là nơi duy nhất dùng chúng và
+nó khai báo `environment: production`, nên cứ để làm environment secret.
+
+```bash
+R=thangdx-1076/agentic-coding-hands-on
+
+gh secret set SUPABASE_PROJECT_REF  --repo $R
+gh secret set SUPABASE_ACCESS_TOKEN --repo $R
+gh secret set SUPABASE_DB_PASSWORD  --repo $R
+
+gh secret set VERCEL_TOKEN      --env production --repo $R
+gh secret set VERCEL_ORG_ID     --env production --repo $R
+gh secret set VERCEL_PROJECT_ID --env production --repo $R
+
+gh secret list --repo $R                     # phải thấy 3 dòng Supabase
+gh secret list --env production --repo $R    # phải thấy 3 dòng Vercel
+```
+
+Mỗi lệnh hỏi giá trị qua stdin — đừng viết giá trị thẳng trên dòng lệnh, nó nằm
+lại trong shell history.
+
+Muốn gọn hơn thì để cả sáu làm repository secret; workflow chạy y hệt, đổi lại
+job `migrate` cũng cầm `VERCEL_TOKEN` mà nó không cần. Chấp nhận được với repo
+một người, đừng làm vậy khi nhiều người đẩy code.
+
+### 5.3 — Ghi chú về giá trị
 
 `VERCEL_TOKEN` chỉ hiện **một lần** lúc tạo — copy ngay, mất thì tạo cái mới.
 Hai ID còn lại không phải secret, chỉ là định danh; cách chắc nhất để lấy đúng
@@ -196,39 +256,36 @@ nên không cần link lại cho khớp.
 
 `.vercel/` đã nằm trong `.gitignore`.
 
-Ba biến Supabase ở đây chỉ dùng cho job `migrate`. Credential mà **app** cần
-(`NEXT_PUBLIC_*`) cố ý không nằm trong GitHub secret: `cd.yml` chạy
-`vercel pull` để kéo chúng từ Vercel xuống lúc build, nên chúng chỉ tồn tại đúng
-một chỗ và không bao giờ lệch nhau.
+Credential mà **app** cần (`NEXT_PUBLIC_*`) cố ý không nằm trong GitHub secret ở
+bất kỳ Environment nào: `cd.yml` chạy `vercel pull` để kéo chúng từ Vercel xuống
+lúc build, nên chúng chỉ tồn tại đúng một chỗ và không bao giờ lệch nhau.
 
-### Environments
+### 5.4 — Duyệt lần chạy đầu
 
-**Repo → Settings → Environments** → tạo hai cái:
+Với **Required reviewers** trên `production-db`, job `migrate` dừng chờ bạn. Thứ
+tự trên màn hình Actions:
 
-- **`production-db`** → bật **Required reviewers**, thêm chính bạn.
+1. Job **`plan`** chạy xong trước, in danh sách migration pending ra **Summary**
+   của run (ngay đầu trang, không phải trong log).
+2. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 1 → tick
+   `production-db` → **Approve and deploy**.
 
-  Đây là chốt chặn duy nhất trước khi `supabase db push` đổi schema production —
-  thao tác không có nút undo. Job in ra danh sách migration đang pending
-  (`--dry-run`) **trước** khi xin duyệt, nên bạn duyệt dựa trên danh sách thật.
-- **`production`** → không cần reviewer. Deploy code thì rollback được bằng một
-  click trên Vercel; schema thì không.
+Không có migration nào pending thì Summary in `Remote database is up to date`;
+duyệt là xong, không gì thay đổi.
 
 ---
 
 ## Bước 6 — Deploy lần đầu và nghiệm thu
 
-```bash
-git add .env.example .gitignore .github/workflows/cd.yml docs/deployment.md
-git commit -m "chore(deploy): add production CD pipeline and deployment runbook"
-git push origin main
-```
-
-Theo dõi ở tab **Actions**:
+Pipeline đã nằm trên `main`, nên mỗi lần merge là một lần deploy. Theo dõi ở tab
+**Actions**:
 
 1. **CI** chạy trước (~5–8 phút). Đỏ ⇒ dừng, không có gì được deploy.
-2. **CD** tự khởi động sau khi CI xanh. Job `migrate` dừng lại chờ bạn **Review
-   deployments → Approve**. Mở log step *List pending migrations* trước khi duyệt.
-3. Job `deploy` build, ship, rồi `curl` vào deployment URL. URL production in ra ở
+2. **CD** tự khởi động sau khi CI xanh — không phải lúc commit về. Job `plan`
+   chạy trước, in danh sách migration pending ra **Summary** của run.
+3. Job `migrate` hiện **Review deployments**. Đọc Summary ở bước 2 rồi mới
+   **Approve**.
+4. Job `deploy` build, ship, rồi `curl` vào deployment URL. URL production in ra ở
    phần Summary của run.
 
 ### Nghiệm thu thủ công — bắt buộc
