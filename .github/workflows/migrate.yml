@@ -86,10 +86,18 @@ jobs:
 
       # Written to the step summary, not just the log: the reviewer should not
       # have to open a job and scroll to decide whether to approve.
+      #
+      # The heading says "plan", not "pending migrations": `db push --dry-run`
+      # prints a file list ONLY when something is pending, and answers
+      # `Remote database is up to date.` otherwise. A heading promising a list
+      # over output that has none reads as a broken step rather than the
+      # perfectly normal nothing-to-do case — which is exactly how it was read
+      # the first time this ran. The legend below names both outcomes so the
+      # summary is self-explanatory without this file open beside it.
       - name: Dry run
         run: |
           {
-            echo "## Migrations pending on production"
+            echo "## Migration plan"
             echo ""
             echo "Ref: \`${{ github.ref_name }}\` @ \`${{ github.sha }}\`"
             echo ""
@@ -100,7 +108,16 @@ jobs:
           {
             echo '```'
             echo ""
-            echo "Approve the \`migrate\` job only if this list is what you expect."
+            echo "**How to read this**"
+            echo ""
+            echo "| Output above | Means |"
+            echo "| --- | --- |"
+            echo "| \`Would push these migrations:\` + a file list | Those files will be applied. Approve only if the list is what you expect. |"
+            echo "| \`Remote database is up to date.\` | Nothing is pending. Approving changes nothing — this is not a missing list. |"
+            echo ""
+            echo "The two \`SUPABASE_AUTH_EXTERNAL_GOOGLE_*\` warnings are normal: the CLI"
+            echo "parses \`supabase/config.toml\` before every command, and that block only"
+            echo "applies to the local stack. They have no bearing on what gets pushed."
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

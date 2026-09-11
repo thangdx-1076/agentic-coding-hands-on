@@ -420,13 +420,24 @@ Migration **không bao giờ** tự chạy. Mỗi lần cần đổi schema prod
 1. **Actions → Migrate production database → Run workflow**.
 2. Ô `confirm`: gõ đúng chữ `migrate`. Gõ khác là workflow chạy nhưng không job
    nào thực thi — cố ý, để một cú bấm nhầm không đổi được gì.
-3. Job **`plan`** chạy trước, in danh sách migration pending ra **Summary** của
+3. Job **`plan`** chạy trước, in kết quả `db push --dry-run` ra **Summary** của
    run (ngay đầu trang, không phải trong log).
 4. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 3 → tick
    `production-db` → **Approve and deploy**.
 
-Không có migration nào pending thì Summary in `Remote database is up to date`;
-duyệt là xong, không gì thay đổi.
+**Đọc Summary ở bước 3.** `--dry-run` chỉ in danh sách file khi *có* file pending:
+
+| Summary in ra                                      | Nghĩa là                                                                   |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `Would push these migrations:` kèm danh sách `.sql` | Đúng những file sắp được áp. Đọc kỹ rồi mới Approve                        |
+| `Remote database is up to date.`                    | Không có gì pending. Approve cũng không đổi gì — **không phải thiếu danh sách** |
+
+Trường hợp thứ hai là bình thường và sẽ gặp thường xuyên: phần lớn commit không
+đụng SQL. Đừng đi tìm danh sách không tồn tại.
+
+Hai dòng `WARN: environment variable is unset: SUPABASE_AUTH_EXTERNAL_GOOGLE_*`
+luôn xuất hiện và vô hại — CLI parse `supabase/config.toml` trước mọi lệnh, mà
+block `[auth.external.google]` trong đó chỉ dùng cho stack local.
 
 Workflow này **chỉ đổi schema, không deploy code**. Nếu migration vừa chạy có
 code đi kèm thì merge code đó vào `main` sau — `cd.yml` lo phần deploy.
