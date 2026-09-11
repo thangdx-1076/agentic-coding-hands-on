@@ -197,16 +197,39 @@ một Environment đã tồn tại; làm ngược lại thì không có chỗ đ
 
 **Repo → Settings → Environments → New environment**:
 
-| Environment     | Job dùng nó | Protection rule                     |
-| --------------- | ----------- | ----------------------------------- |
-| `production-db` | `migrate`   | **Required reviewers** → thêm bạn   |
-| `production`    | `deploy`    | không cần                           |
+| Environment     | Job dùng nó | Protection rule                   | Giữ secret gì                                     |
+| --------------- | ----------- | --------------------------------- | ------------------------------------------------- |
+| `production-db` | `migrate`   | **Required reviewers** → thêm bạn | không giữ gì — xem § 5.2                          |
+| `production`    | `deploy`    | không cần                         | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
 
-Tên phải khớp **chính xác** (phân biệt hoa thường) với `environment:` trong
-`cd.yml` — [`production-db`](../.github/workflows/cd.yml) ở job `migrate`,
-`production` ở job `deploy`. Gõ sai tên thì GitHub **tự tạo một Environment mới
-rỗng** mang tên trong workflow thay vì báo lỗi, job chạy thẳng không qua luật nào,
-và secret bạn vừa nạp vào cái tên gõ sai sẽ không bao giờ được đọc tới.
+> **`production-db` tồn tại chỉ để làm cổng duyệt, không phải để chứa secret.**
+> Job `migrate` không đọc secret nào từ nó — ba biến Supabase là repository
+> secret (§ 5.2 giải thích vì sao). Bỏ environment này đi thì `migrate` mất luôn
+> chỗ treo Required reviewers và `supabase db push` chạy thẳng vào database
+> production không ai nhìn. Đó đúng là chuyện đã xảy ra ngày 2026-09-11, xem ô
+> cảnh báo dưới.
+
+Tên khớp **không phân biệt hoa thường**: `cd.yml` ghi `production`, một
+Environment tên `Production` vẫn nhận (đã kiểm chứng 2026-09-11 — job đọc được
+secret của nó). Nhưng gõ **sai** tên thì GitHub không báo lỗi mà **tự tạo một
+Environment mới rỗng** mang đúng tên trong workflow: job chạy thẳng, không qua
+luật nào, và secret bạn nạp vào cái tên cũ không bao giờ được đọc tới.
+
+> **⚠️ Tạo Environment KHÔNG tự có protection rule.** Tạo xong nó rỗng — không
+> reviewer, không gì cả. Ngày 2026-09-11 `production-db` được tạo mà bỏ quên
+> bước bật Required reviewers, và job `migrate` chạy `supabase db push` vào
+> production không dừng lại lần nào. Lần đó vô hại vì không có migration nào
+> pending, nhưng nếu có thì nó đã apply xong rồi — và không có nút undo.
+>
+> Bật reviewer xong, **kiểm lại bằng API** chứ đừng tin màn hình:
+>
+> ```bash
+> R=thangdx-1076/agentic-coding-hands-on
+> gh api repos/$R/environments/production-db \
+>   --jq '[.protection_rules[].type]'   # phải in ["required_reviewers"]
+> ```
+>
+> In ra `[]` là chưa có cổng nào.
 
 Vì sao là hai chứ không phải một: protection rule gắn theo Environment, nên gộp
 lại chỉ còn hai lựa chọn, cả hai đều dở. Bật reviewer ⇒ **mọi** deploy đều phải
@@ -214,6 +237,12 @@ duyệt, kể cả commit sửa CSS, và duyệt nhiều thì thành phản xạ
 `supabase db push` đổi schema production mà không ai nhìn. Migration không có nút
 undo, deploy code thì rollback được bằng một click trên Vercel — hai mức rủi ro
 khác nhau thì cần hai cái cổng khác nhau.
+
+**Đừng để secret nằm ở Environment mà không workflow nào gọi tên.** Một
+Environment thừa (tên cũ, tên thử nghiệm) vẫn giữ nguyên credential trong đó:
+không job nào đọc được, nhưng ai có quyền write vào repo đều thêm được một
+workflow trỏ vào nó. Xoá environment là xoá luôn secret bên trong:
+`gh api -X DELETE repos/$R/environments/<tên>`.
 
 ### 5.2 — Nạp secret, đúng phạm vi cho từng cái
 
@@ -238,6 +267,15 @@ credential đó rộng phạm vi hơn mức tối thiểu.
 
 Bộ Vercel không vướng ràng buộc đó — job `deploy` là nơi duy nhất dùng chúng và
 nó khai báo `environment: production`, nên cứ để làm environment secret.
+
+Hệ quả: **`production-db` không giữ secret nào.** Nó chỉ là chỗ treo Required
+reviewers. Nếu bạn lỡ nạp một biến Supabase vào đó, xoá đi — environment secret
+đè lên repository secret cùng tên, nên để cả hai là có hai nguồn sự thật mà chỉ
+một cái thắng trong im lặng, và bạn sẽ sửa nhầm cái không được đọc:
+
+```bash
+gh secret delete SUPABASE_PROJECT_REF --env production-db --repo $R
+```
 
 ```bash
 R=thangdx-1076/agentic-coding-hands-on
@@ -361,6 +399,10 @@ tự trên màn hình Actions:
 
 Không có migration nào pending thì Summary in `Remote database is up to date`;
 duyệt là xong, không gì thay đổi.
+
+**Nếu `migrate` chạy thẳng qua, không hiện Review deployments** — đó không phải
+"không có gì để duyệt", đó là chưa có cổng. Quay lại § 5.1 và kiểm bằng lệnh
+`gh api` ở đó: `[]` nghĩa là environment rỗng luật.
 
 ### 5.6 — Bật branch protection cho `main`
 

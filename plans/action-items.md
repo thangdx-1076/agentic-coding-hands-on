@@ -2003,3 +2003,21 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Chưa xác định được `deploy` đỏ vì scope token hay vì cặp ID sai — phải chờ kết quả `vercel pull` ở máy bạn.
+
+## 260911-1748 — đồng bộ docs Environment, và dọn secret thừa
+
+### Tôi cần làm
+
+- [ ] **Environment `SSA` đang giữ đủ 6 secret thật mà không workflow nào gọi tên** (tạo 09:26–09:35, lượt setup đầu). Không job nào đọc được, nhưng ai có quyền write vào repo đều thêm được workflow trỏ vào nó. Nên xoá: `gh api -X DELETE repos/thangdx-1076/agentic-coding-hands-on/environments/SSA` — xoá environment là xoá luôn secret bên trong, không khôi phục được.
+- [ ] `production-db` còn `SUPABASE_PROJECT_REF` thừa (env secret đè repo secret cùng tên ⇒ hai nguồn sự thật). Xoá: `gh secret delete SUPABASE_PROJECT_REF --env production-db --repo …`.
+
+### Decisions
+
+- **Giữ `production-db`.** Nó không chứa secret nào (ba biến Supabase là repository secret vì job `plan` không gắn environment), nhưng nó là chỗ duy nhất treo được Required reviewers cho `migrate`. Bỏ đi là `supabase db push` chạy thẳng vào production không ai duyệt — đúng chuyện xảy ra sáng nay khi environment tồn tại mà chưa bật luật.
+- **Đã bật `required_reviewers` → `thangdx-1076` cho `production-db`** qua API, và kiểm lại bằng API chứ không tin màn hình.
+- Sửa một khẳng định sai trong doc: tên environment **không** phân biệt hoa thường. `cd.yml` ghi `production`, repo có `Production`, job vẫn đọc được secret của nó (chứng cứ: log in `VERCEL_ORG_ID: ***`). Bản cũ ghi "phải khớp chính xác, phân biệt hoa thường".
+- Thêm vào § 5.1 cảnh báo "tạo Environment KHÔNG tự có protection rule" kèm lệnh `gh api` kiểm chứng, và vào § 5.5 dấu hiệu nhận biết "chạy thẳng không hiện Review deployments = chưa có cổng, không phải không có gì để duyệt".
+
+### Nợ lại
+
+- Chưa xoá `SSA` và secret trùng ở `production-db` — hai thao tác xoá credential, để bạn tự quyết.
