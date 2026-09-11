@@ -1,0 +1,193 @@
+# -----------------------------------------------------------------------
+# Deploy pipeline — production only
+# -----------------------------------------------------------------------
+# CI (ci.yml) proves the commit. THIS file ships it. They are deliberately
+# two workflows: ci.yml runs on every feature branch and every PR where a
+# deploy would be meaningless, and keeping the deploy out of it means a
+# change to the deploy path can never turn a PR's test run red.
+#
+# The seam between them is `workflow_run` (see the trigger below), NOT a
+# `push` trigger. A `push: [main]` trigger here would start deploying the
+# moment the commit lands, in parallel with the tests that are supposed to
+# gate it — the deploy would usually win the race. `workflow_run` fires
+# only after CI has finished, and the `if:` on every job below demands
+# `conclusion == 'success'`, so a red CI on `main` deploys nothing.
+#
+# What that gate is worth is bounded by what CI actually covers, and that
+# is less than a green checkmark suggests: `@auth` and `@local-db` tests
+# are excluded from CI, and the `/auth/callback` PKCE success path has no
+# automated test anywhere. Read ci.yml's header comment before treating a
+# green deploy as "the authenticated flow works in production". The
+# post-deploy smoke check here is a liveness probe on `/`, not a substitute.
+#
+# One consequence of the split worth knowing: `workflow_run` workflows are
+# always read from the DEFAULT branch (`main`). Editing this file on a
+# feature branch changes nothing until it merges, and it cannot be tested
+# from a PR. Use the `workflow_dispatch` trigger to exercise it once merged.
+# -----------------------------------------------------------------------
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"] # matches `name:` in ci.yml — rename there, rename here
+    types: [completed]
+    branches: [main]
+  # Manual redeploy: re-ship the current `main` without pushing an empty
+  # commit (a rolled-back Vercel alias, a re-run after fixing an env var in
+  # the Vercel dashboard). It skips the CI-conclusion check by construction
+  # — there is no `workflow_run` payload — so the person clicking it owns
+  # that decision.
+  workflow_dispatch:
+
+concurrency:
+  group: cd-production
+  # NEVER cancel in progress here. A cancelled run can leave `supabase db
+  # push` half-applied or a Vercel deployment un-promoted. Queue instead:
+  # two deploys back to back is slow, a torn deploy is an outage.
+  cancel-in-progress: false
+
+env:
+  # The exact commit CI proved, not "whatever `main` points at now". Between
+  # CI finishing and this workflow starting, someone can push again; checking
+  # out `main` would ship a commit no pipeline has ever tested. Empty on
+  # `workflow_dispatch`, where `actions/checkout` falls back to the default
+  # branch tip — deliberate, that is what a manual redeploy means.
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  migrate:
+    name: Migrate production database
+    # `workflow_dispatch` has no `workflow_run` payload, so `conclusion` is
+    # empty and the first clause carries the run. On a `workflow_run` event
+    # a non-success conclusion (failure, cancelled, timed_out) stops here.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    # Put a required reviewer on this GitHub Environment. Schema migration is
+    # the one irreversible step in this pipeline: `supabase db push` applies
+    # every pending file under supabase/migrations/ and there is no undo. The
+    # dry-run step below prints exactly which files are pending, so the
+    # approval is made against a list rather than a promise.
+    environment: production-db
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # Pinned to the version this repo's migrations were authored and
+          # applied with locally. `latest` would make an upstream CLI release
+          # an unannounced change to how production schema is applied.
+          version: 2.98.2
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: List pending migrations (dry run)
+        run: supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      # A no-op on any commit that touched no SQL, which is most of them —
+      # `db push` compares against the remote `schema_migrations` table and
+      # applies only what is missing. Running it unconditionally is cheaper
+      # than a path filter that can silently skip a migration when a commit
+      # range is computed wrong.
+      - name: Apply migrations
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+  deploy:
+    name: Deploy to Vercel
+    # Schema first, then code. The reverse order opens a window where the new
+    # bundle queries columns that do not exist yet — the release that added
+    # `kudos_cards.distinct_senders` (migration 0022) would have thrown on
+    # every `/kudos` render until its migration landed.
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Matches ci.yml and the `engines.node` range in package.json
+          # (>=22 <25). Vercel's own build image must be set to the same
+          # major in Project Settings → Build & Deployment.
+          node-version: "24"
+
+      # Pinned, not `vercel@latest`, for the same reason as the Supabase CLI
+      # above: an upstream release should never change this pipeline silently.
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.16.0
+
+      # Pulls the project's Production environment variables down from Vercel
+      # so the build below inlines the real NEXT_PUBLIC_* values. This is why
+      # no Supabase credential is duplicated into GitHub secrets: Vercel holds
+      # them once, and `vercel pull` is the only thing that reads them.
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+
+      # Build HERE rather than on Vercel, then ship the prebuilt output. The
+      # artifact that goes live is then the exact tree this pipeline gated,
+      # and a build failure surfaces as a red job in this run instead of
+      # inside the Vercel dashboard. Requires Vercel's own Git integration to
+      # be OFF for this repo (docs/deployment.md § Bước 4) — otherwise every
+      # push to `main` deploys twice, once ungated by Vercel and once here.
+      - name: Build
+        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      # Liveness probe, not a test suite. It catches the failure class that
+      # only appears once real env vars are bound: a missing
+      # NEXT_PUBLIC_SUPABASE_URL, a proxy redirect loop, a 500 on first
+      # render. `--fail` exits non-zero on any 4xx/5xx; the retries absorb the
+      # few seconds a fresh deployment needs to start serving.
+      #
+      # NOTE: with `PRELAUNCH_LOCK_ENABLED=true` and the event still ahead,
+      # `/` redirects to `/prelaunch` — `--location` follows it, so a 200 here
+      # proves the site is up, not which page a visitor lands on.
+      - name: Smoke check
+        run: |
+          curl --fail --silent --show-error --location \
+            --retry 5 --retry-delay 5 --retry-all-errors \
+            --output /dev/null "${{ steps.deploy.outputs.url }}"
+
+      - name: Record deployment
+        if: always()
+        run: |
+          {
+            echo "## Production deploy — ${{ job.status }}"
+            echo ""
+            echo "- Deployment URL: ${{ steps.deploy.outputs.url }}"
+            echo "- Commit: \`${{ env.DEPLOY_SHA || github.sha }}\`"
+            echo "- Trigger: \`${{ github.event_name }}\`"
+            echo ""
+            echo "Migrations were applied by the \`migrate\` job before this deploy."
+            echo "The CI run that gated it excluded \`@auth\` and \`@local-db\` tests —"
+            echo "the authenticated path was NOT verified. See ci.yml's header."
+          } >> "$GITHUB_STEP_SUMMARY"
