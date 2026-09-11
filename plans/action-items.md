@@ -1969,3 +1969,74 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - CD vẫn chưa chạy thật lần nào. Lần merge PR #30 sẽ là lần đầu — và nó sẽ đỏ ở `plan` nếu 6 secret chưa nạp. Đó là hành vi đúng, không phải bug.
+
+## 260911-1730 — preview deployment tắt có chủ đích
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **Giữ nguyên trạng thái không có Vercel preview trên PR.** Nguyên nhân là `vercel.json` (`git.deploymentEnabled: false`, commit `16638a6`) — công tắc này quét cả preview lẫn production chứ không riêng `main`. Đã ghi rõ vào `docs/deployment.md` § Bước 4 để lần sau không ai đọc nó như một lỗi cấu hình.
+- Ghi sẵn cách bật lại (`deploymentEnabled: { "main": false }`, hoặc Ignored Build Step theo `$VERCEL_ENV`) kèm điều kiện tiên quyết: phải tách Supabase project riêng cho Preview trước. Bật preview khi Preview env còn trỏ chung production là biến mỗi PR thành một đường ghi vào database thật.
+
+### Nợ lại
+
+- Chưa có Supabase project cho Preview. Đây là thứ chặn việc bật lại preview, không phải bản thân cấu hình Vercel.
+
+## 260911-1740 — token scope và cái test sai
+
+### Tôi cần làm
+
+- [ ] **Thu hồi token đã dán ra plain text** tại https://vercel.com/account/tokens (prefix `vcp_6SVa…`). Nó nằm trong transcript hội thoại — coi như đã lộ, không phụ thuộc vào việc nó có dùng được hay không.
+- [ ] Tạo token mới **scope vào đúng project SAA** (không phải Full Account), rồi `gh secret set VERCEL_TOKEN --env production`.
+- [ ] Kiểm bằng `vercel pull` chứ không phải `vercel whoami`; nếu vẫn đỏ thì so `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` với `.vercel/project.json`.
+- [ ] Dọn shell history dòng có chứa token.
+
+### Decisions
+
+- **`vercel whoami` là phép thử SAI cho token có scope hẹp.** Vercel có 3 mức scope (Full Account / Team / Project); token Project- hoặc Team-scoped bị từ chối mọi request tới user-level resource, mà `whoami` đúng là loại đó — nó trả `User not found` kể cả khi token đúng hoàn toàn. Tôi đã đưa nhầm lệnh này làm test và nó dẫn chẩn đoán đi sai hướng. Runbook § 5.3 giờ ghi rõ, kèm phép thử đúng (`vercel pull` với đúng cặp ID).
+- **Đổi khuyến nghị scope từ Team sang Project.** Trước ghi "chọn đúng team"; tài liệu Vercel cho scope xuống tận một project, và đó là mức hẹp nhất đủ cho `pull`/`build`/`deploy` của `cd.yml`. Câu cũ "token không giới hạn theo project, toàn quyền API" là sai — đã xoá.
+- Sửa URL trang token: `vercel.com/account/tokens` (bản cũ ghi `/account/settings/tokens`).
+
+### Nợ lại
+
+- Chưa xác định được `deploy` đỏ vì scope token hay vì cặp ID sai — phải chờ kết quả `vercel pull` ở máy bạn.
+
+## 260911-1748 — đồng bộ docs Environment, và dọn secret thừa
+
+### Tôi cần làm
+
+- [ ] **Environment `SSA` đang giữ đủ 6 secret thật mà không workflow nào gọi tên** (tạo 09:26–09:35, lượt setup đầu). Không job nào đọc được, nhưng ai có quyền write vào repo đều thêm được workflow trỏ vào nó. Nên xoá: `gh api -X DELETE repos/thangdx-1076/agentic-coding-hands-on/environments/SSA` — xoá environment là xoá luôn secret bên trong, không khôi phục được.
+- [ ] `production-db` còn `SUPABASE_PROJECT_REF` thừa (env secret đè repo secret cùng tên ⇒ hai nguồn sự thật). Xoá: `gh secret delete SUPABASE_PROJECT_REF --env production-db --repo …`.
+
+### Decisions
+
+- **Giữ `production-db`.** Nó không chứa secret nào (ba biến Supabase là repository secret vì job `plan` không gắn environment), nhưng nó là chỗ duy nhất treo được Required reviewers cho `migrate`. Bỏ đi là `supabase db push` chạy thẳng vào production không ai duyệt — đúng chuyện xảy ra sáng nay khi environment tồn tại mà chưa bật luật.
+- **Đã bật `required_reviewers` → `thangdx-1076` cho `production-db`** qua API, và kiểm lại bằng API chứ không tin màn hình.
+- Sửa một khẳng định sai trong doc: tên environment **không** phân biệt hoa thường. `cd.yml` ghi `production`, repo có `Production`, job vẫn đọc được secret của nó (chứng cứ: log in `VERCEL_ORG_ID: ***`). Bản cũ ghi "phải khớp chính xác, phân biệt hoa thường".
+- Thêm vào § 5.1 cảnh báo "tạo Environment KHÔNG tự có protection rule" kèm lệnh `gh api` kiểm chứng, và vào § 5.5 dấu hiệu nhận biết "chạy thẳng không hiện Review deployments = chưa có cổng, không phải không có gì để duyệt".
+
+### Nợ lại
+
+- Chưa xoá `SSA` và secret trùng ở `production-db` — hai thao tác xoá credential, để bạn tự quyết.
+
+## 260911-1755 — tách migration khỏi deploy
+
+### Tôi cần làm
+
+- [ ] **Đổi thói quen merge.** PR nào có file trong `supabase/migrations/` thì chạy `migrate.yml` TRƯỚC khi merge, hoặc viết migration tương thích ngược để thứ tự hết quan trọng. Pipeline không còn ép thứ tự hộ nữa.
+- [ ] Lần deploy tới: chạy **Actions → Migrate production database → Run workflow** một lượt để xác nhận cổng duyệt hoạt động (lần trước nó chạy thẳng vì environment chưa có luật).
+
+### Decisions
+
+- **Manual trigger, automated execution.** Migration tách sang `.github/workflows/migrate.yml`, chỉ chạy bằng `workflow_dispatch`. Không chuyển sang gõ `supabase db push` ở laptop: cách đó mất CLI pin đúng version, mất log, mất dấu vết ai chạy cái gì — mà không thêm được an toàn nào so với cổng Required reviewers vốn đã có.
+- Thêm ô `confirm` phải gõ đúng chữ `migrate`. Cổng duyệt là một nút, mà một nút thì bị bấm theo phản xạ; đây là thao tác không hoàn tác được duy nhất trong cả hệ thống nên hỏi hai lần.
+- **`cd.yml` giờ chỉ deploy code.** Bỏ `plan` + `migrate`, bỏ `needs: migrate` của job `deploy`.
+- Thêm step `Pending migrations check` vào `cd.yml`: đọc compare API xem push vừa rồi có đụng `supabase/migrations/` không, có thì in cảnh báo vào Summary + `::warning::`. Đọc qua API thay vì `git diff` để khỏi phải `fetch-depth: 0` mỗi lần deploy chỉ để trả lời một câu hỏi yes/no. **Đây là lời nhắc, không phải cổng chặn** — nó không biết migration đã chạy hay chưa, chỉ biết file có đổi.
+- Docs ghi rõ cái giá của việc tách (mất bảo đảm thứ tự) và cách bù đúng thứ tự ưu tiên: expand/contract trước, chạy migrate trước khi merge sau.
+
+### Nợ lại
+
+- Câu trả lời thẳng cho "đây có phải best practice không": tách migration khỏi deploy thì đúng là best practice; chạy thủ công ở máy thì không. Thứ thực sự làm cho thứ tự hết quan trọng là migration tương thích ngược, và repo chưa có quy ước nào bắt buộc điều đó — mới chỉ ghi trong doc.

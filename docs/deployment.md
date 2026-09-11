@@ -9,12 +9,37 @@ dựng Node server + `sharp` + reverse proxy — không đáng cho một event s
 
 Toàn bộ deploy do GitHub Actions chạy, không do Vercel tự bắt commit:
 
-| File                      | Chạy khi nào                        | Làm gì                                       |
-| ------------------------- | ----------------------------------- | -------------------------------------------- |
-| `.github/workflows/ci.yml` | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e |
-| `.github/workflows/cd.yml` | **ngay khi có commit vào `main`**   | `supabase db push` → `vercel deploy --prod` → smoke check |
+| File                           | Chạy khi nào                         | Làm gì                                                          |
+| ------------------------------ | ------------------------------------ | --------------------------------------------------------------- |
+| `.github/workflows/ci.yml`      | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e   |
+| `.github/workflows/cd.yml`      | **ngay khi có commit vào `main`**    | `vercel deploy --prod` → smoke check. **Không đụng database**     |
+| `.github/workflows/migrate.yml` | **chỉ khi bạn bấm Run workflow**     | `db push --dry-run` → duyệt → `db push`. **Không deploy code**    |
 
-**Cổng chặn nằm ở branch protection, không nằm trong CD.** `main` được bảo vệ và
+**Code và schema đi hai đường riêng, và chỉ một đường tự động.** Merge vào `main`
+là deploy code lên schema đang có sẵn. Đổi schema chỉ xảy ra khi bạn tự vào
+**Actions → Migrate production database → Run workflow**.
+
+> **Cái giá của việc tách: mất bảo đảm thứ tự.** Pipeline cũ ép schema chạy trước
+> code trong cùng một lượt. Giờ không còn gì chặn một PR vừa thêm migration vừa
+> thêm code đọc nó được merge và deploy ngay lên schema cũ — đúng kịch bản
+> migration `0022` (`distinct_senders`): `/kudos` sẽ ném lỗi ở mọi lần render cho
+> tới khi có người nhớ ra.
+>
+> Hai cách giữ an toàn, theo thứ tự ưu tiên:
+>
+> 1. **Viết migration tương thích ngược** (expand/contract): đẩy phần schema
+>    thêm-mới đi trước, một mình, lúc code đang chạy chưa biết tới nó. Code dùng
+>    tới thì merge ở lượt sau. Phần phá huỷ (drop/rename) đi cuối cùng, khi không
+>    còn code nào tham chiếu hình dạng cũ. Thứ tự hết quan trọng — đây là cách sửa
+>    thật sự.
+> 2. Nếu migration và code buộc phải đi cùng nhau: chạy `migrate.yml` **trước khi
+>    merge** PR đó.
+>
+> `cd.yml` có in cảnh báo vào Summary khi commit nó đang deploy có đụng
+> `supabase/migrations/`. Đó là lời nhắc, **không phải cổng chặn** — nó không biết
+> migration đã chạy hay chưa, chỉ biết file có thay đổi.
+
+**Cổng chặn merge nằm ở branch protection, không nằm trong CD.** `main` được bảo vệ và
 yêu cầu hai check `Quality` + `E2E (CI-safe)` xanh mới cho merge PR — kèm `strict`
 (branch phải cập nhật với `main` trước khi merge) và không miễn trừ cho admin. Nên
 commit nào đã nằm trên `main` thì đã qua test rồi, CD deploy thẳng không đợi CI
@@ -148,10 +173,20 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
    hoạt, mọi branch. `cd.yml` không bị ảnh hưởng: nó deploy bằng CLI
    (`vercel deploy --prebuilt`), không đi qua đường Git trigger.
 
+   > **PR không còn preview deployment, và đó là cố ý.** `deploymentEnabled: false`
+   > quét cả preview lẫn production, không riêng `main` — thấy PR trống chỗ bot
+   > Vercel vẫn hay comment thì đừng đi tìm lỗi cấu hình. Đây là lựa chọn đã cân
+   > nhắc (2026-09-11): preview có giá trị, nhưng ở trạng thái hiện tại nó sẽ
+   > build bằng Preview environment variables — mà những biến đó, nếu trỏ chung
+   > project Supabase với production, biến mỗi PR thành một đường ghi thẳng vào
+   > database thật. Muốn bật lại thì xem đoạn cuối mục này, và tách Supabase
+   > project cho Preview TRƯỚC.
+
    Không có khoá này thì mỗi push vào `main` deploy **hai lần**: một lần Vercel tự
-   chạy ngay khi commit về — không qua test nào, và **không chờ job `migrate`** —
-   một lần nữa do `cd.yml`. Lần ungated đó mới là lần lên sóng trước, mang code mới
-   chạy trên schema cũ.
+   chạy ngay khi commit về — không qua test nào — một lần nữa do `cd.yml`. Lần
+   ungated đó lên sóng trước, và nó dựng bundle bằng env của Vercel chứ không phải
+   thứ `cd.yml` vừa `vercel pull` xuống, nên hai lần deploy có thể ra hai kết quả
+   khác nhau từ cùng một commit.
 
    Hai cách thay thế, nếu muốn khoá ngay mà chưa merge được file này:
    - **Settings → Git → Ignored Build Step** → *Custom*, lệnh `exit 0` (Vercel hiểu
@@ -159,11 +194,21 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
    - **Settings → Git → Disconnect** hẳn repo. Dứt điểm nhất, đổi lại mất preview
      comment trên PR.
 
-   Muốn **giữ preview cho PR nhưng chặn production**, dùng Ignored Build Step với
-   `[ "$VERCEL_ENV" = "production" ] && exit 0 || exit 1` thay vì `vercel.json`.
-   Trước khi làm vậy phải tách Supabase project riêng cho Preview: hiện
-   `NEXT_PUBLIC_SUPABASE_URL` set cho cả Production lẫn Preview, nên preview của
-   mọi PR đang đọc ghi thẳng vào database thật.
+   Muốn **bật lại preview cho PR nhưng vẫn chặn production**, `deploymentEnabled`
+   nhận cả object khoá theo tên branch — sửa đúng một dòng trong `vercel.json`:
+
+   ```json
+   { "git": { "deploymentEnabled": { "main": false } } }
+   ```
+
+   (Cách tương đương không đụng file: Ignored Build Step với
+   `[ "$VERCEL_ENV" = "production" ] && exit 0 || exit 1`.)
+
+   **Việc phải làm trước, không phải sau:** tách một Supabase project riêng cho
+   Preview và set `NEXT_PUBLIC_SUPABASE_URL` + publishable key scope Preview trỏ
+   vào đó. Để nguyên thì preview của mọi PR build bằng biến trỏ về database thật —
+   mỗi PR thành một đường ghi vào dữ liệu production, và cleanup của test
+   `@local-db` không với tới đó.
 5. **Settings → Domains**: gắn domain thật nếu có. Nhớ quay lại Bước 3.3 cập nhật
    Site URL và Redirect URLs cho khớp.
 
@@ -178,16 +223,39 @@ một Environment đã tồn tại; làm ngược lại thì không có chỗ đ
 
 **Repo → Settings → Environments → New environment**:
 
-| Environment     | Job dùng nó | Protection rule                     |
-| --------------- | ----------- | ----------------------------------- |
-| `production-db` | `migrate`   | **Required reviewers** → thêm bạn   |
-| `production`    | `deploy`    | không cần                           |
+| Environment     | Job dùng nó | Protection rule                   | Giữ secret gì                                     |
+| --------------- | ----------- | --------------------------------- | ------------------------------------------------- |
+| `production-db` | `migrate`   | **Required reviewers** → thêm bạn | không giữ gì — xem § 5.2                          |
+| `production`    | `deploy`    | không cần                         | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
 
-Tên phải khớp **chính xác** (phân biệt hoa thường) với `environment:` trong
-`cd.yml` — [`production-db`](../.github/workflows/cd.yml) ở job `migrate`,
-`production` ở job `deploy`. Gõ sai tên thì GitHub **tự tạo một Environment mới
-rỗng** mang tên trong workflow thay vì báo lỗi, job chạy thẳng không qua luật nào,
-và secret bạn vừa nạp vào cái tên gõ sai sẽ không bao giờ được đọc tới.
+> **`production-db` tồn tại chỉ để làm cổng duyệt, không phải để chứa secret.**
+> Job `migrate` không đọc secret nào từ nó — ba biến Supabase là repository
+> secret (§ 5.2 giải thích vì sao). Bỏ environment này đi thì `migrate` mất luôn
+> chỗ treo Required reviewers và `supabase db push` chạy thẳng vào database
+> production không ai nhìn. Đó đúng là chuyện đã xảy ra ngày 2026-09-11, xem ô
+> cảnh báo dưới.
+
+Tên khớp **không phân biệt hoa thường**: `cd.yml` ghi `production`, một
+Environment tên `Production` vẫn nhận (đã kiểm chứng 2026-09-11 — job đọc được
+secret của nó). Nhưng gõ **sai** tên thì GitHub không báo lỗi mà **tự tạo một
+Environment mới rỗng** mang đúng tên trong workflow: job chạy thẳng, không qua
+luật nào, và secret bạn nạp vào cái tên cũ không bao giờ được đọc tới.
+
+> **⚠️ Tạo Environment KHÔNG tự có protection rule.** Tạo xong nó rỗng — không
+> reviewer, không gì cả. Ngày 2026-09-11 `production-db` được tạo mà bỏ quên
+> bước bật Required reviewers, và job `migrate` chạy `supabase db push` vào
+> production không dừng lại lần nào. Lần đó vô hại vì không có migration nào
+> pending, nhưng nếu có thì nó đã apply xong rồi — và không có nút undo.
+>
+> Bật reviewer xong, **kiểm lại bằng API** chứ đừng tin màn hình:
+>
+> ```bash
+> R=thangdx-1076/agentic-coding-hands-on
+> gh api repos/$R/environments/production-db \
+>   --jq '[.protection_rules[].type]'   # phải in ["required_reviewers"]
+> ```
+>
+> In ra `[]` là chưa có cổng nào.
 
 Vì sao là hai chứ không phải một: protection rule gắn theo Environment, nên gộp
 lại chỉ còn hai lựa chọn, cả hai đều dở. Bật reviewer ⇒ **mọi** deploy đều phải
@@ -195,6 +263,12 @@ duyệt, kể cả commit sửa CSS, và duyệt nhiều thì thành phản xạ
 `supabase db push` đổi schema production mà không ai nhìn. Migration không có nút
 undo, deploy code thì rollback được bằng một click trên Vercel — hai mức rủi ro
 khác nhau thì cần hai cái cổng khác nhau.
+
+**Đừng để secret nằm ở Environment mà không workflow nào gọi tên.** Một
+Environment thừa (tên cũ, tên thử nghiệm) vẫn giữ nguyên credential trong đó:
+không job nào đọc được, nhưng ai có quyền write vào repo đều thêm được một
+workflow trỏ vào nó. Xoá environment là xoá luôn secret bên trong:
+`gh api -X DELETE repos/$R/environments/<tên>`.
 
 ### 5.2 — Nạp secret, đúng phạm vi cho từng cái
 
@@ -219,6 +293,15 @@ credential đó rộng phạm vi hơn mức tối thiểu.
 
 Bộ Vercel không vướng ràng buộc đó — job `deploy` là nơi duy nhất dùng chúng và
 nó khai báo `environment: production`, nên cứ để làm environment secret.
+
+Hệ quả: **`production-db` không giữ secret nào.** Nó chỉ là chỗ treo Required
+reviewers. Nếu bạn lỡ nạp một biến Supabase vào đó, xoá đi — environment secret
+đè lên repository secret cùng tên, nên để cả hai là có hai nguồn sự thật mà chỉ
+một cái thắng trong im lặng, và bạn sẽ sửa nhầm cái không được đọc:
+
+```bash
+gh secret delete SUPABASE_PROJECT_REF --env production-db --repo $R
+```
 
 ```bash
 R=thangdx-1076/agentic-coding-hands-on
@@ -247,19 +330,30 @@ một người, đừng làm vậy khi nhiều người đẩy code.
 Token nằm ở **tài khoản**, không nằm trong project — nên đường đi không qua
 project settings:
 
-1. Mở [vercel.com/account/settings/tokens](https://vercel.com/account/settings/tokens)
-   (hoặc: avatar góc phải → **Settings** → **Tokens**). Kể cả khi project thuộc
-   team, trang này vẫn là trang cá nhân của bạn.
+1. Mở [vercel.com/account/tokens](https://vercel.com/account/tokens). Trang này
+   thuộc **personal account** kể cả khi project nằm trong team — ở thanh chọn
+   scope góc trái trên cùng của dashboard phải đang xem tài khoản cá nhân, không
+   phải team, mới vào được.
 2. **Create Token**, điền ba ô:
    - **Token Name** — đặt tên nói rõ nơi dùng, ví dụ `github-actions-cd-saa`.
      Tên là thứ duy nhất phân biệt token sau này; `token1` thì ba tháng nữa
      không ai dám thu hồi vì không biết nó đang chạy ở đâu.
-   - **Scope** — chọn **đúng team sở hữu project SAA**, không phải tài khoản cá
-     nhân (trừ khi project nằm thẳng trong tài khoản cá nhân của bạn). Đây là chỗ
-     sai hay gặp nhất: token lệch scope vẫn hợp lệ, vẫn `vercel pull` được, nhưng
-     Vercel không thấy project ⇒ job `deploy` đỏ ngay step **Pull Vercel
-     environment** với lỗi kiểu "Project not found". Scope phải khớp với
-     `VERCEL_ORG_ID` ở mục dưới.
+   - **Scope** — dropdown có ba mức, chọn **hẹp nhất đủ dùng**: bấm vào **team
+     sở hữu project SAA** để nó xổ ra danh sách project, rồi **chọn đúng project
+     SAA**. Token project-scoped chỉ đụng được một project đó, và đủ cho toàn bộ
+     `vercel pull` / `build` / `deploy` của `cd.yml`.
+
+     Chọn **All Projects** thì thành team-scoped (rộng hơn, vẫn chạy). Chọn
+     **Full Account** là trao quyền trên tài khoản cá nhân lẫn mọi team bạn tham
+     gia — đừng dùng cho CI.
+
+     Scope phải khớp với `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` ở § 5.4. Lệch là
+     token vẫn hợp lệ nhưng Vercel từ chối ⇒ job `deploy` đỏ ở step **Pull Vercel
+     environment** với `Could not retrieve Project Settings` — đọc như lỗi cấu
+     hình workflow, thực ra là lỗi scope.
+
+     Một số team bắt buộc bật 2FA hoặc SAML mới cho tạo token scope vào team đó;
+     dashboard sẽ báo ngay lúc bạn chọn.
    - **Expiration** — chọn theo chính sách của bạn. Cân nhắc thật: token hết hạn
      thì `cd.yml` đỏ ở đúng step trên, và vì CD chỉ chạy khi có commit vào `main`,
      bạn sẽ phát hiện đúng lúc đang cần deploy gấp. Chọn hạn dài cho tiện thì phải
@@ -269,11 +363,31 @@ project settings:
 4. Nạp vào GitHub bằng lệnh ở 5.2 (`gh secret set VERCEL_TOKEN --env production`),
    hoặc dán qua UI. Đừng để nó nằm lại trong Notes/Slack/clipboard manager.
 
-**Token này không bị giới hạn theo project.** Nó cho toàn quyền API trên mọi thứ
-trong scope đã chọn — mọi project của team đó, không riêng SAA. Nên đối xử với nó
-như mật khẩu team: một token cho một mục đích, và **Revoke** ngay ở chính trang
-trên khi nghi ngờ lộ hoặc khi người tạo rời dự án. Thu hồi không làm hỏng
-deployment đang chạy, chỉ khiến lần deploy sau đỏ cho tới khi thay token mới.
+Một token cho một mục đích, và **Revoke** ngay ở chính trang trên khi nghi ngờ lộ
+hoặc khi người tạo rời dự án. Thu hồi không làm hỏng deployment đang chạy, chỉ
+khiến lần deploy sau đỏ cho tới khi thay token mới.
+
+#### Kiểm token vừa tạo — **đừng dùng `vercel whoami`**
+
+`whoami` đọc user-level resource, mà token scope Project hoặc Team bị từ chối mọi
+request tới tài nguyên mức đó. Nó trả `Error: User not found` **kể cả khi token
+hoàn toàn đúng** — dùng nó làm phép thử là tự dẫn mình đi sai hướng (đã dính
+2026-09-11). `whoami` chỉ có nghĩa với token Full Account.
+
+Phép thử thật là chạy đúng lệnh CI chạy:
+
+```bash
+rm -r .vercel 2>/dev/null
+VERCEL_ORG_ID="<org id>" VERCEL_PROJECT_ID="<project id>" \
+  vercel pull --yes --environment=production --token="<token>"
+```
+
+- Chạy được ⇒ token và cặp ID khớp nhau, nạp secret rồi re-run CD.
+- `Could not retrieve Project Settings` ⇒ hoặc scope token, hoặc cặp ID. Lấy ID
+  thật bằng `vercel link` ở § 5.4 rồi so lại.
+
+Token nằm trong lệnh ⇒ nó vào shell history. `history -d` dòng đó, hoặc gõ lệnh
+với một dấu cách ở đầu nếu shell của bạn bật `HIST_IGNORE_SPACE`.
 
 ### 5.4 — Lấy `VERCEL_ORG_ID` và `VERCEL_PROJECT_ID`
 
@@ -299,18 +413,27 @@ Credential mà **app** cần (`NEXT_PUBLIC_*`) cố ý không nằm trong GitHub
 bất kỳ Environment nào: `cd.yml` chạy `vercel pull` để kéo chúng từ Vercel xuống
 lúc build, nên chúng chỉ tồn tại đúng một chỗ và không bao giờ lệch nhau.
 
-### 5.5 — Duyệt lần chạy đầu
+### 5.5 — Chạy migration (thủ công, mỗi lần đều vậy)
 
-Với **Required reviewers** trên `production-db`, job `migrate` dừng chờ bạn. Thứ
-tự trên màn hình Actions:
+Migration **không bao giờ** tự chạy. Mỗi lần cần đổi schema production:
 
-1. Job **`plan`** chạy xong trước, in danh sách migration pending ra **Summary**
-   của run (ngay đầu trang, không phải trong log).
-2. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 1 → tick
+1. **Actions → Migrate production database → Run workflow**.
+2. Ô `confirm`: gõ đúng chữ `migrate`. Gõ khác là workflow chạy nhưng không job
+   nào thực thi — cố ý, để một cú bấm nhầm không đổi được gì.
+3. Job **`plan`** chạy trước, in danh sách migration pending ra **Summary** của
+   run (ngay đầu trang, không phải trong log).
+4. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 3 → tick
    `production-db` → **Approve and deploy**.
 
 Không có migration nào pending thì Summary in `Remote database is up to date`;
 duyệt là xong, không gì thay đổi.
+
+Workflow này **chỉ đổi schema, không deploy code**. Nếu migration vừa chạy có
+code đi kèm thì merge code đó vào `main` sau — `cd.yml` lo phần deploy.
+
+**Nếu `migrate` chạy thẳng qua, không hiện Review deployments** — đó không phải
+"không có gì để duyệt", đó là chưa có cổng. Quay lại § 5.1 và kiểm bằng lệnh
+`gh api` ở đó: `[]` nghĩa là environment rỗng luật.
 
 ### 5.6 — Bật branch protection cho `main`
 
@@ -355,17 +478,19 @@ Từng khoá, và vì sao:
 
 ## Bước 6 — Deploy lần đầu và nghiệm thu
 
-Pipeline đã nằm trên `main`, nên mỗi lần merge là một lần deploy. Theo dõi ở tab
-**Actions**:
+Lần đầu, schema đi trước — và đây cũng là thứ tự cho mọi lần sau có migration.
 
-1. **Trên PR**: CI chạy (~5–8 phút). Nút Merge khoá cho tới khi cả `Quality` lẫn
+1. **Chạy migration trước** (§ 5.5): Actions → **Migrate production database** →
+   Run workflow → gõ `migrate` → duyệt. Lần đầu thì bạn đã `db push` tay ở Bước 2
+   rồi, nên Summary sẽ in `Remote database is up to date` — chạy một lượt để xác
+   nhận CI cũng nói vậy là đáng giá.
+2. **Trên PR**: CI chạy (~5–8 phút). Nút Merge khoá cho tới khi cả `Quality` lẫn
    `E2E (CI-safe)` xanh. Đây là chỗ duy nhất test chặn được bạn.
-2. **Merge xong**: CD khởi động **ngay**, không đợi CI chạy lại trên `main`. Job
-   `plan` chạy trước, in danh sách migration pending ra **Summary** của run.
-3. Job `migrate` hiện **Review deployments**. Đọc Summary ở bước 2 rồi mới
-   **Approve**.
+3. **Merge xong**: CD khởi động **ngay**, không đợi CI chạy lại trên `main`. Nó
+   chỉ deploy code — không đụng database.
 4. Job `deploy` build, ship, rồi `curl` vào deployment URL. URL production in ra ở
-   phần Summary của run.
+   phần Summary của run. Nếu commit vừa deploy có đụng `supabase/migrations/`,
+   Summary còn kèm một cảnh báo ⚠️ nhắc bạn kiểm lại đã chạy migration chưa.
 
 ### Nghiệm thu thủ công — bắt buộc
 

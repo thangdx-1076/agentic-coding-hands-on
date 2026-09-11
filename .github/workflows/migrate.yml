@@ -1,0 +1,157 @@
+# -----------------------------------------------------------------------
+# Production schema migration — manually triggered, never automatic
+# -----------------------------------------------------------------------
+# Split out of cd.yml deliberately (2026-09-11): merging to `main` deploys
+# code, and does NOT touch the database. Schema changes happen only when a
+# person opens Actions and runs this workflow.
+#
+# Manual TRIGGER, automated EXECUTION. The alternative — someone running
+# `supabase db push` from a laptop — gives up three things and buys nothing
+# the approval gate below does not already provide: the CLI version stays
+# pinned here (a newer local CLI can apply migrations differently), every
+# run leaves a log, and the record says who ran what and when.
+#
+# ## What this split costs, and what you must do instead
+#
+# cd.yml used to guarantee ORDER: schema first, then code, in one pipeline.
+# That guarantee is now gone, and it was load-bearing. Merging a PR that
+# adds both a migration and the code reading it will deploy the code
+# immediately, against the old schema — the release that added
+# `kudos_cards.distinct_senders` (migration 0022) would have thrown on
+# every `/kudos` render until someone remembered to come here.
+#
+# Two ways to stay safe, in order of preference:
+#
+#  1. **Make the migration backward compatible** (expand/contract): ship the
+#     additive schema change FIRST, on its own, while the running code
+#     neither knows nor cares about it. Deploy the code that uses it in a
+#     later merge. Destructive changes (drop/rename) go last, after no
+#     deployed code references the old shape. Order stops mattering, which
+#     is the only real fix.
+#  2. If a migration and its consumer must ship together: run this workflow
+#     BEFORE merging the PR. cd.yml's deploy job prints a warning when the
+#     commit it is deploying touched `supabase/migrations/`, so a forgotten
+#     run shows up in the run summary — a reminder, not a guard.
+# -----------------------------------------------------------------------
+name: Migrate production database
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "migrate" to confirm applying pending migrations to PRODUCTION'
+        required: true
+        type: string
+
+concurrency:
+  group: migrate-production
+  # Never cancel: a cancelled run can leave the schema half-applied.
+  cancel-in-progress: false
+
+jobs:
+  # Read-only, and deliberately NOT bound to a GitHub Environment. Required
+  # reviewers gate an entire job before its first step runs, so a dry-run
+  # living inside `migrate` would produce no output until after the approval —
+  # the reviewer would be approving blind. Running it here, one job earlier,
+  # is what makes the approval a decision about a printed list of SQL files.
+  #
+  # The consequence for secrets: this job needs the Supabase credentials while
+  # holding no environment, so those three must be REPOSITORY secrets, not
+  # environment secrets on `production-db`. That is the price of showing the
+  # plan before the gate. See docs/deployment.md § Bước 5.2.
+  plan:
+    name: List pending migrations
+    # A typed confirmation ahead of the approval click. The reviewer prompt
+    # alone is one button, and one button gets clicked reflexively; this is
+    # the only irreversible action in the whole system, so it asks twice.
+    if: inputs.confirm == 'migrate'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # Pinned to the version this repo's migrations were authored and
+          # applied with locally. `latest` would make an upstream CLI release
+          # an unannounced change to how production schema is applied.
+          version: 2.98.2
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      # Written to the step summary, not just the log: the reviewer should not
+      # have to open a job and scroll to decide whether to approve.
+      - name: Dry run
+        run: |
+          {
+            echo "## Migrations pending on production"
+            echo ""
+            echo "Ref: \`${{ github.ref_name }}\` @ \`${{ github.sha }}\`"
+            echo ""
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD" \
+            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          {
+            echo '```'
+            echo ""
+            echo "Approve the \`migrate\` job only if this list is what you expect."
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+  migrate:
+    name: Apply migrations
+    # Waits for the plan above, so the approval prompt is never the first
+    # thing that happens.
+    needs: plan
+    runs-on: ubuntu-latest
+    # `production-db` carries the required-reviewer rule. Creating the
+    # Environment does NOT create that rule — verify it with:
+    #   gh api repos/<owner>/<repo>/environments/production-db \
+    #     --jq '[.protection_rules[].type]'
+    # An empty list means this job runs unattended, which is exactly what
+    # happened on 2026-09-11. See docs/deployment.md § 5.1.
+    environment: production-db
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.98.2
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      # A no-op when nothing is pending — `db push` compares against the
+      # remote `schema_migrations` table and applies only what is missing.
+      - name: Apply migrations
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Record what was applied
+        if: always()
+        run: |
+          {
+            echo "## Migration run — ${{ job.status }}"
+            echo ""
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Triggered by: @${{ github.actor }}"
+            echo ""
+            echo "Code is NOT deployed by this workflow. If this migration has a"
+            echo "consumer in application code, merge that code to \`main\` now —"
+            echo "cd.yml deploys it."
+          } >> "$GITHUB_STEP_SUMMARY"
