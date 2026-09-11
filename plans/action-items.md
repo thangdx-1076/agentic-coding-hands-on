@@ -1903,3 +1903,32 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Reviewer gợi ý thêm: đã sửa cả 2 Medium (đăng ký opener qua ref thay vì deps đổi mỗi render; `encodeURIComponent` cho profileId) và 2 Low (guard UUID trước khi query; comment giải thích 2 hover card đóng khác nhau có chủ ý).
+
+## 260911-1544 — production deploy pipeline
+
+### Tôi cần làm
+
+- [ ] **Tạo Supabase Cloud project** (region Singapore, Postgres 17) và lưu database password — `docs/deployment.md` Bước 1. Không ai làm hộ được, cần tài khoản của bạn.
+- [ ] **Quyết định seed demo**: `supabase/migrations/0008_kudos_demo_seed.sql` + `0019` insert 8 user giả vào `auth.users` (`@kudos-demo.saa`) và 12 kudo mock. `db push` sẽ đẩy chúng lên production. Giữ cho board có nội dung ngày launch, hay xoá bằng `DELETE FROM auth.users WHERE email LIKE '%@kudos-demo.saa';`? Phải chốt TRƯỚC khi có người đăng nhập thật.
+- [ ] **Tạo Google OAuth client** trên Google Cloud Console + dán vào Supabase — Bước 3. Cần quyền trên GCP project của tổ chức.
+- [ ] **Nạp 6 GitHub secret** (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`) và tạo 2 Environment (`production-db` có required reviewer, `production`) — Bước 5.
+- [ ] **Tắt Vercel Git integration** (Ignored Build Step → `exit 0`) — không làm thì mỗi push deploy 2 lần, bản ungated lên trước.
+- [ ] **Nghiệm thu thủ công sau deploy đầu**: checklist ở cuối `docs/deployment.md`. CI không cover login Google, upload ảnh kudo, avatar Google.
+- [ ] Cân nhắc bật branch protection cho `main` — hiện CI đỏ chặn được deploy nhưng không chặn được merge.
+
+### Decisions
+
+- **Vercel + Supabase Cloud**, không self-host. App dựa vào 3 thứ chỉ chạy gọn trên runtime Next gốc: `src/proxy.ts`, Server Actions `bodySizeLimit: 28mb`, và image optimizer với `remotePatterns` sinh từ env. Self-host phải tự dựng Node server + sharp + reverse proxy.
+- **CI và CD tách file** theo yêu cầu. Nối bằng `workflow_run` chứ không phải `push: [main]`: trigger `push` sẽ chạy song song với chính bộ test đáng lẽ phải gác nó, và deploy thường thắng cuộc đua. `workflow_run` + `if: conclusion == 'success'` là cách duy nhất giữ được gate mà không phải chạy lại toàn bộ test trong CD.
+- **Build trên GitHub Actions rồi `vercel deploy --prebuilt`**, không để Vercel build. Artifact lên sóng đúng bằng cây code mà CI đã gác; build lỗi hiện thành job đỏ thay vì chôn trong dashboard Vercel.
+- **Migrate chạy trước deploy**, và đứng sau Environment `production-db` có required reviewer. Thứ tự ngược lại tạo khoảng trống mà bundle mới query cột chưa tồn tại — đúng kịch bản migration `0022` (`distinct_senders`) sẽ ném lỗi trên mọi lần render `/kudos`.
+- `cancel-in-progress: false` cho CD. Huỷ giữa chừng có thể để lại schema apply dở hoặc deployment chưa promote.
+- Credential app (`NEXT_PUBLIC_*`) **không** nhân bản vào GitHub secret — `vercel pull` kéo từ Vercel lúc build, nên chúng chỉ tồn tại một chỗ.
+- Pin cứng `vercel@59.16.0` và `supabase/setup-cli@2.98.2` (đúng bản CLI local đã dùng để apply migration). `latest` biến một release upstream thành thay đổi ngầm của pipeline production.
+- `.gitignore` mở ngoại lệ cho `.env.example` — file chỉ chứa TÊN biến và comment, không có giá trị thật.
+
+### Nợ lại
+
+- Smoke check sau deploy chỉ là `curl` vào `/`, chứng minh app sống chứ không chứng minh UI đúng. Muốn chặt hơn thì cần một suite e2e chạy trên Supabase staging — chưa có project staging nào.
+- Nhánh PKCE thành công của `/auth/callback` vẫn không có test ở đâu cả; deploy cũng không đổi được điều đó.
+- Chưa cấu hình preview deploy cho PR (bạn yêu cầu chỉ deploy `main`). Nếu sau cần, thêm job dùng `--environment=preview` và một Supabase project riêng cho preview.

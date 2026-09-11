@@ -110,6 +110,9 @@ loop the redirect.
 The server-only variables carry no `NEXT_PUBLIC_` prefix on purpose — they are never inlined into
 the client bundle.
 
+`.env.example` is the copy-paste template for the four variables the app itself needs; on Vercel
+the same four live in Project Settings → Environment Variables. See [Deployment](#deployment).
+
 ## Database
 
 The Supabase project is committed here — `supabase/config.toml` plus `supabase/migrations/`:
@@ -187,7 +190,31 @@ about whether a component renders correctly.
   normally needed on a machine with the local stack up.
 
 None of these gates block a merge today: `main` has no branch protection, so every job reports
-rather than enforces.
+rather than enforces. They do block a **deploy** — see below.
+
+## Deployment
+
+Production runs on **Vercel** (app) + **Supabase Cloud** (database, auth, storage). Full runbook —
+creating the Supabase project, applying migrations, wiring Google OAuth, the required GitHub
+secrets, and the manual acceptance checklist — is in [`docs/deployment.md`](docs/deployment.md).
+
+`.github/workflows/cd.yml` is a **separate** workflow from CI and only ever targets `main`. It is
+triggered by `workflow_run` on CI's completion, not by `push`: a `push` trigger would start
+deploying in parallel with the tests meant to gate it. Two jobs, in this order:
+
+1. **`migrate`** — `supabase db push` against the production project. Gated behind the
+   `production-db` GitHub Environment with a required reviewer, because a schema change has no
+   undo. A `--dry-run` step prints the pending migration list _before_ the approval prompt.
+2. **`deploy`** — `vercel build --prod` then `vercel deploy --prebuilt --prod`, so the artifact that
+   goes live is the exact tree CI gated, followed by a `curl` liveness check on `/`.
+
+Vercel's own Git integration must stay **disabled** for this repo (`Ignored Build Step` →
+`exit 0`); otherwise every push to `main` deploys twice, and the ungated Vercel-side build wins the
+race. `docs/deployment.md` § Bước 4.
+
+Two things this pipeline does not prove: the authenticated flow (CI excludes `@auth` and
+`@local-db`), and the `/auth/callback` success path (no automated test exists anywhere). The
+post-deploy checklist in the runbook covers both by hand.
 
 ## Known gaps
 
