@@ -1951,3 +1951,21 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - (không có)
+
+## 260911-1725 — CI gác merge, CD deploy ngay khi merge
+
+### Tôi cần làm
+
+- [ ] Biết đường thoát khẩn cấp: `enforce_admins: true` nên **bạn cũng không push thẳng vào `main` được**. Cần gấp thì tắt rule → push → bật lại (lệnh ở `docs/deployment.md` § 5.6), đừng ngồi gỡ Git.
+- [ ] Nếu sau này đổi `name:` của job trong `ci.yml`, sửa luôn `contexts` trong protection rule cùng lúc — lệch tên là PR treo pending vĩnh viễn, không đỏ.
+
+### Decisions
+
+- **Branch protection trên `main`**: required checks `Quality` + `E2E (CI-safe)`, `strict: true`, `enforce_admins: true`, khoá force-push và xoá nhánh, bắt resolve conversation. `required_pull_request_reviews: null` vì repo một người — bật lên là tự khoá mình ra ngoài (không tự approve PR của mình được).
+- **CD đổi từ `workflow_run` sang `push: [main]`.** Lý do cũ (chặn deploy khi CI đỏ) giờ do branch protection gánh, và gánh sớm hơn — chặn ngay ở nút Merge thay vì sau khi code đã vào `main`. Giữ `workflow_run` chỉ còn nghĩa là đợi CI chạy lại lần hai trên đúng thứ vừa test xong.
+- Bỏ luôn `DEPLOY_SHA` và mọi `ref:` trong `cd.yml`. Với event `push`, checkout mặc định đã là đúng commit vừa đẩy; biến đó chỉ tồn tại để bù cho cái mà `workflow_run` không tự có.
+- **Giữ CI chạy trên push `main`** dù giờ nó không gác gì nữa. Nó tốn thêm một lượt runner mỗi lần merge, đổi lại bắt được trường hợp merge commit hỏng trong khi PR head thì không. Muốn tiết kiệm thì bỏ `main` khỏi `push.branches` của `ci.yml`.
+
+### Nợ lại
+
+- CD vẫn chưa chạy thật lần nào. Lần merge PR #30 sẽ là lần đầu — và nó sẽ đỏ ở `plan` nếu 6 secret chưa nạp. Đó là hành vi đúng, không phải bug.

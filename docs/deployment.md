@@ -12,10 +12,17 @@ Toàn bộ deploy do GitHub Actions chạy, không do Vercel tự bắt commit:
 | File                      | Chạy khi nào                        | Làm gì                                       |
 | ------------------------- | ----------------------------------- | -------------------------------------------- |
 | `.github/workflows/ci.yml` | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e |
-| `.github/workflows/cd.yml` | **chỉ khi CI trên `main` xanh**     | `supabase db push` → `vercel deploy --prod` → smoke check |
+| `.github/workflows/cd.yml` | **ngay khi có commit vào `main`**   | `supabase db push` → `vercel deploy --prod` → smoke check |
 
-CD nối vào CI qua `workflow_run`, không phải `push`. Nghĩa là commit vào `main` mà CI
-đỏ thì không deploy gì cả. Chi tiết lý do nằm trong comment đầu `cd.yml`.
+**Cổng chặn nằm ở branch protection, không nằm trong CD.** `main` được bảo vệ và
+yêu cầu hai check `Quality` + `E2E (CI-safe)` xanh mới cho merge PR — kèm `strict`
+(branch phải cập nhật với `main` trước khi merge) và không miễn trừ cho admin. Nên
+commit nào đã nằm trên `main` thì đã qua test rồi, CD deploy thẳng không đợi CI
+chạy lại lượt thứ hai.
+
+Đổi lại: **thứ gì lọt vào `main` mà không qua PR được bảo vệ là deploy thẳng ra
+production.** Tắt branch protection không chỉ là nới lỏng merge — nó mở đường cho
+commit chưa test đi tới người dùng.
 
 ---
 
@@ -305,6 +312,45 @@ tự trên màn hình Actions:
 Không có migration nào pending thì Summary in `Remote database is up to date`;
 duyệt là xong, không gì thay đổi.
 
+### 5.6 — Bật branch protection cho `main`
+
+Đã bật sẵn trên repo này (2026-09-11). Ghi lại đây vì nó là **điều kiện** để CD
+được phép deploy thẳng lúc merge — không có nó thì commit chưa test đi ra
+production:
+
+```bash
+R=thangdx-1076/agentic-coding-hands-on
+gh api -X PUT repos/$R/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["Quality", "E2E (CI-safe)"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true
+}
+JSON
+gh api repos/$R/branches/main/protection --jq '.required_status_checks'   # kiểm lại
+```
+
+Từng khoá, và vì sao:
+
+- `contexts` — đúng hai chuỗi trong `name:` của hai job ở `ci.yml`. Gõ sai hoặc
+  đổi tên job sau này ⇒ check bị bỏ yêu cầu **trong im lặng**, PR treo pending
+  vĩnh viễn chờ một check không ai phát ra.
+- `strict: true` — branch phải cập nhật với `main` trước khi merge. Đây là thứ
+  làm cho "CI đã xanh" nói về đúng cái cây code sẽ nằm trên `main`, chứ không
+  phải một ảnh chụp cũ.
+- `enforce_admins: true` — bạn cũng không bypass được. Cần đường thoát khẩn cấp
+  thì tắt rule, push, bật lại; chậm hơn nhưng để lại dấu vết, khác hẳn một cú
+  push lặng lẽ.
+- `required_pull_request_reviews: null` — repo một người thì không tự approve PR
+  của mình được, bật lên là tự khoá mình ra ngoài. Thêm người thứ hai thì mở.
+
 ---
 
 ## Bước 6 — Deploy lần đầu và nghiệm thu
@@ -312,9 +358,10 @@ duyệt là xong, không gì thay đổi.
 Pipeline đã nằm trên `main`, nên mỗi lần merge là một lần deploy. Theo dõi ở tab
 **Actions**:
 
-1. **CI** chạy trước (~5–8 phút). Đỏ ⇒ dừng, không có gì được deploy.
-2. **CD** tự khởi động sau khi CI xanh — không phải lúc commit về. Job `plan`
-   chạy trước, in danh sách migration pending ra **Summary** của run.
+1. **Trên PR**: CI chạy (~5–8 phút). Nút Merge khoá cho tới khi cả `Quality` lẫn
+   `E2E (CI-safe)` xanh. Đây là chỗ duy nhất test chặn được bạn.
+2. **Merge xong**: CD khởi động **ngay**, không đợi CI chạy lại trên `main`. Job
+   `plan` chạy trước, in danh sách migration pending ra **Summary** của run.
 3. Job `migrate` hiện **Review deployments**. Đọc Summary ở bước 2 rồi mới
    **Approve**.
 4. Job `deploy` build, ship, rồi `curl` vào deployment URL. URL production in ra ở
@@ -368,6 +415,13 @@ Nói thẳng để không ai đọc nhầm dấu tick xanh:
   nhập Google thật mới sinh ra được cặp code/verifier.
 - Smoke check sau deploy chỉ là probe sống/chết trên `/`. Nó bắt được app chết,
   không bắt được UI sai.
-- `main` không có branch protection (xác nhận 2026-09-05). CI đỏ không chặn được
-  merge — nó chỉ chặn deploy. Nên `main` có thể chứa code chưa bao giờ lên
-  production; muốn biết cái gì đang chạy thì đọc pipeline, đừng đọc branch.
+- Branch protection chặn **merge**, không chặn **push**. Rule khoá force-push và
+  xoá nhánh, bắt buộc qua PR có check xanh — nhưng nó bảo vệ đúng `main`. Mọi
+  đường khác vào production (bấm Run workflow trên CD, `vercel deploy` tay từ
+  máy bạn, promote một deployment cũ trên dashboard) không đi qua check nào.
+- Rule khớp theo **tên check**. Đổi `name:` của job trong `ci.yml` mà quên sửa
+  rule là check bị bỏ yêu cầu trong im lặng: PR treo mãi ở trạng thái pending
+  chờ một check không bao giờ tồn tại, chứ không đỏ để bạn nhận ra.
+- `strict` bật nghĩa là branch phải cập nhật với `main` mới merge được. Nhiều PR
+  chạy song song thì cái sau phải update rồi chờ CI chạy lại — đúng mục đích
+  (kết quả merge mới là thứ được test), nhưng chậm hơn, đừng tưởng CI lỗi.

@@ -1,42 +1,40 @@
 # -----------------------------------------------------------------------
 # Deploy pipeline — production only
 # -----------------------------------------------------------------------
-# CI (ci.yml) proves the commit. THIS file ships it. They are deliberately
-# two workflows: ci.yml runs on every feature branch and every PR where a
-# deploy would be meaningless, and keeping the deploy out of it means a
-# change to the deploy path can never turn a PR's test run red.
+# CI (ci.yml) proves the commit. THIS file ships it. Two workflows, not one:
+# ci.yml runs on every feature branch and every PR where a deploy would be
+# meaningless, and keeping the deploy out of it means a change to the deploy
+# path can never turn a PR's test run red.
 #
-# The seam between them is `workflow_run` (see the trigger below), NOT a
-# `push` trigger. A `push: [main]` trigger here would start deploying the
-# moment the commit lands, in parallel with the tests that are supposed to
-# gate it — the deploy would usually win the race. `workflow_run` fires
-# only after CI has finished, and the `if:` on every job below demands
-# `conclusion == 'success'`, so a red CI on `main` deploys nothing.
+# **The gate is branch protection, not this workflow.** `main` requires the
+# `Quality` and `E2E (CI-safe)` checks to pass before a PR can merge, so by
+# the time a commit exists on `main` it has already been tested — as a PR,
+# against this same suite. That is why the trigger below is a plain
+# `push: [main]` and this file contains no CI-conclusion check: re-gating on
+# CI here would only wait for a second, redundant run of tests that already
+# passed, delaying every deploy by the length of the suite.
 #
-# What that gate is worth is bounded by what CI actually covers, and that
-# is less than a green checkmark suggests: `@auth` and `@local-db` tests
-# are excluded from CI, and the `/auth/callback` PKCE success path has no
-# automated test anywhere. Read ci.yml's header comment before treating a
-# green deploy as "the authenticated flow works in production". The
-# post-deploy smoke check here is a liveness probe on `/`, not a substitute.
+# The consequence is worth stating plainly: **anything that lands on `main`
+# outside a protected PR deploys straight to production.** An admin bypassing
+# protection, or a direct push if protection is ever relaxed, reaches users
+# with no test in between. Protection is the only thing standing there.
 #
-# One consequence of the split worth knowing: `workflow_run` workflows are
-# always read from the DEFAULT branch (`main`). Editing this file on a
-# feature branch changes nothing until it merges, and it cannot be tested
-# from a PR. Use the `workflow_dispatch` trigger to exercise it once merged.
+# And what that protection is worth is bounded by what CI actually covers,
+# which is less than a green check suggests: `@auth` and `@local-db` tests are
+# excluded, and the `/auth/callback` PKCE success path has no automated test
+# anywhere. Read ci.yml's header before treating a green deploy as "the
+# authenticated flow works in production". The smoke check at the end of this
+# file is a liveness probe on `/`, not a substitute.
 # -----------------------------------------------------------------------
 name: CD
 
 on:
-  workflow_run:
-    workflows: ["CI"] # matches `name:` in ci.yml — rename there, rename here
-    types: [completed]
+  push:
     branches: [main]
   # Manual redeploy: re-ship the current `main` without pushing an empty
   # commit (a rolled-back Vercel alias, a re-run after fixing an env var in
-  # the Vercel dashboard). It skips the CI-conclusion check by construction
-  # — there is no `workflow_run` payload — so the person clicking it owns
-  # that decision.
+  # the Vercel dashboard). Deploys the branch tip at click time, whatever
+  # that is — the person clicking owns that.
   workflow_dispatch:
 
 concurrency:
@@ -46,13 +44,9 @@ concurrency:
   # two deploys back to back is slow, a torn deploy is an outage.
   cancel-in-progress: false
 
-env:
-  # The exact commit CI proved, not "whatever `main` points at now". Between
-  # CI finishing and this workflow starting, someone can push again; checking
-  # out `main` would ship a commit no pipeline has ever tested. Empty on
-  # `workflow_dispatch`, where `actions/checkout` falls back to the default
-  # branch tip — deliberate, that is what a manual redeploy means.
-  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+# Every job checks out the default ref for the event — the pushed commit on
+# `push`, the branch tip on `workflow_dispatch` — so no explicit `ref:` is
+# needed anywhere below.
 
 jobs:
   # Read-only, and deliberately NOT bound to a GitHub Environment. Required
@@ -67,18 +61,10 @@ jobs:
   # plan before the gate. See docs/deployment.md § Bước 5.2.
   plan:
     name: List pending migrations
-    # `workflow_dispatch` has no `workflow_run` payload, so `conclusion` is
-    # empty and the first clause carries the run. On a `workflow_run` event
-    # a non-success conclusion (failure, cancelled, timed_out) stops here.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.DEPLOY_SHA }}
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -127,8 +113,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.DEPLOY_SHA }}
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -169,8 +153,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.DEPLOY_SHA }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -229,7 +211,7 @@ jobs:
             echo "## Production deploy — ${{ job.status }}"
             echo ""
             echo "- Deployment URL: ${{ steps.deploy.outputs.url }}"
-            echo "- Commit: \`${{ env.DEPLOY_SHA || github.sha }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
             echo "- Trigger: \`${{ github.event_name }}\`"
             echo ""
             echo "Migrations were applied by the \`migrate\` job before this deploy."
