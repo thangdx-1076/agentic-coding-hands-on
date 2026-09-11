@@ -14,3 +14,7 @@ next-env.d.ts
 *.tsbuildinfo
 public/
 .playwright-mcp
+# Written by `supabase link`; git-ignored, but Prettier still reads it and its
+# formatting is not ours to fix — it makes `format:check` red on any machine
+# that has linked the remote project.
+supabase/.temp
