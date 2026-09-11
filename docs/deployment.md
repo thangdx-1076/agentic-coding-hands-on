@@ -198,9 +198,9 @@ Sáu secret, chia theo job tiêu thụ chúng:
 | `SUPABASE_PROJECT_REF`  | `plan` + `migrate` | **Repository secret**            | project ref ở Bước 1                                 |
 | `SUPABASE_ACCESS_TOKEN` | `plan` + `migrate` | **Repository secret**            | Supabase → Account → Access Tokens → Generate        |
 | `SUPABASE_DB_PASSWORD`  | `plan` + `migrate` | **Repository secret**            | database password đặt ở Bước 1                       |
-| `VERCEL_TOKEN`          | `deploy`           | Environment secret, `production` | Vercel → Account Settings → Tokens → Create          |
-| `VERCEL_ORG_ID`         | `deploy`           | Environment secret, `production` | Vercel → Team/Account Settings → **Team ID**         |
-| `VERCEL_PROJECT_ID`     | `deploy`           | Environment secret, `production` | Vercel → Project Settings → General → **Project ID** |
+| `VERCEL_TOKEN`          | `deploy`           | Environment secret, `production` | § 5.3 — chú ý chọn đúng **Scope**                    |
+| `VERCEL_ORG_ID`         | `deploy`           | Environment secret, `production` | § 5.4 — `vercel link` rồi đọc `.vercel/`             |
+| `VERCEL_PROJECT_ID`     | `deploy`           | Environment secret, `production` | § 5.4 — cùng file với `VERCEL_ORG_ID`                |
 
 **Vì sao bộ Supabase phải là repository secret, không phải environment secret
 của `production-db`.** Required reviewers chặn **toàn bộ job** trước khi step đầu
@@ -235,11 +235,43 @@ Muốn gọn hơn thì để cả sáu làm repository secret; workflow chạy y
 job `migrate` cũng cầm `VERCEL_TOKEN` mà nó không cần. Chấp nhận được với repo
 một người, đừng làm vậy khi nhiều người đẩy code.
 
-### 5.3 — Ghi chú về giá trị
+### 5.3 — Lấy `VERCEL_TOKEN`
 
-`VERCEL_TOKEN` chỉ hiện **một lần** lúc tạo — copy ngay, mất thì tạo cái mới.
-Hai ID còn lại không phải secret, chỉ là định danh; cách chắc nhất để lấy đúng
-cả hai là để CLI tự điền thay vì copy tay từ dashboard:
+Token nằm ở **tài khoản**, không nằm trong project — nên đường đi không qua
+project settings:
+
+1. Mở [vercel.com/account/settings/tokens](https://vercel.com/account/settings/tokens)
+   (hoặc: avatar góc phải → **Settings** → **Tokens**). Kể cả khi project thuộc
+   team, trang này vẫn là trang cá nhân của bạn.
+2. **Create Token**, điền ba ô:
+   - **Token Name** — đặt tên nói rõ nơi dùng, ví dụ `github-actions-cd-saa`.
+     Tên là thứ duy nhất phân biệt token sau này; `token1` thì ba tháng nữa
+     không ai dám thu hồi vì không biết nó đang chạy ở đâu.
+   - **Scope** — chọn **đúng team sở hữu project SAA**, không phải tài khoản cá
+     nhân (trừ khi project nằm thẳng trong tài khoản cá nhân của bạn). Đây là chỗ
+     sai hay gặp nhất: token lệch scope vẫn hợp lệ, vẫn `vercel pull` được, nhưng
+     Vercel không thấy project ⇒ job `deploy` đỏ ngay step **Pull Vercel
+     environment** với lỗi kiểu "Project not found". Scope phải khớp với
+     `VERCEL_ORG_ID` ở mục dưới.
+   - **Expiration** — chọn theo chính sách của bạn. Cân nhắc thật: token hết hạn
+     thì `cd.yml` đỏ ở đúng step trên, và vì CD chỉ chạy khi có commit vào `main`,
+     bạn sẽ phát hiện đúng lúc đang cần deploy gấp. Chọn hạn dài cho tiện thì phải
+     tự đặt lịch xoay vòng; chọn hạn ngắn thì ghi ngày hết hạn vào `plans/action-items.md`.
+3. Bấm **Create**, rồi **copy ngay**. Giá trị chỉ hiện **một lần**; đóng dialog là
+   mất, không có cách xem lại — chỉ có tạo cái mới.
+4. Nạp vào GitHub bằng lệnh ở 5.2 (`gh secret set VERCEL_TOKEN --env production`),
+   hoặc dán qua UI. Đừng để nó nằm lại trong Notes/Slack/clipboard manager.
+
+**Token này không bị giới hạn theo project.** Nó cho toàn quyền API trên mọi thứ
+trong scope đã chọn — mọi project của team đó, không riêng SAA. Nên đối xử với nó
+như mật khẩu team: một token cho một mục đích, và **Revoke** ngay ở chính trang
+trên khi nghi ngờ lộ hoặc khi người tạo rời dự án. Thu hồi không làm hỏng
+deployment đang chạy, chỉ khiến lần deploy sau đỏ cho tới khi thay token mới.
+
+### 5.4 — Lấy `VERCEL_ORG_ID` và `VERCEL_PROJECT_ID`
+
+Hai ID này không phải secret, chỉ là định danh; cách chắc nhất để lấy đúng cả hai
+là để CLI tự điền thay vì copy tay từ dashboard:
 
 ```bash
 npm i -g vercel@59.16.0   # cùng version cd.yml ghim
@@ -260,7 +292,7 @@ Credential mà **app** cần (`NEXT_PUBLIC_*`) cố ý không nằm trong GitHub
 bất kỳ Environment nào: `cd.yml` chạy `vercel pull` để kéo chúng từ Vercel xuống
 lúc build, nên chúng chỉ tồn tại đúng một chỗ và không bao giờ lệch nhau.
 
-### 5.4 — Duyệt lần chạy đầu
+### 5.5 — Duyệt lần chạy đầu
 
 Với **Required reviewers** trên `production-db`, job `migrate` dừng chờ bạn. Thứ
 tự trên màn hình Actions:

@@ -1932,3 +1932,22 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - Smoke check sau deploy chỉ là `curl` vào `/`, chứng minh app sống chứ không chứng minh UI đúng. Muốn chặt hơn thì cần một suite e2e chạy trên Supabase staging — chưa có project staging nào.
 - Nhánh PKCE thành công của `/auth/callback` vẫn không có test ở đâu cả; deploy cũng không đổi được điều đó.
 - Chưa cấu hình preview deploy cho PR (bạn yêu cầu chỉ deploy `main`). Nếu sau cần, thêm job dùng `--environment=preview` và một Supabase project riêng cho preview.
+
+## 260911-1711 — docs: cách lấy VERCEL_TOKEN
+
+### Tôi cần làm
+
+- [ ] Lúc tạo token thật, chọn **Scope** đúng team sở hữu project SAA. Token lệch scope vẫn hợp lệ nhưng `deploy` đỏ ở step *Pull Vercel environment* — không phải lỗi cấu hình workflow.
+- [ ] Ghi ngày hết hạn token vào file này sau khi tạo, để còn biết đường xoay vòng trước khi CD đỏ giữa lúc cần deploy.
+
+### Decisions
+
+- Tách `§ 5.3 — Lấy VERCEL_TOKEN` thành mục riêng thay vì một ô trong bảng 5.2. Ba ô của form (Name/Scope/Expiration) đều có cái bẫy riêng, nhét vào một ô bảng thì không nói được cái nào.
+- **Không ghi cứng các lựa chọn trong dropdown Expiration.** Vercel đổi danh sách này theo thời gian; doc ghi nguyên tắc chọn, không ghi con số, để khỏi tự tạo drift.
+- Ship bỏ qua temper/lint/license/journal/docs-update: diff là markdown thuần, không đụng `src/`, `package.json` hay dependency. Cổng duy nhất một file `.md` có thể làm đỏ CI là `pnpm format:check` — đã chạy, xanh. Không claim "tempered".
+- Không bump version: `0.11.0` giữ nguyên. Convention repo bump khi có feature hoặc đổi schema; sửa doc thì không.
+- Không tạo issue mới: PR #30 đã mở sẵn cho branch này và là đường dẫn truy vết đủ dùng. Repo không có issue nào đang mở.
+
+### Nợ lại
+
+- (không có)
