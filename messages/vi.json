@@ -242,12 +242,12 @@
         "quote": "Trích dẫn"
       },
       "hashtagLabel": "Hashtag",
-      "hashtagAdd": "+ Hashtag",
+      "hashtagAdd": "Hashtag",
       "limitNote": "Tối đa 5",
       "hashtagPickerLabel": "Chọn hashtag",
       "hashtagRemove": "Xóa hashtag {tag}",
       "imageLabel": "Image",
-      "imageAdd": "+ Image",
+      "imageAdd": "Image",
       "imageRemove": "Xóa ảnh {index}",
       "anonymousLabel": "Gửi lời cám ơn và ghi nhận ẩn danh",
       "anonymousNameLabel": "Tên ẩn danh",
@@ -302,7 +302,14 @@
       "copyLink": "Copy Link",
       "copiedToast": "Link copied — ready to share!",
       "heartLabel": "{count} lượt tim",
-      "signInToHeart": "Đăng nhập để thả tim"
+      "signInToHeart": "Đăng nhập để thả tim",
+      "personHover": {
+        "unitLabel": "Tên đơn vị:",
+        "receivedLabel": "Số Kudos nhận được:",
+        "sentLabel": "Số Kudos đã gửi:",
+        "sendKudo": "Gửi KUDO",
+        "unknownName": "Sunner"
+      }
     },
     "sidebar": {
       "received": "Số Kudos bạn nhận được:",

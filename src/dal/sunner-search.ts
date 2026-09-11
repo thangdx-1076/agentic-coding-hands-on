@@ -12,9 +12,13 @@ import "server-only";
  * `public.users` is FORCE RLS own-row only (`0001_users_table.sql:55-59`),
  * so a search across every Sunner cannot query it directly — `profile_cards`
  * is the one view that exposes a cross-Sunner, `authenticated`-only read,
- * and exposes exactly `(id, full_name, avatar_url)`. Never widen the
- * `select()` below to pull `department`/`email`/`role` (SEC_004 — the
- * view's own doc-comment forbids it).
+ * and exposes exactly `(id, full_name, avatar_url, department)`.
+ *
+ * `department` joined that list in migration `0020`, for the dropdown's
+ * third line; that migration's header sets out why it is not the widening
+ * SEC_004 bars (it is already public to `anon` via `kudos_cards`, on the
+ * public /kudos board). Never widen the `select()` below any further —
+ * `email`/`role`/`locale` and the timestamps remain off limits.
  *
  * The Supabase client is always INJECTED by the caller (never created
  * here), matching every other DAL read in this codebase. Fails open to
@@ -28,12 +32,17 @@ export type SunnerSuggestion = {
   id: string;
   fullName: string | null;
   avatarUrl: string | null;
+  /** Rendered as the third line of each recipient-dropdown row. Nullable:
+   * `users.department` is only backfilled for seeded Sunners, so a real
+   * sign-in has none until someone sets it. */
+  department: string | null;
 };
 
 type SunnerRow = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  department: string | null;
 };
 
 type SunnerSearchResult = { data: SunnerRow[] | null; error: unknown };
@@ -45,9 +54,10 @@ type SunnerSearchResult = { data: SunnerRow[] | null; error: unknown };
  * builder parses the selected columns at the TYPE level against this
  * literal to infer the row shape.
  */
-type SunnerSearchColumns = "id,full_name,avatar_url";
+type SunnerSearchColumns = "id,full_name,avatar_url,department";
 
-const SUNNER_SEARCH_COLUMNS: SunnerSearchColumns = "id,full_name,avatar_url";
+const SUNNER_SEARCH_COLUMNS: SunnerSearchColumns =
+  "id,full_name,avatar_url,department";
 
 const DEFAULT_LIMIT = 8;
 
@@ -130,6 +140,7 @@ export async function searchSunners(
       id: row.id,
       fullName: row.full_name,
       avatarUrl: row.avatar_url,
+      department: row.department,
     }));
   } catch {
     return [];

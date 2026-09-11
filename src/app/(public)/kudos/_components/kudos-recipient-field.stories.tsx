@@ -14,16 +14,19 @@ const SEEDED_OPTIONS = [
     id: "a0000000-0000-4000-8000-000000000001",
     fullName: "Đỗ hoàng Hiệp",
     avatarUrl: null,
+    department: "CEVC1",
   },
   {
     id: "a0000000-0000-4000-8000-000000000002",
     fullName: "Dương thúy An",
     avatarUrl: null,
+    department: "CEVC1",
   },
   {
     id: "a0000000-0000-4000-8000-000000000007",
     fullName: "Nguyễn Hoàng Linh",
     avatarUrl: null,
+    department: "CEVC1",
   },
 ];
 

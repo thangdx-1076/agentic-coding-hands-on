@@ -19,7 +19,7 @@ vi.mock("../_actions/search-sunners", () => ({
 const mockedSearch = vi.mocked(searchSunners);
 
 function makeSunner(id: string): SunnerSuggestion {
-  return { id, fullName: `Sunner ${id}`, avatarUrl: null };
+  return { id, fullName: `Sunner ${id}`, avatarUrl: null, department: "CEVC1" };
 }
 
 function createDeferred<T>() {
@@ -371,7 +371,12 @@ describe("useRecipientSearch", () => {
     );
 
     act(() => {
-      result.current.select({ id: "1", fullName: null, avatarUrl: null });
+      result.current.select({
+        id: "1",
+        fullName: null,
+        avatarUrl: null,
+        department: "CEVC1",
+      });
     });
 
     expect(result.current.query).toBe("");

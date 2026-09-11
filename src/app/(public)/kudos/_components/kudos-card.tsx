@@ -71,13 +71,23 @@ export function KudosCard({
     >
       {/* mm:Frame 482/Info user — sender, mũi tên, receiver */}
       <div className="flex w-full flex-row items-start justify-between gap-6">
-        <KudosCardPerson person={card.sender} personRole="sender" />
+        <KudosCardPerson
+          person={card.sender}
+          personRole="sender"
+          heroTiers={copy.heroTiers}
+          personHover={copy.personHover}
+        />
         {/* mm:B.3.4_Icon mũi tên / C.3.2_Icon sent (MM_MEDIA_Send, 32x32) */}
         <IconSend
           aria-hidden="true"
           className="mt-4 h-8 w-8 shrink-0 text-login-button-text"
         />
-        <KudosCardPerson person={card.receiver} personRole="receiver" />
+        <KudosCardPerson
+          person={card.receiver}
+          personRole="receiver"
+          heroTiers={copy.heroTiers}
+          personHover={copy.personHover}
+        />
       </div>
 
       <div className="h-px w-full bg-login-button" />

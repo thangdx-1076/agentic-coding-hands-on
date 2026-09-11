@@ -138,33 +138,70 @@ test.describe("Homepage SAA", () => {
     test("[TC ID-24, ID-39] Countdown decreases by 1 minute after 1 minute passes", async ({
       page,
     }) => {
-      // Install clock BEFORE goto with fixed time 1h 30m before EVENT_START_AT (2099-12-31T18:30:00+07:00)
-      // 17:00 → 18:30 = 1 hour 30 minutes remaining = 01:30:00
-      // Countdown renders as 01 hours, 29 minutes remaining (within current hour)
-      await page.clock.install({ time: new Date("2099-12-31T17:00:00+07:00") });
-
+      // Reads the countdown's OWN starting value instead of hardcoding one.
+      // The previous version pinned the clock to 2099-12-31 on the assumption
+      // that `EVENT_START_AT` was 2099-12-31T18:30:00+07:00; the env now
+      // holds a real 2026 date, so that clock landed AFTER the event and the
+      // countdown correctly showed 00:00 — the test failed on a stale
+      // assumption, not a regression. Derived expectations keep it honest
+      // whatever date the environment carries.
+      await page.clock.install({ time: new Date() });
       await page.goto("/");
 
-      // Use auto-retrying expectations (toHaveText) which wait for hydration
       const minutesTile = page
         .locator("text=MINUTES")
         .locator("..")
-        .getByText(/^\d{2,}$/);
-
-      // Verify initial state: 29 minutes remaining
-      await expect(minutesTile.first()).toHaveText("29");
+        .getByText(/^\d{2,}$/)
+        .first();
       const hoursTile = page
         .locator("text=HOURS")
         .locator("..")
-        .getByText(/^\d{2,}$/);
-      await expect(hoursTile.first()).toHaveText("01");
+        .getByText(/^\d{2,}$/)
+        .first();
 
-      // Fast-forward 1 minute
+      await expect(minutesTile).toHaveText(/^\d{2}$/);
+      const before = Number(await minutesTile.textContent());
+      const hoursBefore = Number(await hoursTile.textContent());
+
+      // Precondition: this asserts a TICK, so the countdown has to be
+      // running. A past `EVENT_START_AT` pins every tile at 00.
+      expect(
+        before + hoursBefore,
+        "EVENT_START_AT must be in the future for this test to mean anything",
+      ).toBeGreaterThan(0);
+
       await page.clock.fastForward("00:01:00");
 
-      // Verify minutes decreased to 28 (and hours still 01)
-      await expect(minutesTile.first()).toHaveText("28");
-      await expect(hoursTile.first()).toHaveText("01");
+      // One minute less, wrapping 00 -> 59 at the hour boundary.
+      const expected = String((before + 59) % 60).padStart(2, "0");
+      await expect(minutesTile).toHaveText(expected);
+    });
+
+    test("[TC ID-24b] Digit boxes stay inside their own tile, even past 99 days", async ({
+      page,
+    }) => {
+      // The design frame only ever draws a 2-digit day count, so the tile was
+      // pinned to its 116px width. `days` is deliberately uncapped, so at 100+
+      // days the third box overflowed into the HOURS tile and the row read as
+      // "10 60 7" instead of "106 07 53". This asserts the containment itself,
+      // so it holds for any day count and any EVENT_START_AT.
+      await page.goto("/");
+
+      const tiles = page.locator("[data-testid='tile']");
+      await expect(tiles).toHaveCount(3);
+
+      for (let i = 0; i < 3; i++) {
+        const tile = tiles.nth(i);
+        const tileBox = await tile.boundingBox();
+        const digits = tile.locator("[data-testid='tile-digit']");
+        const lastBox = await digits.last().boundingBox();
+
+        expect(tileBox).not.toBeNull();
+        expect(lastBox).not.toBeNull();
+        const tileRight = (tileBox?.x ?? 0) + (tileBox?.width ?? 0);
+        const digitsRight = (lastBox?.x ?? 0) + (lastBox?.width ?? 0);
+        expect(digitsRight).toBeLessThanOrEqual(tileRight + 1);
+      }
     });
 
     test("[TC ID-14] Event information text visible", async ({ page }) => {

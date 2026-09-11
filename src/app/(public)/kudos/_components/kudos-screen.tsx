@@ -19,6 +19,7 @@ import { KudosSidebar } from "./kudos-sidebar";
 import type { KudosLeaderboardItemData } from "./kudos-leaderboard";
 import type { KudosStats } from "./kudos-stat-list";
 
+import type { SunnerSuggestion } from "@/dal/sunner-search";
 import type { KudosCard as KudosCardModel } from "@/dal/kudos";
 import { LOCALE_LABEL, type AppLocale } from "@/lib/i18n/locale";
 import { montserrat, montserratAlternates } from "@/styles/fonts";
@@ -62,6 +63,9 @@ export type KudosScreenProps = {
   compose: {
     isSignedIn: boolean;
     hashtagVocabulary: string[];
+    /** Set only when the reader arrived from a profile's write-Kudo bar
+     * (`/kudos?compose=<id>`) — the dialog opens with them selected. */
+    initialRecipient?: SunnerSuggestion | null;
   };
 };
 
@@ -120,6 +124,7 @@ export function KudosScreen({
           copy={copy}
           isSignedIn={compose.isSignedIn}
           hashtagVocabulary={compose.hashtagVocabulary}
+          initialRecipient={compose.initialRecipient ?? null}
         />
 
         <div className="flex w-full flex-col gap-6">

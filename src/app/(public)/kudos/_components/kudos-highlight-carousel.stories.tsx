@@ -27,6 +27,8 @@ const baseCard: KudosCardModel = {
     avatarUrl: "/kudos/avatar-sender.png",
     department: "CEVC10",
     kudosReceived: 15,
+    kudosSent: 15,
+    distinctSenders: 15,
   },
   receiver: {
     id: "receiver-1",
@@ -34,6 +36,8 @@ const baseCard: KudosCardModel = {
     avatarUrl: "/kudos/avatar-receiver.png",
     department: "CEVC10",
     kudosReceived: 60,
+    kudosSent: 60,
+    distinctSenders: 60,
   },
 };
 

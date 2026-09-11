@@ -160,6 +160,8 @@ function toCard(row: CardRow): KudosCard {
       avatarUrl: row.sender_avatar_url,
       department: row.sender_department,
       kudosReceived: row.sender_kudos_received,
+      kudosSent: row.sender_kudos_sent,
+      distinctSenders: row.sender_distinct_senders,
     },
     receiver: {
       id: row.receiver_id,
@@ -167,6 +169,8 @@ function toCard(row: CardRow): KudosCard {
       avatarUrl: row.receiver_avatar_url,
       department: row.receiver_department,
       kudosReceived: row.receiver_kudos_received,
+      kudosSent: row.receiver_kudos_sent,
+      distinctSenders: row.receiver_distinct_senders,
     },
     isOwn: row.is_own,
   };

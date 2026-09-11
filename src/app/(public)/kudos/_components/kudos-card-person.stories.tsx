@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { defaultKudosCopy } from "../_shared/kudos-copy";
+
 import { KudosCardPerson } from "./kudos-card-person";
 
 import type { KudosPerson } from "@/dal/kudos";
@@ -17,11 +19,15 @@ const senderNewHero: KudosPerson = {
   avatarUrl: "/kudos/avatar-sender.png",
   department: "CEVC10",
   kudosReceived: 5,
+  kudosSent: 5,
+  distinctSenders: 5,
 };
 
 const senderRisingHero: KudosPerson = {
   ...senderNewHero,
   kudosReceived: 15,
+  kudosSent: 15,
+  distinctSenders: 15,
 };
 
 const receiverSuperHero: KudosPerson = {
@@ -30,16 +36,24 @@ const receiverSuperHero: KudosPerson = {
   avatarUrl: "/kudos/avatar-receiver.png",
   department: "CEVC10",
   kudosReceived: 25,
+  kudosSent: 25,
+  distinctSenders: 25,
 };
 
 const receiverLegendHero: KudosPerson = {
   ...receiverSuperHero,
   kudosReceived: 60,
+  kudosSent: 60,
+  distinctSenders: 60,
 };
 
 const meta = {
   title: "Kudos/KudosCardPerson",
   component: KudosCardPerson,
+  args: {
+    heroTiers: defaultKudosCopy.heroTiers,
+    personHover: defaultKudosCopy.personHover,
+  },
 } satisfies Meta<typeof KudosCardPerson>;
 
 export default meta;
@@ -47,7 +61,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const NewHero: Story = {
-  args: { person: senderNewHero, personRole: "sender" },
+  args: {
+    heroTiers: defaultKudosCopy.heroTiers,
+    person: senderNewHero,
+    personRole: "sender",
+  },
 };
 
 export const RisingHero: Story = {
@@ -83,6 +101,8 @@ export const Anonymous: Story = {
       avatarUrl: null,
       department: null,
       kudosReceived: 0,
+      kudosSent: 0,
+      distinctSenders: 0,
     },
     personRole: "sender",
   },

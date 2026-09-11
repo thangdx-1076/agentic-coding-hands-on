@@ -37,11 +37,15 @@ type Row = {
   sender_avatar_url: string | null;
   sender_department: string | null;
   sender_kudos_received: number;
+  sender_kudos_sent: number;
+  sender_distinct_senders: number;
   receiver_id: string;
   receiver_full_name: string | null;
   receiver_avatar_url: string | null;
   receiver_department: string | null;
   receiver_kudos_received: number;
+  receiver_kudos_sent: number;
+  receiver_distinct_senders: number;
 };
 
 type StubResult = { data: Row[] | null; error: unknown };
@@ -159,11 +163,15 @@ const HIGHLIGHT_ROW: Row = {
   sender_avatar_url: "https://example.com/a.png",
   sender_department: "CEVC10",
   sender_kudos_received: 3,
+  sender_kudos_sent: 3,
+  sender_distinct_senders: 3,
   receiver_id: "user-b",
   receiver_full_name: "Trần Thị B",
   receiver_avatar_url: "https://example.com/b.png",
   receiver_department: "CEVC20",
   receiver_kudos_received: 21,
+  receiver_kudos_sent: 21,
+  receiver_distinct_senders: 21,
 };
 
 const EMPTY_BOARD: KudosBoard = {
@@ -204,6 +212,8 @@ describe("getKudosBoard", () => {
           avatarUrl: "https://example.com/a.png",
           department: "CEVC10",
           kudosReceived: 3,
+          kudosSent: 3,
+          distinctSenders: 3,
         },
         receiver: {
           id: "user-b",
@@ -211,6 +221,8 @@ describe("getKudosBoard", () => {
           avatarUrl: "https://example.com/b.png",
           department: "CEVC20",
           kudosReceived: 21,
+          kudosSent: 21,
+          distinctSenders: 21,
         },
       },
     ]);
@@ -304,6 +316,8 @@ describe("getKudosBoard", () => {
       sender_avatar_url: null,
       sender_department: null,
       sender_kudos_received: 0,
+      sender_kudos_sent: 0,
+      sender_distinct_senders: 0,
     };
     const { client } = stubClient([OK([anonymousRow]), OK([])]);
 
@@ -315,6 +329,8 @@ describe("getKudosBoard", () => {
       avatarUrl: null,
       department: null,
       kudosReceived: 0,
+      kudosSent: 0,
+      distinctSenders: 0,
     });
     // Receiver stays a real identity — the view only masks the sender side.
     expect(board.highlight[0].receiver.id).toBe("user-b");

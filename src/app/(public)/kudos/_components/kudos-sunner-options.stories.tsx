@@ -1,30 +1,47 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useRef } from "react";
 import { fn } from "storybook/test";
 
 import { defaultKudosComposeCopy } from "../_shared/kudos-compose-copy";
 
+import type { KudosSunnerOptionsProps } from "./kudos-sunner-options";
 import { KudosSunnerOptions } from "./kudos-sunner-options";
 
 const copy = defaultKudosComposeCopy;
 
+/** The list places itself as a `fixed` popover against a real anchor, so a
+ * story has to supply one — this stands in for the recipient combobox box
+ * the field passes in the app. */
+function OptionsWithAnchor(
+  args: Omit<KudosSunnerOptionsProps, "anchorRef">,
+): React.ReactElement {
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  return (
+    <div className="p-6">
+      <div
+        ref={anchorRef}
+        className="flex w-96 items-center rounded-lg border border-[#998C5F] bg-white px-6 py-4 font-montserrat text-base font-bold text-[#999]"
+      >
+        {copy.recipientPlaceholder}
+      </div>
+      <KudosSunnerOptions {...args} anchorRef={anchorRef} />
+    </div>
+  );
+}
+
 const meta = {
   title: "Kudos/KudosSunnerOptions",
   component: KudosSunnerOptions,
+  render: (args) => <OptionsWithAnchor {...args} />,
   parameters: { backgrounds: { default: "light" } },
-  // `absolute top-full left-0` needs a positioned ancestor to preview
-  // sensibly — the real ancestor is phase-09's recipient input wrapper.
-  decorators: [
-    (Story) => (
-      <div className="relative h-16 w-96">
-        <Story />
-      </div>
-    ),
-  ],
   args: {
     label: copy.recipientLabel,
     loadingLabel: copy.recipientLoading,
     emptyLabel: copy.recipientEmpty,
     onSelect: fn(),
+    // Replaced by `OptionsWithAnchor`'s own ref at render time; present only
+    // so the args satisfy the component's required props.
+    anchorRef: { current: null },
   },
 } satisfies Meta<typeof KudosSunnerOptions>;
 
@@ -36,9 +53,19 @@ type Story = StoryObj<typeof meta>;
 export const WithResults: Story = {
   args: {
     options: [
-      { id: "1", fullName: "Nguyễn Văn A", avatarUrl: null },
-      { id: "2", fullName: "Nguyễn Thị B", avatarUrl: null },
-      { id: "3", fullName: "Trần Văn C", avatarUrl: null },
+      {
+        id: "1",
+        fullName: "Nguyễn Văn A",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
+      {
+        id: "2",
+        fullName: "Nguyễn Thị B",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
+      { id: "3", fullName: "Trần Văn C", avatarUrl: null, department: "CEVC1" },
     ],
   },
 };
@@ -67,8 +94,18 @@ export const MentionIds: Story = {
     listboxTestId: "kudos-mention-options",
     optionTestId: "kudos-mention-option",
     options: [
-      { id: "1", fullName: "Nguyễn Văn A", avatarUrl: null },
-      { id: "2", fullName: "Nguyễn Thị B", avatarUrl: null },
+      {
+        id: "1",
+        fullName: "Nguyễn Văn A",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
+      {
+        id: "2",
+        fullName: "Nguyễn Thị B",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
     ],
   },
 };

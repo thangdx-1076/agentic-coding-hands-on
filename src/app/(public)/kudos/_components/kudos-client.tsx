@@ -16,12 +16,14 @@ import {
   deriveKudosCardState,
   type KudosCardState,
 } from "../_utils/kudos-card-state";
+import { KudosComposeProvider } from "../_contexts/kudos-compose-context";
 
 import { KudosScreen } from "./kudos-screen";
 import type { KudosHighlightCarouselItem } from "./kudos-highlight-carousel";
 import type { KudosLeaderboardItemData } from "./kudos-leaderboard";
 import type { KudosStats } from "./kudos-stat-list";
 
+import type { ProfileCard } from "@/dal/profile-cards";
 import type { KudosBoard, KudosCard as KudosCardModel } from "@/dal/kudos";
 import { ROUTES } from "@/constants/routes";
 import type { AppLocale } from "@/lib/i18n/locale";
@@ -46,6 +48,9 @@ export type KudosClientProps = {
     hashtag?: string;
     department?: string;
   }) => Promise<FeedResult>;
+  /** Resolved server-side from `?compose=<id>`; `null` when the param is
+   * absent, the id matches nobody, or the visitor is signed out. */
+  composeRecipient: ProfileCard | null;
 };
 
 /**
@@ -73,6 +78,7 @@ export function KudosClient({
   logoutAction,
   toggleKudoHeartAction,
   loadMoreKudosAction,
+  composeRecipient,
 }: KudosClientProps) {
   const { handleSelectLocale } = useSelectLocale();
   const { toastMessage, showToast } = useKudosToast();
@@ -153,47 +159,59 @@ export function KudosClient({
   );
 
   return (
-    <KudosScreen
-      copy={copy}
-      viewer={viewer}
-      locale={locale}
-      onSelectLocale={handleSelectLocale}
-      logoutAction={logoutAction}
-      highlightItems={highlightItems}
-      hashtagFilter={hashtagFilter}
-      departmentFilter={departmentFilter}
-      spotlightTotal={board.spotlightTotal}
-      spotlightNames={board.spotlightNames}
-      spotlightLatestKudo={
-        latestFeedCard?.receiver.fullName
-          ? {
-              receiverName: latestFeedCard.receiver.fullName,
-              createdAt: latestFeedCard.createdAt,
-            }
-          : null
-      }
-      // Remounts `KudosFeed` on filter change — `useInfiniteFeed` seeds
-      // `items` from `initialPage` only on mount (C14/C15). Also remounts
-      // when the server's newest feed item changes: `createKudo`'s
-      // `revalidatePath` refreshes `board`/this component's props, but
-      // `useInfiniteFeed`'s own `items` state (F007, not remounted by a prop
-      // change alone) would otherwise keep showing the pre-submit top card
-      // (C24-C26). Any client-appended page gets dropped in that same
-      // instant — an acceptable trade-off right after the viewer's own
-      // submit, matching the filter-change remount's identical trade-off.
-      feedKey={`${hashtag ?? ""}::${department ?? ""}::${latestFeedCard?.id ?? "empty"}`}
-      feedInitialPage={board.feed}
-      feedLoadMore={feedLoadMore}
-      getFeedCardState={getCardState}
-      onToggleHeart={toggleHeart}
-      onSelectHashtag={selectHashtag}
-      onCopyLink={handleCopyLink}
-      {...buildKudosSidebarProps(stats, giftRecipients)}
-      toastMessage={toastMessage}
-      compose={{
-        isSignedIn: viewerId !== null,
-        hashtagVocabulary: board.filters.hashtags,
-      }}
-    />
+    // Spans the whole screen because the compose dialog (inside the
+    // key-visual band) and the cards that open it (carousel, feed) are
+    // siblings — see `kudos-compose-context.tsx`.
+    <KudosComposeProvider>
+      <KudosScreen
+        copy={copy}
+        viewer={viewer}
+        locale={locale}
+        onSelectLocale={handleSelectLocale}
+        logoutAction={logoutAction}
+        highlightItems={highlightItems}
+        hashtagFilter={hashtagFilter}
+        departmentFilter={departmentFilter}
+        spotlightTotal={board.spotlightTotal}
+        spotlightNames={board.spotlightNames}
+        spotlightLatestKudo={
+          latestFeedCard?.receiver.fullName
+            ? {
+                receiverName: latestFeedCard.receiver.fullName,
+                createdAt: latestFeedCard.createdAt,
+              }
+            : null
+        }
+        // Remounts `KudosFeed` on filter change — `useInfiniteFeed` seeds
+        // `items` from `initialPage` only on mount (C14/C15). Also remounts
+        // when the server's newest feed item changes: `createKudo`'s
+        // `revalidatePath` refreshes `board`/this component's props, but
+        // `useInfiniteFeed`'s own `items` state (F007, not remounted by a prop
+        // change alone) would otherwise keep showing the pre-submit top card
+        // (C24-C26). Any client-appended page gets dropped in that same
+        // instant — an acceptable trade-off right after the viewer's own
+        // submit, matching the filter-change remount's identical trade-off.
+        feedKey={`${hashtag ?? ""}::${department ?? ""}::${latestFeedCard?.id ?? "empty"}`}
+        feedInitialPage={board.feed}
+        feedLoadMore={feedLoadMore}
+        getFeedCardState={getCardState}
+        onToggleHeart={toggleHeart}
+        onSelectHashtag={selectHashtag}
+        onCopyLink={handleCopyLink}
+        {...buildKudosSidebarProps(stats, giftRecipients)}
+        toastMessage={toastMessage}
+        compose={{
+          isSignedIn: viewerId !== null,
+          hashtagVocabulary: board.filters.hashtags,
+          // `profile_cards` does not expose `department` through
+          // `getProfileCard`'s column list, and the compose field never
+          // renders one for the chosen recipient — `null` is the honest
+          // value, not a placeholder.
+          initialRecipient: composeRecipient
+            ? { ...composeRecipient, department: null }
+            : null,
+        }}
+      />
+    </KudosComposeProvider>
   );
 }

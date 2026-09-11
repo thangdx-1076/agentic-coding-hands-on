@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useRef } from "react";
 import { fn } from "storybook/test";
 
 import { defaultKudosComposeCopy } from "../_shared/kudos-compose-copy";
 
+import type { KudosHashtagPickerProps } from "./kudos-hashtag-picker";
 import { KudosHashtagPicker } from "./kudos-hashtag-picker";
 
 const copy = defaultKudosComposeCopy;
@@ -22,9 +24,31 @@ const SUGGESTIONS = [
 ];
 const SELECTED = SUGGESTIONS.slice(0, 3);
 
+/** The picker places itself as a `fixed` popover against a real anchor
+ * element, so a story has to give it one — rendered here as a stand-in for
+ * the "+ Hashtag" button the compose field supplies in the app. */
+function PickerWithAnchor(
+  args: Omit<KudosHashtagPickerProps, "anchorRef">,
+): React.ReactElement {
+  const anchorRef = useRef<HTMLButtonElement | null>(null);
+  return (
+    <div className="p-6">
+      <button
+        ref={anchorRef}
+        type="button"
+        className="rounded-lg border border-[#998C5F] bg-white px-2 py-1 font-montserrat text-[11px] font-bold text-[#999]"
+      >
+        + Hashtag
+      </button>
+      <KudosHashtagPicker {...args} anchorRef={anchorRef} />
+    </div>
+  );
+}
+
 const meta = {
   title: "Kudos/KudosHashtagPicker",
   component: KudosHashtagPicker,
+  render: (args) => <PickerWithAnchor {...args} />,
   parameters: { backgrounds: { default: "dark" } },
   args: {
     suggestions: SUGGESTIONS,
@@ -35,6 +59,9 @@ const meta = {
     onAdd: fn(),
     onRemove: fn(),
     onClose: fn(),
+    // Replaced by `PickerWithAnchor`'s own ref at render time; present only
+    // so the args satisfy the component's required props.
+    anchorRef: { current: null },
   },
 } satisfies Meta<typeof KudosHashtagPicker>;
 

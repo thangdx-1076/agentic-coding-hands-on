@@ -17,6 +17,14 @@ export type KudosPerson = {
   avatarUrl: string | null;
   department: string | null;
   kudosReceived: number;
+  /** Kudos this Sunner has SENT. 0 for the sender of an anonymous kudo,
+   * masked by `kudos_cards` (0021) for the same de-anonymisation reason
+   * `kudosReceived` is. */
+  kudosSent: number;
+  /** How many DIFFERENT Sunners have sent this person a kudo — what the
+   * Hero badge ranks on (`heroTierIndex`). 0 for the sender of an anonymous
+   * kudo, masked by `kudos_cards` (0022). */
+  distinctSenders: number;
 };
 
 export type KudosCard = {

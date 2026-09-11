@@ -17,7 +17,7 @@ vi.mock("../_actions/search-sunners", () => ({
 const mockedSearch = vi.mocked(searchSunners);
 
 function makeSunner(id: string): SunnerSuggestion {
-  return { id, fullName: `Sunner ${id}`, avatarUrl: null };
+  return { id, fullName: `Sunner ${id}`, avatarUrl: null, department: "CEVC1" };
 }
 
 function makeTextarea(

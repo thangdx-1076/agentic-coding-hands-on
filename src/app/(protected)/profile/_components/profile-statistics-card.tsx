@@ -1,10 +1,16 @@
+import Link from "next/link";
 import { Fragment } from "react";
 
 import { STATISTICS_ROWS, type ProfileCopy } from "../_shared/profile-copy";
 
+import { ROUTES } from "@/constants/routes";
+
 export type ProfileStatisticsCardProps = {
   copy: ProfileCopy["stats"];
   isSelf: boolean;
+  /** The Sunner this profile belongs to. Only read when `!isSelf`, to aim
+   * the write-Kudo bar at them. */
+  profileId: string;
 };
 
 const PANEL_CLASS =
@@ -18,19 +24,32 @@ const PRIMARY_BUTTON_CLASS =
  * disabled "Viết Kudo" bar that REPLACES the whole slot. Mutually
  * exclusive, never both (technical-spec.md § 3.3, C8) — this is the slot
  * the write-Kudo bar replaces, confirmed via MoMorph, not a co-render.
- * Neither control has a click handler (no modal, no API — FUN_006/007
- * deferred to F007+).
+ *
+ * The write-Kudo bar WORKS now. It was a `disabled` button while
+ * FUN_006/007 were "deferred to F007+" — those shipped, so the deferral
+ * expired. It is a link rather than a button because the compose dialog is
+ * not on this screen: it belongs to `/kudos`, which opens it from
+ * `?compose=<id>` with this Sunner already selected. Sending the reader to
+ * the one screen that owns the dialog beats mounting a second copy of that
+ * whole state machine here.
+ *
+ * "Mở Secret Box" below stays disabled — that one really is still deferred.
  */
 export function ProfileStatisticsCard({
   copy,
   isSelf,
+  profileId,
 }: ProfileStatisticsCardProps) {
   if (!isSelf) {
     return (
       <div className={PANEL_CLASS}>
-        <button type="button" disabled className={PRIMARY_BUTTON_CLASS}>
+        <Link
+          href={`${ROUTES.KUDOS}?compose=${encodeURIComponent(profileId)}`}
+          data-testid="profile-write-kudo"
+          className={PRIMARY_BUTTON_CLASS}
+        >
           {copy.writeKudos}
-        </button>
+        </Link>
       </div>
     );
   }

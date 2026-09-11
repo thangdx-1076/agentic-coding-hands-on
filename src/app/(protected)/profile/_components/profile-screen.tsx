@@ -77,7 +77,11 @@ export function ProfileScreen({
           {/* mm:362:5064 */}
           <BadgeCollection heading={badgeHeading} />
           {/* mm:362:5073 */}
-          <ProfileStatisticsCard copy={copy.stats} isSelf={isSelf} />
+          <ProfileStatisticsCard
+            copy={copy.stats}
+            isSelf={isSelf}
+            profileId={profile.id}
+          />
 
           {/* mm:362:5084 */}
           <section

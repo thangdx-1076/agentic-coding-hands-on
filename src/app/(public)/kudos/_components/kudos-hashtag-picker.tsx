@@ -1,11 +1,37 @@
 "use client";
 
-import type { KeyboardEvent, SVGProps } from "react";
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent,
+  type RefObject,
+  type SVGProps,
+} from "react";
+
+import { useAnchoredPopover } from "../_hooks/use-anchored-popover";
+
+/** The whole Hashtag field (`kudos-hashtag-field.tsx`) — chips and their
+ * remove buttons, the "+ Hashtag" trigger, the limit note, and this panel.
+ * A pointer landing anywhere in it does NOT count as "outside".
+ *
+ * Not just the trigger, which is the narrower boundary you would reach for
+ * first: the chip remove buttons live in this wrapper but outside the panel,
+ * so closing on their `pointerdown` re-rendered the field before the press
+ * became a `click` and the removal was silently dropped (C13). Excluding the
+ * trigger matters too — it unconditionally re-opens the picker, so closing
+ * first would tear the panel down and rebuild it, losing the typed query, on
+ * a click meant to be a no-op. */
+const FIELD_SELECTOR = "[data-testid=kudos-hashtag-field]";
+
+/** Panel width `1002:13102` draws, as a number so placement can keep the
+ * panel inside the viewport's right edge. */
+const PANEL_WIDTH = 318;
 
 export type KudosHashtagPickerProps = {
-  /** Vocabulary the caller already computed (`/kudos` page's
-   * `filters.hashtags`, clarifications.md § "Hashtag là free-text..."). Not
-   * queried or filtered here — this list is rendered as-is. */
+  /** Vocabulary the caller already computed — `buildHashtagSuggestions`
+   * (`_utils`): the Sun* master list merged with `/kudos`'s own
+   * `filters.hashtags` (clarifications.md § "Hashtag là free-text..."). Not
+   * queried, deduped or filtered here — this list is rendered as-is. */
   suggestions: string[];
   /** Currently-added tags — marks which suggestion rows render the "đã
    * chọn" (selected) state. */
@@ -21,6 +47,9 @@ export type KudosHashtagPickerProps = {
   onAdd: (tag: string) => void;
   onRemove: (tag: string) => void;
   onClose: () => void;
+  /** The "+ Hashtag" button this panel hangs under. A ref, not a DOM query:
+   * the panel must anchor to ITS OWN field's trigger. */
+  anchorRef: RefObject<HTMLButtonElement | null>;
   /** Accessible name for both the free-text input and the listbox
    * (`copy.hashtagPickerLabel`). */
   label: string;
@@ -62,11 +91,18 @@ export type KudosHashtagPickerProps = {
  * hook owns its OWN internal `open` boolean with no controlled-prop escape
  * hatch, and `pickerOpen`/`query` here are owned by phase-07's hook (resets
  * alongside every other compose field on dialog close/Escape). Plain
- * handlers, no local component state at all (Todo: this component never
- * calls React's own state hook) — every option row is natively
+ * handlers, no local component state — every option row is natively
  * `Tab`-reachable in DOM order rather than a custom roving-tabindex
  * pointer; Enter in the input commits the typed query, Escape (input or a
  * row) calls `onClose`.
+ *
+ * Placement and dismissal are both this component's own job, NOT the
+ * caller's. It renders as a `fixed` popover anchored to the "+ Hashtag"
+ * button so it floats OVER the form rather than being clipped by (or
+ * stretching) the dialog's scroll container — see the placement effect. A
+ * click outside the field closes it, which is the only mouse-driven way out:
+ * the trigger re-opens rather than toggles, and the design draws no close
+ * button on the panel.
  */
 export function KudosHashtagPicker({
   suggestions,
@@ -77,13 +113,64 @@ export function KudosHashtagPicker({
   onAdd,
   onRemove,
   onClose,
+  anchorRef,
   label,
 }: KudosHashtagPickerProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Floats over the form instead of living in its layout — the shared hook's
+  // own doc explains why `fixed` is the only positioning that survives the
+  // dialog's scroll container. `hashtags.length` is a real dependency, not
+  // padding: adding or removing a chip re-wraps the field's flex row and
+  // MOVES the trigger, often onto the next line, so a panel placed against
+  // the old position ends up detached from its anchor.
+  const position = useAnchoredPopover({
+    anchorRef,
+    panelRef,
+    width: PANEL_WIDTH,
+    deps: [suggestions.length, hashtags.length],
+  });
+
+  // Dismissal. Selecting a tag deliberately leaves the panel open (C13/C14 add
+  // several in a row), so without this listener a mouse-only user had NO way
+  // out at all: the trigger re-opens rather than toggles, and the panel draws
+  // no close control of its own. Escape was the sole escape hatch, and only
+  // while focus still sat inside the picker — click anywhere else first and
+  // Escape reaches the native `<dialog>` instead, whose `cancel` handler
+  // (`use-kudos-compose-dialog.ts:75`) closes the whole compose modal and
+  // resets the draft. `pointerdown`, not `click`, so the panel is gone before
+  // the press can move focus or land on whatever sat underneath it — which is
+  // also why `FIELD_SELECTOR`, not the panel alone, defines "inside".
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (panelRef.current?.contains(target)) return;
+      if (
+        target instanceof Element &&
+        target.closest(FIELD_SELECTOR) !== null
+      ) {
+        return;
+      }
+      onClose();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [onClose]);
+
+  /** Enter in the free-text input commits the typed tag AND dismisses — the
+   * query is consumed and blanked, so nothing is left in the input to act on,
+   * and the panel would otherwise sit over the Image and "gửi ẩn danh"
+   * controls directly beneath the Hashtag field. Clicking a suggestion ROW
+   * deliberately does NOT close: those rows carry a selected/checkmark state
+   * and are meant to be toggled several at a time (C13/C14). */
   function commitQuery() {
     const tag = query.trim();
     if (tag.length > 0) {
       onAdd(tag);
       onQueryChange("");
+      onClose();
     }
   }
 
@@ -120,8 +207,17 @@ export function KudosHashtagPicker({
   return (
     // mm:1002:13102
     <div
+      ref={panelRef}
       data-testid="kudos-hashtag-picker"
-      className="absolute top-full left-0 z-30 mt-1 flex w-[318px] flex-col items-start gap-1 rounded-lg border border-[#998C5F] bg-[#00070C] p-1.5"
+      style={{
+        top: position?.top ?? 0,
+        left: position?.left ?? 0,
+        maxHeight: position?.maxHeight,
+        // First paint happens before `place()` has measured, so the panel is
+        // held invisible for that one frame rather than flashing at 0,0.
+        visibility: position ? "visible" : "hidden",
+      }}
+      className="fixed z-50 flex w-[318px] flex-col items-start gap-1 overflow-hidden rounded-lg border border-[#998C5F] bg-[#00070C] p-1.5 shadow-lg"
     >
       <input
         type="text"
@@ -132,7 +228,17 @@ export function KudosHashtagPicker({
         placeholder={label}
         className="w-full min-w-0 rounded px-2.5 py-2 font-montserrat text-sm font-bold text-white placeholder:text-white/60 focus:outline-none"
       />
-      <div role="listbox" aria-label={label} className="flex w-full flex-col">
+      {/* The list scrolls; the search input above it stays pinned. The design
+          frame draws a fixed 8-row panel, but the real list is the master
+          vocabulary plus every tag past kudos used
+          (`buildHashtagSuggestions`) and so has no upper bound. No fixed cap
+          here — placement measures the room actually available and sets the
+          panel's `maxHeight`, so the list uses whatever is left over. */}
+      <div
+        role="listbox"
+        aria-label={label}
+        className="flex w-full min-h-0 flex-1 flex-col overflow-y-auto"
+      >
         {suggestions.map((tag) => {
           const isSelected = hashtags.includes(tag);
           const disabled = !isSelected && limitReached;

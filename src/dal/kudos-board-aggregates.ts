@@ -56,10 +56,14 @@ export async function getKudosTotal(
   return count;
 }
 
-/** Every distinct hashtag/department value in `public.kudos`, via the
- * `kudos_filter_options` view (migration `0014`) — PostgREST has no
- * `DISTINCT` (BR-017/FR-215). Sorted by `value` (the view read orders by
- * it) so dropdown order stays deterministic across runs. */
+/** Every distinct hashtag CHIP and receiver department in `public.kudos`,
+ * via the `kudos_filter_options` view (migrations `0014`/`0018`) — PostgREST
+ * has no `DISTINCT` (BR-017/FR-215). Sorted by `value` (the view read orders
+ * by it) so dropdown order stays deterministic across runs.
+ *
+ * "Chip", not "hashtag", is exact: element 1 of `kudos.hashtags` is the Danh
+ * hiệu (title), and `0018` excludes it, so a title never shows up as a
+ * filterable tag. */
 export async function getKudosFilterOptions(
   client: KudosAggregatesClient,
 ): Promise<KudosFilterOptions> {

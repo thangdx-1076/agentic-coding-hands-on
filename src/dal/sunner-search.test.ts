@@ -6,6 +6,7 @@ type SunnerRow = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  department: string | null;
 };
 type LimitResult = { data: SunnerRow[] | null; error: unknown };
 
@@ -37,6 +38,7 @@ describe("searchSunners", () => {
             id: "user-1",
             full_name: "Dang Xuan Thang",
             avatar_url: "https://a.png",
+            department: "CEVC1",
           },
         ],
         error: null,
@@ -44,20 +46,32 @@ describe("searchSunners", () => {
     );
 
     await expect(searchSunners(client, "thang")).resolves.toEqual([
-      { id: "user-1", fullName: "Dang Xuan Thang", avatarUrl: "https://a.png" },
+      {
+        id: "user-1",
+        fullName: "Dang Xuan Thang",
+        avatarUrl: "https://a.png",
+        department: "CEVC1",
+      },
     ]);
   });
 
   it("full_name/avatar_url null → giữ nguyên null, không throw", async () => {
     const client = stubClient(() =>
       Promise.resolve({
-        data: [{ id: "user-2", full_name: null, avatar_url: null }],
+        data: [
+          {
+            id: "user-2",
+            full_name: null,
+            avatar_url: null,
+            department: "CEVC1",
+          },
+        ],
         error: null,
       }),
     );
 
     await expect(searchSunners(client, "a")).resolves.toEqual([
-      { id: "user-2", fullName: null, avatarUrl: null },
+      { id: "user-2", fullName: null, avatarUrl: null, department: "CEVC1" },
     ]);
   });
 
@@ -65,16 +79,21 @@ describe("searchSunners", () => {
     const client = stubClient(() =>
       Promise.resolve({
         data: [
-          { id: "u1", full_name: "An", avatar_url: null },
-          { id: "u2", full_name: "Binh", avatar_url: null },
+          { id: "u1", full_name: "An", avatar_url: null, department: "CEVC1" },
+          {
+            id: "u2",
+            full_name: "Binh",
+            avatar_url: null,
+            department: "CEVC1",
+          },
         ],
         error: null,
       }),
     );
 
     await expect(searchSunners(client, "n")).resolves.toEqual([
-      { id: "u1", fullName: "An", avatarUrl: null },
-      { id: "u2", fullName: "Binh", avatarUrl: null },
+      { id: "u1", fullName: "An", avatarUrl: null, department: "CEVC1" },
+      { id: "u2", fullName: "Binh", avatarUrl: null, department: "CEVC1" },
     ]);
   });
 
@@ -140,7 +159,9 @@ describe("searchSunners", () => {
     await searchSunners({ from }, "  thang  ");
 
     expect(from).toHaveBeenCalledExactlyOnceWith("profile_cards");
-    expect(select).toHaveBeenCalledExactlyOnceWith("id,full_name,avatar_url");
+    expect(select).toHaveBeenCalledExactlyOnceWith(
+      "id,full_name,avatar_url,department",
+    );
     expect(ilike).toHaveBeenCalledExactlyOnceWith("full_name", "%thang%");
     expect(order).toHaveBeenCalledExactlyOnceWith("full_name", {
       ascending: true,

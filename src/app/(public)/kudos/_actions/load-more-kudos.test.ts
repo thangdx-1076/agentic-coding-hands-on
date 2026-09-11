@@ -24,6 +24,8 @@ const SENDER: KudosCard["sender"] = {
   avatarUrl: null,
   department: "CEVC10",
   kudosReceived: 12,
+  kudosSent: 12,
+  distinctSenders: 12,
 };
 
 const CARD: KudosCard = {
