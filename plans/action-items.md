@@ -2040,3 +2040,19 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Câu trả lời thẳng cho "đây có phải best practice không": tách migration khỏi deploy thì đúng là best practice; chạy thủ công ở máy thì không. Thứ thực sự làm cho thứ tự hết quan trọng là migration tương thích ngược, và repo chưa có quy ước nào bắt buộc điều đó — mới chỉ ghi trong doc.
+
+## 260911-1805 — Summary của migrate đọc gây hiểu nhầm
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **Đổi tiêu đề Summary từ "Migrations pending on production" sang "Migration plan".** `db push --dry-run` chỉ in danh sách file khi CÓ file pending; không có thì nó in `Remote database is up to date.`. Tiêu đề hứa một danh sách trong khi output không có danh sách nào đọc lên như step bị hỏng — và đó đúng là cách nó bị đọc ở lần chạy thật đầu tiên.
+- Thêm bảng chú giải hai trường hợp ngay dưới output, để Summary tự giải thích được mà không cần mở `migrate.yml` ra đối chiếu. Thêm luôn dòng giải thích hai WARN `SUPABASE_AUTH_EXTERNAL_GOOGLE_*` là vô hại.
+- **Kiểm chứng bằng thực nghiệm thay vì đoán**: tạo một file migration tạm, chạy `db push --dry-run` với `--db-url` trỏ vào DB **local** (không đụng production), quan sát output thật rồi xoá file. Chuỗi thật là `Would push these migrations:` + danh sách bullet. Trước đó doc chỉ ghi chung chung "in danh sách file SQL pending".
+
+### Nợ lại
+
+- Lần chạy `migrate.yml` đầu tiên trên production mới chỉ chứng minh nhánh "không có gì pending". Nhánh "có pending" vẫn chưa chạy thật lần nào trên production — mới chỉ kiểm trên DB local.
