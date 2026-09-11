@@ -148,6 +148,15 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
    hoạt, mọi branch. `cd.yml` không bị ảnh hưởng: nó deploy bằng CLI
    (`vercel deploy --prebuilt`), không đi qua đường Git trigger.
 
+   > **PR không còn preview deployment, và đó là cố ý.** `deploymentEnabled: false`
+   > quét cả preview lẫn production, không riêng `main` — thấy PR trống chỗ bot
+   > Vercel vẫn hay comment thì đừng đi tìm lỗi cấu hình. Đây là lựa chọn đã cân
+   > nhắc (2026-09-11): preview có giá trị, nhưng ở trạng thái hiện tại nó sẽ
+   > build bằng Preview environment variables — mà những biến đó, nếu trỏ chung
+   > project Supabase với production, biến mỗi PR thành một đường ghi thẳng vào
+   > database thật. Muốn bật lại thì xem đoạn cuối mục này, và tách Supabase
+   > project cho Preview TRƯỚC.
+
    Không có khoá này thì mỗi push vào `main` deploy **hai lần**: một lần Vercel tự
    chạy ngay khi commit về — không qua test nào, và **không chờ job `migrate`** —
    một lần nữa do `cd.yml`. Lần ungated đó mới là lần lên sóng trước, mang code mới
@@ -159,11 +168,21 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
    - **Settings → Git → Disconnect** hẳn repo. Dứt điểm nhất, đổi lại mất preview
      comment trên PR.
 
-   Muốn **giữ preview cho PR nhưng chặn production**, dùng Ignored Build Step với
-   `[ "$VERCEL_ENV" = "production" ] && exit 0 || exit 1` thay vì `vercel.json`.
-   Trước khi làm vậy phải tách Supabase project riêng cho Preview: hiện
-   `NEXT_PUBLIC_SUPABASE_URL` set cho cả Production lẫn Preview, nên preview của
-   mọi PR đang đọc ghi thẳng vào database thật.
+   Muốn **bật lại preview cho PR nhưng vẫn chặn production**, `deploymentEnabled`
+   nhận cả object khoá theo tên branch — sửa đúng một dòng trong `vercel.json`:
+
+   ```json
+   { "git": { "deploymentEnabled": { "main": false } } }
+   ```
+
+   (Cách tương đương không đụng file: Ignored Build Step với
+   `[ "$VERCEL_ENV" = "production" ] && exit 0 || exit 1`.)
+
+   **Việc phải làm trước, không phải sau:** tách một Supabase project riêng cho
+   Preview và set `NEXT_PUBLIC_SUPABASE_URL` + publishable key scope Preview trỏ
+   vào đó. Để nguyên thì preview của mọi PR build bằng biến trỏ về database thật —
+   mỗi PR thành một đường ghi vào dữ liệu production, và cleanup của test
+   `@local-db` không với tới đó.
 5. **Settings → Domains**: gắn domain thật nếu có. Nhớ quay lại Bước 3.3 cập nhật
    Site URL và Redirect URLs cho khớp.
 

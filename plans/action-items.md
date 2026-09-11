@@ -1969,3 +1969,18 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - CD vẫn chưa chạy thật lần nào. Lần merge PR #30 sẽ là lần đầu — và nó sẽ đỏ ở `plan` nếu 6 secret chưa nạp. Đó là hành vi đúng, không phải bug.
+
+## 260911-1730 — preview deployment tắt có chủ đích
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **Giữ nguyên trạng thái không có Vercel preview trên PR.** Nguyên nhân là `vercel.json` (`git.deploymentEnabled: false`, commit `16638a6`) — công tắc này quét cả preview lẫn production chứ không riêng `main`. Đã ghi rõ vào `docs/deployment.md` § Bước 4 để lần sau không ai đọc nó như một lỗi cấu hình.
+- Ghi sẵn cách bật lại (`deploymentEnabled: { "main": false }`, hoặc Ignored Build Step theo `$VERCEL_ENV`) kèm điều kiện tiên quyết: phải tách Supabase project riêng cho Preview trước. Bật preview khi Preview env còn trỏ chung production là biến mỗi PR thành một đường ghi vào database thật.
+
+### Nợ lại
+
+- Chưa có Supabase project cho Preview. Đây là thứ chặn việc bật lại preview, không phải bản thân cấu hình Vercel.
