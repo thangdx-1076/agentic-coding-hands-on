@@ -4,6 +4,8 @@ import { KudosBanner } from "./kudos-banner";
 import { KudosComposeLauncher } from "./kudos-compose-launcher";
 import { KudosHeroProfileSearch } from "./kudos-hero-profile-search";
 
+import type { SunnerSuggestion } from "@/dal/sunner-search";
+
 export type KudosKeyvisualBandProps = {
   copy: Pick<
     KudosPageCopy,
@@ -11,6 +13,7 @@ export type KudosKeyvisualBandProps = {
   >;
   isSignedIn: boolean;
   hashtagVocabulary: string[];
+  initialRecipient?: SunnerSuggestion | null;
 };
 
 /**
@@ -31,6 +34,7 @@ export function KudosKeyvisualBand({
   copy,
   isSignedIn,
   hashtagVocabulary,
+  initialRecipient = null,
 }: KudosKeyvisualBandProps) {
   return (
     <div className="relative w-full">
@@ -42,6 +46,7 @@ export function KudosKeyvisualBand({
           pillAriaLabel={copy.compose.ariaLabel}
           isSignedIn={isSignedIn}
           hashtagVocabulary={hashtagVocabulary}
+          initialRecipient={initialRecipient}
         />
         <KudosHeroProfileSearch
           copy={copy.heroSearch}

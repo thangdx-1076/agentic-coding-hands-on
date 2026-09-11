@@ -373,6 +373,68 @@ test.describe(
   () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
+    test("[C35] Hovering an avatar opens the Sunner info card (name, unit, both Kudos counts)", async ({
+      page,
+    }) => {
+      await page.goto("/kudos");
+
+      const trigger = page
+        .locator("[data-testid=kudos-person-hover-trigger]")
+        .first();
+      const card = page.locator("[data-testid=kudos-person-hover-card]");
+      await expect(card).toHaveCount(0);
+
+      await trigger.hover();
+      await expect(card).toBeVisible();
+      // Seeded departments are CEVC1-4 / OPD / Infra (migration 0019).
+      await expect(card).toContainText(/Tên đơn vị:\s*(CEVC\d|OPD|Infra)/);
+      await expect(card).toContainText(/Số Kudos nhận được:\s*\d+/);
+      // `kudos_sent` only exists from migration 0021 — before it, this half
+      // of the card had no data to render at all.
+      await expect(card).toContainText(/Số Kudos đã gửi:\s*\d+/);
+
+      // Dismisses again when the pointer leaves both avatar and card.
+      await page.mouse.move(0, 0);
+      await expect(card).toHaveCount(0);
+    });
+
+    test("[C36] Hovering a hero badge explains the tier", async ({ page }) => {
+      await page.goto("/kudos");
+
+      const badge = page.locator("[data-testid=kudos-hero-badge]").first();
+      const card = page.locator("[data-testid=kudos-hero-badge-card]");
+      await expect(card).toHaveCount(0);
+
+      await badge.hover();
+      await expect(card).toBeVisible();
+      // Same words /standards prints, read from the one `standards` namespace.
+      await expect(card).toContainText("người gửi Kudos cho bạn");
+    });
+
+    test("[C37] The hover card floats free of the carousel's transformed slide", async ({
+      page,
+    }) => {
+      await page.goto("/kudos");
+
+      const trigger = page
+        .locator("[data-testid=kudos-person-hover-trigger]")
+        .first();
+      await trigger.hover();
+
+      const card = page.locator("[data-testid=kudos-person-hover-card]");
+      await expect(card).toBeVisible();
+
+      // A `fixed` card inside the carousel's `transform`ed slide would be
+      // positioned against THAT slide, not the viewport, and land far from
+      // its avatar. Portalling to <body> is what keeps the two together.
+      const anchorBox = await trigger.boundingBox();
+      const cardBox = await card.boundingBox();
+      expect(anchorBox).not.toBeNull();
+      expect(cardBox).not.toBeNull();
+      const dx = Math.abs((cardBox?.x ?? 0) - (anchorBox?.x ?? 0));
+      expect(dx).toBeLessThan(200);
+    });
+
     test("[C11] Carousel displays exactly 5 highlight cards with counter 1/5", async ({
       page,
     }) => {
@@ -638,17 +700,29 @@ test.describe(
       // C21: Gõ tên một Sunner có trong scatter + Enter → đúng node đó có `data-matched="true"`, URL không đổi
       await page.goto("/kudos");
 
+      // The name is read OUT OF the scatter rather than hardcoded. The
+      // previous version typed a seeded "Đỗ" and assumed that Sunner was on
+      // screen — but the scatter is built from the Highlight cards plus the
+      // FIRST feed page (`FEED_PAGE_SIZE = 10`, `src/dal/kudos.ts`), so any
+      // kudo added after the seed pushes the oldest receivers out of it and
+      // the test failed on absent data, not on broken search. Asking the
+      // page which names it is actually showing tests the real contract —
+      // "a name that IS in the scatter gets highlighted" — under any row
+      // count.
+      const names = page.locator("[data-testid=kudos-spotlight-name]");
+      await expect(names.first()).toBeVisible();
+      const target = (await names.first().textContent())?.trim() ?? "";
+      expect(target.length).toBeGreaterThan(0);
+
       const search = page.locator("[data-testid=kudos-sunner-search]");
-      // Use a known seed name
-      await search.fill("Đỗ");
+      await search.fill(target);
       await page.keyboard.press("Enter");
 
-      // Check if any scatter name has data-matched="true"
+      // That exact node — not merely "some node" — must be the one matched.
       const matched = page.locator(
         "[data-testid=kudos-spotlight-name][data-matched=true]",
       );
-      const count = await matched.count();
-      expect(count).toBeGreaterThan(0);
+      await expect(matched.first()).toHaveText(target);
 
       // URL should not change
       const url = new URL(page.url());
@@ -813,6 +887,32 @@ test.describe(
       if (authSession?.user_id) {
         await deleteTestUser(authSession.user_id);
       }
+    });
+
+    test("[C38] Gửi KUDO on the avatar card opens compose with that Sunner already chosen", async ({
+      page,
+    }) => {
+      await page.goto("/kudos");
+
+      const trigger = page
+        .locator("[data-testid=kudos-person-hover-trigger]")
+        .first();
+      await trigger.hover();
+
+      const card = page.locator("[data-testid=kudos-person-hover-card]");
+      await expect(card).toBeVisible();
+      const name = (await card.locator("p").first().textContent())?.trim();
+      expect(name).toBeTruthy();
+
+      await card.locator("[data-testid=kudos-person-hover-cta]").click();
+
+      // The compose dialog lives in the key-visual band, several levels away
+      // from the card — this asserts the context wiring, not just the button.
+      const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+      await expect(dialog).toHaveAttribute("open", "");
+      await expect(
+        dialog.locator("[data-testid=kudos-recipient-input]"),
+      ).toHaveValue(name ?? "");
     });
 
     test("[C25] Toggle heart: icon state changes, count updates", async ({

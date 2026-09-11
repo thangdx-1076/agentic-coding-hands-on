@@ -26,7 +26,7 @@ function DigitBox({ char }: { char: string }) {
   return (
     <div
       data-testid="tile-digit"
-      className="relative inline-flex min-h-[56px] min-w-[35px] items-center justify-center px-1 sm:min-h-[70px] sm:min-w-[49px] sm:px-2 lg:min-h-[82px] lg:min-w-[51px]"
+      className="relative inline-flex min-h-[56px] min-w-[35px] shrink-0 items-center justify-center px-1 sm:min-h-[70px] sm:min-w-[49px] sm:px-2 lg:min-h-[82px] lg:min-w-[51px]"
     >
       <div
         className="absolute inset-0 rounded-lg opacity-50 backdrop-blur-[16.64px]"
@@ -105,6 +105,17 @@ function TileLabel({ children }: { children: string }) {
  * `80px`/`sm:` `112px` tiles → the pixel-perfect `116px` at `lg:`) so the
  * 3-tile row never exceeds the viewport width at 375/768 — purely a size
  * reduction, the `lg:` values are untouched.
+ *
+ * Those widths are MINIMUMS, not fixed sizes, and that distinction is
+ * load-bearing. The design frame (`2167:9038`) is 116px because it draws
+ * exactly two 51px boxes with a 14px gap — it only ever pictures a 2-digit
+ * day count. `days` is deliberately uncapped (see `DigitBoxes`), so at 100+
+ * days the row needs 181px: pinned to a fixed 116px the third box simply
+ * overflowed its tile and collided with HOURS, rendering "1 0 6 0 7" as an
+ * unreadable "10 60 7". `min-w-` keeps every design measurement intact at
+ * two digits and lets the tile grow at three; `shrink-0` on both the tile
+ * and each box stops the row from "solving" the overflow by squashing
+ * boxes below their 51px instead.
  */
 export function CountdownTiles({
   days,
@@ -120,7 +131,7 @@ export function CountdownTiles({
       {/* mm:2268:35139 */}
       <div
         data-testid="tile"
-        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+        className="flex h-20 min-w-20 shrink-0 flex-col items-start justify-center gap-2 sm:h-28 sm:min-w-28 sm:gap-3 lg:h-32 lg:min-w-[116px] lg:gap-[14px]"
       >
         {/* mm:2268:35140 */}
         <DigitBoxes value={days} />
@@ -130,7 +141,7 @@ export function CountdownTiles({
       {/* mm:2268:35144 */}
       <div
         data-testid="tile"
-        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+        className="flex h-20 min-w-20 shrink-0 flex-col items-start justify-center gap-2 sm:h-28 sm:min-w-28 sm:gap-3 lg:h-32 lg:min-w-[116px] lg:gap-[14px]"
       >
         <DigitBoxes value={hours} />
         <TileLabel>{hoursLabel}</TileLabel>
@@ -138,7 +149,7 @@ export function CountdownTiles({
       {/* mm:2268:35149 */}
       <div
         data-testid="tile"
-        className="flex h-20 w-20 flex-col items-start justify-center gap-2 sm:h-28 sm:w-28 sm:gap-3 lg:h-32 lg:w-[116px] lg:gap-[14px]"
+        className="flex h-20 min-w-20 shrink-0 flex-col items-start justify-center gap-2 sm:h-28 sm:min-w-28 sm:gap-3 lg:h-32 lg:min-w-[116px] lg:gap-[14px]"
       >
         <DigitBoxes value={minutes} />
         <TileLabel>{minutesLabel}</TileLabel>

@@ -62,11 +62,11 @@ export function ProfileHero({ profile, copy }: ProfileHeroProps) {
       {/* mm:362:5052 */}
       <div className="relative z-10 -mt-[100px] flex flex-col items-center gap-8 px-6 pb-8 text-center">
         {profile.avatarUrl ? (
-          // mm:362:5053 — remote avatar host has no `next.config` `images.remotePatterns`
-          // entry yet; a plain `<img>` is used on purpose (Key Insights, phase-05 plan) —
-          // `next.config.ts` is not owned by this phase.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          /* mm:362:5053 — `next/image` now that the Google avatar CDN is
+           * allowlisted in `src/configs/image-remote-patterns.ts`. The plain
+           * `<img>` that stood here was a workaround for the missing
+           * `images.remotePatterns` entry, not a design choice. */
+          <Image
             src={profile.avatarUrl}
             alt=""
             aria-hidden="true"

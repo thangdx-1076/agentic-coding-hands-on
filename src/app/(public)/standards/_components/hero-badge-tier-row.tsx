@@ -33,11 +33,14 @@ export function HeroBadgeTierRow({ tier, copy }: HeroBadgeTierRowProps) {
        * wrong — the geometry, not the contract, is what caught this.
        */}
       <div className="flex flex-row items-center gap-2">
+        {/* See `kudos-card-person.tsx`: the badge PNG is a rectangle around
+            pill artwork, so its corners need clipping. */}
         <Image
           src={tier.asset}
           alt={copy.alt}
           width={tier.width}
           height={tier.height}
+          className="rounded-full"
         />
         {/* mm:3204:6162 */}
         <p className="font-montserrat text-base leading-6 font-bold tracking-[0.5px] text-white">

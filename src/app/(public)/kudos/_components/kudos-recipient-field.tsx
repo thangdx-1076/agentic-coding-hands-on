@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 import { IconDown } from "../../../_components/language-selector/icon-down";
 import type { KudosComposeCopy } from "../_shared/kudos-compose-copy";
 
@@ -55,9 +59,18 @@ const LISTBOX_ID = "kudos-recipient-options-listbox";
  * listbox in an owned `<div id>` since `KudosSunnerOptionsProps` has no `id`
  * slot to set directly on its own listbox node).
  *
- * Purely presentational: `query`/`options`/`isLoading`/`isOpen`/`onSelect`
- * arrive from phase 07's `use-sunner-suggest` hook via phase 13's wiring —
- * this file owns no state, no debounce, no Sunner-lookup DAL call of its own.
+ * `query`/`options`/`isLoading`/`isOpen`/`onSelect` arrive from phase 07's
+ * `use-sunner-suggest` hook via phase 13's wiring — no debounce and no
+ * Sunner-lookup DAL call live here.
+ *
+ * The ONE piece of state this field owns is `manuallyOpen`, the arrow
+ * button's disclosure toggle. `isOpen` from the caller is derived purely
+ * from the search (`draft.recipient === null && query !== ""`), which is
+ * exactly right for type-ahead and leaves the arrow with nothing to drive —
+ * it used to be a bare `aria-hidden` glyph, so clicking it did nothing at
+ * all. This is local UI state by nature (a disclosure), not form state, so
+ * it stays here rather than being threaded through the compose form: the
+ * selected recipient still lives entirely in the draft.
  */
 export function KudosRecipientField({
   copy,
@@ -69,6 +82,38 @@ export function KudosRecipientField({
   isOpen,
   onSelect,
 }: KudosRecipientFieldProps) {
+  const [manuallyOpen, setManuallyOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+
+  // Either path opens the list: typing (the caller's derived `isOpen`) or the
+  // arrow. They are OR-ed rather than replaced so type-ahead keeps working
+  // exactly as before when the arrow is never touched.
+  const open = isOpen || manuallyOpen;
+
+  // A disclosure the user opened must be dismissible by clicking away, or the
+  // arrow becomes a one-way trap. Scoped to `manuallyOpen`: the derived half
+  // closes on its own terms (a pick, or clearing the query). `pointerdown`,
+  // so the panel is gone before the press can land on what sat beneath it.
+  useEffect(() => {
+    if (!manuallyOpen) return;
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && fieldRef.current?.contains(target)) return;
+      setManuallyOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [manuallyOpen]);
+
+  function toggleOpen() {
+    // Focus follows the disclosure: the list is a type-ahead, so opening it
+    // and leaving the caret elsewhere would strand the user.
+    inputRef.current?.focus();
+    setManuallyOpen((wasOpen) => !(wasOpen || isOpen));
+  }
+
   return (
     <KudosComposeField
       label={copy.recipientLabel}
@@ -78,18 +123,24 @@ export function KudosRecipientField({
       error={error}
     >
       {/* mm:I520:11647;520:9871 */}
-      <div data-testid="kudos-recipient-field" className="relative w-full">
+      <div
+        ref={fieldRef}
+        data-testid="kudos-recipient-field"
+        className="relative w-full"
+      >
         {/* mm:I520:11647;520:9873 mms_B.2_Search */}
         <div
+          ref={boxRef}
           className={`flex w-full items-center justify-between rounded-lg border bg-white px-6 py-4 ${
             error ? "border-[#FF8A80]" : "border-[#998C5F]"
           }`}
         >
           <input
+            ref={inputRef}
             id={CONTROL_ID}
             type="text"
             role="combobox"
-            aria-expanded={isOpen}
+            aria-expanded={open}
             aria-controls={LISTBOX_ID}
             aria-autocomplete="list"
             aria-invalid={error ? true : undefined}
@@ -100,13 +151,26 @@ export function KudosRecipientField({
             data-testid={CONTROL_ID}
             className="min-w-0 flex-1 bg-transparent font-montserrat text-base leading-6 font-bold tracking-[0.15px] text-login-button-text placeholder:text-[#999999] focus:outline-none"
           />
-          {/* mm:I520:11647;520:9873;186:2761 MM_MEDIA_Down */}
-          <IconDown
-            aria-hidden="true"
-            className="h-6 w-6 shrink-0 text-login-button-text"
-          />
+          {/* mm:I520:11647;520:9873;186:2761 MM_MEDIA_Down — a real button,
+              not decoration: the design draws an affordance, so it has to
+              behave like one. */}
+          <button
+            type="button"
+            data-testid="kudos-recipient-toggle"
+            aria-label={copy.recipientLabel}
+            aria-expanded={open}
+            aria-controls={LISTBOX_ID}
+            tabIndex={-1}
+            onClick={toggleOpen}
+            className="flex shrink-0 cursor-pointer items-center justify-center text-login-button-text outline-none"
+          >
+            <IconDown
+              aria-hidden="true"
+              className={`h-6 w-6 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+            />
+          </button>
         </div>
-        {isOpen ? (
+        {open ? (
           <div id={LISTBOX_ID}>
             <KudosSunnerOptions
               label={copy.recipientLabel}
@@ -114,7 +178,11 @@ export function KudosRecipientField({
               loading={isLoading}
               loadingLabel={copy.recipientLoading}
               emptyLabel={copy.recipientEmpty}
-              onSelect={onSelect}
+              onSelect={(option) => {
+                setManuallyOpen(false);
+                onSelect(option);
+              }}
+              anchorRef={boxRef}
             />
           </div>
         ) : null}

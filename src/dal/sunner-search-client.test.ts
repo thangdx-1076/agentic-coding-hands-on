@@ -20,13 +20,13 @@ describe("toSunnerSearchClient", () => {
     const shim = toSunnerSearchClient(fakeSupabase);
     const awaited = await shim
       .from("profile_cards")
-      .select("id,full_name,avatar_url")
+      .select("id,full_name,avatar_url,department")
       .ilike("full_name", "%thang%")
       .order("full_name", { ascending: true })
       .limit(8);
 
     expect(from).toHaveBeenCalledWith("profile_cards");
-    expect(select).toHaveBeenCalledWith("id,full_name,avatar_url");
+    expect(select).toHaveBeenCalledWith("id,full_name,avatar_url,department");
     expect(ilike).toHaveBeenCalledWith("full_name", "%thang%");
     expect(order).toHaveBeenCalledWith("full_name", { ascending: true });
     expect(limit).toHaveBeenCalledWith(8);

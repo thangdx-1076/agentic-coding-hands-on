@@ -76,7 +76,12 @@ describe("searchSunners (server action)", () => {
       stubSupabase({ id: "user-1" }),
     );
     const suggestions = [
-      { id: "u1", fullName: "Dang Xuan Thang", avatarUrl: null },
+      {
+        id: "u1",
+        fullName: "Dang Xuan Thang",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
     ];
     vi.mocked(searchSunnerProfiles).mockResolvedValueOnce(suggestions);
 

@@ -17,6 +17,8 @@ function makeCard(
     avatarUrl: null,
     department: "Dev",
     kudosReceived: 3,
+    kudosSent: 3,
+    distinctSenders: 3,
   };
   return {
     id: "kudo-1",

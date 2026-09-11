@@ -560,21 +560,55 @@ cả overhead `multipart/form-data` (docs khuyên chừa 10-20KB). Chốt
 
 Thêm `images.remotePatterns` (bắt buộc — xem "Ai ghi, ai đọc" ở trên) đọc
 `node_modules/next/dist/docs/01-app/03-api-reference/02-components/image.md`
-§ `#remotepatterns` — `pathname` scope đúng
-`/storage/v1/object/public/**` (không phải `**` trần), `protocol`/`hostname`/
-`port` suy từ `NEXT_PUBLIC_SUPABASE_URL` tại config-load time (không hardcode
-host, để local + hosted đều chạy được không cần sửa file). Cộng
-`images.dangerouslyAllowLocalIP: true` — CHỈ khi hostname đã parse là
-loopback/private (`127.0.0.1`, `localhost`, `::1`, `10.0.0.0/8`,
+§ `#remotepatterns`. Logic này đã tách khỏi `next.config.ts`, nay nằm ở
+`src/configs/image-remote-patterns.ts` (hàm `resolveImagesRemoteConfig()`,
+`next.config.ts` chỉ gọi và gán kết quả vào `images`) — lý do tách:
+`next.config.ts` chỉ Next tự load, vitest không import assert được; tách
+ra module riêng thì `image-remote-patterns.test.ts` mới unit-test được cả
+list, chạy qua ĐÚNG matcher Next dùng thật
+(`next/dist/shared/lib/match-remote-pattern`'s `hasRemoteMatch`) — một
+test còn import thẳng `next.config.ts` để xác nhận list thật sự được wire
+vào, không chỉ tồn tại rời rạc.
+
+Danh sách origin hiện có HAI, không phải một. (1) Supabase Storage — như
+cũ, `pathname` scope đúng `/storage/v1/object/public/**` (không phải `**`
+trần), `protocol`/`hostname`/`port` suy từ `NEXT_PUBLIC_SUPABASE_URL` tại
+config-load time (không hardcode host, để local + hosted đều chạy được
+không cần sửa file). (2) CDN avatar Google OAuth
+(`lh3.googleusercontent.com`, mới) — `public.users.avatar_url` được
+`0002_handle_new_user_trigger.sql` ghi NGUYÊN VĂN từ
+`raw_user_meta_data ->> 'avatar_url'` của Google, và 4 nơi render đọc cột
+này: `kudos-sunner-options.tsx`, `kudos-card-person.tsx`,
+`kudos-leaderboard.tsx` (qua `_shared/build-gift-recipient-items.ts`),
+`profile-hero.tsx`. Thiếu entry này gặp ĐÚNG lỗi "Invalid src prop ...
+hostname ... is not configured" đã tả ở trên nhưng với origin khác — crash
+dropdown tìm kiếm Sunner ngay khi gặp kudo/kết quả đầu tiên thuộc tài
+khoản Google thật. `pathname` scope 2 giá trị `/a/**` và `/a-/**` (avatar
+hiện hành + path legacy tài khoản cũ), không phải `**` trần; `search` cố
+tình để trống vì URL avatar Google từng đổi query string giữa các bản. Hai
+pattern avatar KHÔNG điều kiện theo `NEXT_PUBLIC_SUPABASE_URL` — thiếu/hỏng
+biến đó không được kéo avatar theo. `profile-hero.tsx` trước đây render
+avatar bằng `<img>` thường kèm `eslint-disable @next/next/no-img-element`
+để né đúng lỗi thiếu entry này; nay đã đổi sang `next/image` như mọi nơi
+hiển thị avatar khác trong app — không còn workaround.
+
+Cộng `images.dangerouslyAllowLocalIP: true` — CHỈ khi hostname Supabase đã
+parse là loopback/private (`127.0.0.1`, `localhost`, `::1`, `10.0.0.0/8`,
 `172.16.0.0/12`, `192.168.0.0/16`); một hostname public/hosted luôn để
-`false` (tránh mở SSRF qua Next Image Optimizer). Lý do bắt buộc thêm flag
-này: Next 16 image optimizer tự chặn fetch một hostname resolve ra IP
-private/loopback trừ khi bật cờ này (`node_modules/next/dist/server/
-image-optimizer.js:921-941`), độc lập với `remotePatterns` — instance local
-`saa-app` (`127.0.0.1:55321`) sẽ bị chặn nếu thiếu. Cả 3 field
-(`bodySizeLimit`, `remotePatterns`, `dangerouslyAllowLocalIP`) đọc và verify
-tại `next.config.ts:1-151` — không đoán số, cả hai lần đọc docs đều ghi lại
-trong `implementer-phase-06-decisions.md`.
+`false` (tránh mở SSRF qua Next Image Optimizer). Cờ này không liên quan gì
+tới origin Google — host đó luôn public, không ảnh hưởng giá trị cờ. Lý do
+bắt buộc thêm flag này: Next 16 image optimizer tự chặn fetch một hostname
+resolve ra IP private/loopback trừ khi bật cờ này (`node_modules/next/dist/
+server/image-optimizer.js:921-941`), độc lập với `remotePatterns` —
+instance local `saa-app` (`127.0.0.1:55321`) sẽ bị chặn nếu thiếu.
+
+Cả 3 field (`bodySizeLimit`, `remotePatterns`, `dangerouslyAllowLocalIP`)
+đọc và verify tại `next.config.ts` (`bodySizeLimit`) và
+`src/configs/image-remote-patterns.ts` (`remotePatterns`,
+`dangerouslyAllowLocalIP`) — không đoán số, cả hai lần đọc docs đều ghi
+lại trong `implementer-phase-06-decisions.md`; danh sách origin được cover
+bởi `src/configs/image-remote-patterns.test.ts`, chạy qua matcher thật của
+Next (`hasRemoteMatch`) chứ không phải re-implement luật wildcard.
 
 ### Rendering định dạng — tách khỏi phạm vi F009, chạm đúng 1 file của F007
 

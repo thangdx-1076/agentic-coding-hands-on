@@ -1,0 +1,39 @@
+{
+  "score": 9,
+  "criticalCount": 0,
+  "decision": "SEALED",
+  "acceptanceCovered": [
+    "next/image accepts a Google OAuth avatar URL from public.users.avatar_url on every site that renders it",
+    "a host absent from the allowlist is still rejected, and dangerouslyAllowLocalIP stays false for any public/hosted Supabase hostname",
+    "the pattern list is covered by unit tests that assert through Next's own hasRemoteMatch matcher and fail if the Google patterns are removed",
+    "next.config.ts is proven to actually ship the pattern list, not merely to have it available",
+    "typecheck, lint at --max-warnings 0, format:check, the full unit suite and its 100% coverage gate, and the production build all pass"
+  ],
+  "regressionChecked": [
+    "Supabase Storage kudo attachments (kudos-image-strip.tsx) still match via the unchanged resolveSupabasePattern branch",
+    "dangerouslyAllowLocalIP IPv6 loopback branch now actually fires (bracket-stripping fix) instead of silently never matching",
+    "dangerouslyAllowLocalIP still false for hosted Supabase and unaffected by the new avatar patterns",
+    "the three other avatar render sites (kudos-sunner-options.tsx, kudos-card-person.tsx, kudos-leaderboard.tsx via build-gift-recipient-items.ts) consume the same shared remotePatterns list, so the fix is not profile-hero-only",
+    "story fixture no longer depends on a third-party host (i.pravatar.cc) that was never allowlisted"
+  ],
+  "contractStatus": "OK",
+  "refuted": [],
+  "unproven": [],
+  "reachableRegressions": [],
+  "findings": [
+    {
+      "severity": "Medium",
+      "category": "API contracts",
+      "location": "src/configs/image-remote-patterns.ts:50-53",
+      "summary": "Completeness claim ('no app path writes avatar_url, so this list is complete') is true for src/ code paths but the column is directly writable: migration 0001_users_table.sql:47-51 grants an own-row UPDATE RLS policy and :59 grants column-level UPDATE(avatar_url) to authenticated. A user calling supabase-js directly (bypassing all src/ code) can set avatar_url to any string. remotePatterns still blocks the fetch (no SSRF widening), but it reintroduces the exact 'Invalid src prop' render crash for any other Sunner who views that profile/card, and no error.tsx/global-error.tsx exists anywhere under src/app to contain it.",
+      "disposition": "Accept"
+    },
+    {
+      "severity": "Low",
+      "category": "Craft",
+      "location": "next.config.ts:1",
+      "summary": "src/configs/ is a brand-new top-level directory sitting alongside the existing src/constants/; no doc in ./docs prescribes where a Next-config-only module belongs, so this is a defensible but unreviewed convention choice worth a one-line mention next time docs/system-architecture.md is touched.",
+      "disposition": "Accept"
+    }
+  ]
+}

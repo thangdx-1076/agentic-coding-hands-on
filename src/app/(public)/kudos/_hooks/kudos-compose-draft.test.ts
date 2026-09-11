@@ -12,6 +12,7 @@ const RECIPIENT: KudosSunnerOption = {
   id: "sunner-1",
   fullName: "Nguyễn Văn A",
   avatarUrl: null,
+  department: "CEVC1",
 };
 
 function makeDraft(

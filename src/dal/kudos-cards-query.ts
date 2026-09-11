@@ -30,11 +30,15 @@ export type CardRow = {
   sender_avatar_url: string | null;
   sender_department: string | null;
   sender_kudos_received: number;
+  sender_kudos_sent: number;
+  sender_distinct_senders: number;
   receiver_id: string;
   receiver_full_name: string | null;
   receiver_avatar_url: string | null;
   receiver_department: string | null;
   receiver_kudos_received: number;
+  receiver_kudos_sent: number;
+  receiver_distinct_senders: number;
   /** `k.sender_id = auth.uid()` computed server-side by the view
    * (migration `0016`) against the REAL, unmasked sender — `true` even for
    * an anonymous kudo's own sender, whose `sender_id` above is `NULL`
@@ -59,10 +63,10 @@ type CardsResult = { data: CardRow[] | null; error: unknown };
  * literal type and a second query shape in `KudosClient`.
  */
 type CardColumns =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,sender_kudos_sent,sender_distinct_senders,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,receiver_kudos_sent,receiver_distinct_senders,is_own";
 
 const CARD_COLUMNS: CardColumns =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,sender_kudos_sent,sender_distinct_senders,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,receiver_kudos_sent,receiver_distinct_senders,is_own";
 
 /**
  * The minimal slice of a Supabase client this helper touches:

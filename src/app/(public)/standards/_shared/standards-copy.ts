@@ -1,3 +1,5 @@
+import type { HeroTierSlug } from "@/constants/hero-tiers";
+
 /**
  * Presentational copy contract for `/standards` (mm:3204:6051 "Thể lệ UPDATE",
  * https://momorph.ai/files/9ypp4enmFmdK3YAFJLIu6C/screens/b1Filzi9i6).
@@ -33,32 +35,14 @@ export type StandardsCopy = {
   footer: { close: string; writeKudos: string };
 };
 
-export type HeroTierSlug =
-  "newHero" | "risingHero" | "superHero" | "legendHero";
-
-export type HeroTier = {
-  slug: HeroTierSlug;
-  /** `public/standards/*.png` path (phase 02 asset, `next/image`-ready). */
-  asset: string;
-  width: number;
-  height: number;
-};
-
-/**
- * Order New → Rising → Super → Legend (C4). Tuple rows keep this one row
- * per tier instead of wrapping each entry across 6 lines under Prettier's
- * 80-col width.
- */
-const HERO_TIER_ROWS: [HeroTierSlug, string, number, number][] = [
-  ["newHero", "/standards/new-hero.png", 126, 22],
-  ["risingHero", "/standards/rising-hero.png", 110, 20],
-  ["superHero", "/standards/super-hero.png", 109, 19],
-  ["legendHero", "/standards/legend-hero.png", 110, 20],
-];
-
-export const HERO_TIERS: HeroTier[] = HERO_TIER_ROWS.map(
-  ([slug, asset, width, height]) => ({ slug, asset, width, height }),
-);
+/** Re-exported from the shared table (`@/constants/hero-tiers`), which is
+ * where these moved once `/kudos` needed the same four badges on its cards.
+ * Kept as re-exports so this segment's existing importers do not change. */
+export type {
+  HeroTierSlug,
+  HeroTierAsset as HeroTier,
+} from "@/constants/hero-tiers";
+export { HERO_TIERS } from "@/constants/hero-tiers";
 
 export type SecretBoxBadgeSlug =
   | "revival"

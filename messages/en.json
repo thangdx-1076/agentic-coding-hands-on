@@ -242,12 +242,12 @@
         "quote": "Quote"
       },
       "hashtagLabel": "Hashtag",
-      "hashtagAdd": "+ Hashtag",
+      "hashtagAdd": "Hashtag",
       "limitNote": "Max 5",
       "hashtagPickerLabel": "Select hashtag",
       "hashtagRemove": "Remove hashtag {tag}",
       "imageLabel": "Image",
-      "imageAdd": "+ Image",
+      "imageAdd": "Image",
       "imageRemove": "Remove image {index}",
       "anonymousLabel": "Send this thanks and recognition anonymously",
       "anonymousNameLabel": "Anonymous name",
@@ -302,7 +302,14 @@
       "copyLink": "Copy Link",
       "copiedToast": "Link copied — ready to share!",
       "heartLabel": "{count} hearts",
-      "signInToHeart": "Sign in to give a heart"
+      "signInToHeart": "Sign in to give a heart",
+      "personHover": {
+        "unitLabel": "Unit:",
+        "receivedLabel": "Kudos received:",
+        "sentLabel": "Kudos sent:",
+        "sendKudo": "Send KUDO",
+        "unknownName": "Sunner"
+      }
     },
     "sidebar": {
       "received": "Kudos received:",

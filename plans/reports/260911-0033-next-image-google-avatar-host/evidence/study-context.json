@@ -1,0 +1,29 @@
+{
+  "task": "Fix the next/image \"Invalid src prop ... lh3.googleusercontent.com is not configured under images\" render-time crash on the Sunner search dropdown by allowlisting the Google OAuth avatar CDN, and make the remotePatterns list unit-testable so the same class of crash cannot return unnoticed.",
+  "mode": "auto",
+  "acceptanceCriteria": [
+    "next/image accepts a Google OAuth avatar URL from public.users.avatar_url on every site that renders it",
+    "a host absent from the allowlist is still rejected, and dangerouslyAllowLocalIP stays false for any public/hosted Supabase hostname",
+    "the pattern list is covered by unit tests that assert through Next's own hasRemoteMatch matcher and fail if the Google patterns are removed",
+    "next.config.ts is proven to actually ship the pattern list, not merely to have it available",
+    "typecheck, lint at --max-warnings 0, format:check, the full unit suite and its 100% coverage gate, and the production build all pass"
+  ],
+  "touchpoints": [
+    "next.config.ts",
+    "src/configs/image-remote-patterns.ts",
+    "src/configs/image-remote-patterns.test.ts",
+    "src/app/(protected)/profile/_components/profile-hero.tsx",
+    "src/app/(protected)/profile/_components/profile-hero.stories.tsx"
+  ],
+  "blastRadius": [
+    "every next/image render of public.users.avatar_url: kudos-sunner-options.tsx, kudos-card-person.tsx, kudos-leaderboard.tsx via build-gift-recipient-items.ts, profile-hero.tsx",
+    "Supabase Storage kudo attachments through kudos-image-strip.tsx, which shares the same remotePatterns list",
+    "the /_next/image optimizer route's SSRF posture via dangerouslyAllowLocalIP",
+    "local dev and CI against the loopback Supabase instance"
+  ],
+  "contracts": [
+    "next.config.ts default export shape consumed by Next 16.3.4",
+    "resolveImagesRemoteConfig(supabaseUrl?: string): { remotePatterns, dangerouslyAllowLocalIP }",
+    "images.remotePatterns entries must satisfy next/dist/shared/lib/match-remote-pattern hasRemoteMatch"
+  ]
+}

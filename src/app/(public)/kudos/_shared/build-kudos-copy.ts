@@ -8,8 +8,9 @@ import type { KudosSidebarCopy } from "../_components/kudos-sidebar";
 import type { KudosSpotlightCopy } from "../_components/kudos-spotlight";
 
 import type { KudosComposeCopy } from "./kudos-compose-copy";
-import type { KudosCopy } from "./kudos-copy";
+import type { HeroTierCopy, KudosCopy } from "./kudos-copy";
 
+import type { HeroTierSlug } from "@/constants/hero-tiers";
 import { LOCALE_LABEL, type AppLocale } from "@/lib/i18n/locale";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
@@ -75,11 +76,35 @@ export type KudosPageCopy = SiteChromeCopy & {
  * so no third `login` translator needs to be threaded through for one
  * string `/kudos` never customizes.
  */
+/** `standards.heroSection.tiers.<slug>` carries `alt`/`condition`/
+ * `description`; the badge card calls the first one `label`, since here it
+ * is a heading rather than an image's alternative text. */
+function toHeroTierCopy(
+  tStandards: Translator,
+  slug: HeroTierSlug,
+): HeroTierCopy {
+  const tier = tStandards.raw(`heroSection.tiers.${slug}`) as {
+    alt: string;
+    condition: string;
+    description: string;
+  };
+  return {
+    label: tier.alt,
+    condition: tier.condition,
+    description: tier.description,
+  };
+}
+
 export function buildKudosCopy(
   tHome: Translator,
   tKudos: Translator,
   notifications: SiteChromeCopy["notifications"],
   locale: AppLocale,
+  /** The `standards` namespace, for the Hero-badge hover card. Its four
+   * tiers are explained on `/standards` and on every `/kudos` card, and
+   * both must read the SAME words — so the strings stay in one namespace
+   * rather than being copied into `kudos`. */
+  tStandards: Translator,
 ): KudosPageCopy {
   return {
     nav: {
@@ -164,6 +189,15 @@ export function buildKudosCopy(
       // immediately and throw `FORMATTING_ERROR` for the missing variable.
       heartLabel: tKudos.raw("feed.heartLabel") as string,
       signInToHeart: tKudos("feed.signInToHeart"),
+      // `.raw()` per tier: three static strings each, no interpolation, and
+      // one call per tier reads better than twelve.
+      personHover: tKudos.raw("feed.personHover") as KudosCopy["personHover"],
+      heroTiers: {
+        newHero: toHeroTierCopy(tStandards, "newHero"),
+        risingHero: toHeroTierCopy(tStandards, "risingHero"),
+        superHero: toHeroTierCopy(tStandards, "superHero"),
+        legendHero: toHeroTierCopy(tStandards, "legendHero"),
+      },
     },
     sidebar: {
       received: tKudos("sidebar.received"),

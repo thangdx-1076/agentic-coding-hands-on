@@ -57,7 +57,7 @@ function stubClient(result: StubResult): {
 }
 
 const CARD_COLUMNS =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,sender_kudos_sent,sender_distinct_senders,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,receiver_kudos_sent,receiver_distinct_senders,is_own";
 
 const ROW: CardRow = {
   id: "kudo-1",
@@ -71,11 +71,15 @@ const ROW: CardRow = {
   sender_avatar_url: null,
   sender_department: "Dev",
   sender_kudos_received: 5,
+  sender_kudos_sent: 5,
+  sender_distinct_senders: 5,
   receiver_id: "receiver-1",
   receiver_full_name: "Receiver",
   receiver_avatar_url: null,
   receiver_department: "QA",
   receiver_kudos_received: 2,
+  receiver_kudos_sent: 2,
+  receiver_distinct_senders: 2,
   is_own: false,
 };
 

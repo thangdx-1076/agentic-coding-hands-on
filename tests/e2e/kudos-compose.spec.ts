@@ -496,6 +496,99 @@ test.describe("Kudos Compose Dialog (@auth)", () => {
     await expect(chips).toHaveCount(2);
   });
 
+  test("[C13a] After picking a hashtag, clicking outside the picker dismisses it and keeps the compose dialog open", async ({
+    page,
+  }) => {
+    await page.goto("/kudos");
+    await page.locator("[data-testid=kudos-compose-pill]").click();
+
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    const picker = dialog.locator("[data-testid=kudos-hashtag-picker]");
+
+    await dialog.locator("[data-testid=kudos-hashtag-add]").click();
+    await expect(picker).toBeVisible();
+
+    // Pick by CLICKING A ROW, not by typing + Enter: row clicks deliberately
+    // leave the panel open (rows are multi-select), which is the exact state
+    // the bug report describes — "chọn hashtag xong, không tắt được".
+    await picker
+      .locator("[data-testid=kudos-hashtag-option]")
+      .filter({ hasText: "#GO FAST" })
+      .click();
+    await expect(
+      dialog.locator("[data-testid=kudos-hashtag-chip]"),
+    ).toHaveCount(1);
+    await expect(picker).toBeVisible();
+
+    // So the only mouse-driven way out must be a click outside it.
+    await dialog.locator("[data-testid=kudos-title-input]").click();
+
+    await expect(picker).toBeHidden();
+    // Dismissing the picker must NOT take the whole compose dialog (and the
+    // draft) down with it.
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.locator("[data-testid=kudos-hashtag-chip]"),
+    ).toHaveCount(1);
+  });
+
+  test("[C13b] Escape while the hashtag picker is open closes only the picker, never the compose dialog", async ({
+    page,
+  }) => {
+    await page.goto("/kudos");
+    await page.locator("[data-testid=kudos-compose-pill]").click();
+
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    const picker = dialog.locator("[data-testid=kudos-hashtag-picker]");
+
+    await dialog.locator("[data-testid=kudos-hashtag-add]").click();
+    await expect(picker).toBeVisible();
+
+    // Row click, so the panel is still open and focus sits on the row — the
+    // native `<dialog>` must not get this Escape, or its `cancel` handler
+    // (`use-kudos-compose-dialog.ts:75` → `close()`) resets the whole draft.
+    await picker
+      .locator("[data-testid=kudos-hashtag-option]")
+      .filter({ hasText: "#GO FAST" })
+      .click();
+    await expect(picker).toBeVisible();
+
+    await page.keyboard.press("Escape");
+
+    await expect(picker).toBeHidden();
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.locator("[data-testid=kudos-hashtag-chip]"),
+    ).toHaveCount(1);
+  });
+
+  test("[C13c] Picker always offers the Sun* master hashtag list, independent of what past kudos happen to use", async ({
+    page,
+  }) => {
+    await page.goto("/kudos");
+    await page.locator("[data-testid=kudos-compose-pill]").click();
+
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    const picker = dialog.locator("[data-testid=kudos-hashtag-picker]");
+
+    await dialog.locator("[data-testid=kudos-hashtag-add]").click();
+    await expect(picker).toBeVisible();
+
+    const options = picker.locator("[data-testid=kudos-hashtag-option]");
+    for (const tag of [
+      "High-performing",
+      "BE PROFESSIONAL",
+      "BE OPTIMISTIC",
+      "BE A TEAM",
+      "THINK OUTSIDE THE BOX",
+      "GET RISKY",
+      "GO FAST",
+      "WASSHOI",
+    ]) {
+      await expect(options.filter({ hasText: `#${tag}` })).toHaveCount(1);
+    }
+  });
+
   test('[C14] 5 hashtags is a success state (no message); 6th attempt is blocked with "Tối đa 5 hashtag" message', async ({
     page,
   }) => {
@@ -907,6 +1000,54 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
 
     // Dropdown should close
     await expect(options).toHaveCount(0);
+  });
+
+  test("[C21a] Recipient rows show the Sunner's department under the name", async ({
+    page,
+  }) => {
+    await page.goto("/kudos");
+    await page.locator("[data-testid=kudos-compose-pill]").click();
+
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    await dialog.locator("[data-testid=kudos-recipient-input]").fill("Dương");
+
+    // Seeded departments are CEVC1-4 / OPD / Infra (migration 0019); the row
+    // reads them through `profile_cards.department` (migration 0020).
+    const firstRow = dialog
+      .locator("[data-testid=kudos-recipient-option]")
+      .first();
+    await expect(firstRow).toBeVisible();
+    await expect(firstRow).toContainText(/CEVC\d|OPD|Infra/);
+  });
+
+  test("[C21b] The recipient arrow button opens the dropdown, and a click outside closes it", async ({
+    page,
+  }) => {
+    await page.goto("/kudos");
+    await page.locator("[data-testid=kudos-compose-pill]").click();
+
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    const toggle = dialog.locator("[data-testid=kudos-recipient-toggle]");
+    const listbox = dialog.locator("[data-testid=kudos-recipient-options]");
+
+    // Closed to begin with: the derived open state needs query text, and
+    // there is none yet.
+    await expect(listbox).toHaveCount(0);
+
+    // The arrow is a real control, not decoration — it must open the list
+    // even with an empty query, and move focus to the input so the
+    // type-ahead is immediately usable.
+    await toggle.click();
+    await expect(listbox).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      dialog.locator("[data-testid=kudos-recipient-input]"),
+    ).toBeFocused();
+
+    // And it must be dismissible, or the arrow is a one-way trap.
+    await dialog.locator("[data-testid=kudos-title-input]").click();
+    await expect(listbox).toHaveCount(0);
+    await expect(dialog).toBeVisible();
   });
 
   test("[C22] All 4 required fields valid → Submit loses aria-disabled", async ({

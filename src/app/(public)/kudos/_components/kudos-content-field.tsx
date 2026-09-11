@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef } from "react";
+
 import type { KudosComposeCopy } from "../_shared/kudos-compose-copy";
 
 import type { FormatKind } from "./kudos-format-toolbar";
@@ -85,6 +89,7 @@ export function KudosContentField({
   onMentionSelect,
 }: KudosContentFieldProps) {
   const errorId = `${FIELD_NAME}-error`;
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -100,7 +105,13 @@ export function KudosContentField({
           <textarea
             id={CONTROL_ID}
             data-testid={CONTROL_ID}
-            ref={registerTextarea}
+            ref={(node) => {
+              // Two consumers for one node: the compose form needs it for
+              // formatting/caret work (`registerTextarea`), and the mention
+              // list anchors its floating panel to it.
+              textareaRef.current = node;
+              registerTextarea(node);
+            }}
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={copy.contentPlaceholder}
@@ -113,6 +124,7 @@ export function KudosContentField({
           />
           {mentionOpen ? (
             <KudosSunnerOptions
+              anchorRef={textareaRef}
               label={copy.contentLabel}
               options={mentionOptions}
               loading={mentionLoading}

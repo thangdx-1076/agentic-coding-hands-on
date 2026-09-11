@@ -64,8 +64,18 @@ export const MentionOpen: Story = {
     value: "Cảm ơn @Ngu",
     mentionOpen: true,
     mentionOptions: [
-      { id: "1", fullName: "Nguyễn Văn A", avatarUrl: null },
-      { id: "2", fullName: "Nguyễn Thị B", avatarUrl: null },
+      {
+        id: "1",
+        fullName: "Nguyễn Văn A",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
+      {
+        id: "2",
+        fullName: "Nguyễn Thị B",
+        avatarUrl: null,
+        department: "CEVC1",
+      },
     ],
   },
 };

@@ -1,3 +1,5 @@
+import type { HeroTierSlug } from "@/constants/hero-tiers";
+
 /**
  * Presentational copy contract for the shared `KudosCard` (mm:B.3_KUDO -
  * Highlight `2940:13465`, mm:C.3_KUDO Post `3127:21871`,
@@ -26,6 +28,29 @@ export type KudosCopy = {
   heartLabel: string;
   /** Title shown on the heart button when the viewer is anonymous (FR-602). */
   signInToHeart: string;
+  /** One entry per `HeroTierSlug`, in the hover card the badge opens: the
+   * tier's name, how it is earned, and what it means. Same words
+   * `/standards` prints, read from the same `standards.heroSection.tiers.*`
+   * messages — a badge must not explain itself differently on two screens. */
+  heroTiers: Record<HeroTierSlug, HeroTierCopy>;
+  /** The card an avatar opens on hover. */
+  personHover: KudosPersonHoverCopy;
+};
+
+export type KudosPersonHoverCopy = {
+  /** Prefix before the Sunner's unit, e.g. `"Tên đơn vị:"`. */
+  unitLabel: string;
+  receivedLabel: string;
+  sentLabel: string;
+  sendKudo: string;
+  /** Fallback heading when a Sunner has no name on record. */
+  unknownName: string;
+};
+
+export type HeroTierCopy = {
+  label: string;
+  condition: string;
+  description: string;
 };
 
 export const defaultKudosCopy: KudosCopy = {
@@ -34,4 +59,37 @@ export const defaultKudosCopy: KudosCopy = {
   copiedToast: "Link copied — ready to share!",
   heartLabel: "{count} lượt tim",
   signInToHeart: "Đăng nhập để thả tim",
+  heroTiers: {
+    newHero: {
+      label: "New Hero",
+      condition: "Có 1-4 người gửi Kudos cho bạn",
+      description:
+        "Hành trình lan tỏa điều tốt đẹp bắt đầu – những lời cảm ơn và ghi nhận đầu tiên đã tìm đến bạn.",
+    },
+    risingHero: {
+      label: "Rising Hero",
+      condition: "Có 5-9 người gửi Kudos cho bạn",
+      description:
+        "Hình ảnh bạn đang lớn dần trong trái tim đồng đội bằng sự tử tế và cống hiến của mình.",
+    },
+    superHero: {
+      label: "Super Hero",
+      condition: "Có 10–20 người gửi Kudos cho bạn",
+      description:
+        "Bạn đã trở thành biểu tượng được tin tưởng và yêu quý, người luôn sẵn sàng hỗ trợ và được nhiều đồng đội nhớ đến.",
+    },
+    legendHero: {
+      label: "Legend Hero",
+      condition: "Có hơn 20 người gửi Kudos cho bạn",
+      description:
+        "Bạn đã trở thành huyền thoại – người để lại dấu ấn khó quên trong tập thể bằng trái tim và hành động của mình.",
+    },
+  },
+  personHover: {
+    unitLabel: "Tên đơn vị:",
+    receivedLabel: "Số Kudos nhận được:",
+    sentLabel: "Số Kudos đã gửi:",
+    sendKudo: "Gửi KUDO",
+    unknownName: "Sunner",
+  },
 };

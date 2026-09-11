@@ -290,18 +290,25 @@ test.describe("Profile page", { tag: "@auth" }, () => {
     const statisticsText = page.locator("text=Số Kudos bạn nhận được:");
     await expect(statisticsText).toBeVisible();
 
-    const writeKudoBtn = page.locator("button:has-text('Viết Kudo')");
-    await expect(writeKudoBtn).toHaveCount(0);
+    // Self renders the statistics panel INSTEAD of the bar — the two are
+    // mutually exclusive (C8), whether the bar is a button or a link.
+    await expect(page.locator("[data-testid=profile-write-kudo]")).toHaveCount(
+      0,
+    );
   });
 
-  test("[C8b] Other view has Write Kudo bar (disabled), no statistics card", async ({
+  test("[C8b] Other view has the Write Kudo bar and no statistics card", async ({
     page,
   }) => {
-    // C8: Other: chỉ chứa thanh `Viết Kudo` `disabled`. Self: KHÔNG có `Viết Kudo`
+    // C8: Other: chỉ chứa thanh `Viết Kudo`. Self: KHÔNG có `Viết Kudo`.
+    // The bar is no longer `disabled` — FUN_006/007 shipped, and C11 covers
+    // where it now leads. What C8 is actually about, and what still holds,
+    // is that the bar and the statistics panel never co-render.
     await page.goto(`/profile?id=${otherUserId}`);
 
-    const writeKudoBtn = page.locator("button:has-text('Viết Kudo')");
-    await expect(writeKudoBtn).toHaveAttribute("disabled");
+    await expect(
+      page.locator("[data-testid=profile-write-kudo]"),
+    ).toBeVisible();
 
     const statisticsText = page.locator("text=Số Kudos bạn nhận được:");
     await expect(statisticsText).toHaveCount(0);
@@ -389,29 +396,33 @@ test.describe("Profile page", { tag: "@auth" }, () => {
   });
 
   // C11: Write Kudo button does not open dialog
-  test("[C11] Write Kudo click does not open dialog", async ({ page }) => {
-    // C11: Click `Viết Kudo` → không mở dialog nào (`[role="dialog"]` count 0)
+  test("[C11] Write Kudo on another Sunner's profile opens compose for them", async ({
+    page,
+  }) => {
+    // Was: the bar is `disabled` and opens nothing (FUN_006/007 "deferred to
+    // F007+"). Those features shipped, so the bar now works — it links to
+    // /kudos?compose=<id>, the one screen that owns the compose dialog.
     await page.goto(`/profile?id=${otherUserId}`);
 
-    // Verify no dialogs exist initially
-    let dialogs = page.locator('[role="dialog"]');
-    await expect(dialogs).toHaveCount(0);
+    // No dialog on /profile itself — the screen still mounts none.
+    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
 
-    // Verify button exists and is disabled (per C8b contract)
-    const writeKudoBtn = page.getByRole("button", { name: "Viết Kudo" });
-    await expect(writeKudoBtn).toBeDisabled();
+    const writeKudo = page.locator("[data-testid=profile-write-kudo]");
+    await expect(writeKudo).toBeVisible();
+    await expect(writeKudo).toHaveAttribute(
+      "href",
+      `/kudos?compose=${otherUserId}`,
+    );
 
-    // Attempt interaction (disabled button won't respond to normal click)
-    // This verifies the button is truly disabled and cannot open a dialog
-    try {
-      await writeKudoBtn.click({ timeout: 1000 });
-    } catch {
-      // Expected: button is disabled and click times out
-    }
+    await writeKudo.click();
+    await page.waitForURL(/\/kudos\?compose=/);
 
-    // Verify still no dialogs after attempted click
-    dialogs = page.locator('[role="dialog"]');
-    await expect(dialogs).toHaveCount(0);
+    // Lands on /kudos with the dialog already open AND that Sunner chosen —
+    // the point of the link, not just the navigation.
+    const dialog = page.locator("[data-testid=kudos-compose-dialog]");
+    await expect(dialog).toHaveAttribute("open", "");
+    const recipient = dialog.locator("[data-testid=kudos-recipient-input]");
+    await expect(recipient).not.toHaveValue("");
   });
 
   // C12: Malformed ?id= returns 404

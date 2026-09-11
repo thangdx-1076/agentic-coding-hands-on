@@ -17,6 +17,8 @@ import { getKudosBoard } from "@/dal/kudos";
 import { toKudosAggregatesClient } from "@/dal/kudos-board-aggregates-client";
 import { toKudosClient } from "@/dal/kudos-client";
 import { getViewerHeartedKudoIds } from "@/dal/kudo-hearts";
+import { getProfileCard } from "@/dal/profile-cards";
+import { toProfileCardsClient } from "@/dal/profile-cards-client";
 import { toKudoHeartsClient } from "@/dal/kudo-hearts-client";
 import { getKudosStats, type KudosStatsClient } from "@/dal/kudos-stats";
 import { toKudosStatsClient } from "@/dal/kudos-stats-client";
@@ -32,6 +34,9 @@ export const metadata: Metadata = {
 type KudosPageSearchParams = {
   hashtag?: string | string[];
   department?: string | string[];
+  /** A Sunner id to start a kudo for, set by the write-Kudo bar on
+   * `/profile?id=` — that screen has no compose dialog of its own. */
+  compose?: string | string[];
 };
 
 type KudosPageProps = {
@@ -58,9 +63,14 @@ type KudosPageProps = {
  * states BR-011/BR-012 already define, never a 500.
  */
 export default async function KudosPage({ searchParams }: KudosPageProps) {
-  const { hashtag: rawHashtag, department: rawDepartment } = await searchParams;
+  const {
+    hashtag: rawHashtag,
+    department: rawDepartment,
+    compose: rawCompose,
+  } = await searchParams;
   const hashtag = firstNonEmpty(rawHashtag);
   const department = firstNonEmpty(rawDepartment);
+  const composeRecipientId = firstNonEmpty(rawCompose);
 
   const [currentUser, viewer] = await Promise.all([
     getCurrentUser(),
@@ -74,9 +84,26 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
   const tKudos = await getTranslations("kudos");
   const tStandards = await getTranslations("standards");
   const notificationsCopy = await getNotificationsCopy();
-  const copy = buildKudosCopy(tHome, tKudos, notificationsCopy, locale);
+  const copy = buildKudosCopy(
+    tHome,
+    tKudos,
+    notificationsCopy,
+    locale,
+    tStandards,
+  );
 
   const supabase = await createClient();
+
+  // `?compose=<id>` opens the dialog with that Sunner already chosen. The
+  // name and avatar have to be resolved HERE: the client only receives an
+  // id, and `profile_cards` is an authenticated-only read, so a signed-out
+  // visitor resolves to `null` and simply lands on the board — the compose
+  // flow gates on auth anyway (AD-7).
+  const composeRecipient =
+    viewerId !== null && isUuid(composeRecipientId)
+      ? await getProfileCard(toProfileCardsClient(supabase), composeRecipientId)
+      : null;
+
   const [board, stats, recentGiftRecipients] = await Promise.all([
     getKudosBoard(
       toKudosClient(supabase),
@@ -118,6 +145,7 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
       logoutAction={logoutAction}
       toggleKudoHeartAction={toggleKudoHeart}
       loadMoreKudosAction={loadMoreKudos}
+      composeRecipient={composeRecipient}
     />
   );
 }
@@ -128,6 +156,17 @@ export default async function KudosPage({ searchParams }: KudosPageProps) {
  * `string | string[] | undefined` — validated here into a single trusted
  * `string | null` before it ever reaches `getKudosBoard`'s filters.
  */
+/** `?compose=` crosses the browser boundary, so it can be anything. The id
+ * only ever addresses a `public.users` row, whose key is a UUID — anything
+ * else cannot match and is rejected here rather than spending a Supabase
+ * round-trip to learn the same thing. */
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | null): value is string {
+  return value !== null && UUID_PATTERN.test(value);
+}
+
 function firstNonEmpty(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   return typeof raw === "string" && raw.trim() !== "" ? raw : null;

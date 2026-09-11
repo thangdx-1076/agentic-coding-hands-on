@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, SVGProps } from "react";
+import { useRef, type KeyboardEvent, type SVGProps } from "react";
 
 import type { KudosSunnerOption } from "./kudos-sunner-options";
 import { KudosSunnerOptions } from "./kudos-sunner-options";
@@ -80,6 +80,8 @@ export function KudosHeroSearchPill({
   onDismiss,
   onSubmit,
 }: KudosHeroSearchPillProps) {
+  // The result list places itself against this pill (`useAnchoredPopover`).
+  const pillRef = useRef<HTMLDivElement | null>(null);
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       onDismiss();
@@ -94,6 +96,7 @@ export function KudosHeroSearchPill({
   return (
     // mm:2940:13450
     <div
+      ref={pillRef}
       data-testid="kudos-hero-search-pill"
       className="relative flex w-full max-w-[381px] items-center gap-2 rounded-[68px] border border-[#998C5F] bg-[rgba(255,234,158,0.10)] px-4 py-6"
     >
@@ -125,6 +128,7 @@ export function KudosHeroSearchPill({
       {isOpen ? (
         <div id={LISTBOX_ID}>
           <KudosSunnerOptions
+            anchorRef={pillRef}
             label={ariaLabel}
             options={options}
             loading={loading}

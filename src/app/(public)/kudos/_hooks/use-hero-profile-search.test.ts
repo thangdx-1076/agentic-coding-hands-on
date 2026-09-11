@@ -35,7 +35,7 @@ const mockedSearch = vi.mocked(searchSunners);
 const DEBOUNCE_MS = 250;
 
 function makeSunner(id: string, fullName: string | null): SunnerSuggestion {
-  return { id, fullName, avatarUrl: null };
+  return { id, fullName, avatarUrl: null, department: "CEVC1" };
 }
 
 function renderSearch(isSignedIn = true) {

@@ -1756,3 +1756,150 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 
 - Migration `0017` (index) **được viết SAU khi reviewer chạy xong**, vì nó thực thi đúng finding Low #2 của chính reviewer. Nghĩa là verdict `SEALED` chưa soi `0017`. Nội dung là một `CREATE INDEX`, không đụng policy/grant/cột nào — nhưng nói ra cho đúng bản ghi
 - PR: https://github.com/thangdx-1076/agentic-coding-hands-on/pull/27 (`fix/screen-audit-spec-test-gaps` → `main`, 10 commit)
+
+## 260911-0033 — next-image-google-avatar-host
+
+### Tôi cần làm
+
+- [ ] **Quyết: có chặn `avatar_url` rác ở tầng DB hay không** — `supabase/migrations/0001_users_table.sql:59` cấp `UPDATE (avatar_url)` cho `authenticated` trên row của chính mình, nên một Sunner PATCH thẳng qua PostgREST là đặt được string bất kỳ, không qua app code. Lúc đó người XEM row đó ăn đúng cái throw `Invalid src prop` vừa fix (fix này chỉ đóng nguồn Google hợp lệ, không đóng được đường ghi trực tiếp). Hai hướng: `CHECK` constraint trên cột, hoặc `error.tsx` bao route. Không tự làm vì cái đầu là siết contract DB, cái sau là quyết định UX cho trang lỗi — cả hai vượt phạm vi một bug fix. Reviewer xếp Medium, không chặn.
+
+### Decisions
+
+- Tách logic image config ra `src/configs/image-remote-patterns.ts` thay vì thêm host thẳng vào `next.config.ts` — `next.config.ts` chỉ Next load, vitest không import assert được, nên bug này trước đó không có gì canh. Tách ra là điều kiện để có regression test. Đổi lại: sinh thêm 1 thư mục layer mới (`src/configs/`), đã có trong allowlist coverage nên vẫn bị gate 100% soi
+- `pathname` bó `/a/**` + `/a-/**` chứ không `**` trần — chặn Photos/Drive thumbnail của cùng host `lh3.googleusercontent.com` khỏi đi qua image optimizer. `search` để trống có chủ ý: suffix size (`=s96-c`) nằm trong PATH, pin `search: ""` là tự mở lại đúng cái crash này khi Google thêm query param
+- Đổi 2 story fixture từ `i.pravatar.cc` sang asset local trong `public/` — `profile-hero` giờ render qua `next/image`, host placeholder bên thứ ba sẽ bị chặn. Không thêm host của story vào allowlist production
+- Nhánh `fix/runtime-bug-sweep`, mọc từ `HEAD` hiện tại — PR #27 đã merge và `origin/main..HEAD` = 0 commit, nên HEAD trùng main, không cần rebase/fetch. Tên đặt kiểu "sweep" vì bạn nói còn fix tiếp nhiều bug trên cùng nhánh này
+- Bỏ workaround `<img>` + `eslint-disable` ở `profile-hero.tsx` (nợ từ phase-05) thay vì để nguyên — cùng một bug, giờ nguyên nhân đã hết thì workaround không còn lý do tồn tại
+
+### Nợ lại
+
+- Sửa kèm một bug có sẵn mà test mới bắt được: `new URL("http://[::1]:55321").hostname` trả `"[::1]"` KÈM ngoặc, nên nhánh `::1` trong `isLoopbackOrPrivateHostname` chưa từng chạy đúng — `dangerouslyAllowLocalIP` sẽ sai nếu ai đó trỏ Supabase local qua IPv6 literal. Không ai gặp vì local hiện dùng `127.0.0.1`
+- Comment trong code lúc đầu viết "list is complete for the data the database can actually hold" — sai, reviewer bắt đúng. Đã sửa lại thành nói rõ giới hạn (xem mục "Tôi cần làm")
+
+## 260911-0105 — kudo-hashtag-picker-dismissal-and-master-lists
+
+### Tôi cần làm
+
+- [ ] Rà nốt các phần còn lại của modal viết kudo so với ảnh 2 (chip hashtag + popover đã xong).
+- [ ] Xác nhận `#High-perorming` trong design frame `1002:13190` đúng là lỗi chính tả — code đang ghi `High-performing` (`src/constants/kudos-hashtags.ts`).
+
+### Decisions
+
+- Picker khi viết kudo dùng 8 Sun* values đọc từ frame `1002:13102`; filter vẫn derive từ data thật. Hai dropdown là hai design khác nhau nên không gộp.
+- Sửa chính tả `High-perorming` → `High-performing`; giữ nguyên casing của design (7 dòng in hoa, 1 dòng thường) vì đó là lựa chọn nội dung của design.
+- Migration `0018` loại `hashtags[0]` (Danh hiệu) khỏi `kudos_filter_options` bằng `WITH ORDINALITY` — `IDOL GIỚI TRẺ` là danh hiệu, không phải hashtag, nên không được vào dropdown filter.
+- Migration `0019` UPDATE `users.department` sang CEVC1-4/OPD/Infra thay vì sửa seed `0008` — sửa seed sẽ không đổi DB local trừ khi `db reset`, mà reset thì mất `auth.users`.
+- Dropdown filter render theo thứ tự sort `value` (CEVC1..CEVC4, Infra, OPD), không theo thứ tự trong ảnh design — thứ tự sort là hành vi có chủ đích đã ghi trong doc của view.
+- Enter trong ô free-text của picker giờ đóng luôn panel; click vào dòng gợi ý thì KHÔNG đóng (rows là multi-select có checkmark).
+
+### Nợ lại
+
+- `buildHashtagSuggestions` so khớp không phân biệt hoa/thường; hai tag chỉ khác dấu (`GO FAST` vs `GO-FAST`) vẫn ra hai dòng.
+- Stories/unit fixtures vẫn dùng `CEVC10`/`CEVC20` làm dữ liệu mẫu — không liên quan DB nên để nguyên.
+
+### Bổ sung 01:19 — chip + popover hashtag
+
+- Chip hashtag đổi từ chữ đỏ `#tag` sang pill trắng viền `#998C5F` bo 8px, chữ đậm `#333`, giữ badge X tròn đỏ — cùng họ với nút `+ Hashtag` ngay cạnh. Design không có node chip nào có style (`zOkcd82aJ4`, `5c7PkAibyD` đều rỗng) nên lấy theo ảnh tham chiếu.
+- Panel picker chuyển `absolute` → `fixed` neo theo nút `+ Hashtag`: thoát khỏi clip của scroll container mà không đụng vào layout form. Bỏ hẳn `scrollIntoView` (cách cũ đẩy cả form lên để nhường chỗ cho popover — sai hướng).
+- Panel tự lật lên trên khi dưới không đủ chỗ, tự kẹp trong mép viewport, và đo lại khi số chip đổi (thêm chip làm xuống dòng → nút trigger nhảy chỗ, panel cũ bị lệch khỏi neo).
+
+### Bổ sung 01:28 — dropdown người nhận
+
+- Panel đổi từ nền kem `#FFF8E1` sang nền tối `#00070C` viền `#998C5F`, mỗi dòng là avatar 40px + tên trắng đậm + phòng ban xám bên dưới, theo ảnh tham chiếu. Hai frame design ứng viên (`QIMJNgFb8K`, `zJzaC9GgXt`) đều không có node style nên không đọc được từ MCP.
+- Mũi tên `IconDown` từ `aria-hidden` (trang trí thuần) thành `<button>` thật: mở/đóng list, xoay 180°, focus vào input khi mở, đóng khi click ra ngoài.
+- Migration `0020` thêm `department` vào `profile_cards`. KHÔNG phải cái "widening" mà SEC_004 cấm: điều cấm đó liệt kê đích danh `email`/`role`/`locale`/timestamps, còn `department` đã public cho `anon` qua `kudos_cards` trên trang /kudos công khai — view này chỉ cho `authenticated` nên phạm vi còn hẹp hơn. E2E `profile.spec.ts` C16 (không lộ email/role) vẫn xanh.
+- Tách `_hooks/use-anchored-popover.ts` dùng chung cho cả hashtag picker, dropdown người nhận, mention list và hero search pill — cả bốn đều nằm trong scroll container nên cùng dính lỗi bị cắt.
+
+### Decisions (bổ sung)
+
+- Dropdown người nhận cũng chuyển sang `fixed` như hashtag picker. Với 8 kết quả (limit của `searchSunners`) panel chắc chắn vượt đáy scroll container — sửa trước thay vì đợi báo lỗi.
+
+### Nợ lại (bổ sung)
+
+- Bấm mũi tên khi ô tìm kiếm rỗng hiện "Không tìm thấy Sunner phù hợp" — đúng nhưng chưa thân thiện. Muốn hiện danh sách mặc định thì phải cho `searchSunners` chạy với query rỗng.
+- `home.spec.ts` "[TC ID-24, ID-39] Countdown decreases by 1 minute" đang đỏ SẴN trên cây sạch (đã verify bằng `git stash`) — không liên quan các thay đổi này.
+
+### Bổ sung 09:45 — chip hashtag + nút "+ Hashtag"
+
+- Nút xoá chip đổi từ đĩa đỏ `MM_MEDIA_Close Tiny` sang `MM_MEDIA_Close` (`214:3851`) — dấu X trơn màu tối, dùng lại `IconClose` sẵn có qua `kudos-compose-icons.tsx`. Đĩa đỏ vốn thuộc về thumbnail ảnh (phải đọc được trên nền ảnh bất kỳ nên mới cần nền tròn); chip đã có nền trắng nên không cần.
+- Nút "+ Hashtag" dựng lại theo `Frame 483` (`query_section` trên `;662:8911`): icon plus BÊN TRÁI, `addLabel` + `limitNote` xếp chồng BÊN TRONG nút. Trước đó icon nằm phải và "Tối đa 5" nằm ngoài nút — trong khi `kudos-image-field.tsx` (cùng component Figma `186:2757`) vẫn luôn dựng đúng. Giờ hai bên khớp nhau.
+- Bỏ dấu "+" thừa trong `hashtagAdd`/`imageAdd` (defaults + en.json + vi.json): text node của design đọc đúng là "Hashtag" và "Image" (`;662:8911;186:2760`, `;662:9133;186:2760`), dấu + là icon `MM_MEDIA_Plus`. Để cả hai thì render ra hai dấu cộng.
+
+### Nợ lại (bổ sung)
+
+- Ảnh tham chiếu hiển thị chip thứ 4 là `High-perorming` KHÔNG có `#`, trong khi 3 chip kia đều có. Code đang thêm `#` cho mọi chip. Chưa đổi vì để lệch giữa các chip trông như lỗi; cần xác nhận đây là chủ ý hay chỉ là mock thiếu nhất quán.
+
+## 260911-0954 — hover avatar, bo tròn danh hiệu, hover danh hiệu
+
+### Tôi cần làm
+
+- [ ] **Ngưỡng danh hiệu đang lệch với nội dung tooltip.** `starTier()` xếp hạng theo TỔNG kudos nhận được với mốc 10/20/50, còn tooltip (giờ đã hiện ra) ghi "Có 1-4 / 5-9 / 10-20 / hơn 20 NGƯỜI GỬI". Hai thước đo khác nhau, và người có 0 kudo vẫn hiện "New Hero". Trước đây không ai thấy vì badge không giải thích gì; giờ nó tự nói ra. Cần chốt: đổi `starTier` sang đếm người gửi riêng biệt, hay sửa lại nội dung?
+- [ ] Design không có node cho card hover avatar lẫn tooltip danh hiệu — đã dựng theo ảnh bạn gửi. Xem lại spacing/màu nếu cần khớp pixel.
+
+### Decisions
+
+- Card hover avatar và tooltip danh hiệu đều `createPortal` ra `document.body`. Bắt buộc: slide của carousel dùng `transform` (`kudos-highlight-carousel.tsx:98`), mà ancestor có transform thì trở thành containing block của `position: fixed` — card bị đặt lệch hẳn khỏi avatar. Popover trong dialog thì KHÔNG portal (dialog nằm ở top layer, portal ra body sẽ bị chìm dưới).
+- Nút "Gửi KUDO" nối bằng context `_contexts/kudos-compose-context.tsx` thay vì truyền prop: dialog nằm trong keyvisual band, còn card nằm ở carousel/feed — hai nhánh anh em, truyền prop phải xuyên qua 5 component không liên quan. Launcher đăng ký hàm mở, card gọi.
+- Migration `0021` thêm `sender_kudos_sent`/`receiver_kudos_sent` vào `kudos_cards`, mask về 0 cho người gửi ẩn danh — cùng lý do `sender_kudos_received` bị mask: con số "đã gửi 25" đứng cạnh tên ẩn danh là đầu mối để suy ra danh tính.
+- Bảng `HERO_TIERS` chuyển lên `src/constants/hero-tiers.ts`. Trước đây `/kudos` và `/standards` mỗi bên giữ một bản, kèm comment giải thích ESLint cấm import chéo `_shared` — đúng, và đó chính là lý do nó phải nằm cao hơn một cấp.
+- Chữ trong tooltip đọc từ chính namespace `standards.heroSection.tiers.*`, không copy sang `kudos`: một huy hiệu không được giải thích khác nhau ở hai màn.
+- Trigger hover avatar là `<button>` thật, mở bằng cả hover lẫn focus bàn phím.
+
+### Nợ lại
+
+- Ảnh design ghi đơn vị đầy đủ ("Culture & Communication Executive/C&C Line/HRD Unit/OPD Center") nhưng DB chỉ có `users.department` một cấp (CEVC1). Đang render giá trị đang có.
+
+## 260911-1014 — nút "Viết Kudo" ở profile người khác
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- Nút không hỏng — nó là `<button disabled>` cố ý, kèm comment "FUN_006/007 deferred to F007+". Hai feature đó đã ship nên hạn hoãn hết hiệu lực; đổi thành `<Link>` chạy thật.
+- Là `Link` sang `/kudos?compose=<id>` chứ không mount dialog trên `/profile`: toàn bộ state machine của compose (draft, validate, submit, upload ảnh) nằm ở `/kudos`. Dựng bản thứ hai ở profile là nhân đôi thứ đắt nhất trong feature này.
+- `/kudos` resolve `?compose=` ở phía server qua `getProfileCard` rồi truyền xuống — client chỉ có id, mà `profile_cards` là read chỉ cho `authenticated`. Khách chưa đăng nhập → `null`, vào thẳng board (compose vốn đã chặn theo AD-7).
+- `initialRecipient` đi theo prop `compose` có sẵn (page → client → screen → band → launcher), không dùng context vừa tạo: prop đã xuyên đúng đường đó rồi, thêm context nữa là hai cơ chế cho một việc.
+- `openedRef` chặn dialog mở lại nếu user đóng đi mà component re-render trong khi `?compose=` còn trên URL.
+- Sửa e2e C11 và C8b vì hai test đó mã hóa hành vi hoãn cũ (`disabled`, "không mở dialog"). C11 giờ assert đúng luồng mới; C8b giữ nguyên điều nó thực sự bảo vệ — thanh Viết Kudo và bảng thống kê không bao giờ cùng hiện.
+
+### Nợ lại
+
+- `getProfileCard` không select `department`, nên recipient điền sẵn có `department: null`. Không ảnh hưởng gì vì ô người nhận không hiện phòng ban.
+
+## 260911-1036 — countdown "Coming soon"
+
+### Tôi cần làm
+
+- [ ] **DB local có 4 kudo rác từ các lần chạy e2e** (`Visual Tester`, `Dang Xuan Thang`, …) — tổng 15 dòng thay vì 11 dòng seed. `FEED_PAGE_SIZE = 10` nên `Đỗ hoàng Hiệp` bị đẩy xuống dòng thứ 11, khiến e2e `kudos.spec.ts` C21 (Sunner search scatter) đỏ. Đã verify đỏ cả trên cây sạch → không liên quan thay đổi nào hôm nay. Tôi KHÔNG tự xoá vì trong đó có dòng nhận bởi "Dang Xuan Thang" — có thể là lần đăng nhập thật của bạn. Cần bạn xác nhận trước khi dọn.
+
+### Decisions
+
+- Chiều rộng tile đổi từ cố định (`w-20`/`sm:w-28`/`lg:w-[116px]`) sang `min-w-`. Con số 116px của design (`2167:9038`) là vì frame đó vẽ đúng 2 ô 51px + gap 14px — design chưa bao giờ vẽ trường hợp 3 chữ số. `pad2` cố ý không giới hạn `days` (clarifications: "Days không giới hạn 2 chữ số"), nên phải cho tile nở ra.
+- Thêm `shrink-0` cho cả tile lẫn từng ô: nếu không, flex "giải quyết" tràn bằng cách bóp ô xuống dưới 51px, tức vẫn sai design theo kiểu khác.
+- Sửa e2e ID-24 đọc giá trị phút hiện tại rồi so sánh sau khi tua, thay vì hardcode. Bản cũ ghim clock 2099-12-31 theo giả định `EVENT_START_AT=2099-...`; env giờ là 2026-12-26 nên clock đó nằm SAU sự kiện, countdown về 00 và test đỏ vì giả định cũ chứ không phải vì hồi quy.
+- Thêm ID-24b: assert ô chữ số cuối không vượt mép phải tile. Đã kiểm chứng test này đỏ khi revert fix.
+
+### Nợ lại
+
+- Font "Digital Numbers" của design vẫn chưa được load (đang fallback `monospace`) — vướng license, đã ghi sẵn trong doc-comment của `countdown-tiles.tsx` từ trước.
+
+## 260911-1048 — ship official 0.11.0
+
+### Tôi cần làm
+
+- [ ] **DB local có 3 kudo rác** từ các lần chạy e2e (nhận bởi `Dang Xuan Thang`, `Visual Tester`, `Dương thúy An`, ngày 2026-09). Không chặn ship nữa (đã sửa test C21 hết phụ thuộc dữ liệu), nhưng vẫn nên dọn khi bạn xác nhận dòng của "Dang Xuan Thang" không phải đăng nhập thật.
+- [ ] `pnpm test:e2e:lock` chưa chạy được ở máy này: nó cần `next dev` riêng, mà `.next/dev` lock đang bị dev server giữ (đã ghi trong `playwright.config.ts`). CI chạy trên máy sạch nên sẽ cover.
+
+### Decisions
+
+- **Ngưỡng Hero badge đổi theo design** (finding HIGH của reviewer). `starTier()` cũ xếp theo TỔNG kudos nhận (10/20/50); copy tooltip lấy từ design lại ghi SỐ NGƯỜI GỬI (1-4/5-9/10-20/hơn 20). Design là nguồn đúng → migration `0022` thêm `*_distinct_senders` (`count(DISTINCT sender_id)`), và `heroTierIndex()` thay `starTier()`.
+- 0 người gửi giờ là **không có huy hiệu** (`null`), không phải "New Hero". Luật cũ floor ở tier 0 mà tier 0 là một huy hiệu thật — nên người chưa ai cảm ơn vẫn đeo New Hero.
+- Anonymous kudo VẪN tính vào `distinct_senders` của người nhận: view đọc `sender_id` thật ở bảng gốc và chỉ phát ra một con số tổng, không lộ danh tính.
+- C21 sửa thành đọc tên thật từ scatter thay vì hardcode "Đỗ" — test cũ đỏ vì dữ liệu vắng mặt chứ không phải vì search hỏng. Bản mới còn chặt hơn: assert đúng node đó được highlight.
+- Version 0.11.0 (minor) theo convention repo: có feature mới + đổi schema.
+
+### Nợ lại
+
+- Reviewer gợi ý thêm: đã sửa cả 2 Medium (đăng ký opener qua ref thay vì deps đổi mỗi render; `encodeURIComponent` cho profileId) và 2 Low (guard UUID trước khi query; comment giải thích 2 hover card đóng khác nhau có chủ ý).

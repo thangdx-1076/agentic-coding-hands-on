@@ -11,7 +11,7 @@ type ShimInput = Parameters<typeof toKudosClient>[0];
  * exported.
  */
 const CARD_COLUMNS =
-  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,is_own";
+  "id,content,hashtags,image_urls,heart_count,created_at,sender_id,sender_full_name,sender_avatar_url,sender_department,sender_kudos_received,sender_kudos_sent,sender_distinct_senders,receiver_id,receiver_full_name,receiver_avatar_url,receiver_department,receiver_kudos_received,receiver_kudos_sent,receiver_distinct_senders,is_own";
 
 describe("toKudosClient", () => {
   it("forwards a bare select() as a directly-awaitable thenable (the totals read's shape)", async () => {

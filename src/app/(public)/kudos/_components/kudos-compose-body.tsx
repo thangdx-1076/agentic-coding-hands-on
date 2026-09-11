@@ -5,6 +5,7 @@ import type {
   KudosComposeFieldErrors,
 } from "../_hooks/use-kudos-compose-form";
 import type { KudosComposeCopy } from "../_shared/kudos-compose-copy";
+import { buildHashtagSuggestions } from "../_utils/build-hashtag-suggestions";
 
 import { KudosAnonymousField } from "./kudos-anonymous-field";
 import { KudosHashtagField } from "./kudos-hashtag-field";
@@ -72,11 +73,16 @@ export function KudosComposeBody({
     name: image.file.name,
   }));
 
+  // Master vocabulary + whatever past kudos used — see
+  // `_utils/build-hashtag-suggestions.ts` for why the picker needs both while
+  // the filter dropdown needs only the derived half.
+  const hashtagSuggestions = buildHashtagSuggestions(hashtagVocabulary);
+
   return (
     <>
       <KudosHashtagField
         hashtags={draft.hashtags}
-        suggestions={hashtagVocabulary}
+        suggestions={hashtagSuggestions}
         pickerOpen={hashtagPickerOpen}
         query={hashtagQuery}
         onQueryChange={onHashtagQueryChange}

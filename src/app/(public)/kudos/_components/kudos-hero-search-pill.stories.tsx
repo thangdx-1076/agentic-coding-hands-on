@@ -45,11 +45,13 @@ export const WithResults: Story = {
         id: "11111111-1111-4111-8111-111111111111",
         fullName: "Nguyễn Văn A",
         avatarUrl: null,
+        department: "CEVC1",
       },
       {
         id: "22222222-2222-4222-8222-222222222222",
         fullName: "Nguyễn Thị B",
         avatarUrl: null,
+        department: "CEVC1",
       },
     ],
   },
