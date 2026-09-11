@@ -36,10 +36,19 @@
 # The Storybook step catches a story that BREAKS. It does not check that a
 # story EXISTS for every common component -- that remains a review concern.
 #
-# None of these gates actually block a merge today: `main` has no branch
-# protection (verified 2026-09-05, the protection API returns 404), so
-# every job here reports rather than enforces. Making them binding means
-# enabling branch protection and marking them required status checks.
+# These gates are BINDING since 2026-09-11. `main` is protected and lists
+# `Quality` and `E2E (CI-safe)` — the two `name:` values below — as required
+# status checks, with `strict` on (a PR must be up to date with `main` before
+# it can merge) and admin enforcement on (no bypass, including the repo
+# owner's). Renaming either job silently un-requires it: the protection rule
+# matches on the check name, and a name nothing produces simply never
+# arrives, leaving the PR permanently pending rather than failing loudly.
+# Rename here and in the protection rule in the same change.
+#
+# That protection is also what lets cd.yml deploy on a plain `push` to `main`
+# without re-running these tests — see its header. Turning protection off
+# therefore does more than loosen merges: it puts untested commits on the
+# path to production.
 # -----------------------------------------------------------------------
 name: CI
 

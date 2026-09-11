@@ -1932,3 +1932,40 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - Smoke check sau deploy chỉ là `curl` vào `/`, chứng minh app sống chứ không chứng minh UI đúng. Muốn chặt hơn thì cần một suite e2e chạy trên Supabase staging — chưa có project staging nào.
 - Nhánh PKCE thành công của `/auth/callback` vẫn không có test ở đâu cả; deploy cũng không đổi được điều đó.
 - Chưa cấu hình preview deploy cho PR (bạn yêu cầu chỉ deploy `main`). Nếu sau cần, thêm job dùng `--environment=preview` và một Supabase project riêng cho preview.
+
+## 260911-1711 — docs: cách lấy VERCEL_TOKEN
+
+### Tôi cần làm
+
+- [ ] Lúc tạo token thật, chọn **Scope** đúng team sở hữu project SAA. Token lệch scope vẫn hợp lệ nhưng `deploy` đỏ ở step *Pull Vercel environment* — không phải lỗi cấu hình workflow.
+- [ ] Ghi ngày hết hạn token vào file này sau khi tạo, để còn biết đường xoay vòng trước khi CD đỏ giữa lúc cần deploy.
+
+### Decisions
+
+- Tách `§ 5.3 — Lấy VERCEL_TOKEN` thành mục riêng thay vì một ô trong bảng 5.2. Ba ô của form (Name/Scope/Expiration) đều có cái bẫy riêng, nhét vào một ô bảng thì không nói được cái nào.
+- **Không ghi cứng các lựa chọn trong dropdown Expiration.** Vercel đổi danh sách này theo thời gian; doc ghi nguyên tắc chọn, không ghi con số, để khỏi tự tạo drift.
+- Ship bỏ qua temper/lint/license/journal/docs-update: diff là markdown thuần, không đụng `src/`, `package.json` hay dependency. Cổng duy nhất một file `.md` có thể làm đỏ CI là `pnpm format:check` — đã chạy, xanh. Không claim "tempered".
+- Không bump version: `0.11.0` giữ nguyên. Convention repo bump khi có feature hoặc đổi schema; sửa doc thì không.
+- Không tạo issue mới: PR #30 đã mở sẵn cho branch này và là đường dẫn truy vết đủ dùng. Repo không có issue nào đang mở.
+
+### Nợ lại
+
+- (không có)
+
+## 260911-1725 — CI gác merge, CD deploy ngay khi merge
+
+### Tôi cần làm
+
+- [ ] Biết đường thoát khẩn cấp: `enforce_admins: true` nên **bạn cũng không push thẳng vào `main` được**. Cần gấp thì tắt rule → push → bật lại (lệnh ở `docs/deployment.md` § 5.6), đừng ngồi gỡ Git.
+- [ ] Nếu sau này đổi `name:` của job trong `ci.yml`, sửa luôn `contexts` trong protection rule cùng lúc — lệch tên là PR treo pending vĩnh viễn, không đỏ.
+
+### Decisions
+
+- **Branch protection trên `main`**: required checks `Quality` + `E2E (CI-safe)`, `strict: true`, `enforce_admins: true`, khoá force-push và xoá nhánh, bắt resolve conversation. `required_pull_request_reviews: null` vì repo một người — bật lên là tự khoá mình ra ngoài (không tự approve PR của mình được).
+- **CD đổi từ `workflow_run` sang `push: [main]`.** Lý do cũ (chặn deploy khi CI đỏ) giờ do branch protection gánh, và gánh sớm hơn — chặn ngay ở nút Merge thay vì sau khi code đã vào `main`. Giữ `workflow_run` chỉ còn nghĩa là đợi CI chạy lại lần hai trên đúng thứ vừa test xong.
+- Bỏ luôn `DEPLOY_SHA` và mọi `ref:` trong `cd.yml`. Với event `push`, checkout mặc định đã là đúng commit vừa đẩy; biến đó chỉ tồn tại để bù cho cái mà `workflow_run` không tự có.
+- **Giữ CI chạy trên push `main`** dù giờ nó không gác gì nữa. Nó tốn thêm một lượt runner mỗi lần merge, đổi lại bắt được trường hợp merge commit hỏng trong khi PR head thì không. Muốn tiết kiệm thì bỏ `main` khỏi `push.branches` của `ci.yml`.
+
+### Nợ lại
+
+- CD vẫn chưa chạy thật lần nào. Lần merge PR #30 sẽ là lần đầu — và nó sẽ đỏ ở `plan` nếu 6 secret chưa nạp. Đó là hành vi đúng, không phải bug.
