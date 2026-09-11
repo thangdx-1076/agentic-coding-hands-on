@@ -146,12 +146,47 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
 2. **Settings → Environment Variables**, scope **Production**, thêm 4 biến (đối
    chiếu `.env.example`):
 
-   | Biến                                   | Giá trị                              |
-   | -------------------------------------- | ------------------------------------ |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project-ref>.supabase.co`  |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key ở Bước 1             |
-   | `EVENT_START_AT`                       | `2026-12-26T18:30:00+07:00`          |
-   | `PRELAUNCH_LOCK_ENABLED`               | `true` khi còn khoá site, `false` khi mở |
+   | Biến                                   | Type       | Giá trị                              |
+   | -------------------------------------- | ---------- | ------------------------------------ |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | **Config** | `https://<project-ref>.supabase.co`  |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Config** | publishable key ở Bước 1             |
+   | `EVENT_START_AT`                       | Config     | `2026-12-26T18:30:00+07:00`          |
+   | `PRELAUNCH_LOCK_ENABLED`               | Config     | `true` khi còn khoá site, `false` khi mở |
+
+   > **⚠️ Hai biến `NEXT_PUBLIC_*` BẮT BUỘC là Type `Config`, không phải `Secret`.**
+   > Hộp **Add Environment Variable** hỏi Type trước cả Key. Chọn `Secret` là
+   > deploy xong nhưng Google login chết trên production — và không có gì báo lỗi.
+   >
+   > Vì sao: `cd.yml` build **trong GitHub Actions** rồi ship `--prebuilt`, nên nó
+   > phải `vercel pull` giá trị thật xuống runner. Biến `Secret` thì Vercel không
+   > trả giá trị cho ai hết, kể cả `vercel pull` — CLI ghi đúng chuỗi
+   > `[SENSITIVE]` vào `.vercel/.env.production.local` (hằng
+   > `SENSITIVE_ENV_VALUE_PLACEHOLDER` trong Vercel CLI). Next inline mọi
+   > `NEXT_PUBLIC_*` vào bundle client lúc build, nên bundle production mang theo
+   > `createBrowserClient("[SENSITIVE]", "[SENSITIVE]")`: nhấn nút login là
+   > `signInWithOAuth` hỏng ngay ở client, `src/api/auth.ts` nuốt lỗi thành
+   > `{ ok: false }`, màn login hiện dòng đỏ "Đăng nhập không thành công" —
+   > request chưa từng đi tới Supabase. Kèm theo, `next.config.ts` parse cùng biến
+   > đó lúc build nên production mất luôn `remotePatterns` cho Supabase Storage,
+   > và ảnh kudo ném "hostname is not configured under images".
+   >
+   > Để `Secret` cũng không giấu được gì: hai giá trị này bị inline vào JS gửi
+   > xuống browser, ai xem source cũng đọc được. Publishable key là public theo
+   > thiết kế; thứ phải giữ kín là service-role key, mà nó không có mặt ở đây.
+   >
+   > Đã là `Secret` rồi thì không sửa Type được (Vercel không cho đọc lại giá
+   > trị) — **xoá và Add lại** với Type `Config`, rồi chạy lại `cd.yml`.
+   >
+   > Kiểm sau khi deploy — phải in ra `https://<ref>.supabase.co`, thấy
+   > `[SENSITIVE]` là chưa xong:
+   >
+   > ```bash
+   > P=https://<domain-production>
+   > curl -s "$P/login" -o /tmp/l.html
+   > for c in $(grep -oE '/_next/static/chunks/[^"]+\.js' /tmp/l.html | sort -u); do
+   >   curl -s "$P$c" | grep -ohE 'https://[a-z0-9]{10,}\.supabase\.co|\[SENSITIVE\]'
+   > done | sort -u
+   > ```
 
    Không set `SERVICE_ROLE_KEY` trên Vercel. Không dòng code runtime nào trong
    `src/` đọc nó — nó chỉ phục vụ e2e dọn dữ liệu ở máy local.
@@ -551,6 +586,20 @@ Nói thẳng để không ai đọc nhầm dấu tick xanh:
   nhập Google thật mới sinh ra được cặp code/verifier.
 - Smoke check sau deploy chỉ là probe sống/chết trên `/`. Nó bắt được app chết,
   không bắt được UI sai.
+- **Env var sai giá trị thì deploy vẫn xanh từ đầu tới cuối.** Đã xảy ra
+  2026-09-11: hai biến `NEXT_PUBLIC_*` để Type `Secret`, Google login chết trên
+  production, mà cả bốn bước đều đúng trạng thái "thành công" của chúng —
+  `vercel pull` in dòng bắt đầu bằng `!` (cảnh báo, exit 0):
+  `! 11 Secret values cannot be pulled from the production Environment. Wrote
+  "[SENSITIVE]" as placeholders`; `vercel build` không có gì để phàn nàn vì
+  `[SENSITIVE]` là một string hợp lệ, `src/configs/image-remote-patterns.ts` bắt
+  `URL` throw rồi trả về `null` đúng như thiết kế, còn `createBrowserClient` chỉ
+  ném khi tham số rỗng; `vercel deploy` chỉ upload; smoke check `curl --fail` trên
+  `/` được 200 vì trang render ở server, mà biến server đọc từ runtime Vercel nên
+  vẫn là giá trị thật. Lỗi chỉ sống trong bundle client, và chỉ hiện ra khi có
+  người **nhấn** nút login — không có bước nào trong pipeline nhấn nút.
+  Không có gate nào cho việc này: muốn bắt thì phải grep bundle
+  (xem đoạn kiểm ở Bước 4.2) hoặc chạy e2e `@auth` trên chính deployment.
 - Branch protection chặn **merge**, không chặn **push**. Rule khoá force-push và
   xoá nhánh, bắt buộc qua PR có check xanh — nhưng nó bảo vệ đúng `main`. Mọi
   đường khác vào production (bấm Run workflow trên CD, `vercel deploy` tay từ
