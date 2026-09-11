@@ -2056,3 +2056,18 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Lần chạy `migrate.yml` đầu tiên trên production mới chỉ chứng minh nhánh "không có gì pending". Nhánh "có pending" vẫn chưa chạy thật lần nào trên production — mới chỉ kiểm trên DB local.
+
+## 260911-1830 — google-login-broken-on-production
+
+### Tôi cần làm
+
+- [ ] Vercel → Settings → Environment Variables (Production): `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` đang là Type **Secret**, phải chuyển sang Type **Config**. Secret không đọc lại được nên không convert được — xoá rồi Add lại, chọn Config. Sau đó chạy lại `cd.yml`. Bằng chứng: log CD run 34593087518 in `! 11 Secret values cannot be pulled ... Wrote "[SENSITIVE]" as placeholders`, và bundle production gọi `createBrowserClient("[SENSITIVE]","[SENSITIVE]")`.
+- [ ] Sau khi deploy lại: kiểm Supabase Dashboard → Authentication → URL Configuration có `https://agentic-coding-hands-on-orpin.vercel.app/**` trong Redirect URLs, và Google Cloud Console có `https://<ref>.supabase.co/auth/v1/callback` — hai thứ này chưa bao giờ được thử vì request chưa từng tới Supabase.
+
+### Decisions
+
+- Không sửa code. Nguyên nhân nằm ở cấu hình env trên Vercel, không phải ở `src/api/auth.ts` — bundle inline đúng thứ `vercel pull` đưa xuống.
+
+### Nợ lại
+
+- `next.config.ts` đọc `NEXT_PUBLIC_SUPABASE_URL` lúc build (`resolveImagesRemoteConfig`), nên production hiện không có remotePattern cho Supabase Storage → ảnh kudo sẽ ném "hostname is not configured under images" lúc render. Cùng một nguyên nhân, tự khỏi khi đổi hai biến sang Type Config. Chưa xác minh trên production.
