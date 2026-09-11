@@ -1,6 +1,17 @@
 # -----------------------------------------------------------------------
-# Deploy pipeline — production only
+# Deploy pipeline — production only. CODE ONLY, never the database.
 # -----------------------------------------------------------------------
+# Schema migration lives in migrate.yml and runs ONLY when a person triggers
+# it (2026-09-11). Merging to `main` ships code against whatever schema is
+# already there.
+#
+# Read migrate.yml's header before merging anything that adds a migration:
+# this split gave up the schema-first ordering that used to be enforced here,
+# and the replacement is discipline — make the migration backward compatible,
+# or run migrate.yml before you merge. The "Pending migrations" step below
+# prints a warning when the commit being deployed touched
+# `supabase/migrations/`, but it is a reminder in the run summary, not a gate.
+#
 # CI (ci.yml) proves the commit. THIS file ships it. Two workflows, not one:
 # ci.yml runs on every feature branch and every PR where a deploy would be
 # meaningless, and keeping the deploy out of it means a change to the deploy
@@ -39,9 +50,9 @@ on:
 
 concurrency:
   group: cd-production
-  # NEVER cancel in progress here. A cancelled run can leave `supabase db
-  # push` half-applied or a Vercel deployment un-promoted. Queue instead:
-  # two deploys back to back is slow, a torn deploy is an outage.
+  # NEVER cancel in progress here. A cancelled run can leave a Vercel
+  # deployment un-promoted. Queue instead: two deploys back to back is slow,
+  # a torn deploy is an outage.
   cancel-in-progress: false
 
 # Every job checks out the default ref for the event — the pushed commit on
@@ -49,100 +60,8 @@ concurrency:
 # needed anywhere below.
 
 jobs:
-  # Read-only, and deliberately NOT bound to a GitHub Environment. Required
-  # reviewers gate an entire job before its first step runs, so a dry-run step
-  # living inside `migrate` would produce no output until after the approval —
-  # the reviewer would be approving blind. Running it here, one job earlier,
-  # is what makes the approval a decision about a printed list of SQL files.
-  #
-  # The consequence for secrets: this job needs the Supabase credentials while
-  # holding no environment, so those three must be REPOSITORY secrets, not
-  # environment secrets on `production-db`. That is the price of showing the
-  # plan before the gate. See docs/deployment.md § Bước 5.2.
-  plan:
-    name: List pending migrations
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          # Pinned to the version this repo's migrations were authored and
-          # applied with locally. `latest` would make an upstream CLI release
-          # an unannounced change to how production schema is applied.
-          version: 2.98.2
-
-      - name: Link project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-
-      # Written to the step summary, not just the log: the reviewer should not
-      # have to open a job and scroll to decide whether to approve.
-      - name: Dry run
-        run: |
-          {
-            echo "## Migrations pending on production"
-            echo ""
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD" \
-            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
-          {
-            echo '```'
-            echo ""
-            echo "Approve the \`migrate\` job only if this list is what you expect."
-          } >> "$GITHUB_STEP_SUMMARY"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-
-  migrate:
-    name: Migrate production database
-    # Waits for the plan above, so the approval prompt below is never the first
-    # thing that happens.
-    needs: plan
-    runs-on: ubuntu-latest
-    # Put a required reviewer on this GitHub Environment. Schema migration is
-    # the one irreversible step in this pipeline: `supabase db push` applies
-    # every pending file under supabase/migrations/ and there is no undo.
-    environment: production-db
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: 2.98.2
-
-      - name: Link project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-
-      # A no-op on any commit that touched no SQL, which is most of them —
-      # `db push` compares against the remote `schema_migrations` table and
-      # applies only what is missing. Running it unconditionally is cheaper
-      # than a path filter that can silently skip a migration when a commit
-      # range is computed wrong.
-      - name: Apply migrations
-        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-
   deploy:
     name: Deploy to Vercel
-    # Schema first, then code. The reverse order opens a window where the new
-    # bundle queries columns that do not exist yet — the release that added
-    # `kudos_cards.distinct_senders` (migration 0022) would have thrown on
-    # every `/kudos` render until its migration landed.
-    needs: migrate
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -154,6 +73,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Since schema moved to migrate.yml, nothing in this pipeline guarantees
+      # the database is ready for the code about to ship. This step does not
+      # restore that guarantee — it cannot; it only makes a forgotten
+      # migration visible in the run summary instead of in a 500 on /kudos.
+      #
+      # Reads the compare API rather than deepening the checkout: `git diff`
+      # against `event.before` would need fetch-depth 0 on every deploy to
+      # answer one yes/no question.
+      #
+      # Skipped on workflow_dispatch — a manual redeploy has no push range to
+      # compare, and `event.before` is empty there.
+      - name: Pending migrations check
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BEFORE="${{ github.event.before }}"
+          # All-zero SHA means a brand-new branch: no previous state to diff.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No push range to compare — skipping."
+            exit 0
+          fi
+
+          FILES=$(gh api "repos/${{ github.repository }}/compare/$BEFORE...${{ github.sha }}" \
+            --jq '[.files[].filename | select(startswith("supabase/migrations/"))] | .[]' || true)
+
+          if [ -z "$FILES" ]; then
+            echo "No migration files in this push."
+            exit 0
+          fi
+
+          {
+            echo "## ⚠️ This deploy carries migration files"
+            echo ""
+            echo "$FILES" | sed 's/^/- `/; s/$/`/'
+            echo ""
+            echo "This workflow does **not** apply them. If the code being deployed"
+            echo "reads the new schema, run **Migrate production database** now —"
+            echo "otherwise it queries columns that do not exist yet."
+            echo ""
+            echo "Already migrated before merging? Then nothing to do."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::warning::This deploy includes migration files that cd.yml does not apply. See the run summary."
+
+      # Must come BEFORE setup-node so the `cache: "pnpm"` below can find the
+      # binary. `vercel build` installs dependencies itself, and it picks the
+      # package manager from pnpm-lock.yaml plus `packageManager` in
+      # package.json — so without pnpm on PATH the build dies on
+      # `spawn pnpm ENOENT` before it compiles anything.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        # No `version:` input on purpose — see the `quality` job in ci.yml.
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -161,6 +134,7 @@ jobs:
           # (>=22 <25). Vercel's own build image must be set to the same
           # major in Project Settings → Build & Deployment.
           node-version: "24"
+          cache: "pnpm"
 
       # Pinned, not `vercel@latest`, for the same reason as the Supabase CLI
       # above: an upstream release should never change this pipeline silently.
@@ -214,7 +188,9 @@ jobs:
             echo "- Commit: \`${{ github.sha }}\`"
             echo "- Trigger: \`${{ github.event_name }}\`"
             echo ""
-            echo "Migrations were applied by the \`migrate\` job before this deploy."
-            echo "The CI run that gated it excluded \`@auth\` and \`@local-db\` tests —"
+            echo "This workflow deployed CODE ONLY. No migration was applied —"
+            echo "schema changes run from **Migrate production database**, by hand."
+            echo ""
+            echo "The CI run that gated this excluded \`@auth\` and \`@local-db\` tests —"
             echo "the authenticated path was NOT verified. See ci.yml's header."
           } >> "$GITHUB_STEP_SUMMARY"

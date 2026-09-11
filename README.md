@@ -203,22 +203,30 @@ Production runs on **Vercel** (app) + **Supabase Cloud** (database, auth, storag
 creating the Supabase project, applying migrations, wiring Google OAuth, the required GitHub
 secrets, and the manual acceptance checklist — is in [`docs/deployment.md`](docs/deployment.md).
 
-`.github/workflows/cd.yml` is a **separate** workflow from CI and only ever targets `main`. It runs
-on a plain `push` to `main`, deploying immediately rather than waiting on a CI run. That is safe
-only because of the branch protection above: a commit reaching `main` already passed both checks as
-a PR, so re-gating here would just wait for a second, redundant run. The flip side — anything that
-lands on `main` outside a protected PR goes straight to production. Three jobs, in this order:
+Code and schema ship through **two separate workflows**, and only one of them is automatic.
 
-1. **`plan`** — `supabase db push --dry-run`, writing the pending migration list to the run
-   summary. It carries no GitHub Environment on purpose: required reviewers gate a whole job
-   before its first step, so a dry-run inside `migrate` would only print _after_ the approval.
-   That also forces the three `SUPABASE_*` secrets to be repository secrets rather than
-   environment ones — the cost of showing the plan before the gate.
-2. **`migrate`** — `supabase db push` against the production project. Gated behind the
-   `production-db` GitHub Environment with a required reviewer, because a schema change has no
-   undo.
-3. **`deploy`** — `vercel build --prod` then `vercel deploy --prebuilt --prod`, so the artifact that
-   goes live is the exact tree CI gated, followed by a `curl` liveness check on `/`.
+**`.github/workflows/cd.yml` — code, on merge.** Runs on a plain `push` to `main`, deploying
+immediately rather than waiting on a CI run. That is safe only because of the branch protection
+above: a commit reaching `main` already passed both checks as a PR, so re-gating here would just
+wait for a second, redundant run. The flip side — anything that lands on `main` outside a protected
+PR goes straight to production. One job: `vercel build --prod` then `vercel deploy --prebuilt
+--prod`, so the artifact that goes live is the exact tree CI gated, followed by a `curl` liveness
+check on `/`. **It never touches the database.**
+
+**`.github/workflows/migrate.yml` — schema, by hand.** `workflow_dispatch` only; nothing triggers it
+automatically. Two jobs: `plan` runs `supabase db push --dry-run` and writes the pending list to the
+run summary, then `migrate` applies it behind the `production-db` Environment's required reviewer.
+`plan` carries no Environment on purpose — required reviewers gate a whole job before its first
+step, so a dry-run inside `migrate` would only print _after_ the approval, leaving the reviewer
+approving blind. That is also what forces the three `SUPABASE_*` values to be repository secrets
+rather than environment ones.
+
+The split costs the ordering guarantee the single pipeline used to enforce — schema first, then
+code. Nothing now stops a merge from deploying code against a schema that has not been migrated
+yet. Two ways to stay safe, in order of preference: make migrations backward compatible
+(expand/contract) so order stops mattering, or run `migrate.yml` _before_ merging the PR. `cd.yml`
+prints a warning in the run summary when the commit it is deploying touched `supabase/migrations/` —
+a reminder, not a guard. Details in `migrate.yml`'s header.
 
 Vercel's own Git integration must stay **disabled** for this repo (`Ignored Build Step` →
 `exit 0`); otherwise every push to `main` deploys twice, and the ungated Vercel-side build wins the

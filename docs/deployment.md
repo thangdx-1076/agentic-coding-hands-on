@@ -9,12 +9,37 @@ dựng Node server + `sharp` + reverse proxy — không đáng cho một event s
 
 Toàn bộ deploy do GitHub Actions chạy, không do Vercel tự bắt commit:
 
-| File                      | Chạy khi nào                        | Làm gì                                       |
-| ------------------------- | ----------------------------------- | -------------------------------------------- |
-| `.github/workflows/ci.yml` | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e |
-| `.github/workflows/cd.yml` | **ngay khi có commit vào `main`**   | `supabase db push` → `vercel deploy --prod` → smoke check |
+| File                           | Chạy khi nào                         | Làm gì                                                          |
+| ------------------------------ | ------------------------------------ | --------------------------------------------------------------- |
+| `.github/workflows/ci.yml`      | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e   |
+| `.github/workflows/cd.yml`      | **ngay khi có commit vào `main`**    | `vercel deploy --prod` → smoke check. **Không đụng database**     |
+| `.github/workflows/migrate.yml` | **chỉ khi bạn bấm Run workflow**     | `db push --dry-run` → duyệt → `db push`. **Không deploy code**    |
 
-**Cổng chặn nằm ở branch protection, không nằm trong CD.** `main` được bảo vệ và
+**Code và schema đi hai đường riêng, và chỉ một đường tự động.** Merge vào `main`
+là deploy code lên schema đang có sẵn. Đổi schema chỉ xảy ra khi bạn tự vào
+**Actions → Migrate production database → Run workflow**.
+
+> **Cái giá của việc tách: mất bảo đảm thứ tự.** Pipeline cũ ép schema chạy trước
+> code trong cùng một lượt. Giờ không còn gì chặn một PR vừa thêm migration vừa
+> thêm code đọc nó được merge và deploy ngay lên schema cũ — đúng kịch bản
+> migration `0022` (`distinct_senders`): `/kudos` sẽ ném lỗi ở mọi lần render cho
+> tới khi có người nhớ ra.
+>
+> Hai cách giữ an toàn, theo thứ tự ưu tiên:
+>
+> 1. **Viết migration tương thích ngược** (expand/contract): đẩy phần schema
+>    thêm-mới đi trước, một mình, lúc code đang chạy chưa biết tới nó. Code dùng
+>    tới thì merge ở lượt sau. Phần phá huỷ (drop/rename) đi cuối cùng, khi không
+>    còn code nào tham chiếu hình dạng cũ. Thứ tự hết quan trọng — đây là cách sửa
+>    thật sự.
+> 2. Nếu migration và code buộc phải đi cùng nhau: chạy `migrate.yml` **trước khi
+>    merge** PR đó.
+>
+> `cd.yml` có in cảnh báo vào Summary khi commit nó đang deploy có đụng
+> `supabase/migrations/`. Đó là lời nhắc, **không phải cổng chặn** — nó không biết
+> migration đã chạy hay chưa, chỉ biết file có thay đổi.
+
+**Cổng chặn merge nằm ở branch protection, không nằm trong CD.** `main` được bảo vệ và
 yêu cầu hai check `Quality` + `E2E (CI-safe)` xanh mới cho merge PR — kèm `strict`
 (branch phải cập nhật với `main` trước khi merge) và không miễn trừ cho admin. Nên
 commit nào đã nằm trên `main` thì đã qua test rồi, CD deploy thẳng không đợi CI
@@ -158,9 +183,10 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
    > project cho Preview TRƯỚC.
 
    Không có khoá này thì mỗi push vào `main` deploy **hai lần**: một lần Vercel tự
-   chạy ngay khi commit về — không qua test nào, và **không chờ job `migrate`** —
-   một lần nữa do `cd.yml`. Lần ungated đó mới là lần lên sóng trước, mang code mới
-   chạy trên schema cũ.
+   chạy ngay khi commit về — không qua test nào — một lần nữa do `cd.yml`. Lần
+   ungated đó lên sóng trước, và nó dựng bundle bằng env của Vercel chứ không phải
+   thứ `cd.yml` vừa `vercel pull` xuống, nên hai lần deploy có thể ra hai kết quả
+   khác nhau từ cùng một commit.
 
    Hai cách thay thế, nếu muốn khoá ngay mà chưa merge được file này:
    - **Settings → Git → Ignored Build Step** → *Custom*, lệnh `exit 0` (Vercel hiểu
@@ -387,18 +413,23 @@ Credential mà **app** cần (`NEXT_PUBLIC_*`) cố ý không nằm trong GitHub
 bất kỳ Environment nào: `cd.yml` chạy `vercel pull` để kéo chúng từ Vercel xuống
 lúc build, nên chúng chỉ tồn tại đúng một chỗ và không bao giờ lệch nhau.
 
-### 5.5 — Duyệt lần chạy đầu
+### 5.5 — Chạy migration (thủ công, mỗi lần đều vậy)
 
-Với **Required reviewers** trên `production-db`, job `migrate` dừng chờ bạn. Thứ
-tự trên màn hình Actions:
+Migration **không bao giờ** tự chạy. Mỗi lần cần đổi schema production:
 
-1. Job **`plan`** chạy xong trước, in danh sách migration pending ra **Summary**
-   của run (ngay đầu trang, không phải trong log).
-2. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 1 → tick
+1. **Actions → Migrate production database → Run workflow**.
+2. Ô `confirm`: gõ đúng chữ `migrate`. Gõ khác là workflow chạy nhưng không job
+   nào thực thi — cố ý, để một cú bấm nhầm không đổi được gì.
+3. Job **`plan`** chạy trước, in danh sách migration pending ra **Summary** của
+   run (ngay đầu trang, không phải trong log).
+4. Job **`migrate`** hiện **Review deployments** → đọc Summary ở bước 3 → tick
    `production-db` → **Approve and deploy**.
 
 Không có migration nào pending thì Summary in `Remote database is up to date`;
 duyệt là xong, không gì thay đổi.
+
+Workflow này **chỉ đổi schema, không deploy code**. Nếu migration vừa chạy có
+code đi kèm thì merge code đó vào `main` sau — `cd.yml` lo phần deploy.
 
 **Nếu `migrate` chạy thẳng qua, không hiện Review deployments** — đó không phải
 "không có gì để duyệt", đó là chưa có cổng. Quay lại § 5.1 và kiểm bằng lệnh
@@ -447,17 +478,19 @@ Từng khoá, và vì sao:
 
 ## Bước 6 — Deploy lần đầu và nghiệm thu
 
-Pipeline đã nằm trên `main`, nên mỗi lần merge là một lần deploy. Theo dõi ở tab
-**Actions**:
+Lần đầu, schema đi trước — và đây cũng là thứ tự cho mọi lần sau có migration.
 
-1. **Trên PR**: CI chạy (~5–8 phút). Nút Merge khoá cho tới khi cả `Quality` lẫn
+1. **Chạy migration trước** (§ 5.5): Actions → **Migrate production database** →
+   Run workflow → gõ `migrate` → duyệt. Lần đầu thì bạn đã `db push` tay ở Bước 2
+   rồi, nên Summary sẽ in `Remote database is up to date` — chạy một lượt để xác
+   nhận CI cũng nói vậy là đáng giá.
+2. **Trên PR**: CI chạy (~5–8 phút). Nút Merge khoá cho tới khi cả `Quality` lẫn
    `E2E (CI-safe)` xanh. Đây là chỗ duy nhất test chặn được bạn.
-2. **Merge xong**: CD khởi động **ngay**, không đợi CI chạy lại trên `main`. Job
-   `plan` chạy trước, in danh sách migration pending ra **Summary** của run.
-3. Job `migrate` hiện **Review deployments**. Đọc Summary ở bước 2 rồi mới
-   **Approve**.
+3. **Merge xong**: CD khởi động **ngay**, không đợi CI chạy lại trên `main`. Nó
+   chỉ deploy code — không đụng database.
 4. Job `deploy` build, ship, rồi `curl` vào deployment URL. URL production in ra ở
-   phần Summary của run.
+   phần Summary của run. Nếu commit vừa deploy có đụng `supabase/migrations/`,
+   Summary còn kèm một cảnh báo ⚠️ nhắc bạn kiểm lại đã chạy migration chưa.
 
 ### Nghiệm thu thủ công — bắt buộc
 

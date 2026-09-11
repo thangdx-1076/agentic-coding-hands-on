@@ -2021,3 +2021,22 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Chưa xoá `SSA` và secret trùng ở `production-db` — hai thao tác xoá credential, để bạn tự quyết.
+
+## 260911-1755 — tách migration khỏi deploy
+
+### Tôi cần làm
+
+- [ ] **Đổi thói quen merge.** PR nào có file trong `supabase/migrations/` thì chạy `migrate.yml` TRƯỚC khi merge, hoặc viết migration tương thích ngược để thứ tự hết quan trọng. Pipeline không còn ép thứ tự hộ nữa.
+- [ ] Lần deploy tới: chạy **Actions → Migrate production database → Run workflow** một lượt để xác nhận cổng duyệt hoạt động (lần trước nó chạy thẳng vì environment chưa có luật).
+
+### Decisions
+
+- **Manual trigger, automated execution.** Migration tách sang `.github/workflows/migrate.yml`, chỉ chạy bằng `workflow_dispatch`. Không chuyển sang gõ `supabase db push` ở laptop: cách đó mất CLI pin đúng version, mất log, mất dấu vết ai chạy cái gì — mà không thêm được an toàn nào so với cổng Required reviewers vốn đã có.
+- Thêm ô `confirm` phải gõ đúng chữ `migrate`. Cổng duyệt là một nút, mà một nút thì bị bấm theo phản xạ; đây là thao tác không hoàn tác được duy nhất trong cả hệ thống nên hỏi hai lần.
+- **`cd.yml` giờ chỉ deploy code.** Bỏ `plan` + `migrate`, bỏ `needs: migrate` của job `deploy`.
+- Thêm step `Pending migrations check` vào `cd.yml`: đọc compare API xem push vừa rồi có đụng `supabase/migrations/` không, có thì in cảnh báo vào Summary + `::warning::`. Đọc qua API thay vì `git diff` để khỏi phải `fetch-depth: 0` mỗi lần deploy chỉ để trả lời một câu hỏi yes/no. **Đây là lời nhắc, không phải cổng chặn** — nó không biết migration đã chạy hay chưa, chỉ biết file có đổi.
+- Docs ghi rõ cái giá của việc tách (mất bảo đảm thứ tự) và cách bù đúng thứ tự ưu tiên: expand/contract trước, chạy migrate trước khi merge sau.
+
+### Nợ lại
+
+- Câu trả lời thẳng cho "đây có phải best practice không": tách migration khỏi deploy thì đúng là best practice; chạy thủ công ở máy thì không. Thứ thực sự làm cho thứ tự hết quan trọng là migration tương thích ngược, và repo chưa có quy ước nào bắt buộc điều đó — mới chỉ ghi trong doc.
