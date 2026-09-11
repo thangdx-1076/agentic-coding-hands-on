@@ -35,6 +35,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template. It carries only variable NAMES and comments, never a
+# real value — it is the contract docs/deployment.md points at.
+!.env.example
 
 # vercel
 .vercel
