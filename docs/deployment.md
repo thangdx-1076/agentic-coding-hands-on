@@ -131,14 +131,32 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
 
 3. **Settings → Build & Deployment → Node.js Version**: chọn **22.x** hoặc **24.x**,
    nằm trong `engines.node` của `package.json` (`>=22 <25`).
-4. **Settings → Git → Ignored Build Step**: đổi sang *Custom* với lệnh `exit 0`.
+4. **Auto-deploy đã tắt sẵn bằng `vercel.json`** — không phải bấm gì:
 
-   Vercel hiểu exit code 0 là "bỏ qua build này". Không làm bước này thì mỗi push vào
-   `main` deploy **hai lần**: một lần Vercel tự chạy ngay khi commit về (không qua
-   test nào cả) và một lần nữa do `cd.yml`. Lần ungated đó mới là lần lên sóng trước.
+   ```json
+   { "git": { "deploymentEnabled": false } }
+   ```
 
-   (Cách khác: **Settings → Git → Disconnect** hẳn repo. Đổi lại mất preview
-   comment trên PR của Vercel.)
+   Vercel đọc file này từ chính commit vừa push và bỏ qua deployment do Git kích
+   hoạt, mọi branch. `cd.yml` không bị ảnh hưởng: nó deploy bằng CLI
+   (`vercel deploy --prebuilt`), không đi qua đường Git trigger.
+
+   Không có khoá này thì mỗi push vào `main` deploy **hai lần**: một lần Vercel tự
+   chạy ngay khi commit về — không qua test nào, và **không chờ job `migrate`** —
+   một lần nữa do `cd.yml`. Lần ungated đó mới là lần lên sóng trước, mang code mới
+   chạy trên schema cũ.
+
+   Hai cách thay thế, nếu muốn khoá ngay mà chưa merge được file này:
+   - **Settings → Git → Ignored Build Step** → *Custom*, lệnh `exit 0` (Vercel hiểu
+     exit code 0 là "bỏ qua build này").
+   - **Settings → Git → Disconnect** hẳn repo. Dứt điểm nhất, đổi lại mất preview
+     comment trên PR.
+
+   Muốn **giữ preview cho PR nhưng chặn production**, dùng Ignored Build Step với
+   `[ "$VERCEL_ENV" = "production" ] && exit 0 || exit 1` thay vì `vercel.json`.
+   Trước khi làm vậy phải tách Supabase project riêng cho Preview: hiện
+   `NEXT_PUBLIC_SUPABASE_URL` set cho cả Production lẫn Preview, nên preview của
+   mọi PR đang đọc ghi thẳng vào database thật.
 5. **Settings → Domains**: gắn domain thật nếu có. Nhớ quay lại Bước 3.3 cập nhật
    Site URL và Redirect URLs cho khớp.
 
