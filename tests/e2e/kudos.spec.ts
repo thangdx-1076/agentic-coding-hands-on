@@ -100,7 +100,8 @@ async function sendKudo(
  * | C05 | *(CI-safe)* | `[data-testid=kudos-sunner-search]` có `placeholder="Tìm kiếm"`, `maxlength="100"`; nút submit `disabled` khi ô rỗng | TC[11], TC[17], TC[19] | FR-209, BR-010 |
  * | C06 | *(CI-safe)* | Gõ 101 ký tự → `inputValue()` dài đúng 100 | TC[19] | BR-010 |
  * | C07 | *(CI-safe)* | Không có kudo nào → `[data-testid=kudos-empty]` xuất hiện **2 lần** (carousel + feed), text `Hiện tại chưa có Kudos nào.` | TC[21] | FR-212, BR-011 |
- * | C08 | `@local-db` | Bảng thăng hạng hiện `Chưa có dữ liệu` (chưa có nguồn dữ liệu); bảng quà **KHÔNG** rỗng — migration 0023 seed `secret_box_openings` nên `recent_gift_recipients` luôn có người | TC[22] | FR-213, BR-012, FR-219 |
+ * | C08 | CI-safe | Cả hai bảng render heading; bảng thăng hạng hiện `Chưa có dữ liệu` (chưa có nguồn dữ liệu). KHÔNG khẳng định gì về việc bảng quà rỗng hay không — điều đó phụ thuộc seed, xem C08b | TC[22] | FR-213, BR-012 |
+ * | C08b | `@local-db` | Bảng quà **KHÔNG** rỗng — migration 0023 seed `secret_box_openings` nên `recent_gift_recipients` có người, và mỗi hàng là `<a href>` tới `/profile` | TC[22] | FR-219 |
  * | C09 | *(CI-safe)* | `[data-testid=kudos-sidebar]` visible; ẩn danh → `[data-testid=kudos-stat-row]` đúng **0** phần tử và không có `[data-testid=kudos-open-gift]` | TC[15] | D001 |
  * | C10 | *(CI-safe)* | Thứ tự tài liệu: header → banner → pill → highlight → spotlight → feed+sidebar → footer | TC[13] | FR-201…FR-211 |
  * | C11 | `@local-db` | Carousel hiện đúng 5 `[data-testid=kudos-card][data-variant=highlight]`; `[data-testid=kudos-slide-counter]` đọc `1/5` | TC[09] | FR-203, BR-001 |
@@ -285,7 +286,7 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
     }
   });
 
-  test("[C08] Rank board is empty; gift board lists real Secret Box openers", async ({
+  test("[C08] Both boards render; the rank board is empty", async ({
     page,
   }) => {
     // C08 used to assert BOTH boards read `Chưa có dữ liệu`. That only ever
@@ -295,10 +296,12 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
     // Box feature is not permanently empty, which makes the old "both
     // empty" wording false rather than merely unlucky.
     //
-    // The rank board has no data source wired yet, so its empty state is
-    // still the contract. Unlike C07 above there is no filter that can force
-    // the gift board empty — it is a global "10 most recent" read — so this
-    // asserts the seeded direction instead of pretending the table is bare.
+    // What is left here is what holds with NO database behind the page: both
+    // boards render, and the rank board — which has no data source wired at
+    // all — shows its empty state. Whether the gift board has rows depends
+    // on whether 0023 has been applied, so that assertion lives in [C08b]
+    // under `@local-db`. Asserting it here is what turned this test red in
+    // CI, where no Supabase exists and the board is correctly empty.
     await page.goto("/kudos");
 
     const leaderboards = page.locator("[data-testid=kudos-leaderboard]");
@@ -310,14 +313,9 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
     );
     await expect(rankBoard).toContainText("Chưa có dữ liệu");
 
-    // Openings only ever accumulate (the Secret Box e2e specs open more of
-    // them), so this asserts "has openers", never an exact name or count.
-    const giftBoard = leaderboards.nth(1);
-    await expect(giftBoard).toContainText("10 SUNNER NHẬN QUÀ MỚI NHẤT");
-    await expect(giftBoard).not.toContainText("Chưa có dữ liệu");
-    await expect(
-      giftBoard.locator("a[href*='/profile']").first(),
-    ).toBeVisible();
+    await expect(leaderboards.nth(1)).toContainText(
+      "10 SUNNER NHẬN QUÀ MỚI NHẤT",
+    );
   });
 
   test("[C09] Sidebar hidden when anonymous, statistics rows count 0", async ({
@@ -394,6 +392,28 @@ test.describe(
   { tag: "@local-db" },
   () => {
     test.use({ storageState: { cookies: [], origins: [] } });
+
+    test("[C08b] Gift board lists real Secret Box openers", async ({
+      page,
+    }) => {
+      // The half of [C08] that needs data. The gift board reads
+      // `recent_gift_recipients` (0015), which reads `secret_box_openings`
+      // and nothing else — so it has rows only where migration 0023 has
+      // been applied. Unlike C07 there is no filter that can force it empty:
+      // it is a global "10 most recent" read.
+      //
+      // Openings only ever accumulate (the Secret Box specs open more of
+      // them), so this asserts the DIRECTION — "has openers" — never an
+      // exact name or count.
+      await page.goto("/kudos");
+
+      const giftBoard = page.locator("[data-testid=kudos-leaderboard]").nth(1);
+      await expect(giftBoard).toContainText("10 SUNNER NHẬN QUÀ MỚI NHẤT");
+      await expect(giftBoard).not.toContainText("Chưa có dữ liệu");
+      await expect(
+        giftBoard.locator("a[href*='/profile']").first(),
+      ).toBeVisible();
+    });
 
     test("[C35] Hovering an avatar opens the Sunner info card (name, unit, both Kudos counts)", async ({
       page,
