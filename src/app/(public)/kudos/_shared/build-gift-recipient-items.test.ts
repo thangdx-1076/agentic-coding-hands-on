@@ -35,11 +35,36 @@ describe("buildGiftRecipientItems", () => {
     expect(buildGiftRecipientItems([recipient()], t)).toEqual([
       {
         id: "user-1",
+        rowKey: "user-1-2026-09-10T10:00:00.000Z",
         name: "Đỗ hoàng Hiệp",
         description: "STAY GOLD",
         avatarSrc: "https://a.png",
       },
     ]);
+  });
+
+  it("cùng 1 Sunner mở 2 box → rowKey khác nhau, id vẫn giữ nguyên để link profile", () => {
+    // Bảng quà liệt kê LƯỢT MỞ chứ không phải người, nên trùng `id` là
+    // đúng. Trước đây `<li>` key theo `id` → React cảnh báo trùng key ngay
+    // khi có người mở box thứ hai.
+    const t = stubTranslator({
+      "secretBoxSection.badges.stayGold.caption": "STAY GOLD",
+      "secretBoxSection.badges.revival.caption": "REVIVAL",
+    });
+
+    const items = buildGiftRecipientItems(
+      [
+        recipient({ openedAt: "2026-09-10T10:00:00.000Z" }),
+        recipient({
+          badgeKey: "revival",
+          openedAt: "2026-09-11T11:00:00.000Z",
+        }),
+      ],
+      t,
+    );
+
+    expect(items.map((item) => item.id)).toEqual(["user-1", "user-1"]);
+    expect(new Set(items.map((item) => item.rowKey)).size).toBe(2);
   });
 
   it("badge nhiều từ (kebab-case) → chuyển đúng camelCase trước khi tra caption", () => {

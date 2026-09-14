@@ -2056,3 +2056,233 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - Lần chạy `migrate.yml` đầu tiên trên production mới chỉ chứng minh nhánh "không có gì pending". Nhánh "có pending" vẫn chưa chạy thật lần nào trên production — mới chỉ kiểm trên DB local.
+
+## 260911-1830 — google-login-broken-on-production
+
+### Tôi cần làm
+
+- [ ] Vercel → Settings → Environment Variables (Production): `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` đang là Type **Secret**, phải chuyển sang Type **Config**. Secret không đọc lại được nên không convert được — xoá rồi Add lại, chọn Config. Sau đó chạy lại `cd.yml`. Bằng chứng: log CD run 34593087518 in `! 11 Secret values cannot be pulled ... Wrote "[SENSITIVE]" as placeholders`, và bundle production gọi `createBrowserClient("[SENSITIVE]","[SENSITIVE]")`.
+- [ ] Sau khi deploy lại: kiểm Supabase Dashboard → Authentication → URL Configuration có `https://agentic-coding-hands-on-orpin.vercel.app/**` trong Redirect URLs, và Google Cloud Console có `https://<ref>.supabase.co/auth/v1/callback` — hai thứ này chưa bao giờ được thử vì request chưa từng tới Supabase.
+
+### Decisions
+
+- Không sửa code. Nguyên nhân nằm ở cấu hình env trên Vercel, không phải ở `src/api/auth.ts` — bundle inline đúng thứ `vercel pull` đưa xuống.
+
+### Nợ lại
+
+- `next.config.ts` đọc `NEXT_PUBLIC_SUPABASE_URL` lúc build (`resolveImagesRemoteConfig`), nên production hiện không có remotePattern cho Supabase Storage → ảnh kudo sẽ ném "hostname is not configured under images" lúc render. Cùng một nguyên nhân, tự khỏi khi đổi hai biến sang Type Config. Chưa xác minh trên production.
+
+## 260914-1556 — avatar-click-and-profile-kudo-stats
+
+### Tôi cần làm
+
+- [ ] Chạy `pnpm test:e2e` với Supabase local (cần Docker) để xác nhận 2 test mới: `[C28] Click sender avatar...` trong `tests/e2e/kudos.spec.ts` và `[C6b] Receiving a kudo increments...` trong `tests/e2e/profile.spec.ts`. Máy lúc sửa không có Docker, và chạy `@auth` spec vào project SSA đã link (production) sẽ tạo user test trên production nên không chạy.
+- [ ] Quyết định xem nút `Mở Secret Box` trên `/profile` có nên mở khoá theo `secretBoxUnopened` thật hay không. Giờ đã có số thật để quyết, nhưng comment trong `profile-statistics-card.tsx` vẫn ghi là hoãn — `/kudos` thì đã enable theo số này (C27).
+
+### Decisions
+
+- **Avatar trở thành `<Link>`, không phải thêm `onClick` router.push.** Hợp đồng C28 (`tests/e2e/kudos.spec.ts`) từ đầu đã ghi "Bấm tên/avatar", nhưng chỉ nửa "tên" được nối dây; avatar nằm trong `<button>` của `KudosPersonHoverCard` chỉ có handler hover/focus. Dùng `Link` để khớp đúng pattern mà tên đang dùng, và để middle-click / mở tab mới vẫn chạy.
+- Người gửi ẩn danh (`person.id === null`) giữ nguyên `<button>` — C25/C29 khẳng định block đó không được có `a[href*="/profile"]`.
+- Ref đổi sang callback ref: một `RefObject<HTMLElement>` không gán được đồng thời cho `Ref<HTMLButtonElement>` và `Ref<HTMLAnchorElement>`.
+- **5 dòng thống kê `/profile` đọc `getKudosStats` thật, trước đó hardcode literal `0`** (`profile-statistics-card.tsx`). DAL đã có sẵn và `/kudos` đã dùng — chỉ thiếu dây nối. `secretBoxLeft` (tên trong copy) map sang `secretBoxUnopened` (tên trong DAL) qua `STAT_VALUE_KEYS`.
+- **Chỉ query khi `isSelf`.** Slot đó ở profile người khác là thanh "Viết Kudo" (C8), nên không tốn thêm round-trip, và `/profile?id=` cũng không đọc số của người khác.
+- **Viết lại `[C6]`.** Test cũ khẳng định mỗi dòng có giá trị `0` — nó xanh cả khi counter không hề nối DB, tức là chính nó che cái bug này. Giờ `[C6]` kiểm cấu trúc + giá trị là chuỗi chữ số, còn `[C6b]` mới là dòng chốt: seed 1 kudo rồi so DELTA với `countKudosReceived`.
+
+### Nợ lại
+
+- Bằng chứng cho cả hai fix lấy từ Storybook (story `Self` hiện 12/7/23/3/1; story `NewHero` avatar là `a[href="/profile?id=sender-1"]`; story `Anonymous` vẫn là `button`) + typecheck/lint/unit/build/build-storybook. Chưa có lần chạy e2e thật nào.
+- `/profile` vẫn không render feed kudo (`mms_D_Post all`, C18 khẳng định vắng mặt). Nếu "thông tin kudo chi tiết" mà bạn muốn là danh sách thẻ kudo trên profile chứ không phải 5 counter, thì đó là việc còn lại và cần một phase riêng.
+
+## 260914-1610 — profile người khác: rà thông tin kudo
+
+### Tôi cần làm
+
+- [ ] Quyết định có build feed kudo trên `/profile` hay không (`mms_D_Post all`, đang hoãn F007+, C18 khẳng định vắng mặt). Đây là thứ chặn việc sửa số `(0)` ở dropdown — xem Decisions.
+- [ ] Xác nhận wording ngôi thứ ba với design/BA: tôi tự chọn `Sunner này chưa có Kudos nào được nhận.` / `This Sunner hasn't received any Kudos yet.` theo pattern `badges.headingOther` sẵn có. Nếu design có chữ khác thì sửa 4 key trong `messages/{vi,en}.json`.
+
+### Decisions
+
+- **Sửa copy empty-state ngôi thứ hai trên profile người khác.** `/profile?id=<other>` đang hiện "**Bạn** chưa có Kudos nào được nhận." — xưng "Bạn" với người đọc trên profile không phải của họ. Thêm `emptyReceivedOther`/`emptySentOther`, đúng cách `badges.headingSelf`/`headingOther` đã làm.
+- **Quyết định self/other đặt ở `ProfileScreen`, không đẩy `isSelf` vào `KudosDirectionSelect`.** Chỗ đó đã quyết `directions` rồi; select nhận `emptyByDirection` đã resolve sẵn và giữ đúng vai "chỉ map" như doc của nó ghi.
+- **KHÔNG sửa số `(0)` trong dropdown "Đã nhận (0)"** (`kudos-direction-select.tsx:79,107`) dù nó cũng hardcode. Lý do: feed kudo chưa tồn tại, danh sách bên dưới luôn rỗng. Thay `(0)` bằng số thật sẽ thành "Đã nhận (12)" ngay trên dòng "chưa có Kudos nào" — mâu thuẫn còn tệ hơn. `(0)` hiện đang khớp với thứ đang render. Sửa đúng = build feed trước.
+- RLS đã kiểm: `kudos_select_all` (0006) là `USING (true)` cho anon+authenticated, nên khi cần đếm kudo của người khác thì đọc được, không vướng RLS. `secret_box_openings` là own-row (0011) nên số Secret Box của người khác sẽ luôn về 0 — đừng dựa vào nó cho profile người khác.
+
+### Nợ lại
+
+- Bảng thống kê 5 dòng KHÔNG hiện trên profile người khác — đúng spec (C8, thay bằng thanh "Viết Kudo"), không phải bug. Nghĩa là ngoài tên/avatar/badge, profile người khác gần như không có thông tin kudo nào cho tới khi feed được build.
+- `[C10b]` chưa chạy thật (vẫn thiếu Docker), giống `[C6b]` và `[C28] avatar`.
+
+## 260914-1625 — secret box: fix + seed
+
+### Tôi cần làm
+
+- [ ] Quyết định có đẩy `0023_secret_box_demo_seed.sql` lên production hay không. Nó **thêm tim vào kudo có thật** của người dùng thật (5 tim/kudo từ 8 tài khoản demo) — đúng là dữ liệu bịa. Cùng loại với `0008` vốn đã bơm 8 người + 12 kudo giả vào prod, nên đây là pattern có sẵn của repo, không phải tôi tự nghĩ ra. Muốn giữ prod sạch thì drop file này trước khi chạy `migrate.yml` (header có sẵn câu lệnh rollback).
+- [ ] Đổi wording tooltip nếu không ưng: "Bạn chưa có Secret Box nào để mở — cứ 5 tim nhận được thì mở khoá 1 box."
+
+### Decisions
+
+- **Backend Secret Box KHÔNG hỏng.** Gọi thẳng `open_secret_box()` trong psql: trả `stay-gold`, và raise đúng `no_boxes_left` khi hết lượt. 14/14 test e2e `secret-box.spec.ts` xanh từ trước khi sửa. Nguyên nhân "chưa hoạt động" nằm ở DỮ LIỆU, không ở code.
+- **Gốc rễ: không ai đăng nhập được lại có tim.** Entitlement = `floor(sum(heart_count trên kudo MÌNH GỬI)/5)`. Toàn bộ tim trong DB thuộc về 8 tài khoản `@kudos-demo.saa`, mà 0008 cố ý tạo chúng không password + không `auth.identities` → không bao giờ login được. Tài khoản thật của bạn: gửi 3 kudo, 0 tim, entitlement 0 → nút disabled vĩnh viễn.
+- **Seed bằng migration `0023`, không dùng `supabase/seed.sql`.** `seed.sql` chỉ chạy khi `db reset`, mà repo cấm reset (auth.users có người thật). Migration chạy được cả local lẫn qua `migrate.yml`. Cả 2 câu INSERT đều idempotent (`ON CONFLICT` / `NOT EXISTS`) — chạy lại ra `INSERT 0 0`.
+- **5 tim/kudo, không phải con số tuỳ ý:** `HEARTS_PER_SECRET_BOX = 5`, nên mỗi kudo người thật gửi thành đúng 1 box. Đo sau khi seed: tài khoản bạn 15 tim → 3 box; mở thử 3 lần đếm ngược 2→1→0 đúng.
+- **Không tự ghi `heart_count`.** Chỉ insert `kudo_hearts`, để trigger `on_kudo_heart_change` (0007) tự cộng — cùng quy tắc 0008. Và vẫn tôn trọng `u.id <> k.sender_id` dù migration chạy quyền postgres bỏ qua RLS, để dữ liệu seed là trạng thái mà app thật có thể tạo ra.
+- **Chỉ seed 3 opening cho đúng 3 demo user đã có entitlement ≥ 1.** Seed nhiều hơn entitlement sẽ tạo trạng thái mà chính RPC không bao giờ sinh ra được.
+- **Sửa tooltip "Tính năng đang được phát triển".** Đây là câu làm người dùng kết luận tính năng chưa xong. Nó mô tả trạng thái build đã hết đúng từ lúc RPC lên. Giờ nói đúng lý do bị disable.
+- **`/profile` nút "Mở Secret Box" hardcode `disabled`** (không handler, không testid) → đổi thành `Link` sang `/kudos` khi có box chưa mở, disabled + `title` khi không. Theo đúng tiền lệ thanh "Viết Kudo" ngay trong file đó: dialog nằm ở `/kudos`, không dựng bản sao thứ hai của state machine.
+
+### Nợ lại
+
+- **Seed chỉ cứu tài khoản ĐÃ GỬI kudo.** Tài khoản mới tinh vẫn 0 box cho tới khi gửi kudo rồi chạy lại 0023. Đây là hệ quả trực tiếp của luật "tim cộng cho người gửi", không phải thiếu sót của seed.
+- `[C08]` phải viết lại: nó khẳng định CẢ HAI leaderboard rỗng, mà điều đó chỉ đúng khi `secret_box_openings` trống. Bảng thăng hạng vẫn rỗng (chưa có nguồn dữ liệu) nên giữ; bảng quà giờ khẳng định CÓ người.
+- `[C25]` (kudos-compose) phải sửa `toHaveCount(1)` → `2` cho block người nhận: fix avatar phiên trước làm avatar thành link thứ hai cùng trỏ về 1 profile. Phần quan trọng của C25 — người gửi ẩn danh có 0 link — vẫn xanh.
+- `[C7b]` của chính tôi dính đúng cái bẫy tài khoản dùng lại mà tôi đã cảnh báo ở C6b: lần chạy thứ 2 đếm 3 chứ không phải 1. Đã đổi sang khớp `/^[1-9]\d*$/`.
+- `notifications` có type `secret_box_available` nhưng không có emitter (0012) — hợp đồng treo, chưa đụng.
+
+## 260914-1646 — secret box: mở lại được nhiều lần + nút trên profile
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **Tách hẳn hai việc: migration lo thế giới demo, script lo từng tài khoản.**
+  - `0023` giờ CHỈ seed `secret_box_openings` cho 3 demo Sunner (để bảng quà không rỗng). Bỏ hoàn toàn câu INSERT tim.
+  - `pnpm seed:secret-box <email> [số box]` (`scripts/grant-secret-boxes.mjs`) cấp box cho đúng một tài khoản, chạy lại được bao nhiêu lần tuỳ ý.
+- **Vì sao bỏ câu INSERT tim khỏi migration — test bắt được, không phải tôi đoán.** Câu đó thả tim vào MỌI kudo do tài khoản không-phải-demo gửi, mà carousel Highlight xếp hạng theo `heart_count`, còn suite e2e thì đẻ ra kudo rác không hashtag. Chạy lại 0023 sau một lần chạy e2e → kudo rác lọt top 5 → vỡ `[C13]`, `[C16]`, `[C35]`. Migration không phân biệt được kudo thật với fixture, nên nó không có quyền bịa tương tác lên hàng nó không tạo ra.
+- **Script ưu tiên xoá `secret_box_openings` trước khi bịa thêm tim.** `unopened` luôn được tính lại `= entitlement - opened`, không lưu ở đâu cả — nên xoá opening là trả lại đúng số box đã kiếm được, không thêm một dòng nào vào feed. Chỉ khi vẫn thiếu so với số yêu cầu mới tạo kudo + 5 tim.
+- **Script loại chính target ra khỏi nhóm demo.** Không có CHECK constraint nào chặn self-kudo ở DB — `kudos_insert_own` chỉ là RLS, mà SERVICE_ROLE bỏ qua RLS. Không lọc thì trỏ script vào tài khoản demo sẽ lặng lẽ ghi kudo tự gửi cho chính mình.
+- **`/profile` → `/kudos?secretbox=open` chứ không phải `/kudos` trơn.** Bấm "Mở Secret Box" mà chỉ đá sang board với dialog đóng thì đúng nghĩa "không được" — người dùng bấm xong không có box nào mở. Đọc param bằng `useSearchParams()` ngay trong `SecretBoxLauncher`, giữ đúng quyết định D-P03 là không thêm prop xuyên 4 tầng component. Hằng `SECRET_BOX_OPEN_PARAM` đặt ở `src/constants/routes.ts` vì cả hai route group đều cần.
+- **`[C7b]` giờ BẤM thật.** Bản cũ chỉ kiểm `href` — nó xanh trong khi nút vẫn vô dụng. Đã chứng minh RED: đổi href về `/kudos` thì test đỏ ngay.
+
+### Nợ lại
+
+- Script chỉ chạy được với Supabase local (cần `SERVICE_ROLE_KEY`). Nó bịa tương tác — đừng trỏ vào DB thật.
+- Sau khi seed lại, nếu muốn bảng quà có người thì chạy lại 2 câu trong `0023` (đã guard `NOT EXISTS`, chạy lại an toàn).
+
+## 260914-1706 — secret box: đối chiếu UI/animation với Figma
+
+### Tôi cần làm
+
+- [ ] **Xin asset cho state đã mở.** Repo chỉ có `secret-box-closed.png` + `secret-box-sparkle.png` + 6 `badge-*.png` (64×64). Thiếu: ảnh hộp ĐÃ MỞ, ảnh hộp lúc bấm (không sparkle), và ảnh sản phẩm quà. Không có asset thì không dựng được state reveal đúng thiết kế — và tôi không bịa giá trị visual.
+- [ ] **Chốt danh mục quà.** Design hiện tên sản phẩm dưới ảnh ("Khăn Root Further", "Magnet Root Further" — mm:6885:9709). `badge_key` KHÔNG map 1-1 sang tên quà: hai sản phẩm khác nhau cùng mang tên "Root Further". Cần bảng quà (badge → tên + ảnh) từ BTC.
+- [ ] **Chốt flow reveal cho web.** Frame reveal của iOS chỉ có tiêu đề + tên quà, KHÔNG có dòng hướng dẫn và KHÔNG có bộ đếm. Code hiện luôn hiện bộ đếm. Frame web tương ứng (`P5b2MJQoW6`, `VsjjEDVgEx`) còn `in_progress` và MoMorph chưa có dữ liệu node/ảnh → chưa đủ cơ sở để sửa.
+- [ ] Nhờ design đẩy các frame `in_progress` lên MoMorph (`K-LuEblC08`, `p0qHd6DJ6A`, `P5b2MJQoW6`, `VsjjEDVgEx`, nhóm 3066/3241). Hiện `get_frame_image` và `query_by_type` đều trả rỗng cho chúng.
+
+### Decisions
+
+- **Sửa 2 chuỗi copy vì chúng SAI so với node mà chính code trích dẫn — không phải ý kiến cá nhân.**
+  - `titleRevealed`: `MỞ SECRET BOX THÀNH CÔNG` → `Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025`. Nguồn: mm:6885:9702 và mm:6885:9659, hai frame reveal đều `design: done` + `spec: done`.
+  - `instruction`: `Click vào box để tiếp tục mở` → `Click vào box để mở`. Nguồn: mm:1466:7683 — đúng cái node mà `secret-box-dialog.tsx` ghi là nguồn của dòng này.
+- **Vì sao hai chuỗi đó sai:** `clarifications.md` § "Xung đột copy tiêu đề" tự đánh dấu chúng là **INFERRED** (dòng 109), suy ra từ spec row vì lúc đó state reveal *chưa có frame nào*. Giờ frame có rồi và nói khác. Chữ "tiếp tục" cũng đẻ ra từ cùng suy luận đó.
+- **Sửa luôn `[S04]`/`[S09]`** — hai test đang ghim đúng chuỗi suy luận sai, tức là chúng bảo vệ một hợp đồng không tồn tại.
+- **3 file stories mang bản sao copy riêng** (`secret-box-dialog`, `kudos-stat-list`, `kudos-sidebar`) — sửa cả 3, nếu không Storybook hiện một đằng app một nẻo.
+- **KHÔNG dựng animation / state bấm / ảnh quà.** Thiếu asset và thiếu dữ liệu MoMorph; dựng bừa là vi phạm "không đoán giá trị visual".
+
+### Nợ lại — khoảng cách UI còn lại so với thiết kế
+
+- **State reveal sai về thị giác.** Code dán badge 64×64 vào GIỮA ảnh hộp CÒN ĐÓNG. Thiết kế: hộp mở ra, badge bay lên kèm hạt sáng, rồi tới màn ảnh sản phẩm. Đã chụp lại bằng Storybook để đối chiếu.
+- **Không có state "action bấm mở"** (frame `K-LuEblC08` / `p0qHd6DJ6A`): hộp không sparkle lúc nhấn.
+- **Không có animation nào** — không transition, không hạt sáng, không chuyển động badge.
+- **Thiếu dòng tên quà** dưới ảnh ở state reveal.
+- Code comment trong `secret-box-dialog.tsx` vẫn ghi "No MM_MEDIA_* node exists for the revealed state (BR-004)" — đúng với frame web `1466:7676`, nhưng nhóm frame reveal riêng thì có. Câu đó giờ dễ gây hiểu nhầm là "thiết kế không có state này".
+
+## 260914-1727 — docs-data-migration
+
+### Tôi cần làm
+
+- [ ] Chốt giữ hay xoá 8 account demo `@kudos-demo.saa` trên production — quyết định business, và chỉ làm được TRƯỚC khi có Sunner thật đăng nhập (`docs/data-migration.md` § 7.3).
+- [ ] Kiểm Dashboard → Database → Backups xem plan Supabase hiện tại cho daily snapshot hay PITR, rồi điền con số thật vào `docs/data-migration.md` § 4 mục 3.
+- [ ] Nếu có danh sách phòng ban thật từ HR: cấp file/ticket để viết migration backfill `users.department` (§ 7.2).
+
+### Decisions
+
+- Viết `docs/data-migration.md` thành file riêng thay vì nhồi vào `deployment.md` — `deployment.md` đã 612 dòng và nói về schema + env; data migration có rủi ro và quy trình rollback khác hẳn. Link hai chiều: `deployment.md` § Bước 2 và bảng Rollback trỏ sang, `docs/README.md` mục "Tài liệu viết tay" liệt kê.
+- Phân loại data change thành A/B/C/D (content seed / backfill / cleanup / repair) và gán đường chạy cho từng loại. A, B, D là migration file qua `migrate.yml` (có approval gate + log); C là SQL Editor vì nó chạy một lần ở một môi trường, để thành migration là xoá seed trên máy local người mới join.
+- Mọi ví dụ SQL lấy từ chính migration trong repo (`0003` awards, `0019` department, `0008` rollback header, `0023` secret box), không bịa bảng hay cột.
+
+### Nợ lại
+
+- Header `0003`/`0004` vẫn nhắc `pnpm db:migrate` — script này không tồn tại trong `package.json`. Doc đã ghi cảnh báo, nhưng chưa sửa comment trong file migration.
+- Không có CHECK constraint nào chặn giá trị `users.department` lạ; gõ sai chính tả lúc backfill thì dropdown Phòng ban mọc thêm option và không có gì báo lỗi. Doc chỉ cảnh báo bằng chữ.
+- Chưa có script verify tự động — § 9 là câu SQL chạy tay. Nếu data migration thành việc thường xuyên thì nên đóng thành `pnpm db:verify`.
+
+## 260914-1723 — modal secret box bị scroll
+
+### Tôi cần làm
+
+- [ ] (không có)
+
+### Decisions
+
+- **Nguyên nhân: ô ảnh là hình vuông CỐ ĐỊNH 557px, mọi anh em đều `shrink-0`.** Modal cần 803px trong khi UA chặn `max-height: calc(100% - 38px)` = 762px → thừa **41px** ở 1280x800. Đo bằng `scrollHeight - clientHeight`, không ước lượng. Nghĩa là modal không bao giờ vừa màn hình thấp hơn ~841px.
+- **`flex-1` KHÔNG dùng được ở đây** — đã thử và đo: chiều cao dialog là `auto` rồi mới bị `max-height` cắt, nên lúc layout không có free space để chia, ô ảnh tụt về **0x0**. Chuyển sang cho ô một kích thước xác định theo viewport: `min(557px, calc(100dvh - 320px))`.
+- **320px không phải số bịa:** đo chrome bằng cách ẩn ô ảnh → 246px (tiêu đề, 2 divider, dòng hướng dẫn, bộ đếm, padding, gap), +32px cho dòng thứ hai khi tiêu đề reveal dài xuống hàng, +38px lề UA.
+- **Giữ vuông bằng cách set cả `h` lẫn `w` cùng biểu thức**, không dùng `aspect-square` — aspect-ratio cần một trục xác định trước, mà ở đây `items-center` + con absolute làm chiều rộng co về 0.
+- **Đổi `background-position` của lớp sparkle từ px sang %.** Offset px gắn chặt với một cỡ hộp duy nhất; hộp co lại là crop lệch ngay. Suy ra công thức chứ không mò: với `background-size: 138.527%`, offset = P × (1 − 1,38527) × cỡ hộp → P = (102,944/557)/0,38527 = **47,971%** và (102,487/557)/0,38527 = **47,758%**. Đo lại ở 557px: trình duyệt trả về −102,944 / −102,486 — khớp bản gốc tới 0,001px.
+- **`[S16]`** kiểm ở 800px và 700px (700 để bắt trường hợp tiêu đề reveal xuống 2 dòng). Đã chứng minh RED: trả lại `h-139.25 w-139.25` thì test đỏ với đúng `Received: 41`.
+
+### Nợ lại
+
+- **Sửa thêm một lỗi khác lòi ra trong lúc chạy suite:** `[C10]` fail vì trang có overlay lỗi của Next dev — React log *"Encountered two children with the same key"*. `kudos-leaderboard.tsx` key `<li>` theo `item.id` = id NGƯỜI DÙNG, nhưng bảng quà liệt kê **lượt mở**, nên một người mở 2 box là 2 hàng trùng key. Thêm trường `rowKey` (`userId-openedAt`) cho key, `id` vẫn dùng để link profile. Bug này có sẵn từ trước, chỉ không lộ khi chưa ai mở được box lần thứ hai.
+- `[C19]` fail một lần trong suite nhưng chạy riêng thì xanh — flaky do chạy song song, không đụng vào.
+- Cảnh báo dev còn lại (không sửa, không liên quan): `/standards/new-hero.png` khai báo width/height lệch tỉ lệ.
+
+## 260914-1737 — remove-seed-secret-box-script-alias
+
+### Tôi cần làm
+
+- [ ] Quyết định có xoá luôn `scripts/grant-secret-boxes.mjs` hay không. File đang **untracked** nên `rm` là mất hẳn, không lấy lại được bằng git — vì vậy tôi không tự xoá. Xoá thì Secret Box hết demo lại được sau khi đã mở hộp (xem header `0023`).
+
+### Decisions
+
+- Xoá entry `seed:secret-box` khỏi `package.json`, **giữ** file script. Script vẫn chạy được bằng `node scripts/grant-secret-boxes.mjs <email> [boxes]`; xoá alias không làm mất khả năng nào.
+- Sửa 5 chỗ tham chiếu `pnpm seed:secret-box` sang lệnh `node` trực tiếp: header `0023` (2 chỗ), `docs/data-migration.md` § 3, và 2 chỗ trong chính script (JSDoc + dòng Usage in ra khi thiếu tham số).
+- Không sửa `plans/action-items.md:2151` — đó là log của lần chạy trước, file này chỉ append.
+
+### Nợ lại
+
+- `plans/action-items.md:2151` vẫn ghi lệnh `pnpm seed:secret-box` cũ. Cố ý để nguyên vì là bản ghi lịch sử.
+
+## 260914-1745 — ship-secret-box-profile-and-data-migration-docs
+
+### Tôi cần làm
+
+- [ ] Review PR #33. Nó gánh cả hai mảng: docs Vercel (2 commit cũ) và Secret Box + Profile (9 commit mới). Tên branch vẫn là `docs/warn-vercel-secret-env-breaks-client-bundle`.
+- [ ] Quyết định `supabase/migrations/0023_secret_box_demo_seed.sql` có được ở lại production hay không — đã ghi ở block 260914-1727, nhắc lại vì giờ nó đã nằm trong PR nhắm vào `main`.
+
+### Decisions
+
+- **Ship tất cả trên branch hiện tại, chia commit theo scope** (bạn chọn khi tôi hỏi ở pre-flight). 9 commit mới: i18n / secret-box / kudos / profile / e2e / db / docs / chore version / chore reports.
+- **Version `0.11.0` → `0.12.0` (minor, không phải patch).** Batch này thêm hành vi mới — số liệu profile thật, nút Secret Box tới được dialog, deep link `?secretbox=open` — chứ không chỉ sửa lỗi. Tự chốt theo quy tắc "quyết định thay tôi".
+- **PR #33 được sửa title + body thay vì mở PR mới.** Branch đã có PR mở sẵn; mở cái thứ hai là chia đôi review. Nội dung PR gốc (docs Vercel) giữ nguyên ở cuối body.
+- **Bỏ Step 11 của ship (doc-writer cập nhật `docs/`).** Tầng `docs/vi/` do rebuild-spec sinh; để agent viết lại giữa lúc ship là mời fabrication vào tài liệu spec. Docs impact ghi là **minor** trong PR.
+- **Journal do agent viết đã bị viết lại toàn bộ.** Bản đầu nói `0023` "thêm 15 hearts" — sai ngược với header của chính file đó; nói "chưa chạy được e2e vì không có Docker" — trong khi suite chạy xanh 247 test; và bảo `[C08]` cần viết lại khi nó đã được viết lại rồi. Bản hiện tại chỉ chứa số liệu tôi tự chạy.
+
+### Nợ lại
+
+- `?secretbox=open` không tự xoá khỏi URL sau khi dialog mở.
+- `scripts/grant-secret-boxes.mjs` không có guard kiểm host, chỉ có lời văn ở header, mà nó ghi bằng `SERVICE_ROLE_KEY`.
+- Vòng lặp cấp box trong script đó làm hai lần ghi PostgREST không cùng transaction — crash giữa hai bước để lại một kudo mồ côi.
+- SunLint còn 200 warning (0 error): T020 91 lần, C030 54 lần. Không phải gate của CI nên không chặn ship.
+- `.next` đã bị `pnpm build` ghi đè trong lúc dev server của bạn đang chạy — có thể cần restart `pnpm dev`.
+
+## 260914-1808 — release-workflow-and-c08-ci-fix
+
+### Tôi cần làm
+
+- [ ] **Lần đầu `release.yml` chạy sẽ sinh notes gom TOÀN BỘ history** (repo chưa có tag nào). Trim trong draft trước khi publish.
+- [ ] Xác nhận có phải bạn tự commit `d7ec9e0` trong IDE không. Nó chứa đúng fix C08 của tôi, được commit + push lúc 18:08 trong khi tôi đang viết `release.yml` — lệnh commit của tôi báo "no changes added". Nếu không phải bạn thì có automation nào trong môi trường đang tự commit và push, và cần biết nó là gì.
+
+### Decisions
+
+- **`release.yml` lấy version từ `package.json`, không suy từ conventional commit.** `/tkm:ship` đã bump ở một commit `chore:` nơi quyết định patch/minor được đưa ra lúc còn thấy diff. Hai nguồn version là sai vào ngày chúng lệch nhau.
+- **Chạy trên mọi push vào `main`, idempotent bằng cách kiểm tag đã tồn tại.** Không điều kiện theo file thay đổi — version là signal duy nhất.
+- **Tag tạo bằng refs API trước, rồi mới tạo draft.** Release draft trên GitHub không tự tạo tag (chỉ tạo khi publish), nên nếu không làm vậy thì draft không để lại dấu gì và `--generate-notes` lần sau không có tag trước để diff.
+- **Không gác CI trong `release.yml`**, cùng lý do `cd.yml` không gác: branch protection đã chặn ở PR.
+- **C08 tách thành C08 + C08b** thay vì gắn cả test thành `@local-db`. Gắn cả test thì CI mất luôn phần kiểm bảng thăng hạng rỗng — phần duy nhất nó kiểm được.
+
+### Nợ lại
+
+- **Không reproduce được điều kiện CI ở local.** CI trỏ `NEXT_PUBLIC_SUPABASE_URL` vào `127.0.0.1:54321` (cổng mặc định, không phải 55321 của repo) nên Supabase cố tình không tới được; local tôi luôn có Supabase thật + seed. Đó là lý do C08 xanh ở local và đỏ ở CI. Muốn bắt loại lỗi này trước khi push thì cần một cách chạy e2e với Supabase không tới được — hiện chưa có.
+- Nếu `release.yml` tạo được tag nhưng fail lúc tạo draft, re-run sẽ **skip** (kiểm tag thấy đã có). Lúc đó phải tạo release tay từ tag, hoặc xoá tag rồi re-run. Đã ghi trong step summary của workflow.

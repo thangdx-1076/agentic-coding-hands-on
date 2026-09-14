@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { openSecretBoxAction } from "../_actions/open-secret-box";
 import { useSecretBoxDialog } from "../_hooks/use-secret-box-dialog";
@@ -9,12 +10,19 @@ import type { BadgeKey } from "../_utils/secret-box-badge-asset";
 import type { KudosStats, KudosStatListCopy } from "./kudos-stat-list";
 import { SecretBoxDialog } from "./secret-box-dialog";
 
+import { SECRET_BOX_OPEN_PARAM } from "@/constants/routes";
+
 export type SecretBoxLauncherProps = {
   stats: KudosStats;
   copy: KudosStatListCopy;
 };
 
-const DEFAULT_OPEN_GIFT_DISABLED_TITLE = "Tính năng đang được phát triển";
+/** Says WHY the button is disabled, not that the feature is missing. The
+ * old wording ("Tính năng đang được phát triển") described a build state
+ * that stopped being true once the RPC shipped, and was the single loudest
+ * reason a working Secret Box read as unbuilt. */
+const DEFAULT_OPEN_GIFT_DISABLED_TITLE =
+  "Bạn chưa có Secret Box nào để mở — cứ 5 tim nhận được thì mở khoá 1 box.";
 
 /** mm:I2940:13497;186:1766 `MM_MEDIA_Open Gift` — inlined + `currentColor`
  * (code-rules 2a) so it inherits the button's `text-login-button-text`.
@@ -67,6 +75,24 @@ export function SecretBoxLauncher({ stats, copy }: SecretBoxLauncherProps) {
   const [error, setError] = useState<string | null>(null);
 
   const canMount = stats.secretBoxUnopened > 0;
+
+  // `/kudos?secretbox=open` opens the dialog on arrival, the same trick
+  // `?compose=<id>` uses for the write-Kudo bar. `/profile`'s "Mở Secret
+  // Box" links here: without this it landed the reader on the board with the
+  // dialog shut, so the button they pressed appeared to do nothing.
+  //
+  // Read from the URL rather than threaded down as a prop, keeping D-P03's
+  // decision that this composition root needs no new prop through
+  // `kudos-client` → `kudos-screen` → `kudos-sidebar` → `kudos-stat-list`.
+  const wantsAutoOpen = useSearchParams().get(SECRET_BOX_OPEN_PARAM) === "open";
+
+  useEffect(() => {
+    // `open` is a stable `useCallback`, and closing the dialog changes none
+    // of these, so dismissing it does NOT immediately reopen it.
+    if (wantsAutoOpen && canMount) {
+      open();
+    }
+  }, [wantsAutoOpen, canMount, open]);
 
   async function handleOpenBox() {
     if (busy) {

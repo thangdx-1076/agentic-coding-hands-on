@@ -37,12 +37,16 @@ loadEnv();
  * - `kudos-open-gift`: button "Mở Secret Box", enabled when secretBoxUnopened > 0
  * - `secret-box-dialog`: the `<dialog>` element housing the modal
  * - `secret-box-title`: modal title (toggles between unopened/reveal states)
- * - `secret-box-instruction`: instruction line "Click vào box để tiếp tục mở"
+ * - `secret-box-instruction`: instruction line "Click vào box để mở"
  * - `secret-box-box`: clickable box element
  * - `secret-box-badge`: badge image revealed after click
  * - `secret-box-label`: label text "Secretbox chưa mở"
  * - `secret-box-counter`: unopened count display
  * - `secret-box-close`: X button to close modal
+ *
+ * [S16] additionally pins that the modal FITS the viewport: the artwork
+ * square shrinks with available height instead of forcing the dialog to
+ * scroll (see `secret-box-dialog.tsx`).
  *
  * Seeding strategy (unopened count = floor(sum(heart_count WHERE sender_id=me)/5) - openings):
  * - Create counterpart user to receive kudos FROM the viewer
@@ -299,10 +303,13 @@ test.describe(
       await expect(title).toContainText("KHÁM PHÁ SECRET BOX CỦA BẠN");
     });
 
-    test("[S04] Modal unopened state: instruction 'Click vào box để tiếp tục mở'", async ({
+    test("[S04] Modal unopened state: instruction 'Click vào box để mở'", async ({
       page,
     }) => {
-      // RED: Instruction text verbatim from spec.
+      // Verbatim from mm:1466:7683, the node this line renders. It read
+      // "Click vào box để tiếp tục mở" until the design was re-checked: the
+      // "tiếp tục" was inferred alongside the reveal title, never on the
+      // frame.
       await page.goto("/kudos");
 
       const openGiftBtn = page.locator("[data-testid=kudos-open-gift]");
@@ -310,7 +317,7 @@ test.describe(
 
       const instruction = page.locator("[data-testid=secret-box-instruction]");
       // FAILS: locator resolved to 0 elements
-      await expect(instruction).toContainText("Click vào box để tiếp tục mở");
+      await expect(instruction).toContainText("Click vào box để mở");
     });
 
     test("[S05] Modal unopened state: label 'Secretbox chưa mở' + counter = 1", async ({
@@ -393,11 +400,13 @@ test.describe(
         .toBe(0);
     });
 
-    test("[S09] After reveal: title changes to 'MỞ SECRET BOX THÀNH CÔNG'", async ({
+    test("[S09] After reveal: title becomes the congratulation line", async ({
       page,
     }) => {
-      // RED: Title changes after badge reveal per state machine.
-      // FAILS: modal missing.
+      // Verbatim from mm:6885:9702 / mm:6885:9659 (reveal frames, design+
+      // spec done). The previous expectation, "MỞ SECRET BOX THÀNH CÔNG",
+      // was an inference made while the reveal state had no frame at all —
+      // it pinned a string the design never carried.
       await page.goto("/kudos");
 
       const openGiftBtn = page.locator("[data-testid=kudos-open-gift]");
@@ -407,8 +416,9 @@ test.describe(
       await box.click();
 
       const title = page.locator("[data-testid=secret-box-title]");
-      // FAILS: title never changes (no state update)
-      await expect(title).toContainText("MỞ SECRET BOX THÀNH CÔNG");
+      await expect(title).toContainText(
+        "Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025",
+      );
     });
 
     test("[S10] At count=0: instruction hidden, box disabled (FAILS: RPC missing)", async ({
@@ -467,6 +477,41 @@ test.describe(
       await page.keyboard.press("Escape");
 
       await expect(modal).toBeHidden();
+    });
+
+    test("[S16] Modal fits the viewport — no inner scrollbar", async ({
+      page,
+    }) => {
+      // The box artwork was a fixed 557px square with every sibling
+      // `shrink-0`, so the modal wanted 803px against the UA's
+      // `max-height: calc(100% - 38px)` — 41px of overflow at 1280x800, and
+      // the dialog scrolled. 800 is the failing height from that report;
+      // 700 also covers the revealed title wrapping to a second line.
+      for (const height of [800, 700]) {
+        await page.setViewportSize({ width: 1280, height });
+        await page.goto("/kudos");
+
+        await page.locator("[data-testid=kudos-open-gift]").click();
+        const modal = page.locator("[data-testid=secret-box-dialog]");
+        await expect(modal).toBeVisible();
+
+        const fit = await modal.evaluate((node) => ({
+          overflow: node.scrollHeight - node.clientHeight,
+          withinViewport:
+            node.getBoundingClientRect().bottom <= window.innerHeight,
+        }));
+
+        expect(fit.overflow, `viewport ${height}px must not scroll`).toBe(0);
+        expect(fit.withinViewport).toBe(true);
+
+        // Still square, and never shrunk away to nothing.
+        const box = await page
+          .locator("[data-testid=secret-box-box]")
+          .boundingBox();
+        expect(box).not.toBeNull();
+        expect(Math.abs(box!.width - box!.height)).toBeLessThan(1);
+        expect(box!.width).toBeGreaterThan(200);
+      }
     });
   },
 );

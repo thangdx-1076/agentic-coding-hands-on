@@ -12,16 +12,16 @@ export type KudosDirectionSelectProps = {
    * `["received"]` — SEC_001). Component chỉ map, không tự thêm/bớt option. */
   directions: KudosDirection[];
   copy: ProfileCopy["kudosDirection"];
+  /** Empty-state copy per direction, ALREADY resolved for self vs other by
+   * `ProfileScreen` — the same place that decides `directions`. Kept out of
+   * this component so it stays a pure map and the self/other split lives in
+   * exactly one place. */
+  emptyByDirection: Record<KudosDirection, string>;
 };
 
 const LABEL_KEY: Record<KudosDirection, "receivedLabel" | "sentLabel"> = {
   received: "receivedLabel",
   sent: "sentLabel",
-};
-
-const EMPTY_KEY: Record<KudosDirection, "emptyReceived" | "emptySent"> = {
-  received: "emptyReceived",
-  sent: "emptySent",
 };
 
 /**
@@ -37,6 +37,7 @@ const EMPTY_KEY: Record<KudosDirection, "emptyReceived" | "emptySent"> = {
 export function KudosDirectionSelect({
   directions,
   copy,
+  emptyByDirection,
 }: KudosDirectionSelectProps) {
   const listboxId = useId();
   const [selected, setSelected] = useState<KudosDirection>(directions[0]);
@@ -113,8 +114,11 @@ export function KudosDirectionSelect({
           shown (feed rỗng LUÔN, không phải danh sách trống im lặng —
           FR-305/FUN_011/FUN_012). Feed cards themselves stay out of scope
           (mms_D_Post all, F007+). */}
-      <p className="font-montserrat mt-6 text-base leading-6 text-white/70">
-        {copy[EMPTY_KEY[selected]]}
+      <p
+        data-testid="profile-kudos-empty"
+        className="font-montserrat mt-6 text-base leading-6 text-white/70"
+      >
+        {emptyByDirection[selected]}
       </p>
     </div>
   );

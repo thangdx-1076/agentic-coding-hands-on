@@ -4,15 +4,19 @@ import { fn } from "storybook/test";
 import { SecretBoxDialog } from "./secret-box-dialog";
 
 /**
- * Verbatim from clarifications.md (§ "Xung đột copy tiêu đề", § "Visual
- * state sau khi click") — no string here is invented. Phase 05 owns the
- * real `messages/*.json`-sourced copy; this file stays standalone per the
- * dispatch contract, same as `kudos-link-dialog.stories.tsx`.
+ * Verbatim from the MoMorph frames, not from clarifications.md any more:
+ * `titleRevealed` comes from mm:6885:9702 and `instruction` from
+ * mm:1466:7683. Both previously held strings that clarifications.md had
+ * INFERRED while the reveal state still had no frame to read.
+ *
+ * Phase 05 owns the real `messages/*.json`-sourced copy; this file stays
+ * standalone per the dispatch contract, same as
+ * `kudos-link-dialog.stories.tsx` — so it has to be kept in step by hand.
  */
 const copy = {
   titleUnopened: "KHÁM PHÁ SECRET BOX CỦA BẠN",
-  titleRevealed: "MỞ SECRET BOX THÀNH CÔNG",
-  instruction: "Click vào box để tiếp tục mở",
+  titleRevealed: "Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025",
+  instruction: "Click vào box để mở",
   label: "Secretbox chưa mở",
   close: "Đóng",
 };
@@ -62,7 +66,7 @@ export const Revealed: Story = {
   },
 };
 
-/** Opened one of several: instruction stays visible ("tiếp tục mở" only
+/** Opened one of several: instruction stays visible (it only
  * makes sense with boxes remaining), box stays clickable. */
 export const RevealedWithBoxesLeft: Story = {
   args: {

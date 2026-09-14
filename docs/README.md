@@ -15,3 +15,9 @@ as [`vi/.reading-order.json`](vi/.reading-order.json)).
   content below the closing marker) survives a per-lang pass. Keep this file marker-free so the
   pointer above is not silently removed on the next run.
 -->
+
+## Tài liệu viết tay
+
+- [login-flow.md](login-flow.md) — luồng đăng nhập Google OAuth đầy đủ: từ lúc bấm nút tới hai tầng guard, session cookie, logout và ma trận lỗi.
+- [deployment.md](deployment.md) — deploy và biến môi trường.
+- [data-migration.md](data-migration.md) — đổi dữ liệu (row) trên production: seed nội dung, backfill cột, dọn dữ liệu demo, sửa row sai. Kèm backup, verify và rollback theo từng loại.

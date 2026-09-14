@@ -201,13 +201,16 @@
         "secretBoxLeft": "Secret Boxes left:"
       },
       "openSecretBox": "Open Secret Box 🎁",
-      "writeKudos": "Write Kudos"
+      "writeKudos": "Write Kudos",
+      "openSecretBoxDisabledTitle": "No Secret Box to open yet — every 5 hearts you receive unlocks one."
     },
     "kudos": {
       "receivedLabel": "Received",
       "sentLabel": "Sent",
       "emptyReceived": "You haven't received any Kudos yet.",
-      "emptySent": "You haven't sent any Kudos yet."
+      "emptySent": "You haven't sent any Kudos yet.",
+      "emptyReceivedOther": "This Sunner hasn't received any Kudos yet.",
+      "emptySentOther": "This Sunner hasn't sent any Kudos yet."
     }
   },
   "kudos": {
@@ -318,15 +321,15 @@
       "boxOpened": "Secret Boxes opened:",
       "boxUnopened": "Secret Boxes left:",
       "openGift": "Open Secret Box 🎁",
-      "openGiftDisabledTitle": "This feature is under development",
+      "openGiftDisabledTitle": "No Secret Box to open yet — every 5 hearts you receive unlocks one.",
       "rankBoard": "10 SUNNERS WITH THE NEWEST RANK-UP",
       "giftBoard": "10 SUNNERS WHO JUST RECEIVED GIFTS",
       "emptyBoard": "No data yet"
     },
     "secretBox": {
       "titleUnopened": "DISCOVER YOUR SECRET BOX",
-      "titleRevealed": "SECRET BOX OPENED SUCCESSFULLY",
-      "instruction": "Click the box to keep opening",
+      "titleRevealed": "Congratulations, you have received a gift from the SAA 2025 organisers",
+      "instruction": "Click the box to open",
       "label": "Unopened Secret Box",
       "close": "Close",
       "error": "Something went wrong opening the Secret Box, please try again"

@@ -100,7 +100,8 @@ async function sendKudo(
  * | C05 | *(CI-safe)* | `[data-testid=kudos-sunner-search]` có `placeholder="Tìm kiếm"`, `maxlength="100"`; nút submit `disabled` khi ô rỗng | TC[11], TC[17], TC[19] | FR-209, BR-010 |
  * | C06 | *(CI-safe)* | Gõ 101 ký tự → `inputValue()` dài đúng 100 | TC[19] | BR-010 |
  * | C07 | *(CI-safe)* | Không có kudo nào → `[data-testid=kudos-empty]` xuất hiện **2 lần** (carousel + feed), text `Hiện tại chưa có Kudos nào.` | TC[21] | FR-212, BR-011 |
- * | C08 | *(CI-safe)* | Cả 2 `[data-testid=kudos-leaderboard]` hiện `Chưa có dữ liệu` | TC[22] | FR-213, BR-012 |
+ * | C08 | CI-safe | Cả hai bảng render heading; bảng thăng hạng hiện `Chưa có dữ liệu` (chưa có nguồn dữ liệu). KHÔNG khẳng định gì về việc bảng quà rỗng hay không — điều đó phụ thuộc seed, xem C08b | TC[22] | FR-213, BR-012 |
+ * | C08b | `@local-db` | Bảng quà **KHÔNG** rỗng — migration 0023 seed `secret_box_openings` nên `recent_gift_recipients` có người, và mỗi hàng là `<a href>` tới `/profile` | TC[22] | FR-219 |
  * | C09 | *(CI-safe)* | `[data-testid=kudos-sidebar]` visible; ẩn danh → `[data-testid=kudos-stat-row]` đúng **0** phần tử và không có `[data-testid=kudos-open-gift]` | TC[15] | D001 |
  * | C10 | *(CI-safe)* | Thứ tự tài liệu: header → banner → pill → highlight → spotlight → feed+sidebar → footer | TC[13] | FR-201…FR-211 |
  * | C11 | `@local-db` | Carousel hiện đúng 5 `[data-testid=kudos-card][data-variant=highlight]`; `[data-testid=kudos-slide-counter]` đọc `1/5` | TC[09] | FR-203, BR-001 |
@@ -120,7 +121,7 @@ async function sendKudo(
  * | C25 | `@auth` | Đã đăng nhập: bấm tim trên kudo người khác → icon đổi sang trạng thái `data-hearted="true"`, số tim +1; bấm lại → về `false`, -1 | TC[32], TC[24] | F008 FR-401, BR-001 |
  * | C26 | `@auth` | Kudo do chính mình gửi → nút tim `disabled` | TC[23] | F008 FR-202, BR-002 |
  * | C27 | `@auth` | Sidebar hiện đúng 5 `[data-testid=kudos-stat-row]` + nút `Mở quà` visible, trạng thái enable/disable lấy từ `secretBoxUnopened` thật (DEC-001) — viewer test mới (0 tim đã gửi) nên vẫn `disabled` | TC[15] | FR-211 |
- * | C28 | `@auth` | Bấm tên/avatar trên thẻ → URL tới `/profile?id=<uuid>` | TC[00], TC[35], TC[36] | FR-402, US008 |
+ * | C28 | `@auth` | Bấm tên trên thẻ → URL tới `/profile?id=<uuid>`; và bấm AVATAR (`[data-testid=kudos-person-hover-trigger]`, một `<a href>`) cũng ra đúng URL đó — hai test riêng, vì trước đây chỉ nửa "tên" được nối dây | TC[00], TC[35], TC[36] | FR-402, US008 |
  * | C29 | `@auth` | Ẩn danh bấm tên/avatar → URL về `/login` *(gate `(protected)/layout.tsx` có sẵn, không code mới)* | TC[02] | FR-601, BR-013 |
  * | C30 | *(CI-safe)* | `[data-testid=kudos-hero-search-input]` **không** `readonly`, nhận được chữ gõ vào, `maxlength="128"` | — | FR-402 |
  * | C31 | *(CI-safe)* | Ẩn danh gõ vào ô hero → `[data-testid=kudos-hero-search-options]` hiện gợi ý đăng nhập, **không** phải "không tìm thấy" | — | FR-402, SEC_004 |
@@ -285,17 +286,36 @@ test.describe("Kudos Live board (CI-safe, no Supabase data required)", () => {
     }
   });
 
-  test("[C08] Leaderboards show empty state when no data", async ({ page }) => {
-    // C08: Cả 2 `[data-testid=kudos-leaderboard]` hiện `Chưa có dữ liệu`
+  test("[C08] Both boards render; the rank board is empty", async ({
+    page,
+  }) => {
+    // C08 used to assert BOTH boards read `Chưa có dữ liệu`. That only ever
+    // held because `secret_box_openings` was empty in every environment —
+    // the gift board reads that table (`recent_gift_recipients`, 0015) and
+    // nothing else. Migration 0023 seeds openings precisely so the Secret
+    // Box feature is not permanently empty, which makes the old "both
+    // empty" wording false rather than merely unlucky.
+    //
+    // What is left here is what holds with NO database behind the page: both
+    // boards render, and the rank board — which has no data source wired at
+    // all — shows its empty state. Whether the gift board has rows depends
+    // on whether 0023 has been applied, so that assertion lives in [C08b]
+    // under `@local-db`. Asserting it here is what turned this test red in
+    // CI, where no Supabase exists and the board is correctly empty.
     await page.goto("/kudos");
 
     const leaderboards = page.locator("[data-testid=kudos-leaderboard]");
     await expect(leaderboards).toHaveCount(2);
 
-    for (let i = 0; i < 2; i++) {
-      const board = leaderboards.nth(i);
-      await expect(board).toContainText("Chưa có dữ liệu");
-    }
+    const rankBoard = leaderboards.nth(0);
+    await expect(rankBoard).toContainText(
+      "10 SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT",
+    );
+    await expect(rankBoard).toContainText("Chưa có dữ liệu");
+
+    await expect(leaderboards.nth(1)).toContainText(
+      "10 SUNNER NHẬN QUÀ MỚI NHẤT",
+    );
   });
 
   test("[C09] Sidebar hidden when anonymous, statistics rows count 0", async ({
@@ -372,6 +392,28 @@ test.describe(
   { tag: "@local-db" },
   () => {
     test.use({ storageState: { cookies: [], origins: [] } });
+
+    test("[C08b] Gift board lists real Secret Box openers", async ({
+      page,
+    }) => {
+      // The half of [C08] that needs data. The gift board reads
+      // `recent_gift_recipients` (0015), which reads `secret_box_openings`
+      // and nothing else — so it has rows only where migration 0023 has
+      // been applied. Unlike C07 there is no filter that can force it empty:
+      // it is a global "10 most recent" read.
+      //
+      // Openings only ever accumulate (the Secret Box specs open more of
+      // them), so this asserts the DIRECTION — "has openers" — never an
+      // exact name or count.
+      await page.goto("/kudos");
+
+      const giftBoard = page.locator("[data-testid=kudos-leaderboard]").nth(1);
+      await expect(giftBoard).toContainText("10 SUNNER NHẬN QUÀ MỚI NHẤT");
+      await expect(giftBoard).not.toContainText("Chưa có dữ liệu");
+      await expect(
+        giftBoard.locator("a[href*='/profile']").first(),
+      ).toBeVisible();
+    });
 
     test("[C35] Hovering an avatar opens the Sunner info card (name, unit, both Kudos counts)", async ({
       page,
@@ -1046,6 +1088,30 @@ test.describe(
         .locator("[data-testid=kudos-card-sender-name]")
         .first();
       await senderName.click();
+
+      await page.waitForURL(/\/profile\?id=[a-f0-9\-]+/);
+
+      const url = new URL(page.url());
+      expect(url.pathname).toBe("/profile");
+      expect(url.searchParams.has("id")).toBe(true);
+    });
+
+    test("[C28] Click sender avatar navigates to /profile?id=<uuid>", async ({
+      page,
+    }) => {
+      // C28 says "Bấm tên/avatar" — the avatar half was unwired until the
+      // hover-card trigger became a `<Link>`. Clicking it also OPENS that
+      // hover card (the pointer enters the trigger first), so this asserts
+      // the navigation still wins over the card that appears under it.
+      await page.goto("/kudos");
+
+      const senderAvatar = page
+        .locator(
+          "[data-testid=kudos-card-sender] [data-testid=kudos-person-hover-trigger]",
+        )
+        .first();
+      await expect(senderAvatar).toHaveAttribute("href", /^\/profile\?id=/);
+      await senderAvatar.click();
 
       await page.waitForURL(/\/profile\?id=[a-f0-9\-]+/);
 

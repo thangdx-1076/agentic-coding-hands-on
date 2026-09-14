@@ -1328,10 +1328,18 @@ test.describe("Kudos Compose Dialog (@auth @local-db)", () => {
     const senderLink = senderBlock.locator('a[href*="/profile"]');
     await expect(senderLink).toHaveCount(0);
 
-    // Receiver block should still have a profile link (real Sunner, not anonymous)
+    // Receiver block should still have a profile link (real Sunner, not anonymous).
+    // TWO links, not one: C28 makes the avatar a second route into the same
+    // profile alongside the name. Both must point at the SAME profile — that
+    // is what keeps this a link-count assertion about ONE identity rather
+    // than a loose "at least one link somewhere" check.
     const receiverBlock = ownCard.locator("[data-testid=kudos-card-receiver]");
     const receiverLink = receiverBlock.locator('a[href*="/profile"]');
-    await expect(receiverLink).toHaveCount(1);
+    await expect(receiverLink).toHaveCount(2);
+    const receiverHrefs = await receiverLink.evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute("href")),
+    );
+    expect(new Set(receiverHrefs).size).toBe(1);
   });
 
   test("[C26] Submit with **bold** in content → card renders <strong>, no ** visible", async ({

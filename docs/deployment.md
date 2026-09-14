@@ -14,6 +14,7 @@ Toàn bộ deploy do GitHub Actions chạy, không do Vercel tự bắt commit:
 | `.github/workflows/ci.yml`      | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e   |
 | `.github/workflows/cd.yml`      | **ngay khi có commit vào `main`**    | `vercel deploy --prod` → smoke check. **Không đụng database**     |
 | `.github/workflows/migrate.yml` | **chỉ khi bạn bấm Run workflow**     | `db push --dry-run` → duyệt → `db push`. **Không deploy code**    |
+| `.github/workflows/release.yml` | **ngay khi có commit vào `main`**    | tag `v<version>` theo `package.json` → tạo release **draft**. Không publish, không deploy |
 
 **Code và schema đi hai đường riêng, và chỉ một đường tự động.** Merge vào `main`
 là deploy code lên schema đang có sẵn. Đổi schema chỉ xảy ra khi bạn tự vào
@@ -106,6 +107,9 @@ Quyết định trước khi mở cho user thật:
   khi có người đăng nhập thật — không có cách nào lọc ngược về sau nếu kudo thật đã
   tham chiếu tới họ.
 
+  Quy trình đầy đủ (đo thiệt hại cascade trước khi xoá, backup, verify sau đó) ở
+  [data-migration.md](data-migration.md) § 7.3.
+
 Kiểm tra bucket storage đã có: **Storage → Buckets** phải thấy `kudo-images`, cột
 Public = true. Nó do `0010_kudo_images_bucket.sql` tạo, không phải tạo tay.
 
@@ -146,12 +150,47 @@ Thứ tự quan trọng: tạo credential ở Google trước, dán vào Supabas
 2. **Settings → Environment Variables**, scope **Production**, thêm 4 biến (đối
    chiếu `.env.example`):
 
-   | Biến                                   | Giá trị                              |
-   | -------------------------------------- | ------------------------------------ |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project-ref>.supabase.co`  |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key ở Bước 1             |
-   | `EVENT_START_AT`                       | `2026-12-26T18:30:00+07:00`          |
-   | `PRELAUNCH_LOCK_ENABLED`               | `true` khi còn khoá site, `false` khi mở |
+   | Biến                                   | Type       | Giá trị                              |
+   | -------------------------------------- | ---------- | ------------------------------------ |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | **Config** | `https://<project-ref>.supabase.co`  |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Config** | publishable key ở Bước 1             |
+   | `EVENT_START_AT`                       | Config     | `2026-12-26T18:30:00+07:00`          |
+   | `PRELAUNCH_LOCK_ENABLED`               | Config     | `true` khi còn khoá site, `false` khi mở |
+
+   > **⚠️ Hai biến `NEXT_PUBLIC_*` BẮT BUỘC là Type `Config`, không phải `Secret`.**
+   > Hộp **Add Environment Variable** hỏi Type trước cả Key. Chọn `Secret` là
+   > deploy xong nhưng Google login chết trên production — và không có gì báo lỗi.
+   >
+   > Vì sao: `cd.yml` build **trong GitHub Actions** rồi ship `--prebuilt`, nên nó
+   > phải `vercel pull` giá trị thật xuống runner. Biến `Secret` thì Vercel không
+   > trả giá trị cho ai hết, kể cả `vercel pull` — CLI ghi đúng chuỗi
+   > `[SENSITIVE]` vào `.vercel/.env.production.local` (hằng
+   > `SENSITIVE_ENV_VALUE_PLACEHOLDER` trong Vercel CLI). Next inline mọi
+   > `NEXT_PUBLIC_*` vào bundle client lúc build, nên bundle production mang theo
+   > `createBrowserClient("[SENSITIVE]", "[SENSITIVE]")`: nhấn nút login là
+   > `signInWithOAuth` hỏng ngay ở client, `src/api/auth.ts` nuốt lỗi thành
+   > `{ ok: false }`, màn login hiện dòng đỏ "Đăng nhập không thành công" —
+   > request chưa từng đi tới Supabase. Kèm theo, `next.config.ts` parse cùng biến
+   > đó lúc build nên production mất luôn `remotePatterns` cho Supabase Storage,
+   > và ảnh kudo ném "hostname is not configured under images".
+   >
+   > Để `Secret` cũng không giấu được gì: hai giá trị này bị inline vào JS gửi
+   > xuống browser, ai xem source cũng đọc được. Publishable key là public theo
+   > thiết kế; thứ phải giữ kín là service-role key, mà nó không có mặt ở đây.
+   >
+   > Đã là `Secret` rồi thì không sửa Type được (Vercel không cho đọc lại giá
+   > trị) — **xoá và Add lại** với Type `Config`, rồi chạy lại `cd.yml`.
+   >
+   > Kiểm sau khi deploy — phải in ra `https://<ref>.supabase.co`, thấy
+   > `[SENSITIVE]` là chưa xong:
+   >
+   > ```bash
+   > P=https://<domain-production>
+   > curl -s "$P/login" -o /tmp/l.html
+   > for c in $(grep -oE '/_next/static/chunks/[^"]+\.js' /tmp/l.html | sort -u); do
+   >   curl -s "$P$c" | grep -ohE 'https://[a-z0-9]{10,}\.supabase\.co|\[SENSITIVE\]'
+   > done | sort -u
+   > ```
 
    Không set `SERVICE_ROLE_KEY` trên Vercel. Không dòng code runtime nào trong
    `src/` đọc nó — nó chỉ phục vụ e2e dọn dữ liệu ở máy local.
@@ -530,14 +569,50 @@ Chạy lại pipeline mà không cần commit rỗng: **Actions → CD → Run w
 
 ---
 
+## Release — tag và draft, tự động
+
+`release.yml` chạy cùng lúc với `cd.yml` trên mỗi commit vào `main`, nhưng nó
+không deploy gì: nó đọc `version` trong `package.json`, tag commit đó thành
+`v<version>`, rồi mở một release **draft** với notes GitHub tự sinh.
+
+**Nguồn version duy nhất là `package.json`.** `/tkm:ship` đã bump nó trong một
+commit `chore:` — nơi mà quyết định patch/minor được đưa ra lúc còn nhìn thấy
+diff. Workflow này chỉ *đọc* quyết định đó. Nếu nó tự suy version từ prefix
+conventional-commit thì sẽ có hai câu trả lời cho cùng một câu hỏi, và ngày
+chúng lệch nhau là ngày release sai mà không ai biết.
+
+**Push không bump version thì workflow thành no-op.** Nó kiểm tag đã tồn tại
+chưa; tồn tại rồi thì skip và exit 0. Nên merge một PR docs, một revert, hay PR
+thứ hai vào ngay sau đó đều không tạo release trùng.
+
+Ba điều cần biết trước khi dùng:
+
+- **Nó không publish.** Draft chỉ có bạn thấy. Người đọc notes, sửa, rồi tự bấm
+  publish — hoặc xoá draft đi.
+- **Tag được tạo thật, ngay lúc đó, và không mất khi bạn xoá draft.** Release
+  draft trên GitHub **không** tự tạo tag (GitHub chỉ tạo khi publish), nên
+  workflow tạo tag bằng API trước. Hệ quả: xoá draft xong thì `v<version>` vẫn
+  trỏ vào commit đó, và workflow sẽ **không** tag lại. Muốn undo thật thì xoá cả
+  tag.
+- **Draft không có nghĩa là code chạy được.** Nó được tạo từ `main` mà không
+  chạy lại test, và CI gác merge thì loại `@auth` + `@local-db` (xem header
+  `ci.yml`). Nó chỉ ghi lại "version này ứng với commit này".
+
+Release đầu tiên trong repo chưa có tag nào trước đó, nên `--generate-notes` sẽ
+gom toàn bộ history — notes lần đó rất dài. Trim trong draft trước khi publish.
+
+---
+
 ## Rollback
 
 | Hỏng cái gì            | Làm gì                                                                 |
 | ---------------------- | ---------------------------------------------------------------------- |
 | Code                   | Vercel → Deployments → bản tốt trước đó → **Promote to Production**. Tức thì. |
 | Schema                 | Không có undo. Viết migration mới đảo ngược, push qua pipeline. Mỗi file migration đều có sẵn câu rollback ở header. |
+| Dữ liệu (row)          | Chỉ khôi phục được từ backup có TRƯỚC khi chạy. Xem [data-migration.md](data-migration.md) § 4 và § 10.              |
 | Env var sai            | Sửa trong Vercel → Redeploy (hoặc CD → Run workflow).                   |
 | OAuth gãy sau đổi domain | Cập nhật Site URL + Redirect URLs ở Supabase, và redirect URI ở Google Console. |
+| Release/tag sai        | Xoá draft **và** xoá tag (`git push origin :refs/tags/vX.Y.Z`), rồi sửa `package.json`. Chỉ xoá draft là workflow không tag lại. |
 
 ---
 
@@ -551,6 +626,20 @@ Nói thẳng để không ai đọc nhầm dấu tick xanh:
   nhập Google thật mới sinh ra được cặp code/verifier.
 - Smoke check sau deploy chỉ là probe sống/chết trên `/`. Nó bắt được app chết,
   không bắt được UI sai.
+- **Env var sai giá trị thì deploy vẫn xanh từ đầu tới cuối.** Đã xảy ra
+  2026-09-11: hai biến `NEXT_PUBLIC_*` để Type `Secret`, Google login chết trên
+  production, mà cả bốn bước đều đúng trạng thái "thành công" của chúng —
+  `vercel pull` in dòng bắt đầu bằng `!` (cảnh báo, exit 0):
+  `! 11 Secret values cannot be pulled from the production Environment. Wrote
+  "[SENSITIVE]" as placeholders`; `vercel build` không có gì để phàn nàn vì
+  `[SENSITIVE]` là một string hợp lệ, `src/configs/image-remote-patterns.ts` bắt
+  `URL` throw rồi trả về `null` đúng như thiết kế, còn `createBrowserClient` chỉ
+  ném khi tham số rỗng; `vercel deploy` chỉ upload; smoke check `curl --fail` trên
+  `/` được 200 vì trang render ở server, mà biến server đọc từ runtime Vercel nên
+  vẫn là giá trị thật. Lỗi chỉ sống trong bundle client, và chỉ hiện ra khi có
+  người **nhấn** nút login — không có bước nào trong pipeline nhấn nút.
+  Không có gate nào cho việc này: muốn bắt thì phải grep bundle
+  (xem đoạn kiểm ở Bước 4.2) hoặc chạy e2e `@auth` trên chính deployment.
 - Branch protection chặn **merge**, không chặn **push**. Rule khoá force-push và
   xoá nhánh, bắt buộc qua PR có check xanh — nhưng nó bảo vệ đúng `main`. Mọi
   đường khác vào production (bấm Run workflow trên CD, `vercel deploy` tay từ

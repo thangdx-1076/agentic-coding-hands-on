@@ -15,11 +15,19 @@ export type SecretBoxDialogCopy = {
   /** mm:1466:7678 (A) — unopened-state title, verbatim from the rendered
    * frame ("KHÁM PHÁ SECRET BOX CỦA BẠN"). */
   titleUnopened: string;
-  /** mm:1466:7678 (A) — revealed state, verbatim from spec row A + all 19
-   * test cases ("MỞ SECRET BOX THÀNH CÔNG"); no frame renders this state
-   * (clarifications.md § "Xung đột copy tiêu đề"). */
+  /** Revealed state — "Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025",
+   * verbatim from mm:6885:9702 and mm:6885:9659, two reveal frames that are
+   * both design+spec `done`.
+   *
+   * It was "MỞ SECRET BOX THÀNH CÔNG" here, an INFERENCE that
+   * clarifications.md § "Xung đột copy tiêu đề" recorded as such: the reveal
+   * state had no frame at the time, so the string was reasoned out of the
+   * spec row instead of read off a design. The frames exist now and say
+   * something else. */
   titleRevealed: string;
-  /** mm:1466:7681 (B) — "Click vào box để tiếp tục mở". */
+  /** mm:1466:7683 (B) — "Click vào box để mở", verbatim. The extra "tiếp
+   * tục" this once carried came from the same inference as the title above,
+   * not from the node. */
   instruction: string;
   /** mm:1466:7690 (D, label half) — "Secretbox chưa mở". */
   label: string;
@@ -132,21 +140,39 @@ export function SecretBoxDialog({
       {/* mm:1466:7684 (C) — child "about link" (1466:7687) intentionally
           skipped: empty frame, no children, no MM_MEDIA_* asset, invisible
           in the rendered frame image. */}
+      {/* Was a fixed 557px square, which made the modal 803px tall against
+          the UA's `max-height: calc(100% - 38px)`: at 1280x800 it overflowed
+          by 41px and the whole dialog scrolled (measured, not estimated).
+          It now shrinks to whatever the viewport leaves.
+          `flex-1` does NOT work here: the dialog's height is `auto` clamped
+          by that UA max-height, so at layout time there is no free space to
+          distribute and the button collapsed to 0x0.
+          320px is the reserve for everything else: 246px of chrome measured
+          with the box removed (title, 2 dividers, instruction, counter,
+          padding, gaps), +32px for the second line the longer revealed title
+          wraps to, +38px for the UA margin. Kept as one square via matching
+          width/height rather than `aspect-square`, which needs one axis to
+          be definite first. */}
       <button
         type="button"
         data-testid="secret-box-box"
         disabled={!canOpen || busy}
         onClick={onOpenBox}
-        className="relative h-139.25 w-139.25 shrink-0 disabled:cursor-not-allowed"
+        className="relative h-[min(557px,calc(100dvh-320px))] w-[min(557px,calc(100dvh-320px))] max-w-full shrink-0 disabled:cursor-not-allowed"
       >
-        {/* mm:1466:7685 — background position/size copied verbatim from
-            the node's own Figma fill crop, not guessed. */}
+        {/* mm:1466:7685 — the node's own Figma fill crop. Position is in
+            PERCENT, not the px the crop was authored in: px offsets are tied
+            to one box size, so they slid out of place as soon as the box
+            became resizable. Same crop, derived not guessed — for
+            background-size 138.527%, offset = P x (1 - 1.38527) x boxSize,
+            so P = (102.944/557) / 0.38527 = 47.971% across and
+            (102.487/557) / 0.38527 = 47.758% down. */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
           style={{
             background:
-              "url(/standards/secret-box-sparkle.png) -102.944px -102.487px / 138.527% 138.527% no-repeat",
+              "url(/standards/secret-box-sparkle.png) 47.971% 47.758% / 138.527% 138.527% no-repeat",
           }}
         />
         {/* mm:1466:7686 MM_MEDIA_box quà chưa mở */}

@@ -3,6 +3,8 @@ import * as path from "path";
 
 import { test, expect } from "@playwright/test";
 
+import { countKudosReceived, createKudoAs } from "./helpers/kudos-actions";
+import { getServiceRoleKey } from "./helpers/service-role";
 import {
   createTestSession,
   generateSupabaseCookies,
@@ -37,11 +39,14 @@ loadEnv();
  * | C3 | Hero KHÔNG chứa text node nào ứng với dòng department+tier+stars (`362:5064`) | GUI_009 | @auth |
  * | C4 | Đúng 6 phần tử badge-slot (`362:5066`-`362:5071`) trong 1 hàng căn giữa, tất cả mang cùng 1 attribute "khoá" (`data-locked="true"`); tiêu đề nằm SAU hàng ô theo DOM order | GUI_002 | @auth |
  * | C5 | Tiêu đề bộ sưu tập: self = `Bộ sưu tập icon của tôi`; other = `Bộ sưu tập icon` (KHÔNG chèn tên) | GUI_003 | @auth |
- * | C6 | Self: đúng 5 dòng trong statistics card, nhãn verbatim `Số Kudos bạn nhận được:` / `Số Kudos bạn đã gửi:` / `Số tim bạn nhận được:` / `Số Secret Box bạn đã mở:` / `Số Secret Box chưa mở:`, mỗi dòng giá trị `0`; 1 divider giữa dòng 3 và 4 | GUI_004 | @auth |
- * | C7 | Self: nút `Mở Secret Box` có thuộc tính `disabled` trong MỌI trường hợp | GUI_005 | @auth |
+ * | C6 | Self: đúng 5 dòng trong statistics card, nhãn verbatim `Số Kudos bạn nhận được:` / `Số Kudos bạn đã gửi:` / `Số tim bạn nhận được:` / `Số Secret Box bạn đã mở:` / `Số Secret Box chưa mở:`, mỗi dòng `[data-testid=profile-stat-*]` mang một chuỗi chữ số; 1 divider giữa dòng 3 và 4 | GUI_004 | @auth |
+ * | C6b | Self: seed 1 kudo `other → self` → `[data-testid=profile-stat-received]` tăng đúng 1 (so bằng DELTA với `countKudosReceived`, không so số tuyệt đối). Đây là dòng chốt rằng 5 counter đọc DB thật chứ không phải `0` hardcode | GUI_004, FR-211 | @auth |
+ * | C7 | Self KHÔNG có box nào chưa mở → nút `Mở Secret Box` `disabled`, kèm `title` nói rõ lý do | GUI_005 | @auth |
+ * | C7b | Self có box chưa mở → bấm `[data-testid=profile-open-secret-box]` → URL `/kudos?secretbox=open` và `[data-testid=secret-box-dialog]` MỞ SẴN. Nút này trước hardcode `disabled`; sau đó chỉ là link trơ sang `/kudos` nên bấm xong vẫn không có box nào mở | GUI_005, F000 | @auth @local-db |
  * | C8 | Other: slot statistics KHÔNG chứa 5 dòng/nút Secret Box — chỉ chứa thanh `Viết Kudo` `disabled`. Self: KHÔNG có `Viết Kudo`. Hai biến thể loại trừ lẫn nhau | FUN_008 | @auth |
  * | C9 | Dropdown chiều Kudos (`362:5089`): self → đúng 2 option, trigger `Đã nhận (0)` / `Đã gửi (0)`; other → đúng 1 option Received, **không có** Sent kể cả ở trạng thái disabled/hidden | FUN_009, SEC_001 | @auth |
  * | C10 | Chọn 1 chiều → hiển thị đúng copy rỗng tương ứng (không phải danh sách trống không chữ) | FUN_011, FUN_012 | @auth |
+ * | C10b | Other: `[data-testid=profile-kudos-empty]` dùng ngôi thứ BA (`Sunner này chưa...`), self vẫn ngôi thứ hai (`Bạn chưa...`) — profile người khác không được xưng "Bạn" với người đọc | FUN_011, FUN_012 | @auth |
  * | C11 | Click `Viết Kudo` → không mở dialog nào (`[role="dialog"]` count 0) và không phát request mới | FUN_008 | @auth |
  * | C12 | `page.goto("/profile?id=not-a-uuid")` → `response.status() === 404` (syntactic validation); server-side rejection not observable from browser | FUN_004 | @auth |
  * | C13 | `page.goto("/profile?id=a&id=b")` → `response.status() === 404` | FUN_005 | @auth |
@@ -94,6 +99,10 @@ test.describe("Profile page", { tag: "@auth" }, () => {
   };
   let selfUserId: string;
   let otherUserId: string;
+  /** Needed by [C7b] to seed `heart_count` directly (RLS has no write path
+   * for it). Resolved here, with the other env, so no test body carries a
+   * conditional of its own. */
+  let serviceRoleKey: string;
 
   test.beforeEach(async ({ context }) => {
     supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -103,7 +112,18 @@ test.describe("Profile page", { tag: "@auth" }, () => {
       throw new Error("Supabase environment variables not set");
     }
 
-    // Create self session with metadata
+    const resolvedServiceRoleKey = getServiceRoleKey();
+    if (!resolvedServiceRoleKey) {
+      throw new Error("SERVICE_ROLE_KEY not set — needed to seed heart_count");
+    }
+    serviceRoleKey = resolvedServiceRoleKey;
+
+    // Create self session with metadata.
+    //
+    // INVARIANT: [C6b] asserts this account's received-kudos counter moves by
+    // exactly 1, and `fullyParallel` lets tests in this file run concurrently.
+    // No other test here may write `kudos` rows for this account without
+    // updating [C6b] — the delta would shift between its two assertions.
     selfSession = await createTestSession(
       supabaseUrl,
       publishableKey,
@@ -238,35 +258,64 @@ test.describe("Profile page", { tag: "@auth" }, () => {
     await expect(namedTitle).toHaveCount(0);
   });
 
-  // C6: Self statistics card with 5 rows all 0 values
-  test("[C6] Self statistics card shows 5 rows all with value 0", async ({
+  // C6: Self statistics card — 5 labelled rows, 1 divider, real counters
+  test("[C6] Self statistics card shows 5 labelled rows with numeric counters", async ({
     page,
   }) => {
-    // C6: Self: đúng 5 dòng trong statistics card, mỗi dòng giá trị `0`
+    // C6: Self: đúng 5 dòng trong statistics card, nhãn verbatim.
+    //
+    // This no longer asserts each value is the literal `0`. That assertion
+    // passed against a card that rendered a HARDCODED `0` and would have
+    // passed just the same had the counters never been wired to the DB at
+    // all — which is exactly the defect it failed to catch. The per-row
+    // value is now pinned to a digit string here and to a real DB count in
+    // C6b below.
     await page.goto("/profile");
 
-    // Verify all expected labels exist with 0 values
-    const labels = [
-      "Số Kudos bạn nhận được:",
-      "Số Kudos bạn đã gửi:",
-      "Số tim bạn nhận được:",
-      "Số Secret Box bạn đã mở:",
-      "Số Secret Box chưa mở:",
+    const rows = [
+      { key: "received", label: "Số Kudos bạn nhận được:" },
+      { key: "sent", label: "Số Kudos bạn đã gửi:" },
+      { key: "hearts", label: "Số tim bạn nhận được:" },
+      { key: "secretBoxOpened", label: "Số Secret Box bạn đã mở:" },
+      { key: "secretBoxLeft", label: "Số Secret Box chưa mở:" },
     ];
 
-    for (const label of labels) {
-      const row = page.locator(`text=${label}`);
-      await expect(row).toBeVisible();
+    for (const { key, label } of rows) {
+      await expect(page.locator(`text=${label}`)).toBeVisible();
 
-      // Find the value (should be 0) within the same parent
-      const parent = row.locator("..");
-      const value = parent.locator("text=0");
+      const value = page.locator(`[data-testid=profile-stat-${key}]`);
       await expect(value).toBeVisible();
+      await expect(value).toHaveText(/^\d+$/);
     }
 
     // Verify divider exists between row 3 and row 4
     const divider = page.locator("[role='separator']");
     await expect(divider.first()).toBeVisible();
+  });
+
+  // C6b: the counters track the database, they are not a hardcoded 0
+  test("[C6b] Receiving a kudo increments the received counter", async ({
+    page,
+  }) => {
+    // Asserted as a DELTA, not an absolute: `createTestSession` reuses the
+    // same e2e account across runs, so leftover rows from an earlier run
+    // make any fixed expected number flaky. The delta holds regardless.
+    const before = await countKudosReceived(selfUserId);
+
+    await page.goto("/profile");
+    await expect(
+      page.locator("[data-testid=profile-stat-received]"),
+    ).toHaveText(String(before));
+
+    await createKudoAs(otherSession, {
+      receiverId: selfUserId,
+      content: "Kudo seeded by [C6b] to prove the counter is real.",
+    });
+
+    await page.goto("/profile");
+    await expect(
+      page.locator("[data-testid=profile-stat-received]"),
+    ).toHaveText(String(before + 1));
   });
 
   // C7: Self view — "Mở Secret Box" button is disabled
@@ -278,6 +327,85 @@ test.describe("Profile page", { tag: "@auth" }, () => {
 
     const button = page.locator("button:has-text('Mở Secret Box')");
     await expect(button).toHaveAttribute("disabled");
+  });
+
+  // C7b: the Secret Box button is a real way into the feature once earned
+  test("[C7b] Self holding an unopened box: 'Mở Secret Box' links to /kudos", async ({
+    browser,
+  }) => {
+    // Runs in its OWN account and browser context, never the shared
+    // `selfSession`: this test has to give its viewer hearts, and doing that
+    // to the shared account would flip [C7]'s disabled assertion depending
+    // on which test won the race under `fullyParallel`.
+    const boxed = await createTestSession(
+      supabaseUrl,
+      publishableKey,
+      "e2e-profile-secretbox@example.com",
+      "Test@123456789",
+      { full_name: "E2E Secret Box Sunner" },
+    );
+
+    // Hearts credit the kudo's SENDER (0007/0011), so the viewer earns a box
+    // by SENDING a kudo that collects 5 hearts — 5 is HEARTS_PER_SECRET_BOX.
+    const seeded = await fetch(`${supabaseUrl}/rest/v1/kudos`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        sender_id: boxed.user_id,
+        receiver_id: otherUserId,
+        content: "E2E kudo that earns exactly one Secret Box",
+        heart_count: 5,
+      }),
+    });
+    expect(seeded.ok).toBe(true);
+
+    const boxedContext = await browser.newContext();
+    await injectSupabaseSession(
+      boxedContext,
+      await generateSupabaseCookies(
+        supabaseUrl,
+        publishableKey,
+        boxed.access_token,
+        boxed.refresh_token,
+      ),
+    );
+    const boxedPage = await boxedContext.newPage();
+
+    await boxedPage.goto("/profile");
+
+    // The counter proves the entitlement actually reached the page, so a
+    // green link assertion below cannot be a false positive from some other
+    // branch rendering the same label.
+    //
+    // Matched as "any positive integer", not "1": `createTestSession` reuses
+    // this email across runs, so each run's seeded kudo adds another 5 hearts
+    // and the absolute count climbs. Only "> 0" is actually contractual here.
+    await expect(
+      boxedPage.locator("[data-testid=profile-stat-secretBoxLeft]"),
+    ).toHaveText(/^[1-9]\d*$/);
+
+    // Clicked, not just inspected. Asserting the `href` alone passed while
+    // the button still did nothing useful: it landed on /kudos with the
+    // dialog shut, so the reader pressed "Mở Secret Box" and no Secret Box
+    // opened. The contract is the whole journey.
+    const openBox = boxedPage.locator("[data-testid=profile-open-secret-box]");
+    await expect(openBox).toBeEnabled();
+    await openBox.click();
+
+    await boxedPage.waitForURL(/\/kudos\?secretbox=open/);
+    await expect(
+      boxedPage.locator("[data-testid=secret-box-dialog]"),
+    ).toBeVisible();
+    await expect(
+      boxedPage.locator("[data-testid=secret-box-box]"),
+    ).toBeEnabled();
+
+    await boxedPage.close();
+    await boxedContext.close();
   });
 
   // C8: Statistics card branching — self has stats, other has Write Kudo bar
@@ -354,6 +482,24 @@ test.describe("Profile page", { tag: "@auth" }, () => {
     // Verify Sent does NOT exist anywhere on page (SEC_001)
     const sentOption = page.getByRole("option", { name: /Đã gửi/ });
     await expect(sentOption).toHaveCount(0);
+  });
+
+  // C10b: empty-state copy addresses the right person
+  test("[C10b] Other view: empty-state copy is third person, not 'Bạn'", async ({
+    page,
+  }) => {
+    // Someone else's empty feed used to read "Bạn chưa có Kudos nào được
+    // nhận." — second person on a profile that is not the reader's.
+    await page.goto(`/profile?id=${otherUserId}`);
+
+    const empty = page.locator("[data-testid=profile-kudos-empty]");
+    await expect(empty).toHaveText("Sunner này chưa có Kudos nào được nhận.");
+
+    // Self keeps the second-person wording.
+    await page.goto("/profile");
+    await expect(page.locator("[data-testid=profile-kudos-empty]")).toHaveText(
+      "Bạn chưa có Kudos nào được nhận.",
+    );
   });
 
   // C10: Empty state copy when selecting a direction

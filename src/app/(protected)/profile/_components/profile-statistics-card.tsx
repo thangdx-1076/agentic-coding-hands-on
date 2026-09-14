@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { Fragment } from "react";
 
-import { STATISTICS_ROWS, type ProfileCopy } from "../_shared/profile-copy";
+import {
+  STATISTICS_ROWS,
+  type ProfileCopy,
+  type StatisticsRowKey,
+} from "../_shared/profile-copy";
 
-import { ROUTES } from "@/constants/routes";
+import { ROUTES, SECRET_BOX_OPEN_PARAM } from "@/constants/routes";
+import type { KudosStatsSummary } from "@/dal/kudos-stats";
 
 export type ProfileStatisticsCardProps = {
   copy: ProfileCopy["stats"];
@@ -11,6 +16,22 @@ export type ProfileStatisticsCardProps = {
   /** The Sunner this profile belongs to. Only read when `!isSelf`, to aim
    * the write-Kudo bar at them. */
   profileId: string;
+  /** `null` on another Sunner's profile, where this slot is the write-Kudo
+   * bar instead and no counters render — `page.tsx` skips the query rather
+   * than fetching numbers nothing will show. */
+  stats: KudosStatsSummary | null;
+};
+
+/**
+ * Row key → counter name. Only `secretBoxLeft` differs: the design's label
+ * ("số hộp chưa mở") and the DAL's `secretBoxUnopened` name the same number.
+ */
+const STAT_VALUE_KEYS: Record<StatisticsRowKey, keyof KudosStatsSummary> = {
+  received: "received",
+  sent: "sent",
+  hearts: "hearts",
+  secretBoxOpened: "secretBoxOpened",
+  secretBoxLeft: "secretBoxUnopened",
 };
 
 const PANEL_CLASS =
@@ -33,12 +54,19 @@ const PRIMARY_BUTTON_CLASS =
  * the one screen that owns the dialog beats mounting a second copy of that
  * whole state machine here.
  *
- * "Mở Secret Box" below stays disabled — that one really is still deferred.
+ * "Mở Secret Box" follows that same precedent, for the same reason. It was
+ * hardcoded `disabled` with no handler at all, so it never worked once
+ * F000_SecretBoxModal shipped. The dialog and its open action live on
+ * `/kudos` (`SecretBoxLauncher`), so this is a link there when the viewer
+ * actually holds an unopened box, and a disabled button — carrying the
+ * reason in its `title` — when they do not. Mounting a second copy of that
+ * 3-state machine here would duplicate the one on `/kudos`.
  */
 export function ProfileStatisticsCard({
   copy,
   isSelf,
   profileId,
+  stats,
 }: ProfileStatisticsCardProps) {
   if (!isSelf) {
     return (
@@ -65,8 +93,11 @@ export function ProfileStatisticsCard({
               <span className="font-montserrat text-base leading-6 font-bold text-white">
                 {copy.rows[row.key]}
               </span>
-              <span className="font-montserrat text-[32px] leading-[40px] font-bold text-login-button">
-                0
+              <span
+                data-testid={`profile-stat-${row.key}`}
+                className="font-montserrat text-[32px] leading-10 font-bold text-login-button"
+              >
+                {stats ? stats[STAT_VALUE_KEYS[row.key]] : 0}
               </span>
             </div>
             {row.dividerAfter && (
@@ -76,13 +107,25 @@ export function ProfileStatisticsCard({
           </Fragment>
         ))}
         {/* mm:362:5082 */}
-        <button
-          type="button"
-          disabled
-          className={`mt-2 ${PRIMARY_BUTTON_CLASS}`}
-        >
-          {copy.openSecretBox}
-        </button>
+        {stats && stats.secretBoxUnopened > 0 ? (
+          <Link
+            href={`${ROUTES.KUDOS}?${SECRET_BOX_OPEN_PARAM}=open`}
+            data-testid="profile-open-secret-box"
+            className={`mt-2 ${PRIMARY_BUTTON_CLASS}`}
+          >
+            {copy.openSecretBox}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            data-testid="profile-open-secret-box"
+            title={copy.openSecretBoxDisabledTitle}
+            className={`mt-2 ${PRIMARY_BUTTON_CLASS}`}
+          >
+            {copy.openSecretBox}
+          </button>
+        )}
       </div>
     </div>
   );

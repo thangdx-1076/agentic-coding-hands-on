@@ -18,14 +18,23 @@ export const SelfBothDirections: Story = {
   args: {
     directions: ["received", "sent"],
     copy: sampleProfileCopy.kudosDirection,
+    emptyByDirection: {
+      received: sampleProfileCopy.kudosDirection.emptyReceived,
+      sent: sampleProfileCopy.kudosDirection.emptySent,
+    },
   },
 };
 
 /** Other — Received ONLY; "sent" is absent from the array entirely, not
- * disabled/hidden (SEC_001, C9b). */
+ * disabled/hidden (SEC_001, C9b). Empty-state copy is third person here: it
+ * is not the reader's own profile. */
 export const OtherReceivedOnly: Story = {
   args: {
     directions: ["received"],
     copy: sampleProfileCopy.kudosDirection,
+    emptyByDirection: {
+      received: sampleProfileCopy.kudosDirection.emptyReceivedOther,
+      sent: sampleProfileCopy.kudosDirection.emptySentOther,
+    },
   },
 };

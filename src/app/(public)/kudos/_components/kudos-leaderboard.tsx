@@ -17,7 +17,14 @@ import { ROUTES } from "@/constants/routes";
  * only ever the honest "0 rows" result, not a stand-in for missing work.
  */
 export type KudosLeaderboardItemData = {
+  /** The Sunner this row links to. NOT unique across the list: the gift
+   * board is the 10 most recent OPENINGS, so one Sunner who opened three
+   * boxes is legitimately three rows. */
   id: string;
+  /** React key — unique per ROW, unlike `id`. Keying by `id` made React log
+   * "Encountered two children with the same key" the moment anyone opened a
+   * second box. */
+  rowKey: string;
   name: string;
   description: string;
   avatarSrc: string;
@@ -66,7 +73,7 @@ export function KudosLeaderboard({
           >
             {items.map((item) => (
               // mm:2940:13516 (shared `256:7474` row instance)
-              <li key={item.id}>
+              <li key={item.rowKey}>
                 <Link
                   href={`${ROUTES.PROFILE}?id=${encodeURIComponent(item.id)}`}
                   className="flex items-center gap-2"
