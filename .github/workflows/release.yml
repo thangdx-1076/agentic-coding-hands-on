@@ -1,0 +1,218 @@
+# -----------------------------------------------------------------------
+# Release tagging — runs on every push to `main`, writes nothing public
+# -----------------------------------------------------------------------
+# What it does: reads the version out of `package.json`, tags that commit
+# `v<version>`, and opens a DRAFT GitHub release with generated notes. It
+# never publishes. A human reads the notes, edits them, and presses the
+# button — or deletes the draft.
+#
+# ## Why `package.json` is the version, and nothing else
+#
+# The version already moves in a `chore:` commit during `/tkm:ship`, which
+# is where the patch-vs-minor judgment is made with the diff in hand. This
+# workflow reads that decision rather than making a second one. Deriving a
+# version here from conventional-commit prefixes would mean two independent
+# answers to "what version is this", and the day they disagree is the day a
+# release is wrong in a way nobody notices until later.
+#
+# ## Why it is safe to run on EVERY push to main
+#
+# Most pushes to `main` do not move the version — a docs merge, a revert, a
+# second PR landing minutes later. The tag-exists check below makes those
+# runs a no-op that exits 0, so this workflow is idempotent by construction
+# rather than by luck. Nothing here is conditioned on which files changed;
+# the version is the only signal, and a version that has already been
+# tagged means there is nothing to release.
+#
+# ## Why the tag is created explicitly, and not left to the release
+#
+# A DRAFT release does not create its git tag — GitHub only creates it when
+# the release is published. So a draft on its own leaves no mark on the
+# repository, and `--generate-notes` on the NEXT release would have no
+# previous tag to diff against. Creating the tag here makes it the durable
+# artifact and the draft merely the human-editable notes attached to it.
+#
+# The consequence, stated plainly: **the tag survives a deleted draft.** If
+# you throw the draft away, `v<version>` still points at that commit, and
+# this workflow will not re-tag it. To genuinely undo a release, delete the
+# tag as well.
+#
+# ## Why there is no CI check here
+#
+# Same reasoning as cd.yml: `main` requires the `Quality` and `E2E
+# (CI-safe)` checks before a PR can merge, so a commit on `main` has
+# already been tested. Re-gating here would wait for a redundant run. And
+# the same caveat applies — anything that reaches `main` outside a
+# protected PR is tagged with no test in between, and what CI covers is
+# less than a green check suggests (`@auth` and `@local-db` are excluded;
+# see ci.yml's header). A draft release is not a claim that the code works.
+#
+# ## Relationship to cd.yml
+#
+# Independent, deliberately. cd.yml deploys the same commit; this tags it.
+# Neither waits for the other: a draft release is inert, so creating one
+# for a commit whose deploy then failed costs nothing and leaves the
+# version history intact. Publishing is where a human decides the release
+# is real, and by then the deploy result is visible.
+# -----------------------------------------------------------------------
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # Re-run after fixing whatever broke the first attempt (a revoked token, a
+  # malformed version) without pushing an empty commit. Reads the branch tip
+  # at click time, so a manual run after further merges tags the tip rather
+  # than the commit that originally failed — check what `main` points at
+  # before clicking.
+  workflow_dispatch:
+
+concurrency:
+  group: release-main
+  # Never cancel: a cancelled run can leave the tag created and the draft
+  # missing, which is the one state this workflow cannot repair on a re-run
+  # (the tag-exists check would skip it). Queue instead.
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and draft release
+    runs-on: ubuntu-latest
+    permissions:
+      # Both the tag ref and the release are writes to repository contents.
+      # Nothing else is needed — no packages, no pages, no id-token.
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Reads `version` through `node -p` rather than grep/jq: the field is
+      # whatever `require()` resolves it to, which is the same value pnpm and
+      # every other tool sees. A malformed or missing version fails here,
+      # before anything has been written.
+      - name: Read version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version || ''")
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::package.json has no \`version\` field. Nothing to release."
+            exit 1
+          fi
+
+          # Semver core plus an optional pre-release/build suffix. Rejects
+          # the shapes that would produce a nonsense tag (`v`, `vlatest`,
+          # `v1.2` ) instead of tagging them.
+          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Version \"$VERSION\" is not semver. Fix package.json before releasing."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION → tag v$VERSION"
+
+      # The idempotency gate. `gh api` on a missing ref exits non-zero, so
+      # this distinguishes "already released" from "new version" without
+      # parsing output.
+      - name: Check whether this version is already tagged
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG" --silent 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$TAG already exists — nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "$TAG does not exist yet."
+          fi
+
+      # Created through the API, not `git tag && git push`, so the job needs
+      # no git identity and no deep checkout — and the tag lands atomically
+      # rather than as a second network step that can half-succeed.
+      - name: Create tag
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/${{ steps.version.outputs.tag }}" \
+            -f sha="${{ github.sha }}" \
+            --silent
+
+          echo "Tagged ${{ github.sha }} as ${{ steps.version.outputs.tag }}"
+
+      # `--draft` is the whole point: notes are generated, never published.
+      # `--generate-notes` asks GitHub to build them from the merged PRs and
+      # commits since the previous tag.
+      #
+      # On the FIRST release in a repository there is no previous tag, so the
+      # notes cover the entire history and will be long. That is a one-time
+      # cost and is expected — trim them in the draft before publishing.
+      - name: Create draft release
+        if: steps.check.outputs.exists == 'false'
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL=$(gh release create "${{ steps.version.outputs.tag }}" \
+            --draft \
+            --generate-notes \
+            --title "${{ steps.version.outputs.tag }}" \
+            --target "${{ github.sha }}")
+
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Draft release: $URL"
+
+      - name: Record what happened
+        if: always()
+        run: |
+          {
+            echo "## Release — ${{ job.status }}"
+            echo ""
+            echo "- Version in \`package.json\`: \`${{ steps.version.outputs.version }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ steps.check.outputs.exists }}" = "true" ]; then
+            {
+              echo "### Skipped — \`${{ steps.version.outputs.tag }}\` already exists"
+              echo ""
+              echo "This push did not move the version in \`package.json\`, so there is"
+              echo "nothing new to release. This is the normal outcome for a docs merge,"
+              echo "a revert, or a second PR landing after the one that bumped."
+              echo ""
+              echo "To release, bump the version on a branch and merge that."
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ -n "${{ steps.draft.outputs.url }}" ]; then
+            {
+              echo "### Draft created"
+              echo ""
+              echo "**${{ steps.draft.outputs.url }}**"
+              echo ""
+              echo "Tag \`${{ steps.version.outputs.tag }}\` now points at this commit and is"
+              echo "permanent. The release itself is a **draft** — nobody sees it until a"
+              echo "person edits the notes and publishes."
+              echo ""
+              echo "Deleting the draft does NOT delete the tag, and this workflow will not"
+              echo "re-tag a version it has already tagged. To undo a release properly,"
+              echo "delete the tag too."
+              echo ""
+              echo "A draft is not a statement that the code works: it is created from"
+              echo "\`main\` without re-running tests, and the CI that gated the merge"
+              echo "excludes \`@auth\` and \`@local-db\` (see ci.yml's header)."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Failed before the draft was created"
+              echo ""
+              echo "Check the steps above. If the tag was created but the draft was not,"
+              echo "a re-run will SKIP — the tag-exists check cannot tell that state apart"
+              echo "from an already-released version. Create the release by hand from the"
+              echo "existing tag, or delete the tag and re-run."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

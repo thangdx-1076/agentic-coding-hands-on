@@ -14,6 +14,7 @@ Toàn bộ deploy do GitHub Actions chạy, không do Vercel tự bắt commit:
 | `.github/workflows/ci.yml`      | push feat/fix/chore + PR + push main | lint, format, unit + coverage, build, typecheck, storybook, e2e   |
 | `.github/workflows/cd.yml`      | **ngay khi có commit vào `main`**    | `vercel deploy --prod` → smoke check. **Không đụng database**     |
 | `.github/workflows/migrate.yml` | **chỉ khi bạn bấm Run workflow**     | `db push --dry-run` → duyệt → `db push`. **Không deploy code**    |
+| `.github/workflows/release.yml` | **ngay khi có commit vào `main`**    | tag `v<version>` theo `package.json` → tạo release **draft**. Không publish, không deploy |
 
 **Code và schema đi hai đường riêng, và chỉ một đường tự động.** Merge vào `main`
 là deploy code lên schema đang có sẵn. Đổi schema chỉ xảy ra khi bạn tự vào
@@ -568,6 +569,40 @@ Chạy lại pipeline mà không cần commit rỗng: **Actions → CD → Run w
 
 ---
 
+## Release — tag và draft, tự động
+
+`release.yml` chạy cùng lúc với `cd.yml` trên mỗi commit vào `main`, nhưng nó
+không deploy gì: nó đọc `version` trong `package.json`, tag commit đó thành
+`v<version>`, rồi mở một release **draft** với notes GitHub tự sinh.
+
+**Nguồn version duy nhất là `package.json`.** `/tkm:ship` đã bump nó trong một
+commit `chore:` — nơi mà quyết định patch/minor được đưa ra lúc còn nhìn thấy
+diff. Workflow này chỉ *đọc* quyết định đó. Nếu nó tự suy version từ prefix
+conventional-commit thì sẽ có hai câu trả lời cho cùng một câu hỏi, và ngày
+chúng lệch nhau là ngày release sai mà không ai biết.
+
+**Push không bump version thì workflow thành no-op.** Nó kiểm tag đã tồn tại
+chưa; tồn tại rồi thì skip và exit 0. Nên merge một PR docs, một revert, hay PR
+thứ hai vào ngay sau đó đều không tạo release trùng.
+
+Ba điều cần biết trước khi dùng:
+
+- **Nó không publish.** Draft chỉ có bạn thấy. Người đọc notes, sửa, rồi tự bấm
+  publish — hoặc xoá draft đi.
+- **Tag được tạo thật, ngay lúc đó, và không mất khi bạn xoá draft.** Release
+  draft trên GitHub **không** tự tạo tag (GitHub chỉ tạo khi publish), nên
+  workflow tạo tag bằng API trước. Hệ quả: xoá draft xong thì `v<version>` vẫn
+  trỏ vào commit đó, và workflow sẽ **không** tag lại. Muốn undo thật thì xoá cả
+  tag.
+- **Draft không có nghĩa là code chạy được.** Nó được tạo từ `main` mà không
+  chạy lại test, và CI gác merge thì loại `@auth` + `@local-db` (xem header
+  `ci.yml`). Nó chỉ ghi lại "version này ứng với commit này".
+
+Release đầu tiên trong repo chưa có tag nào trước đó, nên `--generate-notes` sẽ
+gom toàn bộ history — notes lần đó rất dài. Trim trong draft trước khi publish.
+
+---
+
 ## Rollback
 
 | Hỏng cái gì            | Làm gì                                                                 |
@@ -577,6 +612,7 @@ Chạy lại pipeline mà không cần commit rỗng: **Actions → CD → Run w
 | Dữ liệu (row)          | Chỉ khôi phục được từ backup có TRƯỚC khi chạy. Xem [data-migration.md](data-migration.md) § 4 và § 10.              |
 | Env var sai            | Sửa trong Vercel → Redeploy (hoặc CD → Run workflow).                   |
 | OAuth gãy sau đổi domain | Cập nhật Site URL + Redirect URLs ở Supabase, và redirect URI ở Google Console. |
+| Release/tag sai        | Xoá draft **và** xoá tag (`git push origin :refs/tags/vX.Y.Z`), rồi sửa `package.json`. Chỉ xoá draft là workflow không tag lại. |
 
 ---
 
