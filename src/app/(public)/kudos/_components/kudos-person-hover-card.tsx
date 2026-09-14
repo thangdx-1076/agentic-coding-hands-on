@@ -1,13 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { useKudosCompose } from "../_contexts/kudos-compose-context";
 import { useAnchoredPopover } from "../_hooks/use-anchored-popover";
 import type { KudosPersonHoverCopy } from "../_shared/kudos-copy";
 
+import { ROUTES } from "@/constants/routes";
 import type { HeroTierAsset } from "@/constants/hero-tiers";
 import type { KudosPerson } from "@/dal/kudos";
 
@@ -55,7 +64,7 @@ export function KudosPersonHoverCard({
   children,
 }: KudosPersonHoverCardProps) {
   const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement | null>(null);
+  const anchorRef = useRef<HTMLElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardId = useId();
@@ -86,28 +95,50 @@ export function KudosPersonHoverCard({
 
   useEffect(() => cancelClose, []);
 
+  // Shared by both trigger shapes below — the hover card opens identically
+  // whether the avatar is a link or an inert button.
+  const triggerProps = {
+    // Callback ref, not `anchorRef` directly: one `RefObject<HTMLElement>`
+    // is not assignable to both `Ref<HTMLButtonElement>` and
+    // `Ref<HTMLAnchorElement>`, but a callback taking the supertype is.
+    ref: (element: HTMLElement | null) => {
+      anchorRef.current = element;
+    },
+    className: "inline-flex cursor-pointer rounded-full outline-none",
+    "data-testid": "kudos-person-hover-trigger",
+    "aria-describedby": open ? cardId : undefined,
+    "aria-expanded": open,
+    onMouseEnter: show,
+    onMouseLeave: scheduleClose,
+    onFocus: show,
+    onBlur: scheduleClose,
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+      if (event.key === "Escape") setOpen(false);
+    },
+  };
+
   return (
     <>
-      {/* A real button, not a `<span>` with handlers: the card is genuine
+      {/* Interactive, not a `<span>` with handlers: the card is genuine
           content (counts, and an action), so it has to be reachable by
-          keyboard too — focus opens it exactly as hover does. */}
-      <button
-        ref={anchorRef}
-        type="button"
-        className="inline-flex cursor-pointer rounded-full outline-none"
-        data-testid="kudos-person-hover-trigger"
-        aria-describedby={open ? cardId : undefined}
-        aria-expanded={open}
-        onMouseEnter={show}
-        onMouseLeave={scheduleClose}
-        onFocus={show}
-        onBlur={scheduleClose}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") setOpen(false);
-        }}
-      >
-        {children}
-      </button>
+          keyboard too — focus opens it exactly as hover does.
+          A LINK when the Sunner is identifiable, because C28 makes the
+          avatar a second way into `/profile?id=`, alongside the name
+          (`kudos-card-person.tsx`). An anonymous sender (`person.id ===
+          null`, AD-2) keeps the inert button — C25/C29 assert that block
+          exposes no `a[href*="/profile"]`. */}
+      {person.id === null ? (
+        <button type="button" {...triggerProps}>
+          {children}
+        </button>
+      ) : (
+        <Link
+          href={`${ROUTES.PROFILE}?id=${encodeURIComponent(person.id)}`}
+          {...triggerProps}
+        >
+          {children}
+        </Link>
+      )}
       {/* No `document` guard needed: `open` only ever becomes true from a
           real hover or focus, which cannot happen on the server or before
           hydration. */}

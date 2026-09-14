@@ -61,6 +61,10 @@ export function buildGiftRecipientItems(
 
     items.push({
       id: recipient.userId,
+      // One Sunner may appear more than once — this board lists openings,
+      // not people — so the row key pairs them with the opening's own
+      // timestamp, which is unique per row.
+      rowKey: `${recipient.userId}-${recipient.openedAt}`,
       name: recipient.fullName ?? "",
       description: t(
         `secretBoxSection.badges.${toCamelBadgeSlug(recipient.badgeKey)}.caption`,

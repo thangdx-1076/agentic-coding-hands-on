@@ -21,18 +21,21 @@ const EMPTY_LABEL = "Chưa có dữ liệu";
 const sampleItems: KudosLeaderboardItemData[] = [
   {
     id: "sample-sunner-1",
+    rowKey: "sample-sunner-1-row",
     name: "Huỳnh Dương Xuân",
     description: "Nhận được 1 áo phông SAA",
     avatarSrc: "/kudos/avatar-gift-recipient.png",
   },
   {
     id: "sample-sunner-2",
+    rowKey: "sample-sunner-2-row",
     name: "Huỳnh Dương Xuân",
     description: "Nhận được 1 áo phông SAA",
     avatarSrc: "/kudos/avatar-gift-recipient.png",
   },
   {
     id: "sample-sunner-3",
+    rowKey: "sample-sunner-3-row",
     name: "Huỳnh Dương Xuân",
     description: "Nhận được 1 áo phông SAA",
     avatarSrc: "/kudos/avatar-gift-recipient.png",

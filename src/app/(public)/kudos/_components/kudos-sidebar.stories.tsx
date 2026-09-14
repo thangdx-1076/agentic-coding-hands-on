@@ -21,14 +21,15 @@ const sampleCopy: KudosSidebarCopy = {
   boxOpened: "Số Secret Box bạn đã mở:",
   boxUnopened: "Số Secret Box chưa mở:",
   openGift: "Mở Secret Box 🎁",
-  openGiftDisabledTitle: "Tính năng đang được phát triển",
+  openGiftDisabledTitle:
+    "Bạn chưa có Secret Box nào để mở — cứ 5 tim nhận được thì mở khoá 1 box.",
   rankBoardTitle: "10 SUNNER CÓ SỰ THĂNG HẠNG MỚI NHẤT",
   giftBoardTitle: "10 SUNNER NHẬN QUÀ MỚI NHẤT",
   emptyBoard: "Chưa có dữ liệu",
   secretBox: {
     titleUnopened: "KHÁM PHÁ SECRET BOX CỦA BẠN",
-    titleRevealed: "MỞ SECRET BOX THÀNH CÔNG",
-    instruction: "Click vào box để tiếp tục mở",
+    titleRevealed: "Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025",
+    instruction: "Click vào box để mở",
     label: "Secretbox chưa mở",
     close: "Đóng",
     error: "Có lỗi khi mở Secret Box, vui lòng thử lại",
@@ -46,12 +47,14 @@ const sampleStats: KudosStats = {
 const sampleGiftRecipients: KudosLeaderboardItemData[] = [
   {
     id: "sample-sunner-1",
+    rowKey: "sample-sunner-1-row",
     name: "Huỳnh Dương Xuân",
     description: "Nhận được 1 áo phông SAA",
     avatarSrc: "/kudos/avatar-gift-recipient.png",
   },
   {
     id: "sample-sunner-2",
+    rowKey: "sample-sunner-2-row",
     name: "Huỳnh Dương Xuân",
     description: "Nhận được 1 áo phông SAA",
     avatarSrc: "/kudos/avatar-gift-recipient.png",

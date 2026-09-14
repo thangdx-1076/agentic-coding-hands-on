@@ -24,11 +24,12 @@ const sampleCopy: KudosStatListCopy = {
   boxOpened: "Số Secret Box bạn đã mở:",
   boxUnopened: "Số Secret Box chưa mở:",
   openGift: "Mở Secret Box 🎁",
-  openGiftDisabledTitle: "Tính năng đang được phát triển",
+  openGiftDisabledTitle:
+    "Bạn chưa có Secret Box nào để mở — cứ 5 tim nhận được thì mở khoá 1 box.",
   secretBox: {
     titleUnopened: "KHÁM PHÁ SECRET BOX CỦA BẠN",
-    titleRevealed: "MỞ SECRET BOX THÀNH CÔNG",
-    instruction: "Click vào box để tiếp tục mở",
+    titleRevealed: "Chúc mừng bạn đã nhận được phần quà từ BTC SAA 2025",
+    instruction: "Click vào box để mở",
     label: "Secretbox chưa mở",
     close: "Đóng",
     error: "Có lỗi khi mở Secret Box, vui lòng thử lại",
