@@ -106,6 +106,9 @@ Quyết định trước khi mở cho user thật:
   khi có người đăng nhập thật — không có cách nào lọc ngược về sau nếu kudo thật đã
   tham chiếu tới họ.
 
+  Quy trình đầy đủ (đo thiệt hại cascade trước khi xoá, backup, verify sau đó) ở
+  [data-migration.md](data-migration.md) § 7.3.
+
 Kiểm tra bucket storage đã có: **Storage → Buckets** phải thấy `kudo-images`, cột
 Public = true. Nó do `0010_kudo_images_bucket.sql` tạo, không phải tạo tay.
 
@@ -571,6 +574,7 @@ Chạy lại pipeline mà không cần commit rỗng: **Actions → CD → Run w
 | ---------------------- | ---------------------------------------------------------------------- |
 | Code                   | Vercel → Deployments → bản tốt trước đó → **Promote to Production**. Tức thì. |
 | Schema                 | Không có undo. Viết migration mới đảo ngược, push qua pipeline. Mỗi file migration đều có sẵn câu rollback ở header. |
+| Dữ liệu (row)          | Chỉ khôi phục được từ backup có TRƯỚC khi chạy. Xem [data-migration.md](data-migration.md) § 4 và § 10.              |
 | Env var sai            | Sửa trong Vercel → Redeploy (hoặc CD → Run workflow).                   |
 | OAuth gãy sau đổi domain | Cập nhật Site URL + Redirect URLs ở Supabase, và redirect URI ở Google Console. |
 
