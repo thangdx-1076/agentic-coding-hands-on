@@ -2243,3 +2243,26 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 ### Nợ lại
 
 - `plans/action-items.md:2151` vẫn ghi lệnh `pnpm seed:secret-box` cũ. Cố ý để nguyên vì là bản ghi lịch sử.
+
+## 260914-1745 — ship-secret-box-profile-and-data-migration-docs
+
+### Tôi cần làm
+
+- [ ] Review PR #33. Nó gánh cả hai mảng: docs Vercel (2 commit cũ) và Secret Box + Profile (9 commit mới). Tên branch vẫn là `docs/warn-vercel-secret-env-breaks-client-bundle`.
+- [ ] Quyết định `supabase/migrations/0023_secret_box_demo_seed.sql` có được ở lại production hay không — đã ghi ở block 260914-1727, nhắc lại vì giờ nó đã nằm trong PR nhắm vào `main`.
+
+### Decisions
+
+- **Ship tất cả trên branch hiện tại, chia commit theo scope** (bạn chọn khi tôi hỏi ở pre-flight). 9 commit mới: i18n / secret-box / kudos / profile / e2e / db / docs / chore version / chore reports.
+- **Version `0.11.0` → `0.12.0` (minor, không phải patch).** Batch này thêm hành vi mới — số liệu profile thật, nút Secret Box tới được dialog, deep link `?secretbox=open` — chứ không chỉ sửa lỗi. Tự chốt theo quy tắc "quyết định thay tôi".
+- **PR #33 được sửa title + body thay vì mở PR mới.** Branch đã có PR mở sẵn; mở cái thứ hai là chia đôi review. Nội dung PR gốc (docs Vercel) giữ nguyên ở cuối body.
+- **Bỏ Step 11 của ship (doc-writer cập nhật `docs/`).** Tầng `docs/vi/` do rebuild-spec sinh; để agent viết lại giữa lúc ship là mời fabrication vào tài liệu spec. Docs impact ghi là **minor** trong PR.
+- **Journal do agent viết đã bị viết lại toàn bộ.** Bản đầu nói `0023` "thêm 15 hearts" — sai ngược với header của chính file đó; nói "chưa chạy được e2e vì không có Docker" — trong khi suite chạy xanh 247 test; và bảo `[C08]` cần viết lại khi nó đã được viết lại rồi. Bản hiện tại chỉ chứa số liệu tôi tự chạy.
+
+### Nợ lại
+
+- `?secretbox=open` không tự xoá khỏi URL sau khi dialog mở.
+- `scripts/grant-secret-boxes.mjs` không có guard kiểm host, chỉ có lời văn ở header, mà nó ghi bằng `SERVICE_ROLE_KEY`.
+- Vòng lặp cấp box trong script đó làm hai lần ghi PostgREST không cùng transaction — crash giữa hai bước để lại một kudo mồ côi.
+- SunLint còn 200 warning (0 error): T020 91 lần, C030 54 lần. Không phải gate của CI nên không chặn ship.
+- `.next` đã bị `pnpm build` ghi đè trong lúc dev server của bạn đang chạy — có thể cần restart `pnpm dev`.
