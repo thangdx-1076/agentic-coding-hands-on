@@ -2266,3 +2266,23 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 - Vòng lặp cấp box trong script đó làm hai lần ghi PostgREST không cùng transaction — crash giữa hai bước để lại một kudo mồ côi.
 - SunLint còn 200 warning (0 error): T020 91 lần, C030 54 lần. Không phải gate của CI nên không chặn ship.
 - `.next` đã bị `pnpm build` ghi đè trong lúc dev server của bạn đang chạy — có thể cần restart `pnpm dev`.
+
+## 260914-1808 — release-workflow-and-c08-ci-fix
+
+### Tôi cần làm
+
+- [ ] **Lần đầu `release.yml` chạy sẽ sinh notes gom TOÀN BỘ history** (repo chưa có tag nào). Trim trong draft trước khi publish.
+- [ ] Xác nhận có phải bạn tự commit `d7ec9e0` trong IDE không. Nó chứa đúng fix C08 của tôi, được commit + push lúc 18:08 trong khi tôi đang viết `release.yml` — lệnh commit của tôi báo "no changes added". Nếu không phải bạn thì có automation nào trong môi trường đang tự commit và push, và cần biết nó là gì.
+
+### Decisions
+
+- **`release.yml` lấy version từ `package.json`, không suy từ conventional commit.** `/tkm:ship` đã bump ở một commit `chore:` nơi quyết định patch/minor được đưa ra lúc còn thấy diff. Hai nguồn version là sai vào ngày chúng lệch nhau.
+- **Chạy trên mọi push vào `main`, idempotent bằng cách kiểm tag đã tồn tại.** Không điều kiện theo file thay đổi — version là signal duy nhất.
+- **Tag tạo bằng refs API trước, rồi mới tạo draft.** Release draft trên GitHub không tự tạo tag (chỉ tạo khi publish), nên nếu không làm vậy thì draft không để lại dấu gì và `--generate-notes` lần sau không có tag trước để diff.
+- **Không gác CI trong `release.yml`**, cùng lý do `cd.yml` không gác: branch protection đã chặn ở PR.
+- **C08 tách thành C08 + C08b** thay vì gắn cả test thành `@local-db`. Gắn cả test thì CI mất luôn phần kiểm bảng thăng hạng rỗng — phần duy nhất nó kiểm được.
+
+### Nợ lại
+
+- **Không reproduce được điều kiện CI ở local.** CI trỏ `NEXT_PUBLIC_SUPABASE_URL` vào `127.0.0.1:54321` (cổng mặc định, không phải 55321 của repo) nên Supabase cố tình không tới được; local tôi luôn có Supabase thật + seed. Đó là lý do C08 xanh ở local và đỏ ở CI. Muốn bắt loại lỗi này trước khi push thì cần một cách chạy e2e với Supabase không tới được — hiện chưa có.
+- Nếu `release.yml` tạo được tag nhưng fail lúc tạo draft, re-run sẽ **skip** (kiểm tag thấy đã có). Lúc đó phải tạo release tay từ tag, hoặc xoá tag rồi re-run. Đã ghi trong step summary của workflow.
