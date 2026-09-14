@@ -6,6 +6,7 @@ import type { ProfileCopy } from "../_shared/profile-copy";
 
 import { ProfileScreen } from "./profile-screen";
 
+import type { KudosStatsSummary } from "@/dal/kudos-stats";
 import type { ProfileCard } from "@/dal/profile-cards";
 import type { AppLocale } from "@/lib/i18n/locale";
 
@@ -13,6 +14,7 @@ export type ProfileClientProps = {
   copy: ProfileCopy;
   profile: ProfileCard;
   isSelf: boolean;
+  stats: KudosStatsSummary | null;
   /** Never null — `/profile` only renders after `(protected)/layout.tsx`'s
    * session gate. */
   viewer: SiteViewer;
@@ -33,6 +35,7 @@ export function ProfileClient({
   copy,
   profile,
   isSelf,
+  stats,
   viewer,
   locale,
   logoutAction,
@@ -44,6 +47,7 @@ export function ProfileClient({
       copy={copy}
       profile={profile}
       isSelf={isSelf}
+      stats={stats}
       viewer={viewer}
       locale={locale}
       onSelectLocale={handleSelectLocale}

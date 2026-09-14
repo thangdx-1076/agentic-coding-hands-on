@@ -18,6 +18,9 @@ export type ProfileCopy = SiteChromeCopy & {
   stats: {
     rows: Record<StatisticsRowKey, string>;
     openSecretBox: string;
+    /** Why the button is disabled — shown only when the viewer holds no
+     * unopened box. */
+    openSecretBoxDisabledTitle: string;
     writeKudos: string;
   };
   /**
@@ -30,8 +33,14 @@ export type ProfileCopy = SiteChromeCopy & {
   kudosDirection: {
     receivedLabel: string;
     sentLabel: string;
+    /** Second person — only ever shown on the viewer's OWN profile. */
     emptyReceived: string;
     emptySent: string;
+    /** Third person, for `/profile?id=<other>`. Same self/other split the
+     * `badges` heading already draws: an empty feed on someone else's
+     * profile must not address the reader as if it were theirs. */
+    emptyReceivedOther: string;
+    emptySentOther: string;
   };
 };
 
@@ -129,6 +138,8 @@ export const sampleProfileCopy: ProfileCopy = {
       secretBoxLeft: "Số Secret Box chưa mở:",
     },
     openSecretBox: "Mở Secret Box 🎁",
+    openSecretBoxDisabledTitle:
+      "Bạn chưa có Secret Box nào để mở — cứ 5 tim nhận được thì mở khoá 1 box.",
     writeKudos: "Viết Kudo",
   },
   kudosDirection: {
@@ -136,5 +147,7 @@ export const sampleProfileCopy: ProfileCopy = {
     sentLabel: "Đã gửi",
     emptyReceived: "Bạn chưa có Kudos nào được nhận.",
     emptySent: "Bạn chưa có Kudos nào được gửi.",
+    emptyReceivedOther: "Sunner này chưa có Kudos nào được nhận.",
+    emptySentOther: "Sunner này chưa có Kudos nào được gửi.",
   },
 };

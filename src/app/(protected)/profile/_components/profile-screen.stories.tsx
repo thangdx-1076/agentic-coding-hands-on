@@ -38,13 +38,20 @@ const otherProfile = {
   avatarUrl: "/kudos/avatar-receiver.png",
 };
 
-/** Own profile — statistics card (5 rows × `0`) + "Mở Secret Box" disabled;
- * KUDOS dropdown offers both directions. */
+/** Own profile — statistics card (5 real counters) + "Mở Secret Box"
+ * disabled; KUDOS dropdown offers both directions. */
 export const Self: Story = {
   args: {
     copy: sampleProfileCopy,
     profile: selfProfile,
     isSelf: true,
+    stats: {
+      received: 12,
+      sent: 7,
+      hearts: 23,
+      secretBoxOpened: 3,
+      secretBoxUnopened: 1,
+    },
     viewer,
   },
 };
@@ -56,6 +63,7 @@ export const Other: Story = {
     copy: sampleProfileCopy,
     profile: otherProfile,
     isSelf: false,
+    stats: null,
     viewer,
   },
 };

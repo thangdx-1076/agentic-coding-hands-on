@@ -85,6 +85,7 @@ export function buildProfileCopy(
         ]),
       ) as Record<StatisticsRowKey, string>,
       openSecretBox: tProfile("stats.openSecretBox"),
+      openSecretBoxDisabledTitle: tProfile("stats.openSecretBoxDisabledTitle"),
       writeKudos: tProfile("stats.writeKudos"),
     },
     kudosDirection: {
@@ -92,6 +93,8 @@ export function buildProfileCopy(
       sentLabel: tProfile("kudos.sentLabel"),
       emptyReceived: tProfile("kudos.emptyReceived"),
       emptySent: tProfile("kudos.emptySent"),
+      emptyReceivedOther: tProfile("kudos.emptyReceivedOther"),
+      emptySentOther: tProfile("kudos.emptySentOther"),
     },
   };
 }

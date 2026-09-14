@@ -8,6 +8,7 @@ import { KudosDirectionSelect } from "./kudos-direction-select";
 import { ProfileHero } from "./profile-hero";
 import { ProfileStatisticsCard } from "./profile-statistics-card";
 
+import type { KudosStatsSummary } from "@/dal/kudos-stats";
 import type { ProfileCard } from "@/dal/profile-cards";
 import { montserrat, montserratAlternates } from "@/styles/fonts";
 
@@ -15,6 +16,9 @@ export type ProfileScreenProps = {
   copy: ProfileCopy;
   profile: ProfileCard;
   isSelf: boolean;
+  /** The viewer's own counters, or `null` on another Sunner's profile —
+   * see `ProfileStatisticsCard`. */
+  stats: KudosStatsSummary | null;
   /** Never null — `/profile` only renders after `(protected)/layout.tsx`'s
    * gate, unlike `AwardsScreen`, which still accepts an anonymous visitor. */
   viewer: SiteViewer;
@@ -46,6 +50,7 @@ export function ProfileScreen({
   copy,
   profile,
   isSelf,
+  stats,
   viewer,
   locale = "vi",
   onSelectLocale,
@@ -56,6 +61,17 @@ export function ProfileScreen({
     ? copy.badges.headingSelf
     : copy.badges.headingOther;
   const directions = isSelf ? KUDOS_DIRECTIONS : (["received"] as const);
+  // Second person on your own profile, third person on someone else's — the
+  // same split `badges.heading*` already makes. Resolved here rather than in
+  // `KudosDirectionSelect` so `isSelf` is read in one place.
+  const emptyByDirection = {
+    received: isSelf
+      ? copy.kudosDirection.emptyReceived
+      : copy.kudosDirection.emptyReceivedOther,
+    sent: isSelf
+      ? copy.kudosDirection.emptySent
+      : copy.kudosDirection.emptySentOther,
+  };
 
   return (
     // mm:362:5037
@@ -81,6 +97,7 @@ export function ProfileScreen({
             copy={copy.stats}
             isSelf={isSelf}
             profileId={profile.id}
+            stats={stats}
           />
 
           {/* mm:362:5084 */}
@@ -107,6 +124,7 @@ export function ProfileScreen({
               <KudosDirectionSelect
                 directions={[...directions]}
                 copy={copy.kudosDirection}
+                emptyByDirection={emptyByDirection}
               />
             </div>
           </section>

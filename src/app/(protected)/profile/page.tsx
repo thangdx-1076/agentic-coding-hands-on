@@ -12,6 +12,8 @@ import { parseProfileId } from "./_utils/parse-profile-id";
 import { getCurrentUser } from "@/dal/auth";
 import { getProfileCard } from "@/dal/profile-cards";
 import { toProfileCardsClient } from "@/dal/profile-cards-client";
+import { getKudosStats } from "@/dal/kudos-stats";
+import { toKudosStatsClient } from "@/dal/kudos-stats-client";
 import { getUserRole } from "@/dal/users";
 import { toUsersRoleClient } from "@/dal/users-role-client";
 import { getUnreadCount } from "@/dal/notifications";
@@ -106,6 +108,15 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   // calling `getViewer()` (pre-existing duplication, tracked as debt in
   // `plans/action-items.md` rather than refactored here to keep this PR's
   // diff scoped to notifications).
+  // The 5 statistics rows are the viewer's OWN counters, and the slot that
+  // holds them only renders when `isSelf` — another Sunner's profile shows
+  // the write-Kudo bar there instead (C8). So the query is skipped entirely
+  // on that branch rather than fetching numbers nothing will show, which
+  // also keeps `/profile?id=` from reading anyone else's totals.
+  const stats = isSelf
+    ? await getKudosStats(toKudosStatsClient(supabase), viewer.id)
+    : null;
+
   const role = await getUserRole(toUsersRoleClient(supabase), viewer.id);
   const unreadCount = await getUnreadCount(
     toNotificationsClient(supabase),
@@ -132,6 +143,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       copy={copy}
       profile={profile}
       isSelf={isSelf}
+      stats={stats}
       viewer={{
         email: viewer.email ?? "",
         isAdmin: role === "admin",
