@@ -19,3 +19,13 @@ export const ROUTES = {
   PROFILE: "/profile",
   PRELAUNCH: "/prelaunch",
 } as const;
+
+/**
+ * `/kudos?secretbox=open` opens the Secret Box dialog on arrival.
+ *
+ * Lives here, beside `ROUTES`, because BOTH route groups need the same
+ * spelling: `(protected)/profile` writes it into a link and `(public)/kudos`
+ * reads it. Declaring it inside either one would make the other's import a
+ * sideways reach into a private `_components` folder.
+ */
+export const SECRET_BOX_OPEN_PARAM = "secretbox";
