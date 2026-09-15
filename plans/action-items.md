@@ -2286,3 +2286,49 @@ Tất cả đã xử lý. Tôi tự bắt thêm 2 chỗ nữa trước khi revie
 
 - **Không reproduce được điều kiện CI ở local.** CI trỏ `NEXT_PUBLIC_SUPABASE_URL` vào `127.0.0.1:54321` (cổng mặc định, không phải 55321 của repo) nên Supabase cố tình không tới được; local tôi luôn có Supabase thật + seed. Đó là lý do C08 xanh ở local và đỏ ở CI. Muốn bắt loại lỗi này trước khi push thì cần một cách chạy e2e với Supabase không tới được — hiện chưa có.
 - Nếu `release.yml` tạo được tag nhưng fail lúc tạo draft, re-run sẽ **skip** (kiểm tag thấy đã có). Lúc đó phải tạo release tay từ tag, hoặc xoá tag rồi re-run. Đã ghi trong step summary của workflow.
+
+## 260915-2245 — release-auto-publish
+
+### Tôi cần làm
+
+- [ ] Quyết định xem release có được phép công khai khi `cd.yml` deploy cùng commit đó fail hay không. Hiện hai workflow độc lập, release nói về `main` chứ không nói về production. Muốn chặt hơn thì phải gác `release.yml` vào kết quả deploy.
+
+### Decisions
+
+- **Bỏ `--draft` trong `.github/workflows/release.yml`.** Bạn yêu cầu tự publish. Hệ quả: không còn ai đọc notes trước khi nó công khai — tiêu đề PR trở thành changelog thật.
+- **Thêm `--prerelease` cho version có hậu tố `-`** (`1.0.0-rc.1`). Trước đây ô tick prerelease nằm trong UI draft và người bấm publish quyết định; bỏ draft thì không còn ai tick, mà regex version vẫn nhận `-rc.1`. Không có cờ này thì một RC sẽ cướp badge `Latest` của bản stable.
+- **Giữ bước tạo tag riêng** thay vì để `gh release create` tự tạo (published release thì nó tạo được). Giữ để bước kiểm tag-đã-tồn-tại vẫn là cổng idempotent duy nhất.
+
+### Nợ lại
+
+- Thay đổi mới nằm ở working tree nhánh `docs/warn-vercel-secret-env-breaks-client-bundle`, chưa commit, chưa lên `main` — nên chưa có hiệu lực.
+
+### Decisions (bổ sung 2254 — bump bắt buộc mỗi PR)
+
+- **Luật "mọi PR vào `main` phải bump `package.json`" viết vào `CLAUDE.md`, không viết vào skill `ship` global.** Ship global (`~/.claude/skills/ship/`) đã có Step 8 bump sẵn; sửa nó sẽ đổi hành vi cho mọi project khác. Luật này là luật của riêng repo này vì `release.yml` ở đây đọc `package.json`.
+- **`.claude/skills/takumi-flow/SKILL.md` chỉ trỏ về `CLAUDE.md`, không chép lại đoạn bash.** Giữ một nguồn sự thật; skill chỉ nói *chỗ nào trong flow* thì kiểm.
+
+### Nợ lại (bổ sung)
+
+- **Luật bump hiện chỉ là chỉ dẫn, không có gì cưỡng chế.** Một PR mở tay bởi người không đọc `CLAUDE.md` vẫn merge được mà không bump, và `release.yml` sẽ no-op im lặng. Muốn chặt thì cần một job CI so `package.json` của PR với `origin/main` và fail khi bằng nhau — chưa làm.
+
+## 260915-2303 — chore/release-auto-publish (ship)
+
+### Tôi cần làm
+
+- [ ] **Quyết định pháp lý: `sharp` kéo theo binary `@img/sharp-*` dưới LGPL-3.0-or-later, licenseal thấy project khai Proprietary** → 14 warning, `licenseal check` exit 1. Đã có sẵn trên `main` trước PR này (PR này không đổi dependency nào). Cần người xem có chấp nhận weak copyleft không, rồi `/tkm:audit-licenses --review` để chốt.
+- [ ] Quyết định xem release có được phép công khai khi `cd.yml` deploy cùng commit đó fail hay không (lặp lại từ mục trước, vẫn chưa chốt).
+
+### Decisions
+
+- **Bump patch `0.12.0` → `0.12.1`.** Diff 121/44 dòng nhưng toàn config + tài liệu, không có tính năng mới. Ship rule: ≥50 dòng → patch là mặc định an toàn.
+- **Không chạy `test:unit` / `test:e2e`.** Diff không đụng một dòng `.ts`/`.tsx`. Chạy thay bằng đúng bộ gate CI Quality: `lint --max-warnings 0`, `typecheck`, `format:check` — cả ba exit 0. `format:check` là thứ duy nhất trong diff này có thể đỏ vì prettier soi `.md`/`.yml`.
+- **Đi tiếp qua license gate dù licenseal exit 1.** `git diff origin/main -- package.json pnpm-lock.yaml` trống — PR không tạo ra warning nào trong đó.
+- **Không gắn issue vào PR.** PR #29/#30/#32/#33 trong repo này đều không gắn; theo pattern sẵn có.
+- **Sửa `--prerelease` từ glob `*-*` sang regex neo `^[0-9]+\.[0-9]+\.[0-9]+-`** sau khi reviewer bắt được. Glob cũ nhận nhầm `1.0.0+exp-sha.5114f85` (build metadata được phép chứa dấu `-`, và regex validate version ở cùng file cũng nhận chuỗi này) thành prerelease, làm bản stable mất badge `Latest`. Đã reproduce cả trước và sau khi sửa.
+- **`FLAGS` đổi từ chuỗi expand không quote sang mảng bash.** Kiểm `bash -ec 'FLAGS=(); set -- a b "${FLAGS[@]}"; echo $#'` → `argc=2`, mảng rỗng không sinh arg ma.
+
+### Nợ lại
+
+- **Regex validate version ở `.github/workflows/release.yml:110` từ chối dạng prerelease + build ghép (`1.0.0-rc.1+build.5`)** dù comment ngay trên nói nhận "pre-release/build suffix". Reviewer xác nhận bằng reproduce. Không chặn PR này vì nó fail to tiếng ở bước đọc version chứ không sai âm thầm — nhưng comment đang nói sai về code bên dưới.
+- **Luật bump vẫn không có gì cưỡng chế** — chưa có job CI so `package.json` của PR với `origin/main`.
