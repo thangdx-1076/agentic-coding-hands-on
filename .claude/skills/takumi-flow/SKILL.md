@@ -122,6 +122,22 @@ thiết kế — đừng lách.
 Ship dừng giữa đường → **báo user, đừng tự push tay**. Không có đường tắt nào
 quanh evidence gate.
 
+### Cửa version — chạy sau ship, trước khi coi Stage 7 là xong
+
+Ship Step 8 bump version, và bình thường nó bump đúng: Step 3 đã merge
+`origin/main` vào branch trước đó, nên con số nó cộng lên là cộng từ version của
+main. Cửa này là lưới hứng cho các đường ship không đi tới nơi — ship dừng giữa
+chừng vì gate đỏ rồi push tay, PR mở bằng `git-manager`, hoặc commit thẳng.
+
+Kiểm bằng đoạn ở mục **"Mọi PR vào `main` phải mang một bump `package.json`"**
+trong `CLAUDE.md`.
+
+Chưa bump → bump patch, commit `chore: bump version to <new>`, push lên chính
+branch đó. PR đã mở sẽ tự nhận commit mới, không cần mở lại.
+
+Vì sao phải kiểm tay: merge không bump thì `release.yml` no-op **im lặng** và
+thoát 0. Không có gì đỏ để bạn nhận ra.
+
 ### Báo cáo cuối
 
 ```
