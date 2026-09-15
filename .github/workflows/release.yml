@@ -1,10 +1,10 @@
 # -----------------------------------------------------------------------
-# Release tagging — runs on every push to `main`, writes nothing public
+# Release — runs on every push to `main`, publishes without asking
 # -----------------------------------------------------------------------
 # What it does: reads the version out of `package.json`, tags that commit
-# `v<version>`, and opens a DRAFT GitHub release with generated notes. It
-# never publishes. A human reads the notes, edits them, and presses the
-# button — or deletes the draft.
+# `v<version>`, and PUBLISHES a GitHub release with generated notes. There
+# is no human step. The release is public, and watchers are notified, the
+# moment a version bump lands on `main`.
 #
 # ## Why `package.json` is the version, and nothing else
 #
@@ -26,16 +26,18 @@
 #
 # ## Why the tag is created explicitly, and not left to the release
 #
-# A DRAFT release does not create its git tag — GitHub only creates it when
-# the release is published. So a draft on its own leaves no mark on the
-# repository, and `--generate-notes` on the NEXT release would have no
-# previous tag to diff against. Creating the tag here makes it the durable
-# artifact and the draft merely the human-editable notes attached to it.
+# `gh release create` would now create the tag itself, since a published
+# release does create its tag and a draft does not. It stays its own step
+# so the tag-exists check above remains the ONE idempotency gate — a single
+# thing to look at when asking "has this version been released", true
+# whether or not the release step ever got to run.
 #
-# The consequence, stated plainly: **the tag survives a deleted draft.** If
-# you throw the draft away, `v<version>` still points at that commit, and
-# this workflow will not re-tag it. To genuinely undo a release, delete the
-# tag as well.
+# The consequence, stated plainly: **the tag survives a failed release
+# step.** If the tag lands and the release does not, `v<version>` still
+# points at that commit and this workflow will not re-tag it. Create the
+# release by hand from the tag, or delete the tag and re-run. And to undo a
+# release properly, delete the release AND the tag — deleting either one
+# alone leaves this workflow unable to redo it.
 #
 # ## Why there is no CI check here
 #
@@ -45,15 +47,17 @@
 # the same caveat applies — anything that reaches `main` outside a
 # protected PR is tagged with no test in between, and what CI covers is
 # less than a green check suggests (`@auth` and `@local-db` are excluded;
-# see ci.yml's header). A draft release is not a claim that the code works.
+# see ci.yml's header). A published release is not a claim that the code
+# works — only that `main` moved to a new version.
 #
 # ## Relationship to cd.yml
 #
-# Independent, deliberately. cd.yml deploys the same commit; this tags it.
-# Neither waits for the other: a draft release is inert, so creating one
-# for a commit whose deploy then failed costs nothing and leaves the
-# version history intact. Publishing is where a human decides the release
-# is real, and by then the deploy result is visible.
+# Independent, deliberately. cd.yml deploys the same commit; this releases
+# it. Neither waits for the other, and that is the price of publishing
+# automatically: a release can go public for a commit whose deploy then
+# failed. The release describes what is in `main`, not what is live. If the
+# two must never diverge, gate this workflow on the deploy — do not put the
+# human approval step back, it was removed on purpose.
 # -----------------------------------------------------------------------
 name: Release
 
@@ -69,14 +73,14 @@ on:
 
 concurrency:
   group: release-main
-  # Never cancel: a cancelled run can leave the tag created and the draft
+  # Never cancel: a cancelled run can leave the tag created and the release
   # missing, which is the one state this workflow cannot repair on a re-run
   # (the tag-exists check would skip it). Queue instead.
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Tag and draft release
+    name: Tag and publish release
     runs-on: ubuntu-latest
     permissions:
       # Both the tag ref and the release are writes to repository contents.
@@ -145,27 +149,41 @@ jobs:
 
           echo "Tagged ${{ github.sha }} as ${{ steps.version.outputs.tag }}"
 
-      # `--draft` is the whole point: notes are generated, never published.
-      # `--generate-notes` asks GitHub to build them from the merged PRs and
-      # commits since the previous tag.
+      # `--generate-notes` builds the body from the PRs and commits since the
+      # previous tag, and it goes out exactly as generated — nobody reads it
+      # first. PR titles ARE the changelog now; write them accordingly.
       #
-      # On the FIRST release in a repository there is no previous tag, so the
-      # notes cover the entire history and will be long. That is a one-time
-      # cost and is expected — trim them in the draft before publishing.
-      - name: Create draft release
+      # `--prerelease` when the version carries a semver PRE-RELEASE, because
+      # without it a `1.0.0-rc.1` would take the Latest badge off the last
+      # stable release. The draft UI used to be where a person ticked that
+      # box; with the draft gone the version string has to carry it.
+      #
+      # The test is anchored to the position semver gives a pre-release —
+      # straight after the patch number — and NOT a plain "contains a hyphen".
+      # Build metadata is allowed to contain hyphens (`1.0.0+exp-sha.5114f85`
+      # is semver.org's own example, and the regex above accepts it), so a
+      # `*-*` match would strip the Latest badge off a perfectly stable
+      # release and leave no clean way back.
+      - name: Create release
         if: steps.check.outputs.exists == 'false'
-        id: draft
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          FLAGS=()
+          if printf '%s' "${{ steps.version.outputs.version }}" \
+            | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-'; then
+            FLAGS+=(--prerelease)
+          fi
+
           URL=$(gh release create "${{ steps.version.outputs.tag }}" \
-            --draft \
             --generate-notes \
             --title "${{ steps.version.outputs.tag }}" \
-            --target "${{ github.sha }}")
+            --target "${{ github.sha }}" \
+            "${FLAGS[@]}")
 
           echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "Draft release: $URL"
+          echo "Published release: $URL"
 
       - name: Record what happened
         if: always()
@@ -188,29 +206,30 @@ jobs:
               echo ""
               echo "To release, bump the version on a branch and merge that."
             } >> "$GITHUB_STEP_SUMMARY"
-          elif [ -n "${{ steps.draft.outputs.url }}" ]; then
+          elif [ -n "${{ steps.release.outputs.url }}" ]; then
             {
-              echo "### Draft created"
+              echo "### Published"
               echo ""
-              echo "**${{ steps.draft.outputs.url }}**"
+              echo "**${{ steps.release.outputs.url }}**"
               echo ""
-              echo "Tag \`${{ steps.version.outputs.tag }}\` now points at this commit and is"
-              echo "permanent. The release itself is a **draft** — nobody sees it until a"
-              echo "person edits the notes and publishes."
+              echo "Tag \`${{ steps.version.outputs.tag }}\` now points at this commit and the"
+              echo "release is **live** — it shows on the repository home page and watchers"
+              echo "have been notified. Nobody reviewed the generated notes; edit them in"
+              echo "place if they read badly."
               echo ""
-              echo "Deleting the draft does NOT delete the tag, and this workflow will not"
-              echo "re-tag a version it has already tagged. To undo a release properly,"
-              echo "delete the tag too."
+              echo "This workflow will not re-tag a version it has already tagged. To undo"
+              echo "the release, delete the release AND the tag — either one left behind"
+              echo "blocks a clean redo."
               echo ""
-              echo "A draft is not a statement that the code works: it is created from"
+              echo "A release is not a statement that the code works: it is cut from"
               echo "\`main\` without re-running tests, and the CI that gated the merge"
               echo "excludes \`@auth\` and \`@local-db\` (see ci.yml's header)."
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
-              echo "### Failed before the draft was created"
+              echo "### Failed before the release was created"
               echo ""
-              echo "Check the steps above. If the tag was created but the draft was not,"
+              echo "Check the steps above. If the tag was created but the release was not,"
               echo "a re-run will SKIP — the tag-exists check cannot tell that state apart"
               echo "from an already-released version. Create the release by hand from the"
               echo "existing tag, or delete the tag and re-run."
